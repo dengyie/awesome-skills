@@ -1,0 +1,4 @@
+interface:
+  display_name: "Production Code Quality Review"
+  short_description: "Evidence-first production code review SOP"
+  default_prompt: "Use $production-code-quality-review to review this diff for production safety and maintainability."
