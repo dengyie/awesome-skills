@@ -77,6 +77,7 @@ python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --f
 - [Review Workflows](docs/usage/review-workflows.md)
 - [Examples](docs/usage/examples.md)
 - [FAQ](docs/usage/faq.md)
+- [中文文档](docs/zh/README.zh-CN.md) / [Chinese Docs](docs/zh/README.zh-CN.md)
 
 ## Local Verification
 
