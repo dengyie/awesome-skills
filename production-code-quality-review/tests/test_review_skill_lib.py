@@ -160,6 +160,25 @@ index 1111111..2222222 100644
                 ],
             )
 
+    def test_expand_repo_paths_keeps_git_submodule_directory_intact(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            submodule_dir = repo / "vendor" / "shared-lib"
+            submodule_dir.mkdir(parents=True)
+            (submodule_dir / ".git").write_text("gitdir: ../../.git/modules/shared-lib\n")
+            (submodule_dir / "README.md").write_text("submodule readme\n")
+
+            expanded = module.expand_repo_paths(
+                repo,
+                [
+                    "vendor/shared-lib",
+                ],
+            )
+
+            self.assertEqual(expanded, ["vendor/shared-lib"])
+
     def test_risk_reference_augmentation_prefers_merged_reference_set(self):
         module = load_module()
 

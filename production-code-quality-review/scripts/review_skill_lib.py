@@ -404,14 +404,49 @@ def expand_repo_paths(repo: pathlib.Path, paths: Iterable[str]) -> List[str]:
             continue
 
         repo_path = repo / path
+        submodule_root = find_git_submodule_root(repo, repo_path)
+        if submodule_root is not None:
+            expanded.append(str(submodule_root.relative_to(repo)))
+            continue
         if repo_path.is_dir():
-            for child in sorted(item for item in repo_path.rglob("*") if item.is_file()):
-                expanded.append(str(child.relative_to(repo)))
+            expanded.extend(walk_repo_dir(repo, repo_path))
             continue
 
         expanded.append(path)
 
     return dedupe_keep_order(expanded)
+
+
+def is_git_submodule_path(path: pathlib.Path) -> bool:
+    return path.is_dir() and (path / ".git").exists()
+
+
+def find_git_submodule_root(repo: pathlib.Path, path: pathlib.Path) -> pathlib.Path | None:
+    for candidate in [path] + list(path.parents):
+        if candidate == repo:
+            break
+        if candidate.is_dir() and (candidate / ".git").exists():
+            return candidate
+    return None
+
+
+def walk_repo_dir(repo: pathlib.Path, directory: pathlib.Path) -> List[str]:
+    expanded: List[str] = []
+
+    for child in sorted(directory.iterdir()):
+        submodule_root = find_git_submodule_root(repo, child)
+        if submodule_root is not None and submodule_root != directory:
+            expanded.append(str(submodule_root.relative_to(repo)))
+            continue
+
+        if child.is_dir():
+            expanded.extend(walk_repo_dir(repo, child))
+            continue
+
+        if child.is_file():
+            expanded.append(str(child.relative_to(repo)))
+
+    return expanded
 
 
 def dedupe_keep_order(items: Iterable[str]) -> List[str]:

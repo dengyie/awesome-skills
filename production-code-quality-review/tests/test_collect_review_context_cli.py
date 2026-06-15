@@ -343,6 +343,41 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("docs/golden/brief.md", payload["changed_files"])
             self.assertNotIn("docs/golden", payload["changed_files"])
 
+    def test_collect_review_context_keeps_submodule_directory_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            submodule_dir = repo / "vendor" / "shared-lib"
+            submodule_dir.mkdir(parents=True)
+            (submodule_dir / ".git").write_text("gitdir: ../../.git/modules/shared-lib\n")
+            (submodule_dir / "README.md").write_text("nested file\n")
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertIn("vendor/shared-lib", payload["changed_files"])
+            self.assertNotIn("vendor/shared-lib/README.md", payload["changed_files"])
+
 
 if __name__ == "__main__":
     unittest.main()
