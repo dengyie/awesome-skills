@@ -1,31 +1,66 @@
 ---
 name: production-code-quality-review
-description: Evidence-first production code review SOP for pull requests, diffs, changed files, modules, architecture-sensitive changes, production-readiness checks, reliability reviews, maintainability reviews, robustness reviews, and merge-readiness decisions. Use when the user asks for code review, PR review, diff review, architecture review, reliability review, maintainability review, production readiness review, robustness review, "will this scale", "can this be merged", or "review this like a senior engineer". Avoid style-only review unless style affects correctness, maintainability, safety, or local conventions.
+description: Review pull requests and code changes for production correctness, robustness, maintainability, architecture, scalability, observability, tests, security, and merge readiness. Use for PR review, diff review, architecture review, reliability review, production readiness review, or when asked to review like a senior engineer. Avoid style-only review unless style affects correctness, safety, maintainability, or local conventions.
 ---
 
 # Production Code Quality Review
 
 ## Mission
 
-Review code like a senior production engineer. Protect correctness, robustness, maintainability, architectural fit, scalability, observability, testability, and future evolution cost.
+Review code like a senior production engineer.
 
-Do not nitpick formatting. Do not produce generic advice. Every finding must be grounded in actual code evidence.
+Protect:
+
+- correctness
+- robustness
+- maintainability
+- architectural fit
+- scalability
+- observability
+- testability
+- future evolution cost
+
+Do not default to style review. Do not produce generic advice. Every finding must be grounded in actual code evidence.
 
 Default to read-only review behavior. Do not modify files, apply patches, run formatters, update snapshots, or fix code during a review unless the user explicitly asks for implementation in the same request or after the review.
+
+## Mandatory Review Setup
+
+Before judging the code, collect review scope and working-tree context.
+
+Run these deterministic helpers when the repo is available:
+
+- `python3 production-code-quality-review/scripts/collect-review-context.py --repo <repo>`
+- `python3 production-code-quality-review/scripts/diff-line-map.py --repo <repo>`
+- `python3 production-code-quality-review/scripts/detect-stack.py --repo <repo>`
+- `python3 production-code-quality-review/scripts/run-safe-checks.py --repo <repo>`
+
+Use the JSON output to determine:
+
+- base branch or fallback scope
+- staged, unstaged, and untracked files
+- changed files and changed line ranges
+- detected stack
+- risk flags
+- suggested references
+- safe verification commands
+
+Do not treat unrelated dirty worktree files as review findings unless they directly affect the reviewed change.
+
+If the repo is unavailable, state the missing context explicitly and continue with a reduced-confidence review.
 
 ## Source Order
 
 Inspect available context in this order:
 
 1. User request and stated goal
-2. Git diff or changed files
-3. Nearby surrounding code
-4. Existing tests
-5. README, architecture docs, ADRs, or design notes
-6. Dependency files and generated artifacts when relevant
-7. CI, deployment, logging, metrics, and operational paths when relevant
-
-For git-based reviews, identify the review scope before judging the code: inspect status, determine the intended diff or base branch when available, distinguish staged, unstaged, and untracked files, and state assumptions when the target scope is inferred. Do not include unrelated dirty worktree changes as findings unless they affect the reviewed change.
+2. Structured review context from the helper scripts
+3. Git diff or changed files
+4. Nearby surrounding code
+5. Existing tests
+6. README, architecture docs, ADRs, or design notes
+7. Dependency files and generated artifacts when relevant
+8. CI, deployment, logging, metrics, and operational paths when relevant
 
 If intent is unclear, infer the most likely intent from code and tests. State assumptions instead of blocking the review.
 
@@ -33,27 +68,79 @@ If intent is unclear, infer the most likely intent from code and tests. State as
 
 Use this sequence for all non-trivial reviews:
 
-1. Scope and intent: identify what changed, affected modules, external systems, and risk level.
-2. Correctness: review control flow, data flow, state transitions, input/output behavior, contracts, compatibility, and time/date logic.
-3. Robustness: review errors, retries, timeouts, cancellation, idempotency, partial failures, cleanup, concurrency, and observability.
-4. Architecture: review module boundaries, dependency direction, abstraction level, coupling, data ownership, and whether behavior lives in the right layer.
-5. Evolution: review extensibility, migration path, feature toggles, schema/API evolution, reversibility, and six-month maintenance cost.
-6. Tests: review whether tests would fail for the relevant bug, cover failure paths, and avoid shallow or over-mocked confidence.
-7. Security/privacy and performance gates: run when touched surfaces make them relevant. Read `references/security.md` for authentication, authorization, user input, files, databases, secrets, tokens, payments, PII, network calls, admin features, serialization, template rendering, shell commands, dependencies, unsafe IO, rendering, hot paths, batch jobs, queues, caches, or operational-risk changes.
-8. Verification pass: re-check every finding for reachability, evidence, severity, and false-positive risk.
+1. Scope and intent
+2. Correctness
+3. Robustness
+4. Architecture
+5. Evolution and maintenance cost
+6. Tests
+7. Security, privacy, performance, and operational readiness when relevant
+8. Verification pass for every candidate finding
 
-For detailed phase prompts and checklists, read `references/review-framework.md` when the review is larger than a trivial local change.
-For stack-specific risks, read only the relevant sections of `references/language-specific.md` for the languages and frameworks present in the reviewed code.
+For detailed phase prompts and decision rules, load `references/review-framework.md`.
+
+## Reference Routing
+
+Load only the references needed for the reviewed change.
+
+Always useful:
+
+- `references/review-framework.md`
+- `references/output-contract.md`
+- `references/false-positive-control.md`
+
+Load when relevant:
+
+- `references/security.md`
+- `references/typescript.md`
+- `references/backend-and-integrations.md`
+- `references/verification-and-operations.md`
+- `references/database.md`
+
+Prefer the helper scripts' `suggested_references` output over broad reference loading.
+
+## Single-Agent Vs Specialist Review
+
+Use single-agent review for:
+
+- small local diffs
+- low-risk refactors
+- straightforward bug fixes
+
+Use specialist prompts for:
+
+- authentication or authorization changes
+- migrations or schema evolution
+- payment, billing, or financial logic
+- concurrency or retry behavior
+- deployment, infrastructure, or runtime packaging changes
+- large cross-cutting diffs
+
+Specialist review lenses:
+
+- correctness
+- architecture
+- reliability
+- security
+- tests
+
+Reusable synthesis prompt:
+
+- `agents/synthesizer.md`
+
+When using specialist prompts, de-duplicate overlapping findings before the final report.
 
 ## Finding Rules
 
 Every issue must include:
 
-- Location: file, function, component, or behavior path
-- Problem: what is wrong
-- Impact: why it matters in production or maintenance
-- Evidence: concrete code behavior, missing branch, reachable input, or changed contract
-- Suggested fix: a direction that fits the existing codebase
+- Location
+- Problem
+- Impact
+- Evidence
+- Suggested fix
+- Confidence
+- New or pre-existing relative to the current change when that can be determined
 
 Before reporting an issue, verify:
 
@@ -63,36 +150,24 @@ Before reporting an issue, verify:
 4. Is it introduced or made worse by this change?
 5. Is the impact significant enough to mention?
 
-If uncertain, put it under questions or needs confirmation. Do not present speculation as a confirmed bug.
+If uncertain, move it to questions or needs confirmation. Do not present speculation as a confirmed bug.
 
 ## Severity
 
 Use this scale:
 
-- `P0`: blocker. Data loss, critical exploitable security vulnerability, outage risk, broken core flow, irreversible migration risk, severe compatibility break, or incorrect financial/payment/security behavior.
-- `P1`: high. Real correctness bug, serious edge-case failure, missing critical test, significant reliability problem, serious observability gap, or risky architectural coupling.
-- `P2`: medium. Maintainability issue, moderate test gap, localized design problem, non-critical error handling weakness, or plausible future extension risk.
-- `P3`: low. Readability, simplification, consistency, or documentation improvement.
-- `Nit`: pure polish. Never block merge.
+- `P0`: blocker
+- `P1`: high
+- `P2`: medium
+- `P3`: low
+- `Nit`: pure polish
 
-## Specialist References
-
-Load references only when useful:
-
-- `references/review-framework.md`: detailed review phases, verification pass, and final output structure.
-- `references/security.md`: authentication, authorization, privacy, dependency, injection, unsafe IO, and performance/scalability gates.
-- `references/language-specific.md`: TypeScript, Python, Go, Java, Rust, frontend, database, and API-specific review heuristics.
+Do not block on `Nit`.
 
 ## Output
 
-Follow host or user review-output instructions first. If no stronger output order is provided, use:
+Follow host or user review-output instructions first.
 
-1. Top findings ordered by severity, with file/line references when available
-2. Questions or needs confirmation
-3. Architecture assessment
-4. Robustness assessment
-5. Test assessment
-6. Meaningful strengths observed
-7. Final recommendation: safe to merge, safe with follow-ups, fix before merge, or do not merge yet
+If no stronger output order is provided, use the contract in `references/output-contract.md`.
 
 Keep the review concise. Prefer a few high-signal findings over a flood of low-value comments.

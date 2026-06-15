@@ -1,0 +1,426 @@
+from __future__ import annotations
+
+import json
+import pathlib
+import re
+import subprocess
+from typing import Dict, Iterable, List
+
+
+HUNK_RE = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+
+
+def run_git(repo: pathlib.Path, args: List[str], check: bool = True) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        check=check,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout
+
+
+def git_ref_exists(repo: pathlib.Path, ref_name: str) -> bool:
+    result = subprocess.run(
+        ["git", "rev-parse", "--verify", ref_name],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def get_current_branch(repo: pathlib.Path) -> str:
+    return run_git(repo, ["branch", "--show-current"], check=False).strip()
+
+
+def infer_base_ref(repo: pathlib.Path) -> str:
+    branch = get_current_branch(repo)
+    candidates = ["origin/main", "origin/master", "main", "master"]
+
+    for candidate in candidates:
+        if not git_ref_exists(repo, candidate):
+            continue
+        if branch and branch == candidate.split("/")[-1]:
+            continue
+        merge_base = run_git(repo, ["merge-base", "HEAD", candidate], check=False).strip()
+        if merge_base:
+            return candidate
+
+    return "HEAD"
+
+
+def get_status_buckets(repo: pathlib.Path) -> Dict[str, List[str]]:
+    raw = run_git(repo, ["status", "--short"], check=False)
+    staged: List[str] = []
+    unstaged: List[str] = []
+    untracked: List[str] = []
+
+    for line in raw.splitlines():
+        if not line.strip():
+            continue
+        status = line[:2]
+        path = line[3:].strip()
+        if "->" in path:
+            path = path.split("->", 1)[1].strip()
+        if status == "??":
+            untracked.append(path)
+            continue
+        if status[0] != " ":
+            staged.append(path)
+        if status[1] != " ":
+            unstaged.append(path)
+
+    return {
+        "staged": sorted(set(staged)),
+        "unstaged": sorted(set(unstaged)),
+        "untracked": sorted(set(untracked)),
+    }
+
+
+def get_changed_files(repo: pathlib.Path, base_ref: str) -> List[str]:
+    if base_ref == "HEAD":
+        diff_output = run_git(repo, ["diff", "--name-only", "HEAD"], check=False)
+    else:
+        merge_base = run_git(repo, ["merge-base", "HEAD", base_ref], check=False).strip()
+        diff_output = run_git(repo, ["diff", "--name-only", f"{merge_base}...HEAD"], check=False)
+
+    status = get_status_buckets(repo)
+    files = set(filter(None, diff_output.splitlines()))
+    files.update(status["staged"])
+    files.update(status["unstaged"])
+    files.update(status["untracked"])
+    return sorted(files)
+
+
+def get_diff_text(repo: pathlib.Path, base_ref: str) -> str:
+    if base_ref == "HEAD":
+        return run_git(repo, ["diff", "--unified=0", "HEAD"], check=False)
+
+    merge_base = run_git(repo, ["merge-base", "HEAD", base_ref], check=False).strip()
+    return run_git(repo, ["diff", "--unified=0", f"{merge_base}...HEAD"], check=False)
+
+
+def parse_unified_zero_diff(diff_text: str) -> Dict[str, Dict[str, List[Dict[str, int]]]]:
+    result: Dict[str, Dict[str, List[Dict[str, int]]]] = {}
+    current_file: str | None = None
+
+    for line in diff_text.splitlines():
+        if line.startswith("+++ "):
+            file_name = line[4:].strip()
+            if file_name == "/dev/null":
+                current_file = None
+                continue
+            current_file = file_name[2:] if file_name.startswith("b/") else file_name
+            result.setdefault(current_file, {"added": [], "deleted": []})
+            continue
+
+        match = HUNK_RE.match(line)
+        if not match or current_file is None:
+            continue
+
+        old_start = int(match.group(1))
+        old_count = int(match.group(2) or "1")
+        new_start = int(match.group(3))
+        new_count = int(match.group(4) or "1")
+
+        if new_count > 0:
+            result[current_file]["added"].append(
+                {"start": new_start, "end": new_start + new_count - 1}
+            )
+        if old_count > 0:
+            result[current_file]["deleted"].append(
+                {"start": old_start, "end": old_start + old_count - 1}
+            )
+
+    return result
+
+
+def detect_stack(paths: Iterable[str]) -> Dict[str, List[str]]:
+    path_list = list(paths)
+    lower_paths = [path.lower() for path in path_list]
+
+    detected: List[str] = []
+
+    def add_stack(name: str) -> None:
+        if name not in detected:
+            detected.append(name)
+
+    for path in lower_paths:
+        if path.endswith((".ts", ".tsx")) or path == "tsconfig.json":
+            add_stack("typescript")
+        if path.endswith((".js", ".cjs", ".mjs")) or path == "package.json":
+            add_stack("node")
+        if path.endswith(".py") or path in {"pyproject.toml", "requirements.txt", "poetry.lock"}:
+            add_stack("python")
+        if path.endswith(".go") or path == "go.mod":
+            add_stack("go")
+        if path.endswith((".sql", ".sqlite")) or "migration" in path or "schema.prisma" in path:
+            add_stack("database")
+        if path.endswith("dockerfile") or "docker-compose" in path or path == "compose.yaml":
+            add_stack("docker")
+
+    if any(path.endswith((".jsx", ".tsx")) for path in lower_paths):
+        add_stack("frontend")
+
+    reference_map = {
+        "typescript": "typescript.md",
+        "node": "backend-and-integrations.md",
+        "python": "review-framework.md",
+        "database": "database.md",
+        "docker": "review-framework.md",
+        "frontend": "typescript.md",
+    }
+
+    suggested = []
+    for core_reference in ["review-framework.md", "output-contract.md", "false-positive-control.md"]:
+        suggested.append(core_reference)
+    for stack in detected:
+        mapped = reference_map.get(stack)
+        if mapped and mapped not in suggested:
+            suggested.append(mapped)
+
+    if any(stack in detected for stack in ["typescript", "node", "python", "docker"]):
+        suggested.append("verification-and-operations.md")
+
+    return {
+        "detected_stack": detected,
+        "suggested_references": dedupe_keep_order(suggested),
+    }
+
+
+def derive_risk_flags(paths: Iterable[str], diff_text: str) -> List[str]:
+    lower_paths = [path.lower() for path in paths]
+    flags: List[str] = []
+
+    def add_flag(flag: str) -> None:
+        if flag not in flags:
+            flags.append(flag)
+
+    if any(token in path for path in lower_paths for token in ["auth", "permission", "policy", "acl", "session"]):
+        add_flag("auth_or_access_control")
+    if any(token in path for path in lower_paths for token in ["payment", "billing", "invoice", "stripe"]):
+        add_flag("payments_or_billing")
+    if any("migration" in path or path.endswith(".sql") or "schema.prisma" in path for path in lower_paths):
+        add_flag("database_migration")
+    if any(path.startswith(".github/workflows/") or "deploy" in path or "release" in path for path in lower_paths):
+        add_flag("ci_cd_or_deploy")
+    if any(path.endswith("dockerfile") or "docker-compose" in path or path == "compose.yaml" for path in lower_paths):
+        add_flag("container_or_runtime")
+    if any(token in path for path in lower_paths for token in ["api", "client", "http", "webhook"]):
+        add_flag("api_or_network_boundary")
+    if "fetch(" in diff_text or "axios" in diff_text or "requests." in diff_text:
+        add_flag("api_or_network_boundary")
+    if any(token in diff_text.lower() for token in ["logger", "metric", "trace", "span"]):
+        add_flag("observability_change")
+
+    return flags
+
+
+def augment_references_for_risks(
+    suggested_references: Iterable[str], risk_flags: Iterable[str]
+) -> List[str]:
+    references = list(suggested_references)
+    flags = set(risk_flags)
+
+    if "api_or_network_boundary" in flags:
+        references.append("backend-and-integrations.md")
+    if "auth_or_access_control" in flags or "payments_or_billing" in flags:
+        references.append("security.md")
+    if "database_migration" in flags:
+        references.append("database.md")
+    if flags:
+        references.append("verification-and-operations.md")
+
+    return dedupe_keep_order(references)
+
+
+def build_safe_check_commands(detected_stack: Iterable[str]) -> List[Dict[str, str]]:
+    commands: List[Dict[str, str]] = []
+    stack_list = list(detected_stack)
+
+    def add(command: str, reason: str) -> None:
+        if not any(item["command"] == command for item in commands):
+            commands.append({"command": command, "reason": reason})
+
+    if "typescript" in stack_list or "node" in stack_list:
+        add("npm test", "Verify changed behavior and regression coverage.")
+        add("npm run lint", "Catch static correctness and convention issues.")
+        add("npm run typecheck", "Catch unsafe contract and type regressions.")
+        add("npm run build", "Verify compile and packaging health.")
+    if "python" in stack_list:
+        add("python3 -m pytest", "Run Python test coverage for changed behavior.")
+    if "go" in stack_list:
+        add("go test ./...", "Run Go unit and package tests.")
+    if "docker" in stack_list:
+        add("docker compose config", "Validate container configuration without mutation.")
+
+    return commands
+
+
+def select_review_mode(
+    changed_files: Iterable[str], risk_flags: Iterable[str]
+) -> Dict[str, List[str] | str]:
+    files = list(changed_files)
+    flags = list(risk_flags)
+
+    high_risk_flags = {
+        "auth_or_access_control",
+        "payments_or_billing",
+        "database_migration",
+        "ci_cd_or_deploy",
+        "container_or_runtime",
+    }
+    specialist_mode = bool(high_risk_flags.intersection(flags)) or len(files) >= 8
+
+    if specialist_mode:
+        reviewers = ["correctness", "reliability", "security", "tests"]
+        if len(files) >= 4 or "database_migration" in flags:
+            reviewers.insert(1, "architecture")
+        return {
+            "mode": "specialist",
+            "reviewers": dedupe_keep_order(reviewers),
+            "follow_up": ["synthesizer"],
+        }
+
+    return {
+        "mode": "single",
+        "reviewers": ["primary-reviewer"],
+        "follow_up": [],
+    }
+
+
+def build_review_brief_markdown(context: Dict[str, object]) -> str:
+    review_plan = select_review_mode(
+        changed_files=context.get("changed_files", []),
+        risk_flags=context.get("risk_flags", []),
+    )
+    changed_files = context.get("changed_files", [])
+    changed_file_text = ", ".join(f"`{item}`" for item in changed_files) if changed_files else "_none_"
+
+    lines = [
+        "# Review Brief",
+        "",
+        "## Scope",
+        f"- Base: `{context.get('base', 'unknown')}`",
+        f"- Current branch: `{context.get('current_branch', 'unknown')}`",
+        f"- Scope mode: `{context.get('scope_mode', 'unknown')}`",
+        f"- Changed files: {changed_file_text}",
+        "",
+        "## Routing",
+        f"- Review mode: `{review_plan['mode']}`",
+        f"- Reviewer set: {', '.join(f'`{item}`' for item in review_plan['reviewers'])}",
+    ]
+
+    if review_plan["follow_up"]:
+        lines.append(
+            f"- Follow-up: {', '.join(f'`{item}`' for item in review_plan['follow_up'])}"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Risk Flags",
+        ]
+    )
+
+    risk_flags = context.get("risk_flags", [])
+    if risk_flags:
+        lines.extend(f"- `{flag}`" for flag in risk_flags)
+    else:
+        lines.append("- _none detected_")
+
+    lines.extend(
+        [
+            "",
+            "## Suggested References",
+        ]
+    )
+    for ref_name in context.get("suggested_references", []):
+        lines.append(f"- `{ref_name}`")
+
+    lines.extend(
+        [
+            "",
+            "## Changed Line Ranges",
+        ]
+    )
+    changed_ranges = context.get("changed_line_ranges", {})
+    if changed_ranges:
+        for file_name, bucket in changed_ranges.items():
+            lines.append(f"- `{file_name}`")
+            added = bucket.get("added", [])
+            deleted = bucket.get("deleted", [])
+            if added:
+                lines.append(
+                    f"  added: {', '.join(f'{item['start']}-{item['end']}' for item in added)}"
+                )
+            if deleted:
+                lines.append(
+                    f"  deleted: {', '.join(f'{item['start']}-{item['end']}' for item in deleted)}"
+                )
+    else:
+        lines.append("- _no changed line ranges_")
+
+    lines.extend(
+        [
+            "",
+            "## Verification Commands",
+        ]
+    )
+    commands = context.get("safe_check_commands", [])
+    if commands:
+        for item in commands:
+            lines.append(f"- `{item['command']}`: {item['reason']}")
+    else:
+        lines.append("- _no stack-specific checks suggested_")
+
+    return "\n".join(lines) + "\n"
+
+
+def dedupe_keep_order(items: Iterable[str]) -> List[str]:
+    result: List[str] = []
+    for item in items:
+        if item not in result:
+            result.append(item)
+    return result
+
+
+def collect_review_context(repo: pathlib.Path) -> Dict[str, object]:
+    base_ref = infer_base_ref(repo)
+    status = get_status_buckets(repo)
+    changed_files = get_changed_files(repo, base_ref)
+    diff_text = get_diff_text(repo, base_ref)
+    stack_info = detect_stack(changed_files or list_repo_files(repo))
+    risk_flags = derive_risk_flags(changed_files, diff_text)
+    suggested_references = augment_references_for_risks(
+        stack_info["suggested_references"], risk_flags
+    )
+
+    review_plan = select_review_mode(changed_files, risk_flags)
+
+    return {
+        "repo": str(repo),
+        "base": base_ref,
+        "current_branch": get_current_branch(repo),
+        "scope_mode": "working_tree" if any(status.values()) else "branch",
+        "status": status,
+        "changed_files": changed_files,
+        "changed_line_ranges": parse_unified_zero_diff(diff_text),
+        "detected_stack": stack_info["detected_stack"],
+        "suggested_references": suggested_references,
+        "risk_flags": risk_flags,
+        "safe_check_commands": build_safe_check_commands(stack_info["detected_stack"]),
+        "review_plan": review_plan,
+    }
+
+
+def list_repo_files(repo: pathlib.Path) -> List[str]:
+    tracked = run_git(repo, ["ls-files"], check=False).splitlines()
+    return sorted(filter(None, tracked))
+
+
+def to_pretty_json(data: Dict[str, object]) -> str:
+    return json.dumps(data, indent=2, sort_keys=True) + "\n"

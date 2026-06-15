@@ -2,129 +2,172 @@
 
 Use this reference for substantial reviews, cross-cutting changes, risky diffs, or architecture-sensitive work.
 
-## Phase 0: Scope And Intent
+## Phase 0: Review Setup
+
+Before reading code in detail:
+
+1. Collect structured review context from the helper scripts.
+2. Identify the review scope:
+   - base branch or fallback scope
+   - staged, unstaged, and untracked files
+   - changed file list
+   - changed line ranges
+3. Read only the references relevant to the detected stack and risk flags.
+4. Decide whether the review should stay single-agent or use specialist prompts.
+
+Do not start reporting findings before this setup is complete unless the user has given only a pasted snippet with no repo access.
+
+## Phase 1: Scope And Intent
 
 Identify:
 
-- What changed
-- Intended behavior
-- Affected modules and ownership boundaries
-- External systems, APIs, databases, queues, caches, files, or users affected
-- Whether the change is local, cross-cutting, or architectural
-- Risk level: low, medium, high, or critical
+- what changed
+- intended behavior
+- affected modules and ownership boundaries
+- external systems, APIs, databases, queues, caches, files, or users affected
+- whether the change is local, cross-cutting, or architectural
+- risk level: low, medium, high, or critical
 
 Keep this mostly internal unless it materially affects the final recommendation.
 
-## Phase 1: Correctness
+## Phase 2: Correctness
 
 Review:
 
-- Control flow and branch behavior
-- Data flow and state transitions
-- Input/output behavior and return values
-- Null, undefined, empty, zero, and missing-value handling
-- Type assumptions and runtime validation
+- control flow and branch behavior
+- data flow and state transitions
+- input and output behavior
+- null, undefined, empty, zero, and missing-value handling
+- type assumptions and runtime validation
 - API contracts and backward compatibility
-- Database query correctness
-- Serialization and deserialization
-- Time, date, timezone, and ordering logic
-- Race conditions in shared state or async code
+- database query correctness
+- serialization and deserialization
+- time, date, timezone, and ordering logic
+- race conditions in shared state or async code
 
 Ask:
 
-- Can valid input produce wrong output?
-- Can invalid input break the code?
-- Are errors swallowed?
-- Are assumptions enforced?
-- Does this break existing callers?
-- Does similar functionality already exist and should it be reused?
+- can valid input produce wrong output?
+- can invalid input break the code?
+- are errors swallowed?
+- are assumptions enforced?
+- does this break existing callers?
+- does similar functionality already exist and should it be reused?
 
-## Phase 2: Robustness
+## Phase 3: Robustness
 
 Review behavior under failure, load, bad input, and real production conditions:
 
-- Error handling and propagation
-- Retry, timeout, and cancellation behavior
-- Idempotency and duplicate requests
-- Partial failure and transaction boundaries
-- Resource cleanup for files, sockets, handles, and memory
-- Concurrency safety and backpressure
-- Rate limiting and fallback behavior
-- Logging, metrics, traces, and alertability
-- Sensitive information in logs
+- error handling and propagation
+- retry, timeout, and cancellation behavior
+- idempotency and duplicate requests
+- partial failure and transaction boundaries
+- resource cleanup for files, sockets, handles, and memory
+- concurrency safety and backpressure
+- rate limiting and fallback behavior
+- logging, metrics, traces, and alertability
+- sensitive information in logs
 
 Ask:
 
-- What happens when dependencies are slow or unavailable?
-- What happens on duplicate requests?
-- Can this create inconsistent state?
-- Can this fail silently?
-- Can operators debug the failure from logs or metrics?
+- what happens when dependencies are slow or unavailable?
+- what happens on duplicate requests?
+- can this create inconsistent state?
+- can this fail silently?
+- can operators debug the failure from logs or metrics?
 
-## Phase 3: Architecture
+## Phase 4: Architecture
 
 Review:
 
-- Module boundaries
-- Dependency direction
-- Coupling and cohesion
-- Abstraction level
-- Separation of concerns
-- Ownership of business logic
-- Framework leakage
-- Domain model consistency
+- module boundaries
+- dependency direction
+- coupling and cohesion
+- abstraction level
+- separation of concerns
+- ownership of business logic
+- framework leakage
+- domain model consistency
 - API boundaries and data ownership
-- Configuration strategy
-- Reuse versus duplication
-- Simplicity versus over-engineering
+- configuration strategy
+- reuse versus duplication
+- simplicity versus over-engineering
 
 Report architecture issues only when they create real future cost, not because another design is possible.
 
-## Phase 4: Evolution
+## Phase 5: Evolution
 
 Review:
 
-- Extensibility and deleteability
-- Migration and rollback path
-- Feature toggle needs
-- Backward compatibility
-- Test and observability safety nets
-- Documentation of non-obvious decisions
-- Upgrade, downgrade, and vendor risks
-- Schema evolution and API versioning
+- extensibility and deleteability
+- migration and rollback path
+- feature toggle needs
+- backward compatibility
+- test and observability safety nets
+- documentation of non-obvious decisions
+- upgrade, downgrade, and vendor risks
+- schema evolution and API versioning
 
 Ask:
 
-- What happens when this feature grows by 2x?
-- What happens when another team integrates with it?
-- What will be hard to change six months from now?
-- Is this shortcut becoming structural debt?
+- what happens when this feature grows by 2x?
+- what happens when another team integrates with it?
+- what will be hard to change six months from now?
+- is this shortcut becoming structural debt?
 
-## Phase 5: Tests
+## Phase 6: Tests
 
 Review tests as production code:
 
-- Are tests added or updated for changed behavior?
-- Would tests fail if the implementation is broken?
-- Are edge cases and failure paths covered?
-- Are integration points covered?
-- Are concurrency or time-sensitive paths tested when relevant?
-- Are mocks hiding real integration risk?
-- Are snapshots too broad or too weak?
-- Are tests deterministic and readable?
+- are tests added or updated for changed behavior?
+- would tests fail if the implementation is broken?
+- are edge cases and failure paths covered?
+- are integration points covered?
+- are concurrency or time-sensitive paths tested when relevant?
+- are mocks hiding real integration risk?
+- are snapshots too broad or too weak?
+- are tests deterministic and readable?
 
-Do not simply say "add tests." Name the exact test scenario.
+Do not simply say "add tests." Name the exact missing test scenario.
 
-## Phase 6: Verification Pass
+For test quality and production observability details, load `references/verification-and-operations.md`.
+
+## Phase 7: Verification Pass
 
 Before final output, classify every candidate finding:
 
-- Confirmed: directly supported by code
+- Confirmed: directly supported by code or deterministic evidence
 - Likely: strongly implied but not fully proven
 - Needs confirmation: possible issue requiring runtime or project context
-- Removed: speculative or too minor
+- Removed: speculative, duplicate, or too minor
 
-Only include confirmed and important likely findings in the main list. Move uncertain material to questions. Remove style-only opinions unless they affect maintainability.
+Only include confirmed and important likely findings in the main list. Move uncertain material to questions. Remove style-only opinions unless they affect maintainability or safety.
+
+## Changed-Line Guidance
+
+Use changed-line ranges to determine whether a finding is:
+
+- directly introduced by the current change
+- pre-existing but worsened by the current change
+- pre-existing and unrelated
+
+Prefer reporting introduced or worsened issues. Mention pre-existing issues only when they materially block the reviewed change.
+
+## Smaller-Stack Guidance
+
+When Python-specific issues appear, check:
+
+- implicit `None` paths
+- mutable defaults
+- timezone-aware versus naive datetime handling
+- broad exception handling in behavior-critical paths
+
+When Docker or deployment packaging changes appear, check:
+
+- pinned base image strategy
+- root versus non-root execution
+- healthcheck and shutdown behavior
+- runtime config or secret expectations
 
 ## Final Recommendation Labels
 
@@ -132,30 +175,7 @@ Use one of:
 
 - Safe to merge
 - Safe to merge with follow-ups
-- Fix P1/P0 issues before merge
+- Fix P1 or P0 issues before merge
 - Do not merge yet
 
 State the minimal required fixes.
-
-## Final Output Structure
-
-Use host or user review-output instructions first. If no stronger structure is provided, use this order:
-
-1. Top findings ordered by severity
-2. Questions or needs confirmation
-3. Architecture assessment
-4. Robustness assessment
-5. Test assessment
-6. Meaningful strengths observed
-7. Final recommendation
-
-For each finding, include:
-
-- Severity and title
-- Location with file and line when available
-- Problem
-- Why it matters
-- Evidence
-- Suggested fix
-
-Keep summaries brief. Do not bury findings below general commentary.
