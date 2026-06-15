@@ -79,6 +79,18 @@ index 1111111..2222222 100644
             [{"start": 20, "end": 21}],
         )
 
+    def test_parse_unified_zero_diff_ignores_pure_rename_without_hunks(self):
+        module = load_module()
+        diff_text = """diff --git a/src/old_name.ts b/src/new_name.ts
+similarity index 100%
+rename from src/old_name.ts
+rename to src/new_name.ts
+"""
+
+        result = module.parse_unified_zero_diff(diff_text)
+
+        self.assertEqual(result, {})
+
     def test_detect_stack_prefers_specific_references(self):
         module = load_module()
         paths = [
@@ -178,6 +190,24 @@ index 1111111..2222222 100644
             )
 
             self.assertEqual(expanded, ["vendor/shared-lib"])
+
+    def test_expand_repo_paths_preserves_binary_file_path(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            binary_file = repo / "assets" / "logo.png"
+            binary_file.parent.mkdir(parents=True)
+            binary_file.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+            expanded = module.expand_repo_paths(
+                repo,
+                [
+                    "assets/logo.png",
+                ],
+            )
+
+            self.assertEqual(expanded, ["assets/logo.png"])
 
     def test_risk_reference_augmentation_prefers_merged_reference_set(self):
         module = load_module()

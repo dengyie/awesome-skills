@@ -378,6 +378,55 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("vendor/shared-lib", payload["changed_files"])
             self.assertNotIn("vendor/shared-lib/README.md", payload["changed_files"])
 
+    def test_collect_review_context_prefers_rename_target_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src").mkdir()
+            (repo / "src" / "old_name.ts").write_text("export const oldName = true;\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            subprocess.run(
+                ["git", "mv", "src/old_name.ts", "src/new_name.ts"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertIn("src/new_name.ts", payload["changed_files"])
+            self.assertNotIn("src/old_name.ts", payload["changed_files"])
+
 
 if __name__ == "__main__":
     unittest.main()
