@@ -24,7 +24,8 @@ Or use the helper:
 bash production-code-quality-review/scripts/install-local-skill.sh
 ```
 
-The helper defaults to `~/.agents/skills` and can also sync `~/.codex/skills` for legacy local setups.
+The helper defaults to `~/.agents/skills`. Set `INSTALL_LEGACY_CODEX_COPY=1` only if you explicitly want a second legacy copy under `~/.codex/skills`.
+The installed copy also records its source checkout so the update helper can refresh from the original repo path.
 
 ## 2. Collect Review Context
 

@@ -8,7 +8,8 @@
 bash production-code-quality-review/scripts/install-local-skill.sh
 ```
 
-默认会安装到 `~/.agents/skills`，并且可以按需同步到旧的 `~/.codex/skills` 路径。
+默认会安装到 `~/.agents/skills`。如果你明确需要第二份旧路径副本，再设置 `INSTALL_LEGACY_CODEX_COPY=1`。
+安装后的副本会记录来源 checkout，后续 `update-local-skill.sh` 可以安全回源更新。
 
 ## 2. 收集上下文
 

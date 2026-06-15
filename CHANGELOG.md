@@ -61,9 +61,10 @@ The format is intentionally lightweight and optimized for small skill releases.
 ### Changed
 
 - aligned local install helpers with the current `~/.agents/skills` convention
-- added optional legacy `~/.codex/skills` sync for mixed local environments
+- made legacy `~/.codex/skills` sync explicit opt-in only
 - expanded README with install behavior, compact mode, and repo layout
 - clarified onboarding docs around helper-based installation
+- taught `update-local-skill.sh` to refresh from the recorded source checkout when invoked from an installed copy
 
 ### Removed
 

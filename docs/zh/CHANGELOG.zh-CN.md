@@ -9,9 +9,10 @@
 ### 变更
 
 - 本地安装脚本对齐到当前推荐的 `~/.agents/skills` 路径
-- 为同时保留 `~/.codex/skills` 的旧环境增加可选同步能力
+- 将 `~/.codex/skills` 旧副本改为显式开关同步
 - README 补充安装行为、`compact` 模式和仓库结构说明
 - onboarding 文档明确辅助安装脚本的默认行为
+- `update-local-skill.sh` 支持从已安装副本回到记录的来源 checkout 做刷新
 
 ### 移除
 

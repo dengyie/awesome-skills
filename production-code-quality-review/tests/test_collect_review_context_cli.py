@@ -1,5 +1,7 @@
 import json
+import os
 import pathlib
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -301,6 +303,43 @@ class CollectReviewContextCliTests(unittest.TestCase):
         self.assertTrue(INSTALL_SCRIPT.exists())
         self.assertTrue(UPDATE_SCRIPT.exists())
         self.assertTrue(VERIFY_RELEASE_SCRIPT.exists())
+
+    def test_update_script_refreshes_installed_copy_from_recorded_source(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = pathlib.Path(temp_dir)
+            agents_home = root / ".agents"
+            source_root = root / "source"
+            target = agents_home / "skills" / "production-code-quality-review"
+            target.parent.mkdir(parents=True)
+            shutil.copytree(ROOT, source_root)
+
+            subprocess.run(
+                ["bash", str(source_root / "scripts" / "install-local-skill.sh")],
+                cwd=source_root,
+                env={**os.environ, "AGENTS_HOME": str(agents_home)},
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            original_skill = (target / "SKILL.md").read_text()
+            updated_skill = original_skill + "\n<!-- updated from source checkout -->\n"
+            (source_root / "SKILL.md").write_text(updated_skill)
+
+            result = subprocess.run(
+                ["bash", str(target / "scripts" / "update-local-skill.sh")],
+                cwd=root,
+                env={**os.environ, "AGENTS_HOME": str(agents_home)},
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((target / "SKILL.md").read_text(), updated_skill)
+            self.assertEqual(
+                (target / ".skill-source-dir").read_text().strip(),
+                str(source_root),
+            )
 
     def test_verify_release_script_includes_safe_check_and_summary_steps(self):
         script_text = VERIFY_RELEASE_SCRIPT.read_text()

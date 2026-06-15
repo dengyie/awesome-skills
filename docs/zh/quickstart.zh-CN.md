@@ -24,7 +24,8 @@ cp -R production-code-quality-review ~/.agents/skills/
 bash production-code-quality-review/scripts/install-local-skill.sh
 ```
 
-该脚本默认安装到 `~/.agents/skills`，如果你本地还保留 `~/.codex/skills` 的旧路径，也可以一并同步。
+该脚本默认安装到 `~/.agents/skills`。如果你明确需要第二份旧路径副本，再设置 `INSTALL_LEGACY_CODEX_COPY=1`。
+安装后的副本也会记录来源仓库路径，方便 `update-local-skill.sh` 回到原始 checkout 做安全更新。
 
 ## 2. 收集 Review 上下文
 

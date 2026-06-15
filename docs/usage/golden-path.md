@@ -8,7 +8,8 @@ If you only do one thing, do this:
 bash production-code-quality-review/scripts/install-local-skill.sh
 ```
 
-This installs to `~/.agents/skills` by default and can optionally sync a legacy `~/.codex/skills` copy.
+This installs to `~/.agents/skills` by default. Set `INSTALL_LEGACY_CODEX_COPY=1` only if you explicitly want a second legacy `~/.codex/skills` copy.
+The installed copy keeps a source-checkout pointer so `update-local-skill.sh` can safely refresh it later.
 
 ## 2. Collect Context
 
