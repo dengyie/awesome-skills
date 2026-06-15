@@ -38,3 +38,20 @@ The format is intentionally lightweight and optimized for small skill releases.
 - `references/language-specific.md`
 - granular reviewer prompt sprawl
 - several overly fragmented reference files in favor of merged guides
+
+## v0.1.1 - 2026-06-16
+
+### Added
+
+- golden-path onboarding documentation
+- compact review brief output mode
+- local install and update helper scripts
+- release checklist and troubleshooting guide
+- fixture-style tests for TypeScript API, database migration, and Docker scenarios
+
+### Changed
+
+- tightened `SKILL.md` to reduce repeated explanation
+- improved stack detection for TypeScript service repositories
+- changed the Python default verification suggestion to `unittest discover`
+- simplified README into a cleaner landing page
