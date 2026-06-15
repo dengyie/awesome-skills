@@ -93,7 +93,7 @@ index 1111111..2222222 100644
         self.assertIn("npm run lint", command_lines)
         self.assertIn("npm run typecheck", command_lines)
         self.assertIn("npm run build", command_lines)
-        self.assertIn("python3 -m pytest", command_lines)
+        self.assertIn("python3 -m unittest discover", command_lines)
         self.assertIn("go test ./...", command_lines)
         self.assertIn("docker compose config", command_lines)
 

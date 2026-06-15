@@ -251,7 +251,7 @@ def build_safe_check_commands(detected_stack: Iterable[str]) -> List[Dict[str, s
         add("npm run typecheck", "Catch unsafe contract and type regressions.")
         add("npm run build", "Verify compile and packaging health.")
     if "python" in stack_list:
-        add("python3 -m pytest", "Run Python test coverage for changed behavior.")
+        add("python3 -m unittest discover", "Run Python test coverage for changed behavior.")
     if "go" in stack_list:
         add("go test ./...", "Run Go unit and package tests.")
     if "docker" in stack_list:
@@ -393,7 +393,9 @@ def collect_review_context(repo: pathlib.Path) -> Dict[str, object]:
     status = get_status_buckets(repo)
     changed_files = get_changed_files(repo, base_ref)
     diff_text = get_diff_text(repo, base_ref)
-    stack_info = detect_stack(changed_files or list_repo_files(repo))
+    repo_files = list_repo_files(repo)
+    stack_inputs = dedupe_keep_order(changed_files + select_repo_stack_markers(repo_files))
+    stack_info = detect_stack(stack_inputs or repo_files)
     risk_flags = derive_risk_flags(changed_files, diff_text)
     suggested_references = augment_references_for_risks(
         stack_info["suggested_references"], risk_flags
@@ -420,6 +422,36 @@ def collect_review_context(repo: pathlib.Path) -> Dict[str, object]:
 def list_repo_files(repo: pathlib.Path) -> List[str]:
     tracked = run_git(repo, ["ls-files"], check=False).splitlines()
     return sorted(filter(None, tracked))
+
+
+def select_repo_stack_markers(files: Iterable[str]) -> List[str]:
+    markers: List[str] = []
+    marker_names = {
+        "package.json",
+        "tsconfig.json",
+        "go.mod",
+        "pyproject.toml",
+        "requirements.txt",
+        "poetry.lock",
+        "dockerfile",
+        "compose.yaml",
+        "compose.yml",
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "schema.prisma",
+    }
+
+    for path in files:
+        lower_path = path.lower()
+        if (
+            lower_path in marker_names
+            or lower_path.startswith(".github/workflows/")
+            or "migration" in lower_path
+            or lower_path.endswith(".sql")
+        ):
+            markers.append(path)
+
+    return dedupe_keep_order(markers)
 
 
 def to_pretty_json(data: Dict[str, object]) -> str:

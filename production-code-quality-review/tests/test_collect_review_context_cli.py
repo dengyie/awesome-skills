@@ -8,6 +8,8 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "collect-review-context.py"
 REVIEW_ENTRYPOINT = ROOT / "scripts" / "review-entrypoint.py"
+INSTALL_SCRIPT = ROOT / "scripts" / "install-local-skill.sh"
+UPDATE_SCRIPT = ROOT / "scripts" / "update-local-skill.sh"
 
 
 class CollectReviewContextCliTests(unittest.TestCase):
@@ -64,6 +66,147 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("verification-and-operations.md", payload["suggested_references"])
             self.assertIn("npm test", [item["command"] for item in payload["safe_check_commands"]])
 
+    def test_fixture_typescript_api_change_routes_to_backend_and_security_guidance(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "package.json").write_text('{"name":"demo","scripts":{"test":"echo ok","lint":"echo ok","typecheck":"echo ok","build":"echo ok"}}\n')
+            (repo / "tsconfig.json").write_text('{"compilerOptions":{"strict":true}}\n')
+            (repo / "src").mkdir()
+            (repo / "src" / "api-client.ts").write_text("export const timeoutMs = 1000;\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src" / "api-client.ts").write_text(
+                "export const timeoutMs = 2000;\nexport const endpoint = '/admin/users';\n"
+            )
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertIn("typescript", payload["detected_stack"])
+            self.assertIn("node", payload["detected_stack"])
+            self.assertIn("api_or_network_boundary", payload["risk_flags"])
+            self.assertIn("backend-and-integrations.md", payload["suggested_references"])
+            self.assertIn("verification-and-operations.md", payload["suggested_references"])
+            self.assertIn("npm run typecheck", [item["command"] for item in payload["safe_check_commands"]])
+
+    def test_fixture_database_migration_routes_to_database_reference(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "migrations").mkdir()
+            (repo / "migrations" / "001_init.sql").write_text("create table users (id integer primary key);\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "migrations" / "002_add_email.sql").write_text(
+                "alter table users add column email text not null default '';\n"
+            )
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertIn("database", payload["detected_stack"])
+            self.assertIn("database_migration", payload["risk_flags"])
+            self.assertIn("database.md", payload["suggested_references"])
+
+    def test_fixture_docker_change_routes_to_verification_and_operations(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "Dockerfile").write_text("FROM node:20-alpine\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "Dockerfile").write_text("FROM node:22-alpine\nRUN adduser -D app\n")
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertIn("docker", payload["detected_stack"])
+            self.assertIn("container_or_runtime", payload["risk_flags"])
+            self.assertIn("verification-and-operations.md", payload["suggested_references"])
+            self.assertIn("docker compose config", [item["command"] for item in payload["safe_check_commands"]])
+
     def test_review_entrypoint_markdown_outputs_actionable_brief(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)
@@ -108,6 +251,54 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("Suggested References", result.stdout)
             self.assertIn("Review mode", result.stdout)
             self.assertIn("Verification Commands", result.stdout)
+
+    def test_review_entrypoint_compact_outputs_single_line_summary(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "package.json").write_text('{"name":"demo"}\n')
+            (repo / "src").mkdir()
+            (repo / "src" / "app.ts").write_text("export const value = 1;\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src" / "app.ts").write_text("export const value = 2;\n")
+
+            result = subprocess.run(
+                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "compact"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertIn("review-mode=", result.stdout)
+            self.assertIn("changed-files=", result.stdout)
+            self.assertNotIn("\n\n", result.stdout)
+
+    def test_install_and_update_scripts_are_present(self):
+        self.assertTrue(INSTALL_SCRIPT.exists())
+        self.assertTrue(UPDATE_SCRIPT.exists())
 
 
 if __name__ == "__main__":

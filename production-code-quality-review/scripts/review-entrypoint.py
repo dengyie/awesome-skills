@@ -21,7 +21,7 @@ def main() -> int:
     parser.add_argument("--repo", default=".", help="Path to the git repository.")
     parser.add_argument(
         "--format",
-        choices=["json", "markdown"],
+        choices=["json", "markdown", "compact"],
         default="markdown",
         help="Output format.",
     )
@@ -32,6 +32,14 @@ def main() -> int:
 
     if args.format == "json":
         sys.stdout.write(lib.to_pretty_json(context))
+    elif args.format == "compact":
+        plan = context["review_plan"]
+        changed_files = ",".join(context["changed_files"])
+        refs = ",".join(context["suggested_references"])
+        risks = ",".join(context["risk_flags"]) if context["risk_flags"] else "none"
+        sys.stdout.write(
+            f"review-mode={plan['mode']} changed-files={changed_files or 'none'} risk-flags={risks} refs={refs or 'none'}\n"
+        )
     else:
         sys.stdout.write(lib.build_review_brief_markdown(context))
     return 0

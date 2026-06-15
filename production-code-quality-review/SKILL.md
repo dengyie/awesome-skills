@@ -9,20 +9,11 @@ description: Review pull requests and code changes for production correctness, r
 
 Review code like a senior production engineer.
 
-Protect:
-
-- correctness
-- robustness
-- maintainability
-- architectural fit
-- scalability
-- observability
-- testability
-- future evolution cost
+Protect correctness, robustness, maintainability, architectural fit, scalability, observability, testability, and future evolution cost.
 
 Do not default to style review. Do not produce generic advice. Every finding must be grounded in actual code evidence.
 
-Default to read-only review behavior. Do not modify files, apply patches, run formatters, update snapshots, or fix code during a review unless the user explicitly asks for implementation in the same request or after the review.
+Default to read-only review behavior unless the user explicitly asks for implementation too.
 
 ## Mandatory Review Setup
 
@@ -35,19 +26,9 @@ Run these deterministic helpers when the repo is available:
 - `python3 production-code-quality-review/scripts/detect-stack.py --repo <repo>`
 - `python3 production-code-quality-review/scripts/run-safe-checks.py --repo <repo>`
 
-Use the JSON output to determine:
-
-- base branch or fallback scope
-- staged, unstaged, and untracked files
-- changed files and changed line ranges
-- detected stack
-- risk flags
-- suggested references
-- safe verification commands
+Use the outputs to determine scope, stack, risk flags, references, and verification commands.
 
 Do not treat unrelated dirty worktree files as review findings unless they directly affect the reviewed change.
-
-If the repo is unavailable, state the missing context explicitly and continue with a reduced-confidence review.
 
 ## Source Order
 
@@ -62,7 +43,7 @@ Inspect available context in this order:
 7. Dependency files and generated artifacts when relevant
 8. CI, deployment, logging, metrics, and operational paths when relevant
 
-If intent is unclear, infer the most likely intent from code and tests. State assumptions instead of blocking the review.
+If intent is unclear, infer the most likely intent from code and tests. State assumptions instead of blocking.
 
 ## Review Workflow
 
@@ -77,7 +58,7 @@ Use this sequence for all non-trivial reviews:
 7. Security, privacy, performance, and operational readiness when relevant
 8. Verification pass for every candidate finding
 
-For detailed phase prompts and decision rules, load `references/review-framework.md`.
+Load `references/review-framework.md` for detailed phase prompts and decision rules.
 
 ## Reference Routing
 
@@ -97,26 +78,13 @@ Load when relevant:
 - `references/verification-and-operations.md`
 - `references/database.md`
 
-Prefer the helper scripts' `suggested_references` output over broad reference loading.
+Prefer the helper scripts' `suggested_references` output over broad loading.
 
 ## Single-Agent Vs Specialist Review
 
-Use single-agent review for:
+Use single-agent review for small local diffs, low-risk refactors, and straightforward bug fixes.
 
-- small local diffs
-- low-risk refactors
-- straightforward bug fixes
-
-Use specialist prompts for:
-
-- authentication or authorization changes
-- migrations or schema evolution
-- payment, billing, or financial logic
-- concurrency or retry behavior
-- deployment, infrastructure, or runtime packaging changes
-- large cross-cutting diffs
-
-Specialist review lenses:
+Use specialist review lenses for auth, migrations, payments, concurrency, deployment, or large cross-cutting diffs:
 
 - correctness
 - architecture
@@ -127,8 +95,6 @@ Specialist review lenses:
 Reusable synthesis prompt:
 
 - `agents/synthesizer.md`
-
-When using specialist prompts, de-duplicate overlapping findings before the final report.
 
 ## Finding Rules
 
@@ -150,7 +116,7 @@ Before reporting an issue, verify:
 4. Is it introduced or made worse by this change?
 5. Is the impact significant enough to mention?
 
-If uncertain, move it to questions or needs confirmation. Do not present speculation as a confirmed bug.
+If uncertain, move it to questions. Do not present speculation as a confirmed bug.
 
 ## Severity
 
@@ -166,8 +132,6 @@ Do not block on `Nit`.
 
 ## Output
 
-Follow host or user review-output instructions first.
-
-If no stronger output order is provided, use the contract in `references/output-contract.md`.
+Follow host or user review-output instructions first. Otherwise use `references/output-contract.md`.
 
 Keep the review concise. Prefer a few high-signal findings over a flood of low-value comments.
