@@ -46,6 +46,8 @@ This returns JSON that includes:
 - suggested references
 - safe verification commands
 
+This is the main deterministic entrypoint. The smaller helper scripts expose subsets of the same context for narrow automation or debugging.
+
 ## 3. Generate A Review Brief
 
 Run:

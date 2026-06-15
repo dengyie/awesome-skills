@@ -46,6 +46,8 @@ python3 production-code-quality-review/scripts/collect-review-context.py --repo 
 - suggested references
 - safe verification commands
 
+这是主要的确定性入口。其他小脚本主要是把同一份上下文拆成更窄的自动化或调试接口。
+
 ## 3. 生成 Review 简报
 
 运行：

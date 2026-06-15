@@ -27,6 +27,16 @@ Because they are useful building blocks for narrow automation, even if most user
 - `collect-review-context.py`
 - `review-entrypoint.py`
 
+The default deterministic entrypoint is `collect-review-context.py`. The smaller scripts are mostly for subset automation, debugging, or integration glue.
+
+## What is `.skill-source-dir`?
+
+It is a small metadata file written into the installed skill copy.
+
+Its only job is to remember which repo checkout the install came from, so `update-local-skill.sh` can refresh safely from that source later.
+
+Treat it as part of the local install contract, not as a cache file to clean up.
+
 ## Does this skill replace human code review?
 
 No. It is designed to improve review quality and reduce false positives, not replace judgment. The strongest use case is as a production-minded assistant before or during human review.

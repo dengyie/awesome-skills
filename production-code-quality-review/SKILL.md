@@ -19,14 +19,17 @@ Default to read-only review behavior unless the user explicitly asks for impleme
 
 Before judging the code, collect review scope and working-tree context.
 
-Run these deterministic helpers when the repo is available:
+Default entrypoint when the repo is available:
 
 - `python3 production-code-quality-review/scripts/collect-review-context.py --repo <repo>`
-- `python3 production-code-quality-review/scripts/diff-line-map.py --repo <repo>`
-- `python3 production-code-quality-review/scripts/detect-stack.py --repo <repo>`
-- `python3 production-code-quality-review/scripts/run-safe-checks.py --repo <repo>`
 
-Use the outputs to determine scope, stack, risk flags, references, and verification commands.
+Use its output to determine scope, stack, risk flags, references, and verification commands.
+
+Smaller helper scripts remain available for narrow automation or debugging:
+
+- `diff-line-map.py`
+- `detect-stack.py`
+- `run-safe-checks.py`
 
 Do not treat unrelated dirty worktree files as review findings unless they directly affect the reviewed change.
 
@@ -74,6 +77,7 @@ Load when relevant:
 
 - `references/security.md`
 - `references/typescript.md`
+- `references/python.md`
 - `references/backend-and-integrations.md`
 - `references/verification-and-operations.md`
 - `references/database.md`
