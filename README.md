@@ -2,6 +2,8 @@
 
 Reusable Codex skills with an evidence-first, production-engineering bias.
 
+Latest release: `v0.1.4`
+
 ## Included Skill
 
 ### production-code-quality-review
@@ -57,6 +59,12 @@ The installed copy records its source checkout so `update-local-skill.sh` can re
 
 ```bash
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
+```
+
+Optional scope controls:
+
+```bash
+python3 production-code-quality-review/scripts/collect-review-context.py --repo . --base origin/main --scope branch
 ```
 
 ### Generate a human-friendly review brief

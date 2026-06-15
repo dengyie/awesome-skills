@@ -4,6 +4,22 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## v0.1.4 - 2026-06-16
+
+### Added
+
+- added explicit `--base` and `--scope branch|working_tree` overrides to both review context entrypoints
+- added `risk_level` and `review_mode_reason` to structured context and review briefs
+- added release note templates for English and Chinese release documentation
+- added regression coverage proving `branch` scope excludes uncommitted working-tree files
+
+### Changed
+
+- made API/network boundary changes route as high-risk specialist reviews
+- routed Python repositories to the focused `python.md` reference
+- synchronized English and Chinese usage docs for scope overrides and review routing
+- tightened examples, quickstart, release checklist, and release index documentation
+
 ## v0.1.3 - 2026-06-16
 
 ### Fixed

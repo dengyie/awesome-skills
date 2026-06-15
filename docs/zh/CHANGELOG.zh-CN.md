@@ -4,6 +4,22 @@
 
 英文版仍然是默认事实来源；当中英文有细微差异时，以英文原文为准。
 
+## v0.1.4 - 2026-06-16
+
+### 新增
+
+- `collect-review-context.py` 和 `review-entrypoint.py` 都支持显式 `--base` 与 `--scope branch|working_tree`
+- 结构化上下文和 review brief 增加 `risk_level` 与 `review_mode_reason`
+- 增加英文与中文 release note 模板
+- 增加回归测试，验证 `branch` scope 不会混入未提交工作区文件
+
+### 变更
+
+- API / network boundary 改动会被路由为高风险专题审查
+- Python 仓库会路由到更聚焦的 `python.md` reference
+- 同步英文与中文使用文档中的 scope override 和 review routing 说明
+- 收紧 examples、quickstart、release checklist 和 release index 文档
+
 ## v0.1.3 - 2026-06-16
 
 ### 修复
