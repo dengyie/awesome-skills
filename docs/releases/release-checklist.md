@@ -21,6 +21,7 @@ Run:
 
 ```bash
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
+python3 production-code-quality-review/scripts/run-safe-checks.py --repo .
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
 bash production-code-quality-review/scripts/verify-release.sh
 ```
@@ -28,6 +29,7 @@ bash production-code-quality-review/scripts/verify-release.sh
 Confirm:
 
 - JSON output is structurally sane
+- safe check suggestions are present
 - markdown brief remains readable and useful
 - bundled verification script completes successfully
 

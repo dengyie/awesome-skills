@@ -86,3 +86,5 @@ If you want one command that bundles the main release checks, run:
 ```bash
 bash production-code-quality-review/scripts/verify-release.sh
 ```
+
+That bundle also prints the non-mutating safe-check suggestions from `run-safe-checks.py`.

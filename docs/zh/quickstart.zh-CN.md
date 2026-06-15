@@ -86,3 +86,5 @@ python3 -m unittest discover production-code-quality-review/tests -v
 ```bash
 bash production-code-quality-review/scripts/verify-release.sh
 ```
+
+这个 bundle 还会输出 `run-safe-checks.py` 提供的非破坏性验证建议。

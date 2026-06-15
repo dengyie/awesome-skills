@@ -302,6 +302,12 @@ class CollectReviewContextCliTests(unittest.TestCase):
         self.assertTrue(UPDATE_SCRIPT.exists())
         self.assertTrue(VERIFY_RELEASE_SCRIPT.exists())
 
+    def test_verify_release_script_includes_safe_check_and_summary_steps(self):
+        script_text = VERIFY_RELEASE_SCRIPT.read_text()
+
+        self.assertIn("run-safe-checks.py", script_text)
+        self.assertIn("--format compact", script_text)
+
 
 if __name__ == "__main__":
     unittest.main()
