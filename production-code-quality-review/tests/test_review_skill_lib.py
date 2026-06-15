@@ -39,6 +39,8 @@ class ReviewSkillLibTests(unittest.TestCase):
                 "verification-and-operations.md",
             ],
             "risk_flags": ["api_or_network_boundary", "container_or_runtime"],
+            "risk_level": "high",
+            "review_mode_reason": "high-risk change touches sensitive production surfaces",
             "safe_check_commands": [{"command": "npm test", "reason": "Verify regressions."}],
             "review_plan": {
                 "mode": "specialist",
@@ -50,6 +52,8 @@ class ReviewSkillLibTests(unittest.TestCase):
                     "tests",
                 ],
                 "follow_up": ["synthesizer"],
+                "risk_level": "high",
+                "review_mode_reason": "high-risk change touches sensitive production surfaces",
             },
         }
 
@@ -111,6 +115,14 @@ rename to src/new_name.ts
         self.assertIn("backend-and-integrations.md", result["suggested_references"])
         self.assertIn("review-framework.md", result["suggested_references"])
         self.assertIn("database.md", result["suggested_references"])
+
+    def test_detect_stack_routes_python_to_python_reference(self):
+        module = load_module()
+
+        result = module.detect_stack(["pyproject.toml", "src/jobs/reconcile.py"])
+
+        self.assertIn("python", result["detected_stack"])
+        self.assertIn("python.md", result["suggested_references"])
 
     def test_risk_flags_cover_sensitive_surfaces(self):
         module = load_module()
@@ -271,6 +283,30 @@ rename to src/new_name.ts
         self.assertIn("tests", plan["reviewers"])
         self.assertIn("synthesizer", plan["follow_up"])
 
+    def test_select_review_mode_exposes_reason_and_risk_level(self):
+        module = load_module()
+
+        plan = module.select_review_mode(
+            changed_files=["src/auth/session.ts", "migrations/002_add_accounts.sql"],
+            risk_flags=["auth_or_access_control", "database_migration"],
+        )
+
+        self.assertEqual(plan["mode"], "specialist")
+        self.assertEqual(plan["risk_level"], "high")
+        self.assertIn("high-risk", plan["review_mode_reason"])
+
+    def test_select_review_mode_marks_low_risk_changes(self):
+        module = load_module()
+
+        plan = module.select_review_mode(
+            changed_files=["src/app.ts"],
+            risk_flags=[],
+        )
+
+        self.assertEqual(plan["mode"], "single")
+        self.assertEqual(plan["risk_level"], "low")
+        self.assertIn("small", plan["review_mode_reason"])
+
     def test_build_review_brief_markdown_includes_scope_and_reviewers(self):
         module = load_module()
         context = self.sample_context()
@@ -281,6 +317,7 @@ rename to src/new_name.ts
         self.assertIn("- Base: `main`", markdown)
         self.assertIn("- Changed files: `src/app.ts`, `Dockerfile`", markdown)
         self.assertIn("- Review mode: `specialist`", markdown)
+        self.assertIn("- Risk level: `high`", markdown)
         self.assertIn("## Suggested References", markdown)
         self.assertIn("- `typescript.md`", markdown)
         self.assertIn("## Verification Commands", markdown)

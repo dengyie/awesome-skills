@@ -17,10 +17,25 @@ import review_skill_lib as lib
 def main() -> int:
     parser = argparse.ArgumentParser(description="Collect structured review context for a git repo.")
     parser.add_argument("--repo", default=".", help="Path to the git repository.")
+    parser.add_argument(
+        "--base",
+        default=None,
+        help="Optional explicit base ref override, such as HEAD or origin/main.",
+    )
+    parser.add_argument(
+        "--scope",
+        choices=["branch", "working_tree"],
+        default=None,
+        help="Optional review scope mode override.",
+    )
     args = parser.parse_args()
 
     repo = pathlib.Path(args.repo).resolve()
-    context = lib.collect_review_context(repo)
+    context = lib.collect_review_context(
+        repo,
+        base_ref_override=args.base,
+        scope_mode_override=args.scope,
+    )
     sys.stdout.write(lib.to_pretty_json(context))
     return 0
 

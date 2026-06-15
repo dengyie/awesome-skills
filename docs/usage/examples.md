@@ -25,6 +25,8 @@ Representative output shape:
   },
   "detected_stack": ["typescript", "node", "database"],
   "risk_flags": ["auth_or_access_control", "database_migration"],
+  "risk_level": "high",
+  "review_mode_reason": "high-risk change touches sensitive production surfaces",
   "suggested_references": [
     "review-framework.md",
     "output-contract.md",
@@ -57,6 +59,8 @@ Representative output shape:
 
 ## Routing
 - Review mode: `specialist`
+- Risk level: `high`
+- Why this mode: high-risk change touches sensitive production surfaces
 - Reviewer set: `correctness`, `architecture`, `reliability`, `security`, `tests`
 
 ## Risk Flags
@@ -72,6 +76,20 @@ Representative output shape:
 - `database.md`
 ```
 
+## Example: Force A PR-Like Baseline
+
+Command:
+
+```bash
+python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --base origin/main --scope branch --format compact
+```
+
+Representative output shape:
+
+```text
+review-mode=specialist risk-level=high changed-files=src/auth/session.ts,migrations/002_add_accounts.sql risk-flags=auth_or_access_control,database_migration refs=review-framework.md,output-contract.md,false-positive-control.md,security.md,backend-and-integrations.md,database.md,verification-and-operations.md
+```
+
 ## Example: Codex Prompt
 
 Prompt:
@@ -79,7 +97,6 @@ Prompt:
 ```text
 Use $production-code-quality-review to review this diff for production correctness, reliability, and merge readiness. Focus on introduced issues, not style.
 ```
-
 ## Example: Fast Verification
 
 Command:

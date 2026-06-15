@@ -47,6 +47,7 @@ python3 production-code-quality-review/scripts/collect-review-context.py --repo 
 - safe verification commands
 
 这是主要的确定性入口。其他小脚本主要是把同一份上下文拆成更窄的自动化或调试接口。
+如果需要固定 review 基线，可以使用 `--base <ref>` 或 `--scope branch|working_tree`。
 
 ## 3. 生成 Review 简报
 
@@ -89,5 +90,3 @@ python3 -m unittest discover production-code-quality-review/tests -v
 ```bash
 bash production-code-quality-review/scripts/verify-release.sh
 ```
-
-这个 bundle 还会输出 `run-safe-checks.py` 提供的非破坏性验证建议。

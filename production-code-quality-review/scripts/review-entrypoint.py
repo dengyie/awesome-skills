@@ -20,6 +20,17 @@ def main() -> int:
     )
     parser.add_argument("--repo", default=".", help="Path to the git repository.")
     parser.add_argument(
+        "--base",
+        default=None,
+        help="Optional explicit base ref override, such as HEAD or origin/main.",
+    )
+    parser.add_argument(
+        "--scope",
+        choices=["branch", "working_tree"],
+        default=None,
+        help="Optional review scope mode override.",
+    )
+    parser.add_argument(
         "--format",
         choices=["json", "markdown", "compact"],
         default="markdown",
@@ -28,7 +39,11 @@ def main() -> int:
     args = parser.parse_args()
 
     repo = pathlib.Path(args.repo).resolve()
-    context = lib.collect_review_context(repo)
+    context = lib.collect_review_context(
+        repo,
+        base_ref_override=args.base,
+        scope_mode_override=args.scope,
+    )
 
     if args.format == "json":
         sys.stdout.write(lib.to_pretty_json(context))

@@ -25,6 +25,8 @@ python3 production-code-quality-review/scripts/collect-review-context.py --repo 
   },
   "detected_stack": ["typescript", "node", "database"],
   "risk_flags": ["auth_or_access_control", "database_migration"],
+  "risk_level": "high",
+  "review_mode_reason": "high-risk change touches sensitive production surfaces",
   "suggested_references": [
     "review-framework.md",
     "output-contract.md",
@@ -57,6 +59,8 @@ python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --f
 
 ## Routing
 - Review mode: `specialist`
+- Risk level: `high`
+- Why this mode: high-risk change touches sensitive production surfaces
 - Reviewer set: `correctness`, `architecture`, `reliability`, `security`, `tests`
 
 ## Risk Flags
@@ -70,6 +74,20 @@ python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --f
 - `security.md`
 - `backend-and-integrations.md`
 - `database.md`
+```
+
+## 示例：强制使用 PR 风格基线
+
+命令：
+
+```bash
+python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --base origin/main --scope branch --format compact
+```
+
+典型输出结构：
+
+```text
+review-mode=specialist risk-level=high changed-files=src/auth/session.ts,migrations/002_add_accounts.sql risk-flags=auth_or_access_control,database_migration refs=review-framework.md,output-contract.md,false-positive-control.md,security.md,backend-and-integrations.md,database.md,verification-and-operations.md
 ```
 
 ## 示例：Codex 提示词

@@ -8,6 +8,8 @@
 
 ## Routing
 - Review mode: `specialist`
+- Risk level: `high`
+- Why this mode: high-risk change touches sensitive production surfaces
 - Reviewer set: `correctness`, `architecture`, `reliability`, `security`, `tests`
 - Follow-up: `synthesizer`
 

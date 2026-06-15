@@ -52,6 +52,14 @@ def infer_base_ref(repo: pathlib.Path) -> str:
     return "HEAD"
 
 
+def normalize_scope_mode(scope_mode: str | None) -> str | None:
+    if scope_mode is None:
+        return None
+    if scope_mode not in {"branch", "working_tree"}:
+        raise ValueError(f"Unsupported scope mode: {scope_mode}")
+    return scope_mode
+
+
 def get_status_buckets(repo: pathlib.Path) -> Dict[str, List[str]]:
     raw = run_git(repo, ["status", "--short"], check=False)
     staged: List[str] = []
@@ -80,15 +88,22 @@ def get_status_buckets(repo: pathlib.Path) -> Dict[str, List[str]]:
     }
 
 
-def get_changed_files(repo: pathlib.Path, base_ref: str) -> List[str]:
+def get_base_changed_files(repo: pathlib.Path, base_ref: str) -> List[str]:
     if base_ref == "HEAD":
         diff_output = run_git(repo, ["diff", "--name-only", "HEAD"], check=False)
     else:
         merge_base = run_git(repo, ["merge-base", "HEAD", base_ref], check=False).strip()
         diff_output = run_git(repo, ["diff", "--name-only", f"{merge_base}...HEAD"], check=False)
 
+    return sorted(expand_repo_paths(repo, filter(None, diff_output.splitlines())))
+
+
+def get_changed_files(repo: pathlib.Path, base_ref: str, include_worktree: bool = True) -> List[str]:
+    files = set(get_base_changed_files(repo, base_ref))
+    if not include_worktree:
+        return sorted(files)
+
     status = get_status_buckets(repo)
-    files = set(filter(None, diff_output.splitlines()))
     files.update(status["staged"])
     files.update(status["unstaged"])
     files.update(status["untracked"])
@@ -101,6 +116,10 @@ def get_diff_text(repo: pathlib.Path, base_ref: str) -> str:
 
     merge_base = run_git(repo, ["merge-base", "HEAD", base_ref], check=False).strip()
     return run_git(repo, ["diff", "--unified=0", f"{merge_base}...HEAD"], check=False)
+
+
+def get_worktree_diff_text(repo: pathlib.Path) -> str:
+    return run_git(repo, ["diff", "--unified=0", "HEAD"], check=False)
 
 
 def parse_unified_zero_diff(diff_text: str) -> Dict[str, Dict[str, List[Dict[str, int]]]]:
@@ -168,7 +187,7 @@ def detect_stack(paths: Iterable[str]) -> Dict[str, List[str]]:
     reference_map = {
         "typescript": "typescript.md",
         "node": "backend-and-integrations.md",
-        "python": "review-framework.md",
+        "python": "python.md",
         "database": "database.md",
         "docker": "review-framework.md",
         "frontend": "typescript.md",
@@ -272,23 +291,36 @@ def select_review_mode(
         "database_migration",
         "ci_cd_or_deploy",
         "container_or_runtime",
+        "api_or_network_boundary",
     }
-    specialist_mode = bool(high_risk_flags.intersection(flags)) or len(files) >= 8
+    high_risk_hit = bool(high_risk_flags.intersection(flags))
+    large_diff_hit = len(files) >= 8
+    specialist_mode = high_risk_hit or large_diff_hit
 
     if specialist_mode:
         reviewers = ["correctness", "reliability", "security", "tests"]
         if len(files) >= 4 or "database_migration" in flags:
             reviewers.insert(1, "architecture")
+        if high_risk_hit:
+            reason = "high-risk change touches sensitive production surfaces"
+            risk_level = "high"
+        else:
+            reason = "large diff benefits from specialist review split"
+            risk_level = "medium"
         return {
             "mode": "specialist",
             "reviewers": dedupe_keep_order(reviewers),
             "follow_up": ["synthesizer"],
+            "risk_level": risk_level,
+            "review_mode_reason": reason,
         }
 
     return {
         "mode": "single",
         "reviewers": ["primary-reviewer"],
         "follow_up": [],
+        "risk_level": "low" if len(files) <= 3 and not flags else "medium",
+        "review_mode_reason": "small local change fits a single production-minded pass",
     }
 
 
@@ -296,6 +328,10 @@ def build_review_brief_markdown(context: Dict[str, object]) -> str:
     review_plan = context.get("review_plan") or select_review_mode(
         changed_files=context.get("changed_files", []),
         risk_flags=context.get("risk_flags", []),
+    )
+    risk_level = context.get("risk_level") or review_plan.get("risk_level", "unknown")
+    review_mode_reason = context.get("review_mode_reason") or review_plan.get(
+        "review_mode_reason", "unknown"
     )
     changed_files = context.get("changed_files", [])
     changed_file_text = ", ".join(f"`{item}`" for item in changed_files) if changed_files else "_none_"
@@ -311,6 +347,8 @@ def build_review_brief_markdown(context: Dict[str, object]) -> str:
         "",
         "## Routing",
         f"- Review mode: `{review_plan['mode']}`",
+        f"- Risk level: `{risk_level}`",
+        f"- Why this mode: {review_mode_reason}",
         f"- Reviewer set: {', '.join(f'`{item}`' for item in review_plan['reviewers'])}",
     ]
 
@@ -385,11 +423,13 @@ def build_review_brief_compact(context: Dict[str, object]) -> str:
         changed_files=context.get("changed_files", []),
         risk_flags=context.get("risk_flags", []),
     )
+    risk_level = context.get("risk_level") or plan.get("risk_level", "unknown")
     changed_files = ",".join(context["changed_files"])
     refs = ",".join(context["suggested_references"])
     risks = ",".join(context["risk_flags"]) if context["risk_flags"] else "none"
     return (
         f"review-mode={plan['mode']} "
+        f"risk-level={risk_level} "
         f"changed-files={changed_files or 'none'} "
         f"risk-flags={risks} "
         f"refs={refs or 'none'}\n"
@@ -464,11 +504,21 @@ def dedupe_keep_order(items: Iterable[str]) -> List[str]:
     return result
 
 
-def collect_review_context(repo: pathlib.Path) -> Dict[str, object]:
-    base_ref = infer_base_ref(repo)
+def collect_review_context(
+    repo: pathlib.Path,
+    *,
+    base_ref_override: str | None = None,
+    scope_mode_override: str | None = None,
+) -> Dict[str, object]:
+    base_ref = base_ref_override or infer_base_ref(repo)
     status = get_status_buckets(repo)
-    changed_files = get_changed_files(repo, base_ref)
-    diff_text = get_diff_text(repo, base_ref)
+    scope_mode = normalize_scope_mode(scope_mode_override)
+    if scope_mode is None:
+        scope_mode = "working_tree" if any(status.values()) else "branch"
+    include_worktree = scope_mode == "working_tree"
+
+    changed_files = get_changed_files(repo, base_ref, include_worktree=include_worktree)
+    diff_text = get_worktree_diff_text(repo) if include_worktree else get_diff_text(repo, base_ref)
     repo_files = list_repo_files(repo)
     stack_inputs = dedupe_keep_order(changed_files + select_repo_stack_markers(repo_files))
     stack_info = detect_stack(stack_inputs or repo_files)
@@ -483,13 +533,15 @@ def collect_review_context(repo: pathlib.Path) -> Dict[str, object]:
         "repo": str(repo),
         "base": base_ref,
         "current_branch": get_current_branch(repo),
-        "scope_mode": "working_tree" if any(status.values()) else "branch",
+        "scope_mode": scope_mode,
         "status": status,
         "changed_files": changed_files,
         "changed_line_ranges": parse_unified_zero_diff(diff_text),
         "detected_stack": stack_info["detected_stack"],
         "suggested_references": suggested_references,
         "risk_flags": risk_flags,
+        "risk_level": review_plan.get("risk_level", "unknown"),
+        "review_mode_reason": review_plan.get("review_mode_reason", "unknown"),
         "safe_check_commands": build_safe_check_commands(stack_info["detected_stack"]),
         "review_plan": review_plan,
     }

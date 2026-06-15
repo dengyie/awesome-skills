@@ -38,6 +38,12 @@ The scripts automatically infer a base branch or fall back to `HEAD` when needed
 
 to suppress unrelated findings.
 
+If you need to force a review baseline or mode, `review-entrypoint.py` and `collect-review-context.py` both support:
+
+- `--base <ref>`
+- `--scope branch`
+- `--scope working_tree`
+
 ## High-Risk Change Review
 
 Use this when the change touches:

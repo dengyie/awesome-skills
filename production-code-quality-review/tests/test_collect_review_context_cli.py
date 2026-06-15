@@ -66,6 +66,8 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("typescript", payload["detected_stack"])
             self.assertIn("docker", payload["detected_stack"])
             self.assertIn("src/app.ts", payload["changed_line_ranges"])
+            self.assertIn("risk_level", payload)
+            self.assertIn("review_mode_reason", payload)
             self.assertIn("verification-and-operations.md", payload["suggested_references"])
             self.assertIn("npm test", [item["command"] for item in payload["safe_check_commands"]])
 
@@ -116,6 +118,8 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("typescript", payload["detected_stack"])
             self.assertIn("node", payload["detected_stack"])
             self.assertIn("api_or_network_boundary", payload["risk_flags"])
+            self.assertEqual(payload["risk_level"], "high")
+            self.assertIn("high-risk", payload["review_mode_reason"])
             self.assertIn("backend-and-integrations.md", payload["suggested_references"])
             self.assertIn("verification-and-operations.md", payload["suggested_references"])
             self.assertIn("npm run typecheck", [item["command"] for item in payload["safe_check_commands"]])
@@ -164,6 +168,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
 
             self.assertIn("database", payload["detected_stack"])
             self.assertIn("database_migration", payload["risk_flags"])
+            self.assertEqual(payload["risk_level"], "high")
             self.assertIn("database.md", payload["suggested_references"])
 
     def test_fixture_docker_change_routes_to_verification_and_operations(self):
@@ -207,8 +212,143 @@ class CollectReviewContextCliTests(unittest.TestCase):
 
             self.assertIn("docker", payload["detected_stack"])
             self.assertIn("container_or_runtime", payload["risk_flags"])
+            self.assertEqual(payload["risk_level"], "high")
             self.assertIn("verification-and-operations.md", payload["suggested_references"])
             self.assertIn("docker compose config", [item["command"] for item in payload["safe_check_commands"]])
+
+    def test_review_entrypoint_allows_base_and_scope_overrides(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "package.json").write_text('{"name":"demo"}\n')
+            (repo / "src").mkdir()
+            (repo / "src" / "app.ts").write_text("export const value = 1;\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src" / "app.ts").write_text("export const value = 2;\n")
+
+            result = subprocess.run(
+                [
+                    "python3",
+                    str(REVIEW_ENTRYPOINT),
+                    "--repo",
+                    str(repo),
+                    "--base",
+                    "HEAD",
+                    "--scope",
+                    "working_tree",
+                    "--format",
+                    "compact",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertIn("review-mode=", result.stdout)
+            self.assertIn("risk-flags=", result.stdout)
+
+    def test_branch_scope_excludes_uncommitted_worktree_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src").mkdir()
+            (repo / "src" / "committed.ts").write_text("export const value = 1;\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src" / "committed.ts").write_text("export const value = 2;\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "feature change"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "src" / "local-only.ts").write_text("export const localOnly = true;\n")
+
+            branch_result = subprocess.run(
+                [
+                    "python3",
+                    str(SCRIPT),
+                    "--repo",
+                    str(repo),
+                    "--base",
+                    "HEAD~1",
+                    "--scope",
+                    "branch",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            working_tree_result = subprocess.run(
+                [
+                    "python3",
+                    str(SCRIPT),
+                    "--repo",
+                    str(repo),
+                    "--base",
+                    "HEAD~1",
+                    "--scope",
+                    "working_tree",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            branch_payload = json.loads(branch_result.stdout)
+            working_tree_payload = json.loads(working_tree_result.stdout)
+
+            self.assertEqual(branch_payload["scope_mode"], "branch")
+            self.assertIn("src/committed.ts", branch_payload["changed_files"])
+            self.assertNotIn("src/local-only.ts", branch_payload["changed_files"])
+            self.assertIn("src/local-only.ts", working_tree_payload["changed_files"])
 
     def test_review_entrypoint_markdown_outputs_actionable_brief(self):
         with tempfile.TemporaryDirectory() as temp_dir:

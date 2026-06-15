@@ -47,6 +47,7 @@ This returns JSON that includes:
 - safe verification commands
 
 This is the main deterministic entrypoint. The smaller helper scripts expose subsets of the same context for narrow automation or debugging.
+Use `--base <ref>` or `--scope branch|working_tree` when you need to pin the review baseline.
 
 ## 3. Generate A Review Brief
 
@@ -89,5 +90,3 @@ If you want one command that bundles the main release checks, run:
 ```bash
 bash production-code-quality-review/scripts/verify-release.sh
 ```
-
-That bundle also prints the non-mutating safe-check suggestions from `run-safe-checks.py`.

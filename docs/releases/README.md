@@ -11,6 +11,7 @@ Use it to:
 ## Index
 
 - [Release Checklist](release-checklist.md)
+- [Release Template](TEMPLATE.md)
 - [v0.1.0 Release Notes](v0.1.0-production-code-quality-review.md)
 - [v0.1.1 Release Notes](v0.1.1-production-code-quality-review.md)
 - [v0.1.2 Release Notes](v0.1.2-production-code-quality-review.md)

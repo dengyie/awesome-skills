@@ -36,6 +36,12 @@ Use $production-code-quality-review to review my current working tree like a sen
 - changed-line ranges
 - risk flags
 
+如果需要强制指定审查基线或 scope，`review-entrypoint.py` 和 `collect-review-context.py` 都支持：
+
+- `--base <ref>`
+- `--scope branch`
+- `--scope working_tree`
+
 ## 高风险改动审查
 
 适用于以下改动：
