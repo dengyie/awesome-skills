@@ -4,6 +4,18 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## v0.1.3 - 2026-06-16
+
+### Fixed
+
+- taught installed skill copies to record their source checkout via `.skill-source-dir`
+- fixed `update-local-skill.sh` so running it from an installed copy refreshes from the recorded source checkout instead of deleting its own source
+- added regression coverage for installed-copy update flow
+
+### Changed
+
+- updated install, onboarding, and release docs to describe the recorded-source refresh behavior
+
 ## v0.1.0 - 2026-06-16
 
 ### Added

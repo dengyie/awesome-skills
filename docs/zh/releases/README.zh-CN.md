@@ -14,6 +14,7 @@
 - [v0.1.0 发布说明](v0.1.0-production-code-quality-review.zh-CN.md)
 - [v0.1.1 发布说明](v0.1.1-production-code-quality-review.zh-CN.md)
 - [v0.1.2 发布说明](v0.1.2-production-code-quality-review.zh-CN.md)
+- [v0.1.3 发布说明](v0.1.3-production-code-quality-review.zh-CN.md)
 
 ## 对应英文原版
 
@@ -21,3 +22,4 @@
 - [`docs/releases/v0.1.0-production-code-quality-review.md`](../../releases/v0.1.0-production-code-quality-review.md)
 - [`docs/releases/v0.1.1-production-code-quality-review.md`](../../releases/v0.1.1-production-code-quality-review.md)
 - [`docs/releases/v0.1.2-production-code-quality-review.md`](../../releases/v0.1.2-production-code-quality-review.md)
+- [`docs/releases/v0.1.3-production-code-quality-review.md`](../../releases/v0.1.3-production-code-quality-review.md)
