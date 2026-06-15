@@ -80,3 +80,9 @@ python3 -m unittest discover production-code-quality-review/tests -v
 ```
 
 This validates the deterministic helper behavior.
+
+If you want one command that bundles the main release checks, run:
+
+```bash
+bash production-code-quality-review/scripts/verify-release.sh
+```

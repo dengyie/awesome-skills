@@ -70,6 +70,12 @@ python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --f
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format compact
 ```
 
+### Run the release verification bundle
+
+```bash
+bash production-code-quality-review/scripts/verify-release.sh
+```
+
 ## Documentation
 
 - [Golden Path](docs/usage/golden-path.md)
@@ -79,6 +85,7 @@ python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --f
 - [FAQ](docs/usage/faq.md)
 - [中文文档](docs/zh/README.zh-CN.md) / [Chinese Docs](docs/zh/README.zh-CN.md)
 - [中文发布说明](docs/zh/releases/README.zh-CN.md) / [Chinese Release Notes](docs/zh/releases/README.zh-CN.md)
+- [中文 References 导读](docs/zh/references-guide.zh-CN.md) / [Chinese References Guide](docs/zh/references-guide.zh-CN.md)
 
 ## Local Verification
 

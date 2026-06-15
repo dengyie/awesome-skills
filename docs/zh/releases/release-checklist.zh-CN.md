@@ -22,12 +22,14 @@ python3 -m unittest discover production-code-quality-review/tests -v
 ```bash
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
+bash production-code-quality-review/scripts/verify-release.sh
 ```
 
 确认：
 
 - JSON 输出结构合理
 - markdown 简报仍然可读且有用
+- 一体化验证脚本可以顺利执行
 
 ## 3. 验证文档
 

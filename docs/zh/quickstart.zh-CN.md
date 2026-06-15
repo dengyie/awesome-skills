@@ -80,3 +80,9 @@ python3 -m unittest discover production-code-quality-review/tests -v
 ```
 
 这会验证 deterministic helper 的核心行为。
+
+如果你想用一条命令跑完主要发布检查，可以运行：
+
+```bash
+bash production-code-quality-review/scripts/verify-release.sh
+```

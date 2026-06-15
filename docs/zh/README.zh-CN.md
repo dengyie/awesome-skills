@@ -10,6 +10,7 @@
 - [示例](examples.zh-CN.md)
 - [常见问题](faq.zh-CN.md)
 - [故障排查](troubleshooting.zh-CN.md)
+- [References 导读](references-guide.zh-CN.md)
 - [中文变更记录](CHANGELOG.zh-CN.md)
 - [中文发布说明](releases/README.zh-CN.md)
 

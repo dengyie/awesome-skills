@@ -10,6 +10,7 @@ SCRIPT = ROOT / "scripts" / "collect-review-context.py"
 REVIEW_ENTRYPOINT = ROOT / "scripts" / "review-entrypoint.py"
 INSTALL_SCRIPT = ROOT / "scripts" / "install-local-skill.sh"
 UPDATE_SCRIPT = ROOT / "scripts" / "update-local-skill.sh"
+VERIFY_RELEASE_SCRIPT = ROOT / "scripts" / "verify-release.sh"
 
 
 class CollectReviewContextCliTests(unittest.TestCase):
@@ -299,6 +300,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
     def test_install_and_update_scripts_are_present(self):
         self.assertTrue(INSTALL_SCRIPT.exists())
         self.assertTrue(UPDATE_SCRIPT.exists())
+        self.assertTrue(VERIFY_RELEASE_SCRIPT.exists())
 
 
 if __name__ == "__main__":

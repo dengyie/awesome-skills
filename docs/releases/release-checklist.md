@@ -22,12 +22,14 @@ Run:
 ```bash
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
+bash production-code-quality-review/scripts/verify-release.sh
 ```
 
 Confirm:
 
 - JSON output is structurally sane
 - markdown brief remains readable and useful
+- bundled verification script completes successfully
 
 ## 3. Verify Docs
 
