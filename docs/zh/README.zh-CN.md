@@ -10,6 +10,8 @@
 - [示例](examples.zh-CN.md)
 - [常见问题](faq.zh-CN.md)
 - [故障排查](troubleshooting.zh-CN.md)
+- [中文变更记录](CHANGELOG.zh-CN.md)
+- [中文发布说明](releases/README.zh-CN.md)
 
 ## 适用对象
 
@@ -32,9 +34,11 @@
 如果你需要引用项目默认文档，请优先使用这些英文页面：
 
 - [`README.md`](../../README.md)
+- [`CHANGELOG.md`](../../CHANGELOG.md)
 - [`docs/usage/quickstart.md`](../usage/quickstart.md)
 - [`docs/usage/golden-path.md`](../usage/golden-path.md)
 - [`docs/usage/review-workflows.md`](../usage/review-workflows.md)
 - [`docs/usage/examples.md`](../usage/examples.md)
 - [`docs/usage/faq.md`](../usage/faq.md)
 - [`docs/usage/troubleshooting.md`](../usage/troubleshooting.md)
+- [`docs/releases/release-checklist.md`](../releases/release-checklist.md)
