@@ -308,6 +308,41 @@ class CollectReviewContextCliTests(unittest.TestCase):
         self.assertIn("run-safe-checks.py", script_text)
         self.assertIn("--format compact", script_text)
 
+    def test_collect_review_context_flattens_untracked_directories(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            nested_dir = repo / "docs" / "golden"
+            nested_dir.mkdir(parents=True)
+            (nested_dir / "brief.md").write_text("golden\n")
+            (repo / "README.md").write_text("demo\n")
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertIn("docs/golden/brief.md", payload["changed_files"])
+            self.assertNotIn("docs/golden", payload["changed_files"])
+
 
 if __name__ == "__main__":
     unittest.main()

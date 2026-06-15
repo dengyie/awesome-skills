@@ -1,5 +1,6 @@
 import importlib.util
 import pathlib
+import tempfile
 import unittest
 
 
@@ -132,6 +133,32 @@ index 1111111..2222222 100644
         self.assertIn("python3 -m unittest discover", command_lines)
         self.assertIn("go test ./...", command_lines)
         self.assertIn("docker compose config", command_lines)
+
+    def test_expand_repo_paths_flattens_untracked_directories_to_files(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            nested_dir = repo / "tests" / "golden"
+            nested_dir.mkdir(parents=True)
+            (nested_dir / "review-brief.txt").write_text("golden output\n")
+            (repo / "README.md").write_text("demo\n")
+
+            expanded = module.expand_repo_paths(
+                repo,
+                [
+                    "tests/golden",
+                    "README.md",
+                ],
+            )
+
+            self.assertEqual(
+                expanded,
+                [
+                    "tests/golden/review-brief.txt",
+                    "README.md",
+                ],
+            )
 
     def test_risk_reference_augmentation_prefers_merged_reference_set(self):
         module = load_module()

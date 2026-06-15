@@ -92,7 +92,7 @@ def get_changed_files(repo: pathlib.Path, base_ref: str) -> List[str]:
     files.update(status["staged"])
     files.update(status["unstaged"])
     files.update(status["untracked"])
-    return sorted(files)
+    return sorted(expand_repo_paths(repo, files))
 
 
 def get_diff_text(repo: pathlib.Path, base_ref: str) -> str:
@@ -394,6 +394,24 @@ def build_review_brief_compact(context: Dict[str, object]) -> str:
         f"risk-flags={risks} "
         f"refs={refs or 'none'}\n"
     )
+
+
+def expand_repo_paths(repo: pathlib.Path, paths: Iterable[str]) -> List[str]:
+    expanded: List[str] = []
+
+    for path in paths:
+        if not path:
+            continue
+
+        repo_path = repo / path
+        if repo_path.is_dir():
+            for child in sorted(item for item in repo_path.rglob("*") if item.is_file()):
+                expanded.append(str(child.relative_to(repo)))
+            continue
+
+        expanded.append(path)
+
+    return dedupe_keep_order(expanded)
 
 
 def dedupe_keep_order(items: Iterable[str]) -> List[str]:
