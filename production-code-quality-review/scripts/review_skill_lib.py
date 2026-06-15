@@ -293,7 +293,7 @@ def select_review_mode(
 
 
 def build_review_brief_markdown(context: Dict[str, object]) -> str:
-    review_plan = select_review_mode(
+    review_plan = context.get("review_plan") or select_review_mode(
         changed_files=context.get("changed_files", []),
         risk_flags=context.get("risk_flags", []),
     )
@@ -378,6 +378,22 @@ def build_review_brief_markdown(context: Dict[str, object]) -> str:
         lines.append("- _no stack-specific checks suggested_")
 
     return "\n".join(lines) + "\n"
+
+
+def build_review_brief_compact(context: Dict[str, object]) -> str:
+    plan = context.get("review_plan") or select_review_mode(
+        changed_files=context.get("changed_files", []),
+        risk_flags=context.get("risk_flags", []),
+    )
+    changed_files = ",".join(context["changed_files"])
+    refs = ",".join(context["suggested_references"])
+    risks = ",".join(context["risk_flags"]) if context["risk_flags"] else "none"
+    return (
+        f"review-mode={plan['mode']} "
+        f"changed-files={changed_files or 'none'} "
+        f"risk-flags={risks} "
+        f"refs={refs or 'none'}\n"
+    )
 
 
 def dedupe_keep_order(items: Iterable[str]) -> List[str]:

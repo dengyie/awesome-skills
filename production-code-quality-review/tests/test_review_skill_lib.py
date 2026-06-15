@@ -5,6 +5,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 LIB_PATH = ROOT / "scripts" / "review_skill_lib.py"
+GOLDEN_DIR = ROOT / "tests" / "golden"
 
 
 def load_module():
@@ -16,6 +17,41 @@ def load_module():
 
 
 class ReviewSkillLibTests(unittest.TestCase):
+    def sample_context(self):
+        return {
+            "repo": "/tmp/demo",
+            "base": "main",
+            "current_branch": "feature/review",
+            "scope_mode": "working_tree",
+            "status": {"staged": ["src/app.ts"], "unstaged": [], "untracked": []},
+            "changed_files": ["src/app.ts", "Dockerfile"],
+            "changed_line_ranges": {
+                "src/app.ts": {"added": [{"start": 10, "end": 14}], "deleted": []}
+            },
+            "detected_stack": ["typescript", "node", "docker"],
+            "suggested_references": [
+                "review-framework.md",
+                "output-contract.md",
+                "false-positive-control.md",
+                "typescript.md",
+                "backend-and-integrations.md",
+                "verification-and-operations.md",
+            ],
+            "risk_flags": ["api_or_network_boundary", "container_or_runtime"],
+            "safe_check_commands": [{"command": "npm test", "reason": "Verify regressions."}],
+            "review_plan": {
+                "mode": "specialist",
+                "reviewers": [
+                    "correctness",
+                    "architecture",
+                    "reliability",
+                    "security",
+                    "tests",
+                ],
+                "follow_up": ["synthesizer"],
+            },
+        }
+
     def test_parse_unified_zero_diff_builds_changed_ranges(self):
         module = load_module()
         diff_text = """diff --git a/src/app.ts b/src/app.ts
@@ -145,29 +181,7 @@ index 1111111..2222222 100644
 
     def test_build_review_brief_markdown_includes_scope_and_reviewers(self):
         module = load_module()
-
-        context = {
-            "repo": "/tmp/demo",
-            "base": "main",
-            "current_branch": "feature/review",
-            "scope_mode": "working_tree",
-            "status": {"staged": ["src/app.ts"], "unstaged": [], "untracked": []},
-            "changed_files": ["src/app.ts", "Dockerfile"],
-            "changed_line_ranges": {
-                "src/app.ts": {"added": [{"start": 10, "end": 14}], "deleted": []}
-            },
-            "detected_stack": ["typescript", "node", "docker"],
-            "suggested_references": [
-                "review-framework.md",
-                "output-contract.md",
-                "false-positive-control.md",
-                "typescript.md",
-                "backend-and-integrations.md",
-                "verification-and-operations.md",
-            ],
-            "risk_flags": ["api_or_network_boundary", "container_or_runtime"],
-            "safe_check_commands": [{"command": "npm test", "reason": "Verify regressions."}],
-        }
+        context = self.sample_context()
 
         markdown = module.build_review_brief_markdown(context)
 
@@ -178,6 +192,24 @@ index 1111111..2222222 100644
         self.assertIn("## Suggested References", markdown)
         self.assertIn("- `typescript.md`", markdown)
         self.assertIn("## Verification Commands", markdown)
+
+    def test_build_review_brief_markdown_matches_golden_output(self):
+        module = load_module()
+        context = self.sample_context()
+
+        markdown = module.build_review_brief_markdown(context)
+        expected = (GOLDEN_DIR / "review-brief-markdown.md").read_text()
+
+        self.assertEqual(markdown, expected)
+
+    def test_build_review_brief_compact_matches_golden_output(self):
+        module = load_module()
+        context = self.sample_context()
+
+        compact = module.build_review_brief_compact(context)
+        expected = (GOLDEN_DIR / "review-brief-compact.txt").read_text()
+
+        self.assertEqual(compact, expected)
 
 
 if __name__ == "__main__":
