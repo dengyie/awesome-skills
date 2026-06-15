@@ -55,3 +55,16 @@ The format is intentionally lightweight and optimized for small skill releases.
 - improved stack detection for TypeScript service repositories
 - changed the Python default verification suggestion to `unittest discover`
 - simplified README into a cleaner landing page
+
+## v0.1.2 - 2026-06-16
+
+### Changed
+
+- aligned local install helpers with the current `~/.agents/skills` convention
+- added optional legacy `~/.codex/skills` sync for mixed local environments
+- expanded README with install behavior, compact mode, and repo layout
+- clarified onboarding docs around helper-based installation
+
+### Removed
+
+- tracked Python cache artifacts from the published skill tree

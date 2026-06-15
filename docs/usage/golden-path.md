@@ -8,6 +8,8 @@ If you only do one thing, do this:
 bash production-code-quality-review/scripts/install-local-skill.sh
 ```
 
+This installs to `~/.agents/skills` by default and can optionally sync a legacy `~/.codex/skills` copy.
+
 ## 2. Collect Context
 
 ```bash

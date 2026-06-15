@@ -18,6 +18,14 @@ cp -R production-code-quality-review ~/.agents/skills/
 
 Then restart Codex or reload skills.
 
+Or use the helper:
+
+```bash
+bash production-code-quality-review/scripts/install-local-skill.sh
+```
+
+The helper defaults to `~/.agents/skills` and can also sync `~/.codex/skills` for legacy local setups.
+
 ## 2. Collect Review Context
 
 Run:
