@@ -404,6 +404,9 @@ def expand_repo_paths(repo: pathlib.Path, paths: Iterable[str]) -> List[str]:
             continue
 
         repo_path = repo / path
+        if repo_path.is_symlink():
+            expanded.append(path)
+            continue
         submodule_root = find_git_submodule_root(repo, repo_path)
         if submodule_root is not None:
             expanded.append(str(submodule_root.relative_to(repo)))
@@ -434,6 +437,10 @@ def walk_repo_dir(repo: pathlib.Path, directory: pathlib.Path) -> List[str]:
     expanded: List[str] = []
 
     for child in sorted(directory.iterdir()):
+        if child.is_symlink():
+            expanded.append(str(child.relative_to(repo)))
+            continue
+
         submodule_root = find_git_submodule_root(repo, child)
         if submodule_root is not None and submodule_root != directory:
             expanded.append(str(submodule_root.relative_to(repo)))

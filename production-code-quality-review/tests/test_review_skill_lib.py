@@ -209,6 +209,22 @@ rename to src/new_name.ts
 
             self.assertEqual(expanded, ["assets/logo.png"])
 
+    def test_expand_repo_paths_keeps_symlinked_directory_without_recursing(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            target = repo / "target"
+            target.mkdir()
+            (target / "nested.txt").write_text("nested\n")
+
+            link = repo / "linked"
+            link.symlink_to(target, target_is_directory=True)
+
+            expanded = module.expand_repo_paths(repo, ["linked"])
+
+            self.assertEqual(expanded, ["linked"])
+
     def test_risk_reference_augmentation_prefers_merged_reference_set(self):
         module = load_module()
 
