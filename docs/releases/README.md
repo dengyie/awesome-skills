@@ -12,6 +12,7 @@ Use it to:
 
 - [Release Checklist](release-checklist.md)
 - [Release Template](TEMPLATE.md)
+- [v0.1.6 Release Notes](v0.1.6-production-code-quality-review.md)
 - [v0.1.5 Release Notes](v0.1.5-production-code-quality-review.md)
 - [v0.1.4 Release Notes](v0.1.4-production-code-quality-review.md)
 - [v0.1.3 Release Notes](v0.1.3-production-code-quality-review.md)
