@@ -444,6 +444,81 @@ class CollectReviewContextCliTests(unittest.TestCase):
         self.assertTrue(UPDATE_SCRIPT.exists())
         self.assertTrue(VERIFY_RELEASE_SCRIPT.exists())
 
+    def test_install_script_omits_python_cache_artifacts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = pathlib.Path(temp_dir)
+            agents_home = root / ".agents"
+            source_root = root / "source"
+            target = agents_home / "skills" / "production-code-quality-review"
+            shutil.copytree(ROOT, source_root)
+
+            pycache = source_root / "scripts" / "__pycache__"
+            pycache.mkdir(exist_ok=True)
+            (pycache / "review_skill_lib.cpython-313.pyc").write_bytes(b"cache")
+            tests_pycache = source_root / "tests" / "__pycache__"
+            tests_pycache.mkdir(exist_ok=True)
+            (tests_pycache / "test_review_skill_lib.cpython-313.pyc").write_bytes(b"cache")
+
+            subprocess.run(
+                ["bash", str(source_root / "scripts" / "install-local-skill.sh")],
+                cwd=source_root,
+                env={**os.environ, "AGENTS_HOME": str(agents_home)},
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertFalse((target / "scripts" / "__pycache__").exists())
+            self.assertFalse((target / "tests" / "__pycache__").exists())
+            self.assertEqual((target / ".skill-source-dir").read_text().strip(), str(source_root))
+
+            review_repo = root / "review-repo"
+            review_repo.mkdir()
+            subprocess.run(["git", "init"], cwd=review_repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=review_repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=review_repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (review_repo / "README.md").write_text("initial\n")
+            subprocess.run(["git", "add", "."], cwd=review_repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=review_repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (review_repo / "README.md").write_text("updated\n")
+
+            subprocess.run(
+                [
+                    "python3",
+                    str(target / "scripts" / "review-entrypoint.py"),
+                    "--repo",
+                    str(review_repo),
+                    "--base",
+                    "HEAD",
+                    "--scope",
+                    "working_tree",
+                    "--format",
+                    "compact",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertFalse((target / "scripts" / "__pycache__").exists())
+
     def test_update_script_refreshes_installed_copy_from_recorded_source(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = pathlib.Path(temp_dir)
@@ -480,10 +555,12 @@ class CollectReviewContextCliTests(unittest.TestCase):
                 (target / ".skill-source-dir").read_text().strip(),
                 str(source_root),
             )
+            self.assertFalse((target / "scripts" / "__pycache__").exists())
 
     def test_verify_release_script_includes_safe_check_and_summary_steps(self):
         script_text = VERIFY_RELEASE_SCRIPT.read_text()
 
+        self.assertIn("PYTHONDONTWRITEBYTECODE=1", script_text)
         self.assertIn("run-safe-checks.py", script_text)
         self.assertIn("--format compact", script_text)
 

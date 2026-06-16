@@ -1,6 +1,6 @@
 ---
 name: production-code-quality-review
-description: Review pull requests and code changes for production correctness, robustness, maintainability, architecture, scalability, observability, tests, security, and merge readiness. Use for PR review, diff review, architecture review, reliability review, production readiness review, or when asked to review like a senior engineer. Avoid style-only review unless style affects correctness, safety, maintainability, or local conventions.
+description: Use when reviewing pull requests, diffs, architecture-sensitive changes, reliability risks, production readiness, merge readiness, or requests to review like a senior engineer. Focuses on correctness, robustness, maintainability, observability, tests, security, and production risk rather than style-only review.
 ---
 
 # Production Code Quality Review

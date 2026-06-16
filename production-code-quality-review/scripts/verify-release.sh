@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_DIR="${1:-$PWD}"
+export PYTHONDONTWRITEBYTECODE=1
 
 echo "[1/6] Running unit tests"
 python3 -m unittest discover "$ROOT_DIR/tests" -v

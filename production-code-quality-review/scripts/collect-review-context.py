@@ -7,6 +7,7 @@ import pathlib
 import sys
 
 
+sys.dont_write_bytecode = True
 SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
