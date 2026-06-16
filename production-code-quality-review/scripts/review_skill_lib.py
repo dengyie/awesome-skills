@@ -641,17 +641,17 @@ def expand_repo_paths(repo: pathlib.Path, paths: Iterable[str]) -> List[str]:
 
         repo_path = repo / path
         if repo_path.is_symlink():
-            expanded.append(path)
+            expanded.append(normalize_repo_path(path))
             continue
         submodule_root = find_git_submodule_root(repo, repo_path)
         if submodule_root is not None:
-            expanded.append(str(submodule_root.relative_to(repo)))
+            expanded.append(repo_relative_path(repo, submodule_root))
             continue
         if repo_path.is_dir():
             expanded.extend(walk_repo_dir(repo, repo_path))
             continue
 
-        expanded.append(path)
+        expanded.append(normalize_repo_path(path))
 
     return dedupe_keep_order(expanded)
 
@@ -674,12 +674,12 @@ def walk_repo_dir(repo: pathlib.Path, directory: pathlib.Path) -> List[str]:
 
     for child in sorted(directory.iterdir()):
         if child.is_symlink():
-            expanded.append(str(child.relative_to(repo)))
+            expanded.append(repo_relative_path(repo, child))
             continue
 
         submodule_root = find_git_submodule_root(repo, child)
         if submodule_root is not None and submodule_root != directory:
-            expanded.append(str(submodule_root.relative_to(repo)))
+            expanded.append(repo_relative_path(repo, submodule_root))
             continue
 
         if child.is_dir():
@@ -687,9 +687,17 @@ def walk_repo_dir(repo: pathlib.Path, directory: pathlib.Path) -> List[str]:
             continue
 
         if child.is_file():
-            expanded.append(str(child.relative_to(repo)))
+            expanded.append(repo_relative_path(repo, child))
 
     return expanded
+
+
+def normalize_repo_path(path: str) -> str:
+    return path.replace("\\", "/")
+
+
+def repo_relative_path(repo: pathlib.Path, path: pathlib.Path) -> str:
+    return path.relative_to(repo).as_posix()
 
 
 def dedupe_keep_order(items: Iterable[str]) -> List[str]:

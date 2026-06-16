@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import pathlib
 import tempfile
 import unittest
@@ -231,7 +232,12 @@ rename to src/new_name.ts
             (target / "nested.txt").write_text("nested\n")
 
             link = repo / "linked"
-            link.symlink_to(target, target_is_directory=True)
+            try:
+                link.symlink_to(target, target_is_directory=True)
+            except OSError as exc:
+                if os.name == "nt" and getattr(exc, "winerror", None) == 1314:
+                    self.skipTest("Windows symlink creation requires elevated privileges")
+                raise
 
             expanded = module.expand_repo_paths(repo, ["linked"])
 

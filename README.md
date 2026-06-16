@@ -4,7 +4,7 @@ Reusable Codex skills with an evidence-first, production-engineering bias.
 
 Latest release: `v0.1.6`
 
-## Core Skill Asset
+## Skill Packages
 
 ### `production-code-quality-review/`
 
@@ -43,6 +43,26 @@ Skill package guide:
 production-code-quality-review/README.md
 ```
 
+### `zero-to-website-design/`
+
+`zero-to-website-design` is an end-to-end website creation workflow for turning a blank or vague brief into visual references, design-system docs, route specs, implementation, screenshot QA, and delivery readiness.
+
+It is optimized for:
+
+- zero-to-one website design
+- reference-image provenance
+- concept generation before implementation
+- design docs before code
+- route-by-route implementation
+- desktop/mobile browser QA
+- production readiness review
+
+Skill entrypoint:
+
+```text
+zero-to-website-design/SKILL.md
+```
+
 ## Install
 
 Current OpenAI Codex docs use:
@@ -50,16 +70,23 @@ Current OpenAI Codex docs use:
 - user scope: `$HOME/.agents/skills`
 - repo scope: `.agents/skills`
 
-Example:
+Install a skill package by copying its folder:
 
 ```bash
 mkdir -p ~/.agents/skills
 cp -R production-code-quality-review ~/.agents/skills/
 ```
 
+For the website design workflow:
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R zero-to-website-design ~/.agents/skills/
+```
+
 Then start a new Codex session or reload skills so Codex can discover it.
 
-Helper install script:
+The `production-code-quality-review` package also includes a helper install script:
 
 ```bash
 bash production-code-quality-review/scripts/install-local-skill.sh
@@ -141,6 +168,11 @@ production-code-quality-review/
   references/           # Review framework, output contract, heuristics, schemas
   scripts/              # Deterministic context and install/update tooling
   tests/                # Regression tests protecting the skill package
+zero-to-website-design/
+  SKILL.md              # Required Codex skill entrypoint
+  agents/               # Platform metadata
+  references/           # Website design workflow references
+  assets/templates/     # Copyable project documentation templates
 docs/
   usage/                # User-facing documentation
   releases/             # Release notes and release checklist

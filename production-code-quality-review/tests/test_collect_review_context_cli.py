@@ -890,6 +890,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn(key, payload["review_plan"])
         self.assertIn(payload["review_plan"]["mode"], plan_schema["properties"]["mode"]["enum"])
 
+    @unittest.skipIf(os.name == "nt", "POSIX install helper test requires Unix path semantics")
     def test_install_script_omits_python_cache_artifacts(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = pathlib.Path(temp_dir)
@@ -965,6 +966,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             )
             self.assertFalse((target / "scripts" / "__pycache__").exists())
 
+    @unittest.skipIf(os.name == "nt", "POSIX update helper test requires Unix path semantics")
     def test_update_script_refreshes_installed_copy_from_recorded_source(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = pathlib.Path(temp_dir)

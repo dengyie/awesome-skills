@@ -4,6 +4,20 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## Unreleased
+
+### Added
+
+- added `zero-to-website-design`, an end-to-end website design skill for going from a blank brief to visual references, design docs, implementation, browser QA, and production delivery
+- added reusable project templates for design-system docs, implementation plans, asset/data specs, page specs, visual source maps, and QA reports
+- added a development plan documenting the workflow extracted from the Little Lighthouse Folk Canvas rebuild
+
+### Fixed
+
+- normalized review context paths to POSIX-style separators on Windows for untracked directory and submodule expansion
+- skipped POSIX install/update helper tests on Windows where Git Bash path semantics are not representative of the target shell environment
+- skipped symlink-recursion coverage on Windows when the process lacks symlink creation privileges
+
 ## v0.1.6 - 2026-06-17
 
 ### Added
