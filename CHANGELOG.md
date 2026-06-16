@@ -4,6 +4,19 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## v0.1.5 - 2026-06-17
+
+### Fixed
+
+- kept installed skill copies clean by excluding `.skill-source-dir`, `__pycache__/`, and `*.pyc` during install and update
+- prevented Python entrypoints from writing runtime bytecode caches into installed skill directories
+- made `verify-release.sh` run with `PYTHONDONTWRITEBYTECODE=1` so release verification does not dirty the checkout
+
+### Changed
+
+- updated the skill description to follow a clearer `Use when...` discovery pattern
+- added regression coverage for install, update, and installed-copy execution paths
+
 ## v0.1.4 - 2026-06-16
 
 ### Added

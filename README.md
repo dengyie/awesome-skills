@@ -2,7 +2,7 @@
 
 Reusable Codex skills with an evidence-first, production-engineering bias.
 
-Latest release: `v0.1.4`
+Latest release: `v0.1.5`
 
 ## Included Skill
 

@@ -4,6 +4,19 @@
 
 英文版仍然是默认事实来源；当中英文有细微差异时，以英文原文为准。
 
+## v0.1.5 - 2026-06-17
+
+### 修复
+
+- 安装和更新时排除 `.skill-source-dir`、`__pycache__/` 和 `*.pyc`，保持已安装 skill 副本干净
+- 阻止 Python 入口脚本在已安装 skill 目录写入运行时 bytecode cache
+- 让 `verify-release.sh` 使用 `PYTHONDONTWRITEBYTECODE=1`，避免发布验证弄脏 checkout
+
+### 变更
+
+- 将 skill 描述调整为更清晰的 `Use when...` 发现模式
+- 增加安装、更新、已安装副本执行路径的回归测试
+
 ## v0.1.4 - 2026-06-16
 
 ### 新增
