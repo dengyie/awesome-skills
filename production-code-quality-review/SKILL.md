@@ -23,6 +23,8 @@ Default entrypoint when the repo is available:
 
 - `python3 production-code-quality-review/scripts/collect-review-context.py --repo <repo>`
 
+Resolve `production-code-quality-review/scripts/...` relative to this skill directory. For a user-scope install, the absolute path is usually `$HOME/.agents/skills/production-code-quality-review/scripts/...`.
+
 Use its output to determine scope, stack, risk flags, references, and verification commands.
 
 Smaller helper scripts remain available for narrow automation or debugging:
@@ -137,5 +139,7 @@ Do not block on `Nit`.
 ## Output
 
 Follow host or user review-output instructions first. Otherwise use `references/output-contract.md`.
+
+For automation, `review-entrypoint.py --format json` emits context shaped by `references/review-context.schema.json`. Individual findings should follow `references/finding.schema.json` when machine-readable output is needed.
 
 Keep the review concise. Prefer a few high-signal findings over a flood of low-value comments.

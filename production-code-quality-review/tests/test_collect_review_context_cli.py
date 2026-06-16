@@ -8,11 +8,14 @@ import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+CORE_SKILL_README = ROOT / "README.md"
 SCRIPT = ROOT / "scripts" / "collect-review-context.py"
 REVIEW_ENTRYPOINT = ROOT / "scripts" / "review-entrypoint.py"
 INSTALL_SCRIPT = ROOT / "scripts" / "install-local-skill.sh"
 UPDATE_SCRIPT = ROOT / "scripts" / "update-local-skill.sh"
 VERIFY_RELEASE_SCRIPT = ROOT / "scripts" / "verify-release.sh"
+REVIEW_CONTEXT_SCHEMA = ROOT / "references" / "review-context.schema.json"
+FINDING_SCHEMA = ROOT / "references" / "finding.schema.json"
 
 
 class CollectReviewContextCliTests(unittest.TestCase):
@@ -270,6 +273,47 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("review-mode=", result.stdout)
             self.assertIn("risk-flags=", result.stdout)
 
+    def test_review_entrypoint_json_exposes_schema_version(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "README.md").write_text("initial\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "README.md").write_text("updated\n")
+
+            result = subprocess.run(
+                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "json"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertEqual(payload["schema_version"], "review-context/v1")
+            self.assertIn("review_plan", payload)
+
     def test_branch_scope_excludes_uncommitted_worktree_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)
@@ -349,6 +393,317 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("src/committed.ts", branch_payload["changed_files"])
             self.assertNotIn("src/local-only.ts", branch_payload["changed_files"])
             self.assertIn("src/local-only.ts", working_tree_payload["changed_files"])
+
+    def test_working_tree_scope_keeps_branch_and_untracked_line_ranges(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src").mkdir()
+            (repo / "src" / "committed.ts").write_text("export const value = 1;\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src" / "committed.ts").write_text(
+                "export const value = 2;\nexport const committedOnly = true;\n"
+            )
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "feature change"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "src" / "local-only.ts").write_text(
+                "export const localOnly = true;\nexport const more = 1;\n"
+            )
+
+            result = subprocess.run(
+                [
+                    "python3",
+                    str(SCRIPT),
+                    "--repo",
+                    str(repo),
+                    "--base",
+                    "HEAD~1",
+                    "--scope",
+                    "working_tree",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertIn("src/committed.ts", payload["changed_files"])
+            self.assertIn("src/local-only.ts", payload["changed_files"])
+            self.assertIn("src/committed.ts", payload["changed_line_ranges"])
+            self.assertIn("src/local-only.ts", payload["changed_line_ranges"])
+            self.assertEqual(
+                payload["changed_line_ranges"]["src/local-only.ts"]["added"],
+                [{"start": 1, "end": 2}],
+            )
+
+    def test_infers_develop_base_when_main_is_absent(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "README.md").write_text("base\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(["git", "branch", "-M", "develop"], cwd=repo, check=True)
+            subprocess.run(
+                ["git", "checkout", "-b", "feature"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "README.md").write_text("feature\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "feature"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo), "--scope", "branch"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertEqual(payload["base"], "develop")
+
+    def test_safe_check_commands_follow_package_and_python_tooling(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "package.json").write_text(
+                '{"scripts":{"test":"vitest","lint":"eslint .","typecheck":"tsc","build":"vite build"}}\n'
+            )
+            (repo / "pnpm-lock.yaml").write_text("lockfileVersion: '9.0'\n")
+            (repo / "pyproject.toml").write_text(
+                "[tool.pytest.ini_options]\naddopts = '-q'\n\n[tool.ruff]\n\n[tool.mypy]\n"
+            )
+            (repo / "src").mkdir()
+            (repo / "src" / "app.ts").write_text("export const value = 1;\n")
+            (repo / "src" / "job.py").write_text("def run():\n    return 1\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src" / "app.ts").write_text("export const value = 2;\n")
+            (repo / "src" / "job.py").write_text("def run():\n    return 2\n")
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+            commands = [item["command"] for item in payload["safe_check_commands"]]
+
+            self.assertIn("pnpm test", commands)
+            self.assertIn("pnpm lint", commands)
+            self.assertIn("pnpm typecheck", commands)
+            self.assertIn("pnpm build", commands)
+            self.assertIn("python3 -m pytest", commands)
+            self.assertIn("python3 -m ruff check .", commands)
+            self.assertIn("python3 -m mypy .", commands)
+
+    def test_bun_test_script_uses_package_script(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "package.json").write_text('{"scripts":{"test":"vitest"}}\n')
+            (repo / "bun.lockb").write_text("")
+            (repo / "src.js").write_text("console.log(1);\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "src.js").write_text("console.log(2);\n")
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+            commands = [item["command"] for item in payload["safe_check_commands"]]
+
+            self.assertIn("bun run test", commands)
+            self.assertNotIn("bun test", commands)
+
+    def test_known_empty_package_scripts_do_not_emit_missing_js_commands(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "package.json").write_text('{"scripts":{}}\n')
+            (repo / "src.js").write_text("console.log(1);\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "src.js").write_text("console.log(2);\n")
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertEqual(payload["safe_check_commands"], [])
+
+    def test_missing_package_metadata_keeps_js_command_fallbacks(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "src.js").write_text("console.log(1);\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "src.js").write_text("console.log(2);\n")
+
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+            commands = [item["command"] for item in payload["safe_check_commands"]]
+
+            self.assertIn("npm test", commands)
 
     def test_review_entrypoint_markdown_outputs_actionable_brief(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -443,6 +798,97 @@ class CollectReviewContextCliTests(unittest.TestCase):
         self.assertTrue(INSTALL_SCRIPT.exists())
         self.assertTrue(UPDATE_SCRIPT.exists())
         self.assertTrue(VERIFY_RELEASE_SCRIPT.exists())
+
+    def test_core_skill_asset_files_are_present(self):
+        required_files = [
+            CORE_SKILL_README,
+            ROOT / "SKILL.md",
+            ROOT / "agents" / "openai.yaml",
+            ROOT / "references" / "review-framework.md",
+            ROOT / "references" / "output-contract.md",
+            ROOT / "references" / "false-positive-control.md",
+            REVIEW_CONTEXT_SCHEMA,
+            FINDING_SCHEMA,
+            SCRIPT,
+            REVIEW_ENTRYPOINT,
+            ROOT / "scripts" / "review_skill_lib.py",
+            INSTALL_SCRIPT,
+            UPDATE_SCRIPT,
+            VERIFY_RELEASE_SCRIPT,
+            ROOT / "tests" / "test_collect_review_context_cli.py",
+            ROOT / "tests" / "test_review_skill_lib.py",
+        ]
+
+        missing = [str(path.relative_to(ROOT)) for path in required_files if not path.exists()]
+        self.assertEqual(missing, [])
+
+    def test_machine_readable_schema_files_are_present_and_valid_json(self):
+        review_context_schema = json.loads(REVIEW_CONTEXT_SCHEMA.read_text())
+        finding_schema = json.loads(FINDING_SCHEMA.read_text())
+
+        self.assertEqual(review_context_schema["properties"]["schema_version"]["const"], "review-context/v1")
+        self.assertIn("change_classification", finding_schema["required"])
+
+    def test_generated_review_context_satisfies_schema_contract(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "README.md").write_text("initial\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "README.md").write_text("updated\n")
+
+            result = subprocess.run(
+                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "json"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+            schema = json.loads(REVIEW_CONTEXT_SCHEMA.read_text())
+
+            self.assert_payload_satisfies_schema_contract(payload, schema)
+
+    def assert_payload_satisfies_schema_contract(self, payload, schema):
+        for key in schema["required"]:
+            self.assertIn(key, payload)
+
+        for key, definition in schema["properties"].items():
+            if key not in payload:
+                continue
+            if "const" in definition:
+                self.assertEqual(payload[key], definition["const"])
+            if "enum" in definition:
+                self.assertIn(payload[key], definition["enum"])
+
+        for command in payload["safe_check_commands"]:
+            self.assertIn("command", command)
+            self.assertIn("reason", command)
+
+        plan_schema = schema["properties"]["review_plan"]
+        for key in plan_schema["required"]:
+            self.assertIn(key, payload["review_plan"])
+        self.assertIn(payload["review_plan"]["mode"], plan_schema["properties"]["mode"]["enum"])
 
     def test_install_script_omits_python_cache_artifacts(self):
         with tempfile.TemporaryDirectory() as temp_dir:

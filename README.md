@@ -2,13 +2,23 @@
 
 Reusable Codex skills with an evidence-first, production-engineering bias.
 
-Latest release: `v0.1.5`
+Latest release: `v0.1.6`
 
-## Included Skill
+## Core Skill Asset
 
-### production-code-quality-review
+### `production-code-quality-review/`
 
 `production-code-quality-review` is a production-oriented review skill for pull requests, diffs, architecture-sensitive changes, reliability reviews, and merge-readiness decisions.
+
+This directory is the product. Treat it as the protected skill layer of the repository:
+
+- `SKILL.md` is the Codex entrypoint and discovery surface.
+- `scripts/` contains deterministic review-context tooling.
+- `references/` contains the review contract, heuristics, and JSON schemas.
+- `agents/` contains optional synthesis and platform metadata.
+- `tests/` protects the skill package, helper scripts, and install/update behavior.
+
+Repository-level docs under `docs/` explain development and usage, but they are secondary to the shippable skill package.
 
 It is optimized for:
 
@@ -25,6 +35,12 @@ Skill entrypoint:
 
 ```text
 production-code-quality-review/SKILL.md
+```
+
+Skill package guide:
+
+```text
+production-code-quality-review/README.md
 ```
 
 ## Install
@@ -53,6 +69,9 @@ By default the helper installs to `~/.agents/skills/production-code-quality-revi
 Set `INSTALL_LEGACY_CODEX_COPY=1` only if you explicitly want a second legacy copy under `~/.codex/skills`.
 The installed copy records its source checkout so `update-local-skill.sh` can refresh from that repo path.
 
+When running commands from this checkout, use `production-code-quality-review/scripts/...`.
+When running commands from an installed copy outside the checkout, use `$HOME/.agents/skills/production-code-quality-review/scripts/...`.
+
 ## Main Entry Points
 
 ### Collect machine-readable review context
@@ -78,6 +97,9 @@ python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --f
 ```bash
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format compact
 ```
+
+JSON output is available with `--format json` and follows `references/review-context.schema.json`.
+Machine-readable finding records should follow `references/finding.schema.json`.
 
 ### Run the release verification bundle
 
@@ -113,13 +135,14 @@ python3 -m unittest discover production-code-quality-review/tests -v
 
 ```text
 production-code-quality-review/
-  SKILL.md
-  scripts/
-  references/
-  agents/
-  tests/
+  SKILL.md              # Required Codex skill entrypoint
+  README.md             # Skill package guide for users and maintainers
+  agents/               # Platform metadata and synthesis prompt
+  references/           # Review framework, output contract, heuristics, schemas
+  scripts/              # Deterministic context and install/update tooling
+  tests/                # Regression tests protecting the skill package
 docs/
-  usage/
-  releases/
-  dev/
+  usage/                # User-facing documentation
+  releases/             # Release notes and release checklist
+  dev/                  # Development notes, kept separate from the skill
 ```

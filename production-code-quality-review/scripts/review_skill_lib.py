@@ -38,9 +38,23 @@ def get_current_branch(repo: pathlib.Path) -> str:
 
 def infer_base_ref(repo: pathlib.Path) -> str:
     branch = get_current_branch(repo)
-    candidates = ["origin/main", "origin/master", "main", "master"]
+    candidates = dedupe_keep_order(
+        [
+            get_remote_default_branch(repo),
+            "origin/main",
+            "origin/master",
+            "origin/develop",
+            "origin/trunk",
+            "main",
+            "master",
+            "develop",
+            "trunk",
+        ]
+    )
 
     for candidate in candidates:
+        if not candidate:
+            continue
         if not git_ref_exists(repo, candidate):
             continue
         if branch and branch == candidate.split("/")[-1]:
@@ -50,6 +64,15 @@ def infer_base_ref(repo: pathlib.Path) -> str:
             return candidate
 
     return "HEAD"
+
+
+def get_remote_default_branch(repo: pathlib.Path) -> str:
+    remote_head = run_git(
+        repo,
+        ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"],
+        check=False,
+    ).strip()
+    return remote_head
 
 
 def normalize_scope_mode(scope_mode: str | None) -> str | None:
@@ -120,6 +143,50 @@ def get_diff_text(repo: pathlib.Path, base_ref: str) -> str:
 
 def get_worktree_diff_text(repo: pathlib.Path) -> str:
     return run_git(repo, ["diff", "--unified=0", "HEAD"], check=False)
+
+
+def get_scope_diff_text(
+    repo: pathlib.Path,
+    base_ref: str,
+    *,
+    include_worktree: bool,
+    status: Dict[str, List[str]],
+) -> str:
+    if not include_worktree:
+        return get_diff_text(repo, base_ref)
+
+    diff_parts: List[str] = []
+    if base_ref == "HEAD":
+        diff_parts.append(get_worktree_diff_text(repo))
+    else:
+        diff_parts.append(get_diff_text(repo, base_ref))
+        diff_parts.append(get_worktree_diff_text(repo))
+
+    untracked_paths = expand_repo_paths(repo, status.get("untracked", []))
+    diff_parts.append(build_untracked_diff_text(repo, untracked_paths))
+    return "\n".join(part for part in diff_parts if part)
+
+
+def build_untracked_diff_text(repo: pathlib.Path, paths: Iterable[str]) -> str:
+    diff_parts: List[str] = []
+    for path in paths:
+        repo_path = repo / path
+        if not repo_path.is_file():
+            continue
+        try:
+            text = repo_path.read_text()
+        except UnicodeDecodeError:
+            continue
+        lines = text.splitlines()
+        if not lines:
+            continue
+        diff_parts.append(f"diff --git a/{path} b/{path}")
+        diff_parts.append("new file mode 100644")
+        diff_parts.append("--- /dev/null")
+        diff_parts.append(f"+++ b/{path}")
+        diff_parts.append(f"@@ -0,0 +1,{len(lines)} @@")
+        diff_parts.extend(f"+{line}" for line in lines)
+    return "\n".join(diff_parts)
 
 
 def parse_unified_zero_diff(diff_text: str) -> Dict[str, Dict[str, List[Dict[str, int]]]]:
@@ -256,27 +323,156 @@ def augment_references_for_risks(
     return dedupe_keep_order(references)
 
 
-def build_safe_check_commands(detected_stack: Iterable[str]) -> List[Dict[str, str]]:
+def build_safe_check_commands(
+    detected_stack: Iterable[str],
+    *,
+    repo: pathlib.Path | None = None,
+    repo_files: Iterable[str] | None = None,
+) -> List[Dict[str, str]]:
     commands: List[Dict[str, str]] = []
     stack_list = list(detected_stack)
+    file_list = list(repo_files or [])
 
     def add(command: str, reason: str) -> None:
         if not any(item["command"] == command for item in commands):
             commands.append({"command": command, "reason": reason})
 
     if "typescript" in stack_list or "node" in stack_list:
-        add("npm test", "Verify changed behavior and regression coverage.")
-        add("npm run lint", "Catch static correctness and convention issues.")
-        add("npm run typecheck", "Catch unsafe contract and type regressions.")
-        add("npm run build", "Verify compile and packaging health.")
+        package_manager = detect_js_package_manager(file_list)
+        scripts = read_package_scripts(repo) if repo else None
+        add_js_script_command(
+            add,
+            package_manager,
+            scripts,
+            "test",
+            "Verify changed behavior and regression coverage.",
+        )
+        add_js_script_command(
+            add,
+            package_manager,
+            scripts,
+            "lint",
+            "Catch static correctness and convention issues.",
+        )
+        add_js_script_command(
+            add,
+            package_manager,
+            scripts,
+            "typecheck",
+            "Catch unsafe contract and type regressions.",
+        )
+        add_js_script_command(
+            add,
+            package_manager,
+            scripts,
+            "build",
+            "Verify compile and packaging health.",
+        )
     if "python" in stack_list:
-        add("python3 -m unittest discover", "Run Python test coverage for changed behavior.")
+        if repo and prefers_pytest(repo, file_list):
+            add("python3 -m pytest", "Run Python pytest coverage for changed behavior.")
+        else:
+            add("python3 -m unittest discover", "Run Python test coverage for changed behavior.")
+        if repo and uses_ruff(repo, file_list):
+            add("python3 -m ruff check .", "Run configured Python lint checks.")
+        if repo and uses_mypy(repo, file_list):
+            add("python3 -m mypy .", "Run configured Python type checks.")
     if "go" in stack_list:
         add("go test ./...", "Run Go unit and package tests.")
     if "docker" in stack_list:
         add("docker compose config", "Validate container configuration without mutation.")
 
     return commands
+
+
+def detect_js_package_manager(repo_files: Iterable[str]) -> str:
+    files = {path.lower() for path in repo_files}
+    if "pnpm-lock.yaml" in files or "pnpm-workspace.yaml" in files:
+        return "pnpm"
+    if "yarn.lock" in files:
+        return "yarn"
+    if "bun.lock" in files or "bun.lockb" in files:
+        return "bun"
+    return "npm"
+
+
+def read_package_scripts(repo: pathlib.Path | None) -> Dict[str, str] | None:
+    if repo is None:
+        return None
+    package_json = repo / "package.json"
+    if not package_json.exists():
+        return None
+    try:
+        payload = json.loads(package_json.read_text())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    scripts = payload.get("scripts")
+    if not isinstance(scripts, dict):
+        return None
+    return {str(key): str(value) for key, value in scripts.items()}
+
+
+def add_js_script_command(
+    add,
+    package_manager: str,
+    scripts: Dict[str, str] | None,
+    script_name: str,
+    reason: str,
+) -> None:
+    if scripts is not None and script_name not in scripts:
+        return
+    if package_manager == "npm":
+        command = "npm test" if script_name == "test" else f"npm run {script_name}"
+    elif package_manager == "pnpm":
+        command = f"pnpm {script_name}"
+    elif package_manager == "yarn":
+        command = f"yarn {script_name}"
+    elif package_manager == "bun":
+        if script_name == "test":
+            command = "bun run test" if scripts is not None else "bun test"
+        else:
+            command = f"bun run {script_name}"
+    else:
+        command = f"{package_manager} {script_name}"
+    add(command, reason)
+
+
+def prefers_pytest(repo: pathlib.Path, repo_files: Iterable[str]) -> bool:
+    files = {path.lower() for path in repo_files}
+    if "pytest.ini" in files or "conftest.py" in files:
+        return True
+    pyproject = repo / "pyproject.toml"
+    if pyproject.exists():
+        text = read_text_safely(pyproject)
+        if "[tool.pytest" in text or "pytest" in text:
+            return True
+    requirements = repo / "requirements.txt"
+    if requirements.exists() and "pytest" in read_text_safely(requirements).lower():
+        return True
+    return False
+
+
+def uses_ruff(repo: pathlib.Path, repo_files: Iterable[str]) -> bool:
+    files = {path.lower() for path in repo_files}
+    if "ruff.toml" in files or ".ruff.toml" in files:
+        return True
+    pyproject = repo / "pyproject.toml"
+    return pyproject.exists() and "[tool.ruff" in read_text_safely(pyproject)
+
+
+def uses_mypy(repo: pathlib.Path, repo_files: Iterable[str]) -> bool:
+    files = {path.lower() for path in repo_files}
+    if "mypy.ini" in files or ".mypy.ini" in files:
+        return True
+    pyproject = repo / "pyproject.toml"
+    return pyproject.exists() and "[tool.mypy" in read_text_safely(pyproject)
+
+
+def read_text_safely(path: pathlib.Path) -> str:
+    try:
+        return path.read_text()
+    except UnicodeDecodeError:
+        return ""
 
 
 def select_review_mode(
@@ -518,7 +714,12 @@ def collect_review_context(
     include_worktree = scope_mode == "working_tree"
 
     changed_files = get_changed_files(repo, base_ref, include_worktree=include_worktree)
-    diff_text = get_worktree_diff_text(repo) if include_worktree else get_diff_text(repo, base_ref)
+    diff_text = get_scope_diff_text(
+        repo,
+        base_ref,
+        include_worktree=include_worktree,
+        status=status,
+    )
     repo_files = list_repo_files(repo)
     stack_inputs = dedupe_keep_order(changed_files + select_repo_stack_markers(repo_files))
     stack_info = detect_stack(stack_inputs or repo_files)
@@ -530,6 +731,7 @@ def collect_review_context(
     review_plan = select_review_mode(changed_files, risk_flags)
 
     return {
+        "schema_version": "review-context/v1",
         "repo": str(repo),
         "base": base_ref,
         "current_branch": get_current_branch(repo),
@@ -542,7 +744,11 @@ def collect_review_context(
         "risk_flags": risk_flags,
         "risk_level": review_plan.get("risk_level", "unknown"),
         "review_mode_reason": review_plan.get("review_mode_reason", "unknown"),
-        "safe_check_commands": build_safe_check_commands(stack_info["detected_stack"]),
+        "safe_check_commands": build_safe_check_commands(
+            stack_info["detected_stack"],
+            repo=repo,
+            repo_files=repo_files,
+        ),
         "review_plan": review_plan,
     }
 

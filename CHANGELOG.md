@@ -4,6 +4,20 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## v0.1.6 - 2026-06-17
+
+### Added
+
+- added a protected skill-package README that makes `production-code-quality-review/` the clear core asset
+- added JSON schemas for review context and machine-readable findings
+- added regression coverage for schema contract, protected asset presence, mixed working-tree line ranges, `develop` base inference, and package-manager-aware verification commands
+
+### Fixed
+
+- kept `working_tree` changed-line ranges aligned with branch, tracked, and untracked changes
+- improved JavaScript and Python verification command suggestions for pnpm, yarn, bun, pytest, ruff, and mypy
+- avoided suggesting missing JavaScript scripts when `package.json` has a known empty `scripts` object
+
 ## v0.1.5 - 2026-06-17
 
 ### Fixed

@@ -27,6 +27,9 @@ bash production-code-quality-review/scripts/install-local-skill.sh
 该脚本默认安装到 `~/.agents/skills`。如果你明确需要第二份旧路径副本，再设置 `INSTALL_LEGACY_CODEX_COPY=1`。
 安装后的副本也会记录来源仓库路径，方便 `update-local-skill.sh` 回到原始 checkout 做安全更新。
 
+在当前 checkout 中运行时，使用 `production-code-quality-review/scripts/...`。
+如果是在 checkout 外运行已安装副本，使用 `$HOME/.agents/skills/production-code-quality-review/scripts/...`。
+
 ## 2. 收集 Review 上下文
 
 运行：
@@ -48,6 +51,7 @@ python3 production-code-quality-review/scripts/collect-review-context.py --repo 
 
 这是主要的确定性入口。其他小脚本主要是把同一份上下文拆成更窄的自动化或调试接口。
 如果需要固定 review 基线，可以使用 `--base <ref>` 或 `--scope branch|working_tree`。
+如果用于自动化，`review-entrypoint.py --format json` 遵循 `references/review-context.schema.json`。
 
 ## 3. 生成 Review 简报
 

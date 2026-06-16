@@ -4,6 +4,20 @@
 
 英文版仍然是默认事实来源；当中英文有细微差异时，以英文原文为准。
 
+## v0.1.6 - 2026-06-17
+
+### 新增
+
+- 增加 skill 包内部 README，突出 `production-code-quality-review/` 是核心资产
+- 增加 review context 与 machine-readable finding 的 JSON schema
+- 增加 schema contract、核心资产存在性、混合 working-tree line ranges、`develop` base 推断和 package-manager-aware 验证命令的回归测试
+
+### 修复
+
+- 让 `working_tree` changed-line ranges 同时覆盖 branch、tracked 和 untracked 改动
+- 改进 pnpm、yarn、bun、pytest、ruff、mypy 的验证命令建议
+- 当 `package.json` 明确存在但 `scripts` 为空时，不再建议不存在的 JavaScript scripts
+
 ## v0.1.5 - 2026-06-17
 
 ### 修复

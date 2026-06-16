@@ -2,6 +2,11 @@
 
 Use this output shape unless the host or user explicitly asks for a different one.
 
+For machine-readable automation, use:
+
+- `review-context.schema.json` for `review-entrypoint.py --format json`
+- `finding.schema.json` for individual finding records
+
 ## Scope
 
 - Base:
