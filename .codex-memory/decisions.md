@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-18 - Shipped Phase State In Memory Should Be Corrected Before Opening The Next Stage
+- Decision: Use a dedicated V20 memory-state sync pass to reconcile `.codex-memory` with the already-shipped V19 Git state before choosing the next `zero-to-website-design` hardening target.
+- Rationale: The repository treats filesystem memory as the authoritative resume surface. Leaving V19 recorded as only "implemented in the working tree" would make the next stage start from weaker evidence than the actual repository state.
+- Impact: The workstream, session log, and TODO now move forward from a clean shipped V19 baseline instead of carrying stale pre-push language.
+- Rollback trigger: If future stages automate this closeout reliably, this kind of sync-only phase can collapse back into the parent delivery stage.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v20-memory-state-sync-plan.md`, `.codex-memory/workstreams/zero-to-website-design-integration.md`, `.codex-memory/session-log.md`, `.codex-memory/todo.md`
 ## 2026-06-18 - The Entrypoint Should Surface The Strongest Delivery Vocabulary Earlier
 - Decision: Use entrypoint and public usage visibility hardening as the V19 stage for `zero-to-website-design`, and align the agent metadata prompt with the expanded package scope.
 - Rationale: The package already has strong internal contracts for generated route mockups, temporary-binding delivery, and handoff continuity, but a user starting from the top-level entry text could still miss those expectations until later references.

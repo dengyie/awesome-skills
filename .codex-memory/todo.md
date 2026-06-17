@@ -1,6 +1,4 @@
 # TODO
-## In Progress
-- [ ] None.
 ## Next
 - [ ] Decide the next `zero-to-website-design` hardening target after V19 lands.
 - [ ] Decide whether the paused repository-level docs line should be resumed later.

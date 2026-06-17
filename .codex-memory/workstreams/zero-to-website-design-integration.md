@@ -20,7 +20,7 @@
 - V16 asset-authority handoff hardening is shipped as `b9a8bc0 feat(阶段25): harden asset authority handoff`.
 - V17 generated-route-mockup handoff hardening is shipped as `35ec309 feat(阶段26): harden generated route mockup handoff`.
 - V18 delivery-handoff cohesion is shipped as `7a9dc62 feat(阶段27): harden delivery handoff cohesion`.
-- V19 entrypoint and usage visibility hardening is implemented in the working tree across `SKILL.md`, `docs/usage/zero-to-website-design.md`, `agents/openai.yaml`, and regression coverage.
+- V19 entrypoint and usage visibility hardening is shipped as `123bfd5 feat(阶段28): harden entrypoint and usage visibility`.
 - V19 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues after rerunning with UTF-8 process encoding.
 
 ## Blockers
@@ -44,7 +44,6 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Commit and push the V19 entrypoint and usage visibility hardening pass.
 - [ ] Choose the next bounded `zero-to-website-design` hardening target after V19 lands.
 
 ## Validation
