@@ -1,6 +1,6 @@
 # Awesome Skills V12 Skill Matrix Plan
 
-> Status: Implemented in working tree
+> Status: Committed and pushed in `ad8e227`
 > Target surface: repository-level usage documentation
 > Phase type: public navigation hardening
 

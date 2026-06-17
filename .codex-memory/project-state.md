@@ -1,15 +1,20 @@
 # Project State
 
 ## Objective
-- Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
+- Keep the `zero-to-website-design` website-generation skill and repository-level navigation docs published, traceable, and ready for the next bounded hardening stage.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V11 pre-code document-gate hardening is implemented in the working tree.
+- Current stage: V12 repository skill matrix is committed and pushed; V11 pre-code document-gate and V11 release-scope docs are also on GitHub.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
 
 ## Last Verified
+- 2026-06-18: `git push origin codex/best-project-memory-expansion` succeeded through `ad8e227`.
+- 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\tests -v`
+- 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
+- 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-18: `$env:PYTHONUTF8='1'; python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\tests -v`
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
 - 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
@@ -40,16 +45,16 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- The shipped review-memory path remains intentionally conservative by design; any broader prioritization semantics would be a future enhancement, not an unfulfilled V2 requirement.
+- The working tree still contains an unrelated `production-code-quality-review/` GitHub-sync diff; keep it out of website-generation skill commits until that line is explicitly resumed.
 
 ## Active Blockers
-- V11 push is currently blocked by repeated `git push origin codex/best-project-memory-expansion` timeouts even though the remote is readable with `git ls-remote`.
+- None for the website-generation skill publication path.
 
 ## Current Focus
-- Close out the `zero-to-website-design` V11 pre-code document-gate pass with memory sync and an atomic skill-only commit while leaving unrelated repository-level docs work untouched.
+- Close the V12 memory sync after the successful GitHub push, then decide the next bounded `zero-to-website-design` hardening target separately.
 
 ## Next Milestone
-- Commit the `zero-to-website-design` V11 pre-code document-gate pass and keep any unrelated repository-level docs work out of the stage commit.
+- Select and document the next `zero-to-website-design` hardening stage, or explicitly resume the paused `production-code-quality-review` sync as a separate phase.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`

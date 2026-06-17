@@ -1,13 +1,13 @@
 ﻿# TODO
 ## In Progress
-- [ ] Review, commit, and push the repository-level skill matrix pass.
-- [ ] Retry the V11 push after the external git timeout issue clears.
-- [ ] Review, commit, and push the `zero-to-website-design` V11 pre-code document-gate pass.
 - [ ] Decide whether to commit the `production-code-quality-review` GitHub sync.
 ## Next
 - [ ] Decide the next `zero-to-website-design` hardening target after V11 lands.
 - [ ] Decide whether the paused repository-level docs line should be resumed later.
 ## Done
+- [x] Review, commit, and push the repository-level skill matrix pass.
+- [x] Retry the V11 push after the external git timeout issue clears.
+- [x] Review, commit, and push the `zero-to-website-design` V11 pre-code document-gate pass.
 - [x] Add a repository-level skill matrix page and route readers to it from the English and Chinese intros.
 - [x] Design and implement the V11 release-facing docs scope-correction pass.
 - [x] Design and implement the `zero-to-website-design` V11 pre-code document-gate pass.
