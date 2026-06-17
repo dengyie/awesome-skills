@@ -1,4 +1,8 @@
 # Decisions
+## 2026-06-18 - Public Usage Workflow Must Match The Skill Workflow
+- Decision: Treat the public `zero-to-website-design` usage workflow summary as part of the package contract and align it to the 12-step `SKILL.md` workflow.
+- Rationale: The skill body already requires project-memory integration as step 12, while the usage guide still described only eleven gates. This drift could cause users to miss long-running memory behavior even though the skill implements it as a completion expectation.
+- Impact: The usage guide now describes 12 gates and regression tests protect the visible count plus project-memory integration step.
 ## 2026-06-18 - Commit Production Review Mainline Sync As A Standalone Phase
 - Decision: Commit the pending `production-code-quality-review/` sync as V13 after proving the directory matches `origin/main`.
 - Rationale: The dirty diff is not an accidental local edit; it aligns the package with GitHub mainline `f1eac46 Refine staged review modes`, passes the package tests, and validates as a skill. Keeping it uncommitted would keep unrelated review-package changes in every future working-tree review.

@@ -72,6 +72,15 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
 
         self.assertEqual(missing, [])
 
+    def test_usage_workflow_summary_matches_skill_workflow_count(self):
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("The skill guides Codex through 12 gates:", usage_text)
+        self.assertIn("12. Integrate project memory when the work is long-running.", usage_text)
+        self.assertNotIn("eleven gates", usage_text)
+
     def test_visual_provenance_contract_names_statuses_and_sources(self):
         provenance = (ROOT / "references" / "visual-provenance.md").read_text(
             encoding="utf-8"

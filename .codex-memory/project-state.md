@@ -1,15 +1,19 @@
 # Project State
 
 ## Objective
-- Keep the shipped skills in `awesome-skills` aligned with GitHub mainline while preserving the published `zero-to-website-design` website-generation workflow and repository navigation docs.
+- Keep the published `zero-to-website-design` website-generation workflow internally consistent across SKILL instructions, public usage docs, tests, and project memory.
 
 ## Current Phase
-- Current stage: V13 `production-code-quality-review` mainline sync is implemented in the working tree after proving the package matches `origin/main`.
+- Current stage: V14 `zero-to-website-design` workflow-doc alignment is implemented in the working tree.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
 
 ## Last Verified
+- 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
+- 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\tests -v`
+- 2026-06-18: `$env:PYTHONUTF8='1'; python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-18: `git diff --stat origin/main -- production-code-quality-review` reported no package differences.
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\production-code-quality-review\tests -v`
 - 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\production-code-quality-review`
@@ -48,16 +52,16 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- The V13 sync intentionally removes the branch-local review-memory write path from `production-code-quality-review`; keep historical memory-integration docs as the record of that experiment.
+- The remaining repository-level docs line is paused; resume it only as a separately documented phase.
 
 ## Active Blockers
 - None for the website-generation skill publication path.
 
 ## Current Focus
-- Commit and push the standalone V13 `production-code-quality-review` mainline sync, then return to the next bounded `zero-to-website-design` hardening choice.
+- Commit and push V14 workflow-doc alignment after passing tests and production review.
 
 ## Next Milestone
-- Commit and push V13, then select and document the next `zero-to-website-design` hardening stage.
+- Decide whether the paused repository-level docs line should be resumed, or close the active goal if no further TODO remains.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -84,6 +88,7 @@
 - `docs/dev/2026-06-18-awesome-skills-v11-release-docs-scope-correction-plan.md`
 - `docs/dev/2026-06-18-awesome-skills-v12-skill-matrix-plan.md`
 - `docs/dev/2026-06-18-production-code-quality-review-v13-mainline-sync-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v14-workflow-doc-alignment-plan.md`
 - `best-project-memory/scripts/compact_session.py`
 - `best-project-memory/scripts/memory_lint.py`
 - `production-code-quality-review/scripts/review-entrypoint.py`

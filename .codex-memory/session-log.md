@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-18 04:55
+- Task: Implement `zero-to-website-design` V14 workflow-doc alignment.
+- Actions: Identified that `SKILL.md` has a 12-step workflow while public usage docs still said eleven gates; wrote the V14 plan; updated usage docs to include the project-memory integration gate; added a regression test for the visible workflow count; ran package tests, skill validation, repository docs tests, and production review entrypoint.
+- Results: V14 is implemented in the working tree. Tests and validation pass, and production review routed the diff as low risk with no confirmed blocking issue.
+- Next: Commit and push V14; then decide whether the paused repository-level docs line should resume.
+- Blockers: None.
 ## 2026-06-18 04:50
 - Task: Decide and prepare the `production-code-quality-review` GitHub mainline sync.
 - Actions: Inspected the remaining dirty diff; confirmed the package matches `origin/main` at `f1eac46`; ran the package unittest suite and skill validation; wrote the V13 mainline-sync plan; updated project memory and decisions.

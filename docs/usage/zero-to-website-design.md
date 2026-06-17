@@ -55,7 +55,7 @@ Use $zero-to-website-design to rebuild this site from the historical PNG mockups
 
 ## Workflow
 
-The skill guides Codex through eleven gates:
+The skill guides Codex through 12 gates:
 
 1. Restore project context.
 2. Run intake.
@@ -68,6 +68,7 @@ The skill guides Codex through eleven gates:
 9. Implement route by route.
 10. Verify with build and browser QA.
 11. Harden and deliver.
+12. Integrate project memory when the work is long-running.
 
 ## Pre-Code Document Gate
 
