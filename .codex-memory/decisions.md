@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-18 - Public Workflow Summaries Should Match The Shipped Twelve-Step Contract
+- Decision: Use public workflow alignment as the V21 stage for `zero-to-website-design`, and correct the public gate count plus top-level repo framing before opening a deeper contract pass.
+- Rationale: The shipped package already includes twelve workflow steps and a dedicated project-memory/handoff stage. Leaving the public docs on the older "eleven gates" and brief-to-QA framing would keep the most visible entry points behind filesystem truth.
+- Impact: The usage guide, repo overview, and regression tests now reflect the broader design-to-QA-to-handoff workflow more accurately.
+- Rollback trigger: If the top-level repo overview becomes too wordy, keep the corrected gate count and handoff wording while trimming surrounding prose.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v21-public-workflow-alignment-plan.md`, `docs/usage/zero-to-website-design.md`, `README.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Shipped Phase State In Memory Should Be Corrected Before Opening The Next Stage
 - Decision: Use a dedicated V20 memory-state sync pass to reconcile `.codex-memory` with the already-shipped V19 Git state before choosing the next `zero-to-website-design` hardening target.
 - Rationale: The repository treats filesystem memory as the authoritative resume surface. Leaving V19 recorded as only "implemented in the working tree" would make the next stage start from weaker evidence than the actual repository state.

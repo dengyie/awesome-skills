@@ -126,6 +126,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
             encoding="utf-8"
         )
+        repo_readme = (ROOT.parent / "README.md").read_text(encoding="utf-8")
         historical_mock = (ROOT / "references" / "historical-mock-pass.md").read_text(
             encoding="utf-8"
         )
@@ -190,6 +191,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Treat the implementation map as a pre-code gate", skill_text)
         self.assertIn("pre-code document gate", skill_text.lower())
         self.assertIn("Delivery Handoff", usage_text)
+        self.assertIn("twelve gates", usage_text)
         self.assertIn("temporary-binding or generated-route ownership", usage_text)
         self.assertIn("Framework-ready work can still be valid", usage_text)
         self.assertIn("Historical-Mock Path", usage_text)
@@ -453,6 +455,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("route-mockup coverage and escalation target are named when generated assets still shape routes", framework_delivery)
         self.assertIn("Preserve resume-critical route, QA, and blocker state", skill_text)
         self.assertIn("any required route is blocked or not checked", skill_text)
+        self.assertIn("handoff continuity", repo_readme)
+        self.assertIn("framework-first delivery", repo_readme)
+        self.assertIn("memory-aware handoff continuity", repo_readme)
 
     def test_templates_are_scaffolds_without_todo_markers(self):
         templates_dir = ROOT / "assets" / "templates"

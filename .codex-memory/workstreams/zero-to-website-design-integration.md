@@ -22,6 +22,8 @@
 - V18 delivery-handoff cohesion is shipped as `7a9dc62 feat(阶段27): harden delivery handoff cohesion`.
 - V19 entrypoint and usage visibility hardening is shipped as `123bfd5 feat(阶段28): harden entrypoint and usage visibility`.
 - V19 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues after rerunning with UTF-8 process encoding.
+- V21 public workflow alignment is implemented in the working tree across `README.md`, `docs/usage/zero-to-website-design.md`, and regression coverage.
+- V21 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -38,13 +40,16 @@
 - `docs/dev/2026-06-18-zero-to-website-design-v11-precode-doc-gate-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v18-delivery-handoff-cohesion-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v19-entrypoint-and-usage-visibility-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v21-public-workflow-alignment-plan.md`
+- `README.md`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/agents/openai.yaml`
 - `docs/usage/zero-to-website-design.md`
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Choose the next bounded `zero-to-website-design` hardening target after V19 lands.
+- [ ] Commit and push the V21 public workflow alignment pass.
+- [ ] Choose the next bounded `zero-to-website-design` hardening target after V21 lands.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design\tests -v`

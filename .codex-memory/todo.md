@@ -1,8 +1,10 @@
 # TODO
 ## Next
-- [ ] Decide the next `zero-to-website-design` hardening target after V19 lands.
+- [ ] Commit and push the `zero-to-website-design` V21 public workflow alignment pass.
+- [ ] Decide the next `zero-to-website-design` hardening target after V21 lands.
 - [ ] Decide whether the paused repository-level docs line should be resumed later.
 ## Done
+- [x] Decide the next `zero-to-website-design` hardening target after V19 lands.
 - [x] Commit and push the `zero-to-website-design` V19 entrypoint and usage visibility hardening pass.
 - [x] Review, commit, and push the `zero-to-website-design` V18 delivery handoff cohesion pass.
 - [x] Decide the next `zero-to-website-design` hardening target after V18 lands.

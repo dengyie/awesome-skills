@@ -68,7 +68,7 @@ Supporting package highlights:
 
 ### `zero-to-website-design`
 
-Use this skill when you want Codex to turn a blank or vague website brief into a documented, design-first delivery workflow. It pushes work through references, concept generation, route planning, implementation guidance, and browser QA before sign-off.
+Use this skill when you want Codex to turn a blank or vague website brief into a documented, design-first delivery workflow with historical mock support, route planning, implementation guidance, browser QA, and handoff continuity.
 
 Best fit:
 
@@ -77,6 +77,8 @@ Best fit:
 - route-by-route implementation planning
 - reference-image-backed visual direction
 - desktop and mobile screenshot QA
+- framework-first delivery
+- memory-aware handoff continuity
 
 Skill entrypoint:
 

@@ -61,7 +61,7 @@ Framework-ready work can still be valid, but it should not be mistaken for final
 
 ## Workflow
 
-The skill guides Codex through eleven gates:
+The skill guides Codex through twelve gates:
 
 1. Restore project context.
 2. Run intake.
