@@ -1,9 +1,14 @@
 # TODO
 ## In Progress
-- [ ] Reassess whether any remaining V2 gaps need more code proof beyond the now-shipped repair, compaction, lint, and integration stages.
+- [ ] Review, commit, and push the repository overview documentation refresh.
 ## Next
-- [ ] Decide whether V2 is now complete enough for a final delivery summary or still needs one more narrow hardening stage.
+- [ ] Decide whether the next docs pass should add a dedicated top-level skill matrix or release summary page.
 ## Done
+- [x] Added a dedicated design plan for the repository overview documentation refresh.
+- [x] Reworked `README.md` into a clearer multi-skill repository introduction with explicit shipped-skill coverage.
+- [x] Rewrote `docs/zh/README.zh-CN.md` so the Chinese introduction covers all shipped skills instead of only the review package.
+- [x] Completed the V2 delivery audit and confirmed the planned governance, quality, and integration scope is shipped.
+- [x] Produced the final V2 delivery summary.
 - [x] Hardened `best-project-memory/scripts/stale_todo_check.py` so it catches stale active items, not just vague wording.
 - [x] Chose a V12 stale-TODO hardening pass as the next staged V2 target after repair hardening.
 - [x] Hardened `best-project-memory/scripts/init_memory.py --repair` so partial `.codex-memory/` layouts are restored without overwriting existing files.

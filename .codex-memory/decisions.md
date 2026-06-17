@@ -62,3 +62,17 @@
 - Impact: The stale TODO gate now catches a more meaningful class of dirty active state without needing brittle natural-language interpretation.
 - Rollback trigger: If real repositories show too many false positives from exact normalized duplication, narrow the duplicate rule before adding any broader inference.
 - Related files: `best-project-memory/scripts/stale_todo_check.py`, `best-project-memory/tests/test_skill_package.py`, `docs/dev/2026-06-18-best-project-memory-v12-stale-todo-hardening-plan.md`, `docs/usage/best-project-memory.md`
+## 2026-06-18 - Close V2 As Delivered And Use Future Work As Post-V2 Enhancements
+- Decision: Treat the current repository state as the completed `best-project-memory` V2 delivery baseline.
+- Rationale: The planned governance helpers, quality controls, multi-skill integration proofs, release-facing documentation sync, and regression coverage are all present and validated in the current repository state.
+- Alternatives considered: Open another narrow hardening stage before closure, or leave the completion judgment implicit without a delivery summary.
+- Impact: Future improvements can be scoped as post-V2 enhancements rather than as unresolved obligations inside the original V2 plan.
+- Rollback trigger: If a missing V2 requirement is later discovered with concrete repository evidence, reopen a bounded follow-up stage against that specific requirement.
+- Related files: `docs/dev/2026-06-17-best-project-memory-v2-governance-plan.md`, `.codex-memory/phases/2026-06-18-v2-delivery-summary.md`, `.codex-memory/project-state.md`, `.codex-memory/todo.md`
+## 2026-06-18 - Make The Repository Introduction Explicitly Multi-Skill
+- Decision: Refresh the top-level English and Chinese introduction docs around the repository as a three-skill catalog instead of centering them on only one package.
+- Rationale: The repository has grown into a multi-skill collection, but the most visible intro pages still made the scope feel narrower than the actual shipped surface. A landing reader should understand the full inventory within a few seconds.
+- Alternatives considered: Leave the root README mostly as-is and rely on deeper usage docs, or add a new overview doc without changing the main entry pages.
+- Impact: The main introduction now explains which skills the repository contains, what each one is for, and where readers should go next in both languages.
+- Rollback trigger: If the repository later splits into separate packages or a generated docs site becomes the primary entrypoint, simplify the README back to a thinner navigation layer.
+- Related files: `README.md`, `docs/zh/README.zh-CN.md`, `docs/dev/2026-06-18-awesome-skills-overview-doc-refresh-plan.md`

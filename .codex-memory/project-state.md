@@ -1,10 +1,10 @@
 # Project State
 
 ## Objective
-- Expand `best-project-memory` V2 by landing staged governance and multi-skill integration work.
+- Refresh the repository overview docs so the main introduction clearly explains all shipped skills and points readers to the right follow-up guides.
 
 ## Current Phase
-- Current stage: `best-project-memory` V12 stale TODO hardening.
+- Current stage: repository overview documentation refresh and push.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -33,18 +33,16 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- The Level 2 review-write path is still intentionally conservative, so later stages may still need workstream-aware follow-up routing or richer priority semantics if review traffic grows more complex.
-- The `init / repair` helper surface was previously under-proven relative to the V2 plan, so this stage needs to keep repair deterministic and non-destructive.
-- The stale TODO checker was previously too shallow to prove the V2 promise around dirty active-task detection, so this stage needs to keep the new heuristics conservative.
+- The shipped review-memory path remains intentionally conservative by design; any broader prioritization semantics would be a future enhancement, not an unfulfilled V2 requirement.
 
 ## Active Blockers
 - None.
 
 ## Current Focus
-- Harden `stale_todo_check.py` so it catches stale active items, not just vague wording.
+- Update the repository introduction so the multi-skill layout is obvious in both English and Chinese entry docs, then review and push the doc refresh.
 
 ## Next Milestone
-- Ship V12 stale-TODO hardening with regression coverage, then reassess whether any code-heavy V2 gaps still remain.
+- Land the overview-doc refresh commit and push `codex/best-project-memory-expansion`.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -56,7 +54,9 @@
 - `docs/dev/2026-06-18-best-project-memory-v10-doc-sync-plan.md`
 - `docs/dev/2026-06-18-best-project-memory-v11-repair-hardening-plan.md`
 - `docs/dev/2026-06-18-best-project-memory-v12-stale-todo-hardening-plan.md`
+- `docs/dev/2026-06-18-awesome-skills-overview-doc-refresh-plan.md`
 - `.codex-memory/phases/2026-06-18-v2-integration-summary.md`
+- `.codex-memory/phases/2026-06-18-v2-delivery-summary.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v5-memory-aware-templates-plan.md`
@@ -64,6 +64,8 @@
 - `best-project-memory/scripts/memory_lint.py`
 - `production-code-quality-review/scripts/review-entrypoint.py`
 - `production-code-quality-review/scripts/review_skill_lib.py`
+- `README.md`
+- `docs/zh/README.zh-CN.md`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/references/historical-mock-pass.md`
 - `zero-to-website-design/references/framework-first-delivery.md`

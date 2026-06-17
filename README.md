@@ -4,21 +4,31 @@ Reusable Codex skills with an evidence-first, production-engineering bias.
 
 Latest release: `v0.1.6`
 
-## Skill Packages
+## What This Repo Contains
 
-### `best-project-memory/`
+This repository is a multi-skill collection, not a single-package checkout.
 
-`best-project-memory` is a lightweight continuity skill for restoring project context, keeping repo-native state files current, recording decisions, and preparing clean handoffs across sessions.
+It currently ships three Codex skills:
 
-It is optimized for:
+- `best-project-memory`: repo-native project continuity and handoff memory
+- `production-code-quality-review`: production-oriented review and merge-readiness workflow
+- `zero-to-website-design`: design-first website delivery workflow from brief to QA
 
-- project continuity across sessions
-- repo-native memory files
-- decision traceability
-- actionable TODO state
-- compact handoff generation
-- low-friction Markdown workflows
-- staged integration with other repo skills
+Each skill is packaged as its own folder with a `SKILL.md` entrypoint, supporting references, and package-level tests.
+
+## Included Skills
+
+### `best-project-memory`
+
+Use this skill when you want Codex to restore project context at the start of work, keep repo-native memory files current, record decisions, maintain actionable TODOs, and leave a clean handoff trail for later sessions.
+
+Best fit:
+
+- continuing work across sessions
+- keeping durable project state in the repository
+- recording decisions and milestones
+- generating compact handoff summaries
+- integrating continuity into other repo skills
 
 Skill entrypoint:
 
@@ -26,36 +36,23 @@ Skill entrypoint:
 best-project-memory/SKILL.md
 ```
 
-Repository proof points already shipped:
+Supporting package highlights:
 
-- `production-code-quality-review` uses it as a Level 1 read-only consumer and a Level 2 opt-in continuity writer
-- `zero-to-website-design` uses it as a Level 3 governance-aware delivery workflow
-- session compaction and drift-aware linting are available for long-running repos
+- `best-project-memory/scripts/` for memory initialization, linting, compaction, and repair helpers
+- `best-project-memory/references/` for schemas, examples, and operating guidance
+- `docs/usage/best-project-memory.md` for the user-facing guide
 
-### `production-code-quality-review/`
+### `production-code-quality-review`
 
-`production-code-quality-review` is a production-oriented review skill for pull requests, diffs, architecture-sensitive changes, reliability reviews, and merge-readiness decisions.
+Use this skill when you want Codex to review working-tree changes, pull requests, or architecture-sensitive diffs with a production mindset. It emphasizes correctness, robustness, maintainability, observability, and false-positive control over style-only commentary.
 
-This directory is the product. Treat it as the protected skill layer of the repository:
+Best fit:
 
-- `SKILL.md` is the Codex entrypoint and discovery surface.
-- `scripts/` contains deterministic review-context tooling.
-- `references/` contains the review contract, heuristics, and JSON schemas.
-- `agents/` contains optional synthesis and platform metadata.
-- `tests/` protects the skill package, helper scripts, and install/update behavior.
-
-Repository-level docs under `docs/` explain development and usage, but they are secondary to the shippable skill package.
-
-It is optimized for:
-
-- correctness
-- robustness
-- maintainability
-- architecture fit
-- scalability
-- observability
-- test quality
-- false-positive control
+- pull request review
+- pre-merge risk assessment
+- architecture-sensitive change review
+- production readiness checks
+- review workflows that benefit from deterministic context collection
 
 Skill entrypoint:
 
@@ -63,30 +60,62 @@ Skill entrypoint:
 production-code-quality-review/SKILL.md
 ```
 
-Skill package guide:
+Supporting package highlights:
 
-```text
-production-code-quality-review/README.md
-```
+- `production-code-quality-review/scripts/` for review-context collection and review-entrypoint helpers
+- `production-code-quality-review/references/` for schemas, heuristics, and review contracts
+- `production-code-quality-review/README.md` for the package guide
 
-### `zero-to-website-design/`
+### `zero-to-website-design`
 
-`zero-to-website-design` is an end-to-end website creation workflow for turning a blank or vague brief into visual references, design-system docs, route specs, implementation, screenshot QA, and delivery readiness.
+Use this skill when you want Codex to turn a blank or vague website brief into a documented, design-first delivery workflow. It pushes work through references, concept generation, route planning, implementation guidance, and browser QA before sign-off.
 
-It is optimized for:
+Best fit:
 
 - zero-to-one website design
-- reference-image provenance
-- concept generation before implementation
-- design docs before code
-- route-by-route implementation
-- desktop/mobile browser QA
-- production readiness review
+- design documentation before code
+- route-by-route implementation planning
+- reference-image-backed visual direction
+- desktop and mobile screenshot QA
 
 Skill entrypoint:
 
 ```text
 zero-to-website-design/SKILL.md
+```
+
+Supporting package highlights:
+
+- `zero-to-website-design/references/` for delivery workflow references and governance
+- `zero-to-website-design/assets/templates/` for reusable design and implementation templates
+- `docs/usage/zero-to-website-design.md` for the user-facing guide
+
+## Repo Layout
+
+```text
+best-project-memory/
+  SKILL.md              # Required Codex skill entrypoint
+  agents/               # Platform metadata
+  references/           # Memory schema, update policy, examples, handoff patterns
+  scripts/              # Deterministic memory initialization and handoff helpers
+  tests/                # Regression tests protecting package structure and scripts
+production-code-quality-review/
+  SKILL.md              # Required Codex skill entrypoint
+  README.md             # Skill package guide for users and maintainers
+  agents/               # Platform metadata and synthesis prompt
+  references/           # Review framework, output contract, heuristics, schemas
+  scripts/              # Deterministic context and install/update tooling
+  tests/                # Regression tests protecting the skill package
+zero-to-website-design/
+  SKILL.md              # Required Codex skill entrypoint
+  agents/               # Platform metadata
+  references/           # Website design workflow references
+  assets/templates/     # Copyable project documentation templates
+  tests/                # Regression tests protecting package structure
+docs/
+  usage/                # User-facing documentation
+  releases/             # Release notes and release checklist
+  dev/                  # Development notes, kept separate from the skill packages
 ```
 
 ## Install
@@ -100,24 +129,12 @@ Install a skill package by copying its folder:
 
 ```bash
 mkdir -p ~/.agents/skills
+cp -R best-project-memory ~/.agents/skills/
 cp -R production-code-quality-review ~/.agents/skills/
-```
-
-For the website design workflow:
-
-```bash
-mkdir -p ~/.agents/skills
 cp -R zero-to-website-design ~/.agents/skills/
 ```
 
-For project-memory continuity:
-
-```bash
-mkdir -p ~/.agents/skills
-cp -R best-project-memory ~/.agents/skills/
-```
-
-Then start a new Codex session or reload skills so Codex can discover it.
+Then start a new Codex session or reload skills so Codex can discover the installed package.
 
 The `production-code-quality-review` package also includes a helper install script:
 
@@ -134,7 +151,7 @@ When running commands from an installed copy outside the checkout, use `$HOME/.a
 
 ## Main Entry Points
 
-### Collect machine-readable review context
+### Review context collection
 
 ```bash
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
@@ -146,13 +163,13 @@ Optional scope controls:
 python3 production-code-quality-review/scripts/collect-review-context.py --repo . --base origin/main --scope branch
 ```
 
-### Generate a human-friendly review brief
+### Review brief generation
 
 ```bash
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
 ```
 
-### Generate a compact routing summary
+### Compact review routing output
 
 ```bash
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format compact
@@ -161,13 +178,15 @@ python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --f
 JSON output is available with `--format json` and follows `references/review-context.schema.json`.
 Machine-readable finding records should follow `references/finding.schema.json`.
 
-### Run the release verification bundle
+### Release verification bundle
 
 ```bash
 bash production-code-quality-review/scripts/verify-release.sh
 ```
 
 ## Documentation
+
+Repository overview and usage:
 
 - [Best Project Memory](docs/usage/best-project-memory.md)
 - [Zero-To-Website Design](docs/usage/zero-to-website-design.md)
@@ -176,10 +195,14 @@ bash production-code-quality-review/scripts/verify-release.sh
 - [Review Workflows](docs/usage/review-workflows.md)
 - [Examples](docs/usage/examples.md)
 - [FAQ](docs/usage/faq.md)
+- [Troubleshooting](docs/usage/troubleshooting.md)
 - [Release Notes](docs/releases/README.md)
-- [中文文档](docs/zh/README.zh-CN.md) / [Chinese Docs](docs/zh/README.zh-CN.md)
-- [中文发布说明](docs/zh/releases/README.zh-CN.md) / [Chinese Release Notes](docs/zh/releases/README.zh-CN.md)
-- [中文 References 导读](docs/zh/references-guide.zh-CN.md) / [Chinese References Guide](docs/zh/references-guide.zh-CN.md)
+
+Chinese documentation:
+
+- [Chinese Overview](docs/zh/README.zh-CN.md)
+- [Chinese Release Notes](docs/zh/releases/README.zh-CN.md)
+- [Chinese References Guide](docs/zh/references-guide.zh-CN.md)
 
 ## Local Verification
 
@@ -194,31 +217,3 @@ python3 -m unittest discover zero-to-website-design/tests -v
 - `language-specific.md` has been retired in favor of smaller, more focused references.
 - Development notes live in `docs/dev/`.
 - `review-entrypoint.py` supports `markdown`, `json`, and `compact` output.
-
-## Repo Layout
-
-```text
-production-code-quality-review/
-  SKILL.md              # Required Codex skill entrypoint
-  README.md             # Skill package guide for users and maintainers
-  agents/               # Platform metadata and synthesis prompt
-  references/           # Review framework, output contract, heuristics, schemas
-  scripts/              # Deterministic context and install/update tooling
-  tests/                # Regression tests protecting the skill package
-zero-to-website-design/
-  SKILL.md              # Required Codex skill entrypoint
-  agents/               # Platform metadata
-  references/           # Website design workflow references
-  assets/templates/     # Copyable project documentation templates
-  tests/                # Regression tests protecting package structure
-best-project-memory/
-  SKILL.md              # Required Codex skill entrypoint
-  agents/               # Platform metadata
-  references/           # Memory schema, update policy, examples, handoff patterns
-  scripts/              # Deterministic memory initialization and handoff helpers
-  tests/                # Regression tests protecting package structure and scripts
-docs/
-  usage/                # User-facing documentation
-  releases/             # Release notes and release checklist
-  dev/                  # Development notes, kept separate from the skill
-```
