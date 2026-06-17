@@ -13,6 +13,8 @@ Use a production review workflow when available. Review for:
 - broken metadata
 - accessibility regressions
 - missing tests or QA evidence
+- missing route evidence rows
+- contradictory readiness claims
 - maintainability risks
 
 Fix confirmed issues before delivery.
@@ -46,6 +48,7 @@ Check:
 Report:
 
 - routes touched
+- route evidence status for each touched core route
 - source references used
 - design docs created or updated
 - files changed
@@ -56,3 +59,11 @@ Report:
 - temporary-binding ownership and upgrade triggers
 - known gaps
 - deployment or PR link when applicable
+
+## Readiness Claim Rules
+
+- The overall website status cannot be stronger than the weakest required route evidence status.
+- A route with `not-checked` or `blocked` evidence cannot support a final ready claim.
+- A site can be `Framework Ready` while still carrying visual gaps only when those gaps are recorded as accepted gaps.
+- A site can be `Visual Delivery Ready` only when every required route is `visual-delivery-ready` or explicitly out of scope.
+- Final reports must not summarize QA as "passed" when route evidence contains unresolved blocking failures.

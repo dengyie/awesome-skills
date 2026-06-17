@@ -132,6 +132,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         route_acceptance = (ROOT / "references" / "route-acceptance.md").read_text(
             encoding="utf-8"
         )
+        visual_qa = (ROOT / "references" / "visual-qa-checklist.md").read_text(
+            encoding="utf-8"
+        )
         memory_integration = (ROOT / "references" / "project-memory-integration.md").read_text(
             encoding="utf-8"
         )
@@ -142,6 +145,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             encoding="utf-8"
         )
         mock_asset_template = (ROOT / "assets" / "templates" / "mock-asset-pass.md").read_text(
+            encoding="utf-8"
+        )
+        qa_report_template = (ROOT / "assets" / "templates" / "qa-report.md").read_text(
             encoding="utf-8"
         )
         visual_inventory_template = (
@@ -158,6 +164,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Project Memory", usage_text)
         self.assertIn("Generated-Authority Path", usage_text)
         self.assertIn("Record why generation was needed", usage_text)
+        self.assertIn("route evidence rows", usage_text)
+        self.assertIn("not-checked", usage_text)
+        self.assertIn("Visual Delivery Ready", usage_text)
         self.assertIn("strong enough for `Framework Ready`", historical_mock)
         self.assertIn("route owner", historical_mock)
         self.assertIn("replacement or upgrade trigger", historical_mock)
@@ -168,6 +177,17 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Framework Ready", route_acceptance)
         self.assertIn("Visual Delivery Ready", route_acceptance)
         self.assertIn("replacement triggers", route_acceptance)
+        self.assertIn("Route Evidence Contract", route_acceptance)
+        self.assertIn("Viewports Checked", route_acceptance)
+        self.assertIn("framework-ready", route_acceptance)
+        self.assertIn("visual-delivery-ready", route_acceptance)
+        self.assertIn("blocking-framework", route_acceptance)
+        self.assertIn("accepted-gap", route_acceptance)
+        self.assertIn("Required Evidence Fields", visual_qa)
+        self.assertIn("Failure Classification", visual_qa)
+        self.assertIn("console result", visual_qa)
+        self.assertIn("overflow result", visual_qa)
+        self.assertIn("Browser QA must cover both desktop and mobile", visual_qa)
         self.assertIn("workstream", memory_integration.lower())
         self.assertIn("handoff", memory_integration.lower())
         self.assertIn("decisions.md", memory_integration)
@@ -179,6 +199,15 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Route composition owners", visual_source_template)
         self.assertIn("Temporary-binding upgrades in flight", visual_source_template)
         self.assertIn("temporary-binding assets say whether they still control route composition", production_delivery)
+        self.assertIn("route evidence status for each touched core route", production_delivery)
+        self.assertIn("Readiness Claim Rules", production_delivery)
+        self.assertIn("weakest required route evidence status", production_delivery)
+        self.assertIn("## Route Evidence", qa_report_template)
+        self.assertIn("Source Owner", qa_report_template)
+        self.assertIn("Blocking Failures", qa_report_template)
+        self.assertIn("Accepted Gaps", qa_report_template)
+        self.assertIn("Overall route evidence status", qa_report_template)
+        self.assertIn("Final readiness claim follows weakest required route evidence status", qa_report_template)
         self.assertIn("Route owner", mock_asset_template)
         self.assertIn("Replacement trigger", mock_asset_template)
         self.assertIn("Authority Reason", visual_inventory_template)

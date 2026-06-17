@@ -13,6 +13,10 @@
 - V7 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 - V8 concept-authority hardening is implemented in the working tree across `concept-generation.md`, `SKILL.md`, usage docs, and regression coverage.
 - V8 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
+- V8 is committed and pushed as `2f07fe5 feat(阶段16): harden concept authority`.
+- V9 QA evidence contract hardening is selected as the next stage. The target is to make route acceptance and visual QA evidence explicit enough to support production-grade final claims.
+- V9 is implemented in the working tree across `route-acceptance.md`, `visual-qa-checklist.md`, `production-delivery.md`, `SKILL.md`, usage docs, and regression coverage.
+- V9 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -24,9 +28,13 @@
 - `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v7-provenance-contract-hardening-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v8-concept-authority-hardening-plan.md`
+- `docs/dev/2026-06-17-zero-to-website-design-v9-qa-evidence-contract-plan.md`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/references/concept-generation.md`
 - `zero-to-website-design/references/visual-provenance.md`
+- `zero-to-website-design/references/route-acceptance.md`
+- `zero-to-website-design/references/visual-qa-checklist.md`
+- `zero-to-website-design/references/production-delivery.md`
 - `zero-to-website-design/assets/templates/visual-source-map.md`
 - `zero-to-website-design/assets/templates/implementation-plan.md`
 - `zero-to-website-design/assets/templates/page-spec.md`
@@ -35,8 +43,8 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Stage, commit, and push the V8 concept-authority hardening pass.
-- [ ] Choose the next staged `zero-to-website-design` improvement after V8 lands.
+- [ ] Commit and push the V9 pass.
+- [ ] Choose the next staged `zero-to-website-design` improvement after V9 lands.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

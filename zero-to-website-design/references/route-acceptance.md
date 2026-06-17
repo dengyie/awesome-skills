@@ -2,6 +2,27 @@
 
 Use this reference before implementing or reviewing routes.
 
+## Route Evidence Contract
+
+Every touched core route needs a compact evidence row before final handoff.
+
+Use this format in the project QA report or equivalent delivery note:
+
+```md
+| Route | Route Type | Source Owner | Viewports Checked | Evidence | Status | Blocking Failures | Accepted Gaps | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `/posts` | listing | `binding-route`: output/design/posts.png | 1600x900, 390x844 | output/qa/posts-1600x900.png; output/qa/posts-390x844.png | framework-ready | none | final art remains temporary | Mobile menu and links verified |
+```
+
+Allowed route evidence statuses:
+
+- `not-checked`: route exists but lacks browser evidence
+- `blocked`: route was checked and has failures that prevent the claimed milestone
+- `framework-ready`: route satisfies Level A with recorded evidence
+- `visual-delivery-ready`: route satisfies Level A and Level B with recorded evidence
+
+Do not claim a route status that is stronger than its evidence row supports.
+
 ## Level A: Framework Ready
 
 - Route has a clear purpose.
@@ -19,6 +40,8 @@ Use this reference before implementing or reviewing routes.
 - Route works in the target build/export mode.
 - Route composition is accepted even if final imagery is still provisional.
 
+Failed layout, link, asset-loading, console-blocking, or page-level overflow checks block `Framework Ready` unless the route is explicitly out of scope.
+
 ## Level B: Visual Delivery Ready
 
 - Route satisfies all `Framework Ready` expectations.
@@ -26,6 +49,19 @@ Use this reference before implementing or reviewing routes.
 - Asset quality is acceptable for delivery.
 - Metadata is correct.
 - Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps with their remaining scope clearly stated.
+
+Unresolved fidelity gaps, incorrect metadata, weak asset quality, or unacknowledged `temporary-binding` ownership block `Visual Delivery Ready`.
+
+## Failure Handling
+
+Classify each failed check as:
+
+- `blocking-framework`: prevents `Framework Ready`
+- `blocking-visual`: allows `Framework Ready` but prevents `Visual Delivery Ready`
+- `accepted-gap`: explicitly allowed for this milestone and documented with scope
+- `out-of-scope`: not part of the route matrix for this pass
+
+Accepted gaps must name the route, viewport, reason, remaining owner, and what would close the gap.
 
 ## Homepage
 

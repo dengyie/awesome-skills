@@ -1,4 +1,16 @@
 # Session Log
+## 2026-06-17 23:34
+- Task: Close out V8 and choose the next staged `zero-to-website-design` hardening target.
+- Actions: Committed and pushed `2f07fe5 feat(阶段16): harden concept authority`; re-read route acceptance, visual QA, production delivery, usage docs, and the zero-to-website workstream; selected V9 QA evidence contract hardening as the next stage.
+- Results: V8 is now on GitHub. The next stage is scoped to make browser QA evidence, route pass/fail status, failure handling, and delivery claims more explicit.
+- Next: Write the V9 design note, implement docs/tests updates, run tests, quick validation, production review, then commit and push.
+- Blockers: None.
+## 2026-06-17 23:50
+- Task: Implement the `zero-to-website-design` V9 QA evidence contract hardening pass.
+- Actions: Added the V9 design note; hardened route acceptance with evidence rows and readiness statuses; hardened visual QA with required evidence fields and failure classification; tied production delivery claims to route evidence; aligned the shipped QA report template; updated SKILL and usage docs; expanded regression tests; ran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; ran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.
+- Results: V9 is implemented and verified in the working tree. The package now requires route evidence rows, explicit failure classification, and readiness claims tied to recorded QA status, with passing tests and no confirmed blocking review findings.
+- Next: Commit and push the V9 pass, then choose the next staged hardening target.
+- Blockers: None.
 ## 2026-06-18 14:05
 - Task: Implement and verify the `zero-to-website-design` V8 concept-authority hardening pass.
 - Actions: Added the V8 development note; hardened `zero-to-website-design/references/concept-generation.md` with generation-entry conditions, authority escalation, and retirement rules; updated `SKILL.md` and `docs/usage/zero-to-website-design.md` to align the public workflow; expanded regression tests; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.

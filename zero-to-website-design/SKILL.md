@@ -69,6 +69,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Run the project's build or typecheck command.
    - Read `references/route-acceptance.md` and `references/visual-qa-checklist.md`.
    - Use browser/Playwright QA for desktop and mobile screenshots, overflow checks, link checks, menu states, and asset loading.
+   - Record route evidence rows before claiming `Framework Ready` or `Visual Delivery Ready`.
 
 11. Harden and deliver.
    - Read `references/production-delivery.md`.

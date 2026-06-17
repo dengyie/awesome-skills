@@ -169,8 +169,10 @@ The workflow is not complete just because the build passes.
 Minimum verification:
 
 - build or typecheck command passes
+- route evidence rows exist for touched core routes
 - desktop screenshot QA
 - mobile screenshot QA
+- console, overflow, link, asset, and mobile-menu checks are recorded
 - no page-level horizontal overflow
 - key navigation links work
 - mobile menu works when present
@@ -179,6 +181,8 @@ Minimum verification:
 - framework-ready versus visual-delivery-ready status is stated clearly
 - temporary-binding ownership and upgrade triggers are stated when provisional imagery remains
 - production review is run before final delivery
+
+Final readiness claims must follow recorded route evidence: `not-checked` or `blocked` routes cannot support a ready claim, and `Framework Ready` must not be described as `Visual Delivery Ready`.
 
 ## Project Memory
 

@@ -27,6 +27,8 @@ Check:
 - one representative category/filter/archive route
 - any route with custom layout or risky interaction
 
+Record an exception when a listed route type does not exist or is intentionally out of scope.
+
 ## Browser Checks
 
 For each route:
@@ -40,6 +42,27 @@ For each route:
 - mobile menu opens and closes when present
 - local images/assets load with no broken image indicators
 - hover/focus states do not resize fixed layout controls
+
+## Required Evidence Fields
+
+For every route evidence row, record:
+
+- route path
+- route type
+- source owner or visual reference
+- desktop viewport checked
+- mobile viewport checked
+- screenshot path or QA note path
+- console result
+- overflow result
+- navigation/link result
+- local asset result
+- mobile menu result when applicable
+- readiness status
+- blocking failures
+- accepted gaps
+
+Browser QA must cover both desktop and mobile for the route matrix unless an exception is recorded with a reason and risk.
 
 ## Screenshot Evidence
 
@@ -55,6 +78,21 @@ Example:
 output/qa-screenshots/final-pass-YYYY-MM-DD/home-1600x900.png
 ```
 
+Keep screenshot paths stable enough for another session to find and inspect them.
+
+## Failure Classification
+
+Classify every failed browser check as:
+
+- `blocking-framework`: layout, overflow, broken route, broken navigation, broken primary action, missing local asset, or console-blocking error
+- `blocking-visual`: mismatch against a binding reference, unresolved metadata issue, weak final asset quality, or unacknowledged temporary visual source
+- `accepted-gap`: known and explicitly allowed for the current milestone
+- `out-of-scope`: not included in this pass and not used to support readiness claims
+
+Fix `blocking-framework` before claiming `Framework Ready`.
+
+Fix or explicitly downgrade `blocking-visual` before claiming `Visual Delivery Ready`.
+
 ## Visual Gap Report
 
 When working from reference images, report:
@@ -65,4 +103,3 @@ When working from reference images, report:
 - what would be needed for a closer pass
 
 Never claim pixel fidelity when only structural similarity was checked.
-

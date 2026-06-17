@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-17 - Route QA Must Produce Evidence Before Readiness Claims
+- Decision: Treat route acceptance and browser QA evidence as the V9 hardening target for `zero-to-website-design`.
+- Rationale: V6-V8 made visual source authority stricter, but a production website pass can still overclaim readiness if route, viewport, screenshot, console, overflow, link, asset, and gap evidence are not recorded together.
+- Alternatives considered: Adding another source-provenance pass, or adding browser automation scripts before tightening the written contract.
+- Impact: The package now requires compact route evidence rows, explicit failure classification, and final readiness claims tied to the weakest required route status.
+- Rollback trigger: If downstream projects find the evidence rows too heavy for small sites, keep the readiness rules but allow an even smaller route evidence format.
+- Related files: `docs/dev/2026-06-17-zero-to-website-design-v9-qa-evidence-contract-plan.md`, `zero-to-website-design/references/route-acceptance.md`, `zero-to-website-design/references/visual-qa-checklist.md`, `zero-to-website-design/references/production-delivery.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Generated Concepts Need Explicit Authority Escalation Rules
 - Decision: Treat generated-image escalation as its own hardening target immediately after provenance-contract hardening, so `concept-generation.md` no longer relies on implied judgment about when a generated mockup can become route-authoritative.
 - Rationale: Once provenance artifacts are strict, the next likely source of workflow drift is not where authority is recorded but how generation enters the system and climbs the authority ladder. This is especially important for preventing unnecessary generation when repo-owned visuals were already sufficient.
