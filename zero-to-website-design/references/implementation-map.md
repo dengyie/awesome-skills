@@ -72,6 +72,7 @@ Prefer:
 - Replace split or duplicated data sources before final delivery.
 - Treat slug collisions, route-data mismatches, and feed/output drift as delivery blockers until owned and resolved.
 - Name whether the current target is `Framework Ready` or `Visual Delivery Ready`.
+- Treat the page spec as the route-level source of truth for route-data, metadata, and route-specific blockers.
 
 ## Implementation Map Output
 

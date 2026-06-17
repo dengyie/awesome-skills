@@ -117,6 +117,17 @@ When routes are generated from data, the workflow should also preserve:
 
 Final delivery cannot overclaim past slug collisions, route-data mismatch, metadata mismatch, or feed/output drift.
 
+## Route Specs
+
+A touched core route should have a page spec or equivalent route doc that is strong enough for another session to answer:
+
+- what the route is for
+- which data source and metadata source power it
+- whether feed/output relevance exists for that route family
+- what QA evidence belongs to the route
+- what still blocks the route and who owns the unblock
+- what route-specific context must survive a handoff
+
 When the repository uses `.codex-memory/`, the workflow should also:
 
 - restore current state before major work

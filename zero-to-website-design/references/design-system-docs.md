@@ -66,11 +66,15 @@ Treat these documents as a pre-code gate for broad implementation. Do not jump f
 - route purpose
 - binding visual references
 - route status target
+- route-data source of truth
+- metadata source of truth
 - desktop layout regions
 - mobile layout behavior
 - components
 - content needs
+- route-data and metadata integrity expectations
 - states and interactions
+- route blocker owner when the route is not ready
 - acceptance checklist
 
 ## Design Docs Gate
@@ -91,6 +95,7 @@ Do not begin broad implementation until the docs answer:
 For touched core routes, the gate should also make it easy to find:
 
 - the relevant page spec or equivalent route doc
+- the page spec fields for route-data source, metadata source, and route-specific blockers
 - the source-path summary
 - the implementation plan
 - the verification destination for route evidence

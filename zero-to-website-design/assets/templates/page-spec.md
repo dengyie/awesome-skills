@@ -8,6 +8,9 @@ Describe what this route is for.
 
 - Route type:
 - Source owner:
+- Route-data source of truth:
+- Metadata source of truth:
+- Feed/output relevance:
 - Viewport evidence target:
 
 ## Delivery State
@@ -45,6 +48,9 @@ Describe what this route is for.
 - Source:
 - Required fields:
 - Placeholder rules:
+- Route-data and metadata integrity status:
+- Blocker owner:
+- Unblock condition:
 
 ## Interactions
 
@@ -75,3 +81,4 @@ Describe what this route is for.
 - Severity:
 - Follow-up:
 - Handoff-sensitive:
+- Route-specific handoff context:

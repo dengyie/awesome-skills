@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Route Page Specs Must Carry The Stronger Route-Level Contract
+- Decision: Use page-spec contract hardening as the V15 stage for `zero-to-website-design`, and make the route doc explicitly carry route-data source, metadata source, blocker ownership, and route-specific handoff context.
+- Rationale: The global workflow contracts are already much stronger after V14, but the page spec still lagged behind as a route-level source of truth. Tightening the page spec closes the gap between top-level workflow rigor and route-level resumability.
+- Alternatives considered: Leave route-level detail diffused across implementation plans and QA reports, or open another global contract pass first.
+- Impact: The package now treats the page spec as a stronger route-level artifact for source-of-truth, blockers, and route-sensitive handoff state.
+- Rollback trigger: If small single-route sites find the page spec too heavy, trim low-value phrasing while keeping route-data, metadata, blocker, and handoff-sensitive fields.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v15-page-spec-contract-plan.md`, `zero-to-website-design/references/design-system-docs.md`, `zero-to-website-design/references/implementation-map.md`, `zero-to-website-design/assets/templates/page-spec.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Metadata, Route-Data, And Feed Outputs Need A Single Integrity Contract
 - Decision: Use metadata-route-data-feed integrity hardening as the V14 stage for `zero-to-website-design`, and bind route-data source of truth, metadata source of truth, and feed/export source of truth into the route acceptance and delivery contract.
 - Rationale: V13 closed the content-source gap, but route generation and exported outputs can still drift independently from rendered pages. A dedicated integrity contract reduces the chance that a site looks correct while its slugs, metadata, or feed outputs disagree.
