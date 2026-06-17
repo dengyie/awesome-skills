@@ -20,6 +20,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             ROOT / "references" / "visual-qa-checklist.md",
             ROOT / "references" / "historical-mock-pass.md",
             ROOT / "references" / "framework-first-delivery.md",
+            ROOT / "references" / "content-readiness.md",
             ROOT / "references" / "project-memory-integration.md",
             ROOT / "references" / "production-delivery.md",
             ROOT / "assets" / "templates" / "design-system-master.md",
@@ -156,6 +157,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         concept_generation = (ROOT / "references" / "concept-generation.md").read_text(
             encoding="utf-8"
         )
+        content_readiness = (ROOT / "references" / "content-readiness.md").read_text(
+            encoding="utf-8"
+        )
         mock_asset_template = (ROOT / "assets" / "templates" / "mock-asset-pass.md").read_text(
             encoding="utf-8"
         )
@@ -184,6 +188,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("current route slice", usage_text)
         self.assertIn("weakest route evidence status", usage_text)
         self.assertIn("handoff artifact or resume note", usage_text)
+        self.assertIn("Content Readiness", usage_text)
+        self.assertIn("content source status by route family", usage_text)
+        self.assertIn("route-family owner and metadata owner", usage_text)
+        self.assertIn("placeholder or draft replacement triggers", usage_text)
         self.assertIn("Generated-Authority Path", usage_text)
         self.assertIn("Record why generation was needed", usage_text)
         self.assertIn("route evidence rows", usage_text)
@@ -207,6 +215,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("route owner", historical_mock)
         self.assertIn("replacement or upgrade trigger", historical_mock)
         self.assertIn("route composition is accepted", framework_delivery)
+        self.assertIn("placeholder, curated, or generated-draft content policy is documented", framework_delivery)
+        self.assertIn("route-family owner and replacement trigger are named", framework_delivery)
+        self.assertIn("which route families still rely on curated, placeholder, or generated-draft content", framework_delivery)
         self.assertIn("slot/texture behavior", framework_delivery)
         self.assertIn("route owner", implementation_map)
         self.assertIn("Upgrade triggers", implementation_map)
@@ -238,6 +249,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Replacement Trigger", visual_source_template)
         self.assertIn("Route composition owners", visual_source_template)
         self.assertIn("Temporary-binding upgrades in flight", visual_source_template)
+        self.assertIn("content source status by route family", (ROOT / "references" / "design-system-docs.md").read_text(encoding="utf-8"))
+        self.assertIn("placeholder replacement conditions", (ROOT / "references" / "design-system-docs.md").read_text(encoding="utf-8"))
+        self.assertIn("route-family ownership", (ROOT / "references" / "design-system-docs.md").read_text(encoding="utf-8"))
+        self.assertIn("metadata ownership", (ROOT / "references" / "design-system-docs.md").read_text(encoding="utf-8"))
         self.assertIn("Weakest expected route status", implementation_plan_template)
         self.assertIn("Route Ownership And Risks", implementation_plan_template)
         self.assertIn("Route evidence destination", implementation_plan_template)
@@ -251,10 +266,19 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Blocking failures", page_spec_template)
         self.assertIn("Accepted gaps", page_spec_template)
         self.assertIn("Source Method", asset_data_template)
+        self.assertIn("Route Family", asset_data_template)
+        self.assertIn("Metadata Owner", asset_data_template)
+        self.assertIn("Route families allowed to stay provisional", asset_data_template)
+        self.assertIn("Generated-draft content allowed", asset_data_template)
+        self.assertIn("Route family owner", asset_data_template)
+        self.assertIn("Final delivery blocker", asset_data_template)
+        self.assertIn("Framework-ready blocker", asset_data_template)
         self.assertIn("Authority Status", asset_data_template)
         self.assertIn("Ownership Scope", asset_data_template)
         self.assertIn("Replacement Trigger", asset_data_template)
         self.assertIn("Temporary visual scope", asset_data_template)
+        self.assertIn("Touched route families have explicit content source status", asset_data_template)
+        self.assertIn("Placeholder or generated-draft replacement triggers are recorded", asset_data_template)
         self.assertIn("Replacement triggers are recorded", asset_data_template)
         self.assertIn("## Delivery State", design_system_template)
         self.assertIn("Milestone target", design_system_template)
@@ -263,6 +287,11 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Temporary-binding references", design_system_template)
         self.assertIn("Weakest allowed route evidence status", design_system_template)
         self.assertIn("temporary-binding assets say whether they still control route composition", production_delivery)
+        self.assertIn("touched route families have an explicit content source status", production_delivery)
+        self.assertIn("route-family owner and metadata owner are defined", production_delivery)
+        self.assertIn("content source status for each touched route family", production_delivery)
+        self.assertIn("metadata and route/data integrity result", production_delivery)
+        self.assertIn("unresolved placeholder-brand drift", production_delivery)
         self.assertIn("route evidence status for each touched core route", production_delivery)
         self.assertIn("Readiness Claim Rules", production_delivery)
         self.assertIn("weakest required route evidence status", production_delivery)
@@ -286,6 +315,18 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Only move it to `binding-route`", concept_generation)
         self.assertIn("replacement trigger is explicit", concept_generation)
         self.assertIn("do not generate merely because generation is available", concept_generation)
+        self.assertIn("`production`", content_readiness)
+        self.assertIn("`curated`", content_readiness)
+        self.assertIn("`placeholder`", content_readiness)
+        self.assertIn("`generated-draft`", content_readiness)
+        self.assertIn("`mixed`", content_readiness)
+        self.assertIn("route family owner", content_readiness)
+        self.assertIn("metadata owner", content_readiness)
+        self.assertIn("Framework-Ready Allowances", content_readiness)
+        self.assertIn("Visual Delivery Ready Expectations", content_readiness)
+        self.assertIn("Metadata And Route/Data Integrity", content_readiness)
+        self.assertIn("Readiness Blockers", content_readiness)
+        self.assertIn("placeholder-brand drift", content_readiness)
         self.assertIn("Preserve resume-critical route, QA, and blocker state", skill_text)
         self.assertIn("any required route is blocked or not checked", skill_text)
 

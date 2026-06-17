@@ -51,10 +51,14 @@ Treat these documents as a pre-code gate for broad implementation. Do not jump f
 ## ASSET-AND-DATA-SPEC.md Should Define
 
 - content sources
+- content source status by route family
 - placeholder vs production content policy
+- placeholder replacement conditions
 - image/illustration sources
 - icon and ornament strategy
 - data ownership
+- route-family ownership
+- metadata ownership
 - metadata, sitemap, RSS, or SEO requirements
 
 ## Page Specs Should Define
@@ -80,6 +84,7 @@ Do not begin broad implementation until the docs answer:
 - what routes are intentionally deferred
 - what milestone the current pass targets
 - what assets are needed
+- what content source classes are currently allowed
 - what implementation order is expected
 - how completion will be judged
 

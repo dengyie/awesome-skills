@@ -4,10 +4,10 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V12 workstream-and-handoff continuity hardening is implemented in the working tree.
+- Current stage: `zero-to-website-design` V13 content-and-data readiness hardening is implemented in the working tree.
 
 ## Current Branch
-- `codex/best-project-memory-expansion`
+- `codex/zero-to-website-design-v11-clean`
 
 ## Last Verified
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
@@ -45,10 +45,10 @@
 - None.
 
 ## Current Focus
-- Close out the `zero-to-website-design` V12 workstream-and-handoff continuity pass with memory sync and an atomic skill-only commit while leaving unrelated repository-level docs work untouched.
+- Close out the `zero-to-website-design` V13 content-and-data readiness pass with memory sync and an atomic skill-only commit.
 
 ## Next Milestone
-- Commit the `zero-to-website-design` V12 workstream-and-handoff continuity pass and keep any unrelated repository-level docs work out of the stage commit.
+- Commit the `zero-to-website-design` V13 content-and-data readiness pass, then choose the next bounded hardening target from the shipped baseline.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`

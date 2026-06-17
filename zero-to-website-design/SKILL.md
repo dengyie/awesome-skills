@@ -62,9 +62,11 @@ Historical repo images are first-class inputs. When a project already has usable
 
 9. Implement route by route.
    - Read `references/framework-first-delivery.md` when the project should stop at a framework milestone before final asset polish.
+   - Read `references/content-readiness.md` when placeholder, curated, generated-draft, or mixed content is still in play.
    - Build the site framework first: layout, navigation, core routes, card systems, responsive rhythm, and local assets.
    - Prefer project-owned assets over hotlinked assets.
    - Keep content placeholder or curated when the user wants framework-first delivery.
+   - Record content source status, route-family owner, and replacement trigger before placeholder or generated-draft content becomes route-shaping.
    - Treat `Framework Ready` as a valid milestone when layout, interaction, and responsive structure are correct even if final bespoke art is not ready yet.
    - Keep `temporary-binding` assets explicit in docs and delivery notes.
 
@@ -97,6 +99,7 @@ Historical repo images are first-class inputs. When a project already has usable
 - `references/route-acceptance.md`: read before implementing or reviewing route types.
 - `references/visual-qa-checklist.md`: read before signoff.
 - `references/framework-first-delivery.md`: read when framework-first delivery is an explicit milestone.
+- `references/content-readiness.md`: read when placeholder, curated, generated-draft, or mixed content affects route readiness.
 - `references/project-memory-integration.md`: read when the repository uses `.codex-memory/` and the work spans multiple sessions.
 - `references/production-delivery.md`: read before deploy, publish, PR, or final handoff.
 - `references/project-memory-integration.md`: read again when a paused pass needs a handoff or resume note.
@@ -127,6 +130,7 @@ A zero-to-website pass is complete only when:
 - design-system and route docs exist or have been updated
 - core routes are implemented responsively
 - any framework-first milestone is explicitly labeled as such
+- placeholder, curated, generated-draft, or mixed content policy is documented when content is not fully production-ready
 - temporary-binding route owners and upgrade triggers are documented when provisional imagery remains
 - local or owned assets are used where possible
 - build/typecheck passes

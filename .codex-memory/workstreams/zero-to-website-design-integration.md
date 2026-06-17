@@ -26,6 +26,9 @@
 - V11 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues after rerunning with UTF-8 process encoding.
 - V12 workstream-and-handoff continuity hardening is implemented in the working tree across `project-memory-integration.md`, `website-workstream.md`, `qa-report.md`, `SKILL.md`, usage docs, and regression coverage.
 - V12 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
+- V12 is committed and pushed as `cc03f09 feat(阶段21): harden workstream handoff continuity`.
+- V13 content-and-data readiness hardening is implemented in the working tree across `content-readiness.md`, `SKILL.md`, delivery references, `asset-and-data-spec.md`, usage docs, and regression coverage.
+- V13 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -61,10 +64,8 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Commit and push the `zero-to-website-design` V11 pre-code document-gate pass.
-- [ ] Commit and push the `zero-to-website-design` V12 workstream-and-handoff continuity pass.
-- [ ] Choose the next bounded `zero-to-website-design` hardening target after V11 lands.
-- [ ] Choose the next bounded `zero-to-website-design` hardening target after V12 lands.
+- [ ] Commit and push the `zero-to-website-design` V13 content-and-data readiness pass.
+- [ ] Choose the next bounded `zero-to-website-design` hardening target after V13 lands.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

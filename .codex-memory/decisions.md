@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Content And Data Source Readiness Must Limit Delivery Claims
+- Decision: Use content-and-data readiness hardening as the V13 stage for `zero-to-website-design`, and add a dedicated content-readiness reference plus aligned template and delivery wording.
+- Rationale: The workflow already made visual sources, QA evidence, pre-code docs, and continuity explicit, but content/data readiness remained distributed across several lighter references. A dedicated contract reduces drift around placeholder policy, route-family ownership, metadata integrity, and when framework-first content can still support a valid milestone.
+- Alternatives considered: Leave content readiness as scattered wording, or fold the new rules into an existing reference without creating a dedicated entry point.
+- Impact: The package now names content source classes, route-family ownership, placeholder and generated-draft triggers, and the blockers that limit final delivery claims.
+- Rollback trigger: If downstream projects show the new contract is too heavy for small static sites, trim low-value wording while preserving route-family ownership, content-source status, and blocker visibility.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v13-content-readiness-contract-plan.md`, `zero-to-website-design/references/content-readiness.md`, `zero-to-website-design/references/design-system-docs.md`, `zero-to-website-design/references/framework-first-delivery.md`, `zero-to-website-design/references/production-delivery.md`, `zero-to-website-design/assets/templates/asset-and-data-spec.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Workstream And Handoff Artifacts Must Preserve Resume-Critical State
 - Decision: Use workstream-and-handoff continuity hardening as the V12 stage for `zero-to-website-design`, and require route matrix slices, weakest-route evidence, blocker ownership, and explicit handoff cues in the shipped continuity artifacts.
 - Rationale: The V11 gate protects the start of implementation, but long-running website work still risks losing the restart context once a session pauses. Encoding the resume-critical state in filesystem artifacts reduces chat dependence without expanding the contract beyond what a resumed session actually needs.

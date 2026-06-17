@@ -93,6 +93,18 @@ When work spans multiple sessions, preserve:
 
 If a pass pauses while any required route is still blocked or unchecked, the next session should resume from the workstream or handoff rather than chat memory.
 
+## Content Readiness
+
+When placeholder, curated, generated-draft, or mixed content is still active:
+
+- record content source status by route family
+- name the route-family owner and metadata owner
+- state whether framework-first delivery is still allowed
+- record placeholder or draft replacement triggers
+- treat unresolved content-source drift as a readiness limiter, not a hidden footnote
+
+Framework-first delivery can still be valid with provisional content, but final delivery cannot overclaim past placeholder-brand drift, undefined ownership, or route/detail data mismatch.
+
 When the repository uses `.codex-memory/`, the workflow should also:
 
 - restore current state before major work

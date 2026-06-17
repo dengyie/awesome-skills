@@ -24,6 +24,8 @@ A route is `Framework Ready` when:
 - card, list, and detail systems exist
 - typography hierarchy is coherent
 - placeholder or `temporary-binding` assets are correctly placed
+- placeholder, curated, or generated-draft content policy is documented
+- route-family owner and replacement trigger are named when content is provisional
 - temporary assets are documented with route ownership and replacement triggers
 - responsive behavior is stable
 - no overflow, clipping, or dead interactions remain
@@ -37,6 +39,7 @@ A route is `Visual Delivery Ready` when:
 - spacing, hierarchy, and emphasis are tuned
 - asset quality is acceptable for delivery
 - metadata and content framing are coherent
+- required route families no longer depend on unresolved placeholder-brand drift
 - any remaining temporary assets are explicitly acknowledged as post-pass gaps
 - remaining differences are minor and explicitly documented
 
@@ -50,10 +53,12 @@ Report:
 - which assets remain temporary
 - whether those assets control route composition or only slot/texture behavior
 - what has to change before visual delivery signoff
+- which route families still rely on curated, placeholder, or generated-draft content
 - what QA evidence already exists
 
 ## Guardrails
 
 - framework-first is a valid milestone, not a silent excuse for unfinished work
+- provisional content must stay visible in docs and delivery notes while it affects route meaning
 - provisional visuals must remain visible in docs and final reports
 - production review still applies before claiming a delivery-ready state
