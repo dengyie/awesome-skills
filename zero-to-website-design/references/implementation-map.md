@@ -10,9 +10,14 @@ Use this reference after design docs exist and before editing code.
 4. Identify shared primitives.
 5. Identify assets and data needed by each region.
 6. Define responsive behavior.
-7. Choose the smallest implementation order that produces a coherent site.
-8. List files to edit.
-9. State verification commands and browser QA routes.
+7. Choose the asset strategy:
+   - final owned assets
+   - historical mock assets
+   - local structural mock assets
+   - generated assets
+8. Choose the smallest implementation order that produces a coherent site.
+9. List files to edit.
+10. State verification commands and browser QA routes.
 
 ## Component Mapping Prompts
 
@@ -49,6 +54,7 @@ Prefer:
 - Do not delete files without explicit confirmation.
 - Keep static export/deploy constraints visible.
 - Replace split or duplicated data sources before final delivery.
+- Name whether the current target is `Framework Ready` or `Visual Delivery Ready`.
 
 ## Implementation Map Output
 
@@ -60,11 +66,12 @@ Write a compact map before code:
 - Binding references:
 - Components:
 - Assets:
+- Asset strategy:
 - Data sources:
 - Desktop behavior:
 - Mobile behavior:
 - Files to edit:
 - Verification:
 - Known risks:
+- Milestone target:
 ```
-

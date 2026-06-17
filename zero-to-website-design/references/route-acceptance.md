@@ -2,19 +2,28 @@
 
 Use this reference before implementing or reviewing routes.
 
-## Universal Route Checklist
+## Level A: Framework Ready
 
 - Route has a clear purpose.
 - Header/navigation works.
 - Footer or end state is present when appropriate.
-- Desktop layout matches the design docs.
+- Desktop layout matches the intended composition.
 - Mobile layout is intentional, not accidental stacking.
 - Text does not overlap or overflow.
 - Images and local assets load.
 - Links and primary actions are clickable.
-- Metadata is correct.
+- Placeholder or `temporary-binding` assets are correctly placed.
+- Metadata is coherent enough for the current framework pass.
 - No rejected placeholder brand remains.
 - Route works in the target build/export mode.
+
+## Level B: Visual Delivery Ready
+
+- Route satisfies all `Framework Ready` expectations.
+- Visual hierarchy is tuned against the binding reference.
+- Asset quality is acceptable for delivery.
+- Metadata is correct.
+- Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps.
 
 ## Homepage
 
@@ -63,4 +72,3 @@ Use this reference before implementing or reviewing routes.
 - code blocks and examples are readable
 - search or table of contents exists when content volume needs it
 - mobile docs navigation is usable
-

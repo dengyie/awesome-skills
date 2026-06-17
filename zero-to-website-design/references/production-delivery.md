@@ -37,6 +37,8 @@ Check:
 - generated assets are stored in the project when required
 - asset paths work in the target deployment base path
 - large assets are justified
+- temporary-binding assets are acknowledged in the final report
+- framework-first versus final-content status is clearly stated
 
 ## Final Handoff Format
 
@@ -49,6 +51,6 @@ Report:
 - build/test result
 - desktop and mobile QA result
 - production review result
+- framework-ready versus visual-delivery-ready status
 - known gaps
 - deployment or PR link when applicable
-

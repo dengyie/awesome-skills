@@ -1,6 +1,8 @@
 # Concept Generation
 
-Use this reference when the project lacks binding visual sources or when the user asks to generate design images before implementation.
+Use this reference when the project lacks enough repo-owned, historical, user-provided, or temporary visual authority to proceed, or when the user explicitly asks to generate design images before implementation.
+
+Do not treat generation as the default first move. Inspect existing project visuals first.
 
 ## Concept Flow
 
@@ -29,6 +31,12 @@ Prompt for:
 - the intended site type and audience
 - visual motifs that can be implemented with CSS, SVG, or local images
 
+Prefer historical or repo-owned visual sources when:
+
+- the project already has approved concept work
+- a framework-first pass is enough for the current stage
+- new generation is constrained, unnecessary, or undesired
+
 Avoid:
 
 - vague "modern website" prompts
@@ -43,9 +51,11 @@ Generated images start as `exploratory`.
 
 Move an image to `candidate` when it is good enough for user selection.
 
-Move it to `approved` only when the user chooses it.
+Move it to `approved-direction` only when the user chooses it.
 
-Move it to `binding` only when it controls implementation for a route or section.
+Move it to `binding-route` only when it controls implementation for a route or section.
+
+Move it to `temporary-binding` when it is valid for the current framework or mock-asset pass but expected to be upgraded later.
 
 If a later design replaces it, mark the old image `obsolete` instead of deleting history.
 
@@ -60,4 +70,3 @@ After the user chooses a concept, generate or define mockups for the routes that
 - one mobile frame for the hardest layout
 
 Implementation should begin only after the route ownership is clear.
-
