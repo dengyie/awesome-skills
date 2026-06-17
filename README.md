@@ -6,6 +6,25 @@ Latest release: `v0.1.6`
 
 ## Skill Packages
 
+### `best-project-memory/`
+
+`best-project-memory` is a lightweight continuity skill for restoring project context, keeping repo-native state files current, recording decisions, and preparing clean handoffs across sessions.
+
+It is optimized for:
+
+- project continuity across sessions
+- repo-native memory files
+- decision traceability
+- actionable TODO state
+- compact handoff generation
+- low-friction Markdown workflows
+
+Skill entrypoint:
+
+```text
+best-project-memory/SKILL.md
+```
+
 ### `production-code-quality-review/`
 
 `production-code-quality-review` is a production-oriented review skill for pull requests, diffs, architecture-sensitive changes, reliability reviews, and merge-readiness decisions.
@@ -84,6 +103,13 @@ mkdir -p ~/.agents/skills
 cp -R zero-to-website-design ~/.agents/skills/
 ```
 
+For project-memory continuity:
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R best-project-memory ~/.agents/skills/
+```
+
 Then start a new Codex session or reload skills so Codex can discover it.
 
 The `production-code-quality-review` package also includes a helper install script:
@@ -136,6 +162,8 @@ bash production-code-quality-review/scripts/verify-release.sh
 
 ## Documentation
 
+- [Best Project Memory](docs/usage/best-project-memory.md)
+- [Zero-To-Website Design](docs/usage/zero-to-website-design.md)
 - [Golden Path](docs/usage/golden-path.md)
 - [Quickstart](docs/usage/quickstart.md)
 - [Review Workflows](docs/usage/review-workflows.md)
@@ -150,6 +178,8 @@ bash production-code-quality-review/scripts/verify-release.sh
 
 ```bash
 python3 -m unittest discover production-code-quality-review/tests -v
+python3 -m unittest discover best-project-memory/tests -v
+python3 -m unittest discover zero-to-website-design/tests -v
 ```
 
 ## Notes
@@ -173,6 +203,13 @@ zero-to-website-design/
   agents/               # Platform metadata
   references/           # Website design workflow references
   assets/templates/     # Copyable project documentation templates
+  tests/                # Regression tests protecting package structure
+best-project-memory/
+  SKILL.md              # Required Codex skill entrypoint
+  agents/               # Platform metadata
+  references/           # Memory schema, update policy, examples, handoff patterns
+  scripts/              # Deterministic memory initialization and handoff helpers
+  tests/                # Regression tests protecting package structure and scripts
 docs/
   usage/                # User-facing documentation
   releases/             # Release notes and release checklist

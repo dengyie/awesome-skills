@@ -314,6 +314,116 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertEqual(payload["schema_version"], "review-context/v1")
             self.assertIn("review_plan", payload)
 
+    def test_review_entrypoint_includes_project_memory_when_available(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / ".codex-memory" / "workstreams").mkdir(parents=True)
+            (repo / ".codex-memory" / "project-state.md").write_text(
+                """# Project State
+
+## Objective
+- Track review integration.
+
+## Current Phase
+- Phase 5.
+
+## Current Focus
+- Wire project memory into review context.
+
+## Next Milestone
+- Review the new context output.
+
+## Active Risks
+- Keep the brief compact.
+
+## Active Blockers
+- None.
+
+## Key Artifacts
+- production-code-quality-review/scripts/review_skill_lib.py
+""",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "todo.md").write_text(
+                """# TODO
+## In Progress
+- [ ] Add memory-aware review context
+## Next
+- [ ] Review the output contract
+## Done
+""",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "workstreams" / "production-code-quality-review-integration.md").write_text(
+                """# Workstream
+
+## Objective
+- Land the review integration pilot.
+
+## Current State
+- Review context should surface memory.
+
+## Blockers
+- None.
+
+## Files
+- production-code-quality-review/scripts/review_skill_lib.py
+
+## Next Actions
+- [ ] Run review tests
+
+## Validation
+- Not yet run.
+""",
+                encoding="utf-8",
+            )
+
+            (repo / "production-code-quality-review").mkdir()
+            (repo / "production-code-quality-review" / "review_skill_lib.py").write_text("initial\n")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "production-code-quality-review" / "review_skill_lib.py").write_text("updated\n")
+
+            result = subprocess.run(
+                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "json"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+            self.assertTrue(payload["project_memory"]["present"])
+            self.assertEqual(
+                payload["project_memory"]["summary"]["objective"],
+                ["Track review integration."],
+            )
+            self.assertEqual(
+                payload["project_memory"]["relevant_workstreams"][0]["slug"],
+                "production-code-quality-review-integration",
+            )
+
     def test_branch_scope_excludes_uncommitted_worktree_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)

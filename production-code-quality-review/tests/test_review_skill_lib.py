@@ -313,6 +313,128 @@ rename to src/new_name.ts
         self.assertEqual(plan["risk_level"], "low")
         self.assertIn("small", plan["review_mode_reason"])
 
+    def test_load_project_memory_reads_summary_and_matching_workstream(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            memory_dir = repo / ".codex-memory"
+            workstreams_dir = memory_dir / "workstreams"
+            workstreams_dir.mkdir(parents=True)
+            (memory_dir / "project-state.md").write_text(
+                """# Project State
+
+## Objective
+- Ship review memory integration.
+
+## Current Phase
+- Phase 5.
+
+## Current Focus
+- Connect review context to repo memory.
+
+## Next Milestone
+- Review and optimize.
+
+## Active Risks
+- Avoid noisy context.
+
+## Active Blockers
+- None.
+
+## Key Artifacts
+- production-code-quality-review/scripts/review_skill_lib.py
+""",
+                encoding="utf-8",
+            )
+            (memory_dir / "todo.md").write_text(
+                """# TODO
+## In Progress
+- [ ] Integrate project memory
+## Next
+- [ ] Add tests
+## Done
+""",
+                encoding="utf-8",
+            )
+            (workstreams_dir / "production-code-quality-review-integration.md").write_text(
+                """# Workstream
+
+## Objective
+- Land review integration.
+
+## Current State
+- Matching workstream summaries are available.
+
+## Blockers
+- None.
+
+## Files
+- production-code-quality-review/scripts/review_skill_lib.py
+
+## Next Actions
+- [ ] Add CLI coverage
+
+## Validation
+- Not yet run.
+""",
+                encoding="utf-8",
+            )
+
+            memory = module.load_project_memory(
+                repo,
+                ["production-code-quality-review/scripts/review_skill_lib.py"],
+            )
+
+            self.assertTrue(memory["present"])
+            self.assertEqual(memory["summary"]["objective"], ["Ship review memory integration."])
+            self.assertEqual(memory["todo_summary"]["in_progress"], ["Integrate project memory"])
+            self.assertEqual(
+                memory["relevant_workstreams"][0]["slug"],
+                "production-code-quality-review-integration",
+            )
+
+    def test_build_review_brief_markdown_includes_project_memory_when_present(self):
+        module = load_module()
+        context = self.sample_context()
+        context["project_memory"] = {
+            "present": True,
+            "memory_root": ".codex-memory",
+            "project_state_path": ".codex-memory/project-state.md",
+            "todo_path": ".codex-memory/todo.md",
+                "summary": {
+                    "objective": ["Pilot best-project-memory integration into review context."],
+                    "current_phase": ["Phase 5: multi-skill integration."],
+                    "current_focus": ["Wire review context to repo memory."],
+                    "next_milestone": ["Review and harden Phase 5 output."],
+                    "active_risks": ["Context could become noisy if too much memory is loaded."],
+                    "active_blockers": [],
+                    "key_artifacts": ["production-code-quality-review/scripts/review_skill_lib.py"],
+                },
+                "todo_summary": {
+                    "in_progress": ["Integrate project memory into review context"],
+                    "next": ["Add coverage for relevant workstream matching"],
+                },
+                "relevant_workstreams": [
+                    {
+                        "slug": "production-code-quality-review-integration",
+                        "path": ".codex-memory/workstreams/production-code-quality-review-integration.md",
+                        "objective": ["Land the Phase 5 review integration pilot."],
+                        "current_state": ["Context layer now reads repo memory."],
+                        "blockers": [],
+                        "files": ["production-code-quality-review/scripts/review_skill_lib.py"],
+                        "next_actions": ["Add CLI fixture coverage"],
+                        "validation": ["python -m unittest discover production-code-quality-review/tests -v"],
+                        "relevance_score": 18,
+                    }
+                ],
+        }
+
+        markdown = module.build_review_brief_markdown(context)
+
+        self.assertIn("## Project Memory", markdown)
+        self.assertIn("production-code-quality-review-integration", markdown)
+
     def test_build_review_brief_markdown_includes_scope_and_reviewers(self):
         module = load_module()
         context = self.sample_context()
@@ -324,6 +446,8 @@ rename to src/new_name.ts
         self.assertIn("- Changed files: `src/app.ts`, `Dockerfile`", markdown)
         self.assertIn("- Review mode: `specialist`", markdown)
         self.assertIn("- Risk level: `high`", markdown)
+        self.assertIn("## Project Memory", markdown)
+        self.assertIn("Project memory not present", markdown)
         self.assertIn("## Suggested References", markdown)
         self.assertIn("- `typescript.md`", markdown)
         self.assertIn("## Verification Commands", markdown)
