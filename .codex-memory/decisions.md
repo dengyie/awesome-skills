@@ -125,3 +125,11 @@
 - Impact: The main introduction now explains which skills the repository contains, what each one is for, and where readers should go next in both languages.
 - Rollback trigger: If the repository later splits into separate packages or a generated docs site becomes the primary entrypoint, simplify the README back to a thinner navigation layer.
 - Related files: `README.md`, `docs/zh/README.zh-CN.md`, `docs/dev/2026-06-18-awesome-skills-overview-doc-refresh-plan.md`
+## 2026-06-18 - Sync Production Review Skill To GitHub Latest
+- Decision: Treat `origin/main` as the source of truth for `production-code-quality-review` and update the local skill directory from that snapshot.
+- Rationale: The remote `main` branch contains newer skill changes than the local checkout, and the package should be kept aligned with the shipped GitHub version before any further edits.
+- Impact: The local working tree now reflects the latest published skill package contents, including the updated staged review-mode `SKILL.md`.
+## 2026-06-18 - Repository Skill Selection Should Have Its Own Matrix Page
+- Decision: Add a top-level `docs/usage/skill-matrix.md` page as the primary repository-level chooser for the shipped skills.
+- Rationale: The repo README and package docs already describe the individual skills, but a new reader still lacks one compact comparison page that answers "which skill should I use first?" quickly.
+- Impact: The repository now has a reusable skill-selection surface that points users toward `best-project-memory`, `production-code-quality-review`, or `zero-to-website-design` without forcing them to infer the differences from package-specific docs.

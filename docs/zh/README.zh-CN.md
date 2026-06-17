@@ -87,6 +87,7 @@ zero-to-website-design/SKILL.md
 
 中文优先入口：
 
+- [Skill Matrix（英文技能总览）](../usage/skill-matrix.md)
 - [中文快速开始](quickstart.zh-CN.md)
 - [黄金路径](golden-path.zh-CN.md)
 - [审查工作流](review-workflows.zh-CN.md)
@@ -108,6 +109,8 @@ zero-to-website-design/SKILL.md
 
 当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`。
 `best-project-memory` 和 `zero-to-website-design` 目前主要通过 usage 文档与 `docs/dev/` 阶段开发文档记录演进。
+
+如果你现在的核心问题是“这三个 skill 到底该先用哪个”，优先看 [`docs/usage/skill-matrix.md`](../usage/skill-matrix.md)。
 
 ## 使用建议
 

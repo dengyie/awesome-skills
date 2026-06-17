@@ -188,6 +188,7 @@ bash production-code-quality-review/scripts/verify-release.sh
 
 Repository overview and usage:
 
+- [Skill Matrix](docs/usage/skill-matrix.md)
 - [Best Project Memory](docs/usage/best-project-memory.md)
 - [Zero-To-Website Design](docs/usage/zero-to-website-design.md)
 - [Golden Path](docs/usage/golden-path.md)

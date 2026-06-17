@@ -179,3 +179,15 @@
 - Results: The repository now has a clearer English and Chinese landing experience that explicitly explains which skills are included and where to read more.
 - Next: Run production review on the working-tree doc diff, then stage, commit, and push the documentation refresh.
 - Blockers: None.
+## 2026-06-18 16:45
+- Task: Sync `production-code-quality-review` to the latest GitHub version.
+- Actions: Compared the local package against `origin/main`, restored the entire `production-code-quality-review/` directory from `origin/main`, verified the package test suite with `python -m unittest discover production-code-quality-review\tests -v`, and collected fresh review context.
+- Results: The skill directory now matches the latest GitHub `main` snapshot. Tests passed, and the only runtime issue observed was a Windows `gbk` decode warning from `collect-review-context.py` output collection.
+- Next: Decide whether to commit this sync or leave it as a working-tree update alongside the unrelated repository docs changes.
+- Blockers: None.
+## 2026-06-18 17:20
+- Task: Add a repository-level skill matrix for the shipped skills and route readers to it.
+- Actions: Added `docs/dev/2026-06-18-awesome-skills-v12-skill-matrix-plan.md`; created `docs/usage/skill-matrix.md`; linked it from `README.md` and `docs/zh/README.zh-CN.md`; expanded `tests/test_repository_docs.py`; ran `python -m unittest discover E:\project\blog\awesome-skills\tests -v`; ran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; ran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`.
+- Results: The repository now has a compact chooser page for `best-project-memory`, `production-code-quality-review`, and `zero-to-website-design`. The docs regression test and zero-to-website package tests pass, and the skill package still validates cleanly.
+- Next: Stage only the matrix-doc files, commit the pass atomically, and push it without mixing in the separate production-review sync work.
+- Blockers: None.
