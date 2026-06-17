@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 
@@ -39,6 +40,10 @@ HANDOFF_SECTIONS = [
     "## Blockers",
     "## Validation To Run",
 ]
+
+STRUCTURED_SESSION_ENTRY_RE = re.compile(r"^## \d{4}-\d{2}-\d{2} \d{2}:\d{2}$", re.MULTILINE)
+SNAPSHOT_REF_RE = re.compile(r"Snapshot:\s*`([^`]+)`")
+SESSION_COMPACTION_WARNING_THRESHOLD = 8
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,6 +93,20 @@ def clean_bullets(lines: list[str]) -> list[str]:
         if value:
             items.append(value)
     return items
+
+
+def parse_snapshot_reference(project_state: str) -> str:
+    match = SNAPSHOT_REF_RE.search(project_state)
+    if not match:
+        return ""
+    return match.group(1).strip()
+
+
+def snapshot_has_changed_files(text: str) -> bool:
+    items = clean_bullets(extract_section(text, "## Changed Files"))
+    if not items:
+        return False
+    return items != ["No changed files detected."]
 
 
 def main() -> int:
@@ -147,6 +166,7 @@ def main() -> int:
     project_state_path = memory_dir / "project-state.md"
     if project_state_path.exists():
         project_state = read_text(project_state_path)
+        snapshot_reference = parse_snapshot_reference(project_state)
         blockers = clean_bullets(extract_section(project_state, "## Active Blockers"))
         if blockers and blockers != ["None."]:
             for workstream_path in list_markdown_files(memory_dir / "workstreams"):
@@ -156,6 +176,39 @@ def main() -> int:
                     warnings.append(
                         f"{workstream_path.name}: project-state has active blockers but workstream says None."
                     )
+        if snapshot_reference:
+            snapshot_path = memory_dir / "snapshots" / snapshot_reference
+            if not snapshot_path.exists():
+                errors.append(
+                    f"project-state.md: referenced snapshot does not exist: {snapshot_reference}"
+                )
+
+    session_log_path = memory_dir / "session-log.md"
+    if session_log_path.exists():
+        session_log_text = read_text(session_log_path)
+        entry_count = len(STRUCTURED_SESSION_ENTRY_RE.findall(session_log_text))
+        has_compacted_history = "## Compacted History" in session_log_text
+        if entry_count > SESSION_COMPACTION_WARNING_THRESHOLD and not has_compacted_history:
+            warnings.append(
+                "session-log.md: structured history is getting long and should be compacted"
+            )
+
+    snapshots_dir = memory_dir / "snapshots"
+    snapshots = list_markdown_files(snapshots_dir)
+    if snapshots:
+        latest_snapshot = snapshots[-1]
+        latest_snapshot_text = read_text(latest_snapshot)
+        if snapshot_has_changed_files(latest_snapshot_text) and project_state_path.exists():
+            project_state = read_text(project_state_path)
+            snapshot_reference = parse_snapshot_reference(project_state)
+            if not snapshot_reference:
+                warnings.append(
+                    f"project-state.md: latest snapshot `{latest_snapshot.name}` shows changed files but project-state does not reference a snapshot"
+                )
+            elif snapshot_reference != latest_snapshot.name:
+                warnings.append(
+                    f"project-state.md: latest snapshot `{latest_snapshot.name}` shows changed files but project-state still references `{snapshot_reference}`"
+                )
 
     for warning in warnings:
         print(f"WARNING: {warning}")

@@ -6,7 +6,8 @@
 ## Current State
 - Phase 5 Level 1 review integration is shipped.
 - `zero-to-website-design` has already proven a Level 3 governance-aware integration path.
-- V6 session compaction is complete in the working tree with tests, validation, and production review.
+- V6 session compaction is shipped.
+- V7 quality-drift hardening is complete in the working tree with tests, validation, and production review.
 
 ## Blockers
 - None.
@@ -20,7 +21,7 @@
 - `docs/usage/best-project-memory.md`
 
 ## Next Actions
-- [ ] Stage, commit, and push the V6 session-compaction changes.
+- [ ] Stage, commit, and push the V7 quality-drift hardening changes.
 - [ ] Fold the shipped V5/V6 notes into a broader V2 milestone summary.
 - [ ] Choose the next V2 governance or integration target from the remaining plan.
 

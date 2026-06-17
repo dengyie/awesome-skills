@@ -146,6 +146,12 @@ Run a structural lint pass on `.codex-memory`:
 python3 best-project-memory/scripts/memory_lint.py --repo .
 ```
 
+The lint pass now also flags:
+
+- missing snapshot files still referenced by `project-state.md`
+- long structured `session-log.md` history that should likely be compacted
+- latest snapshot evidence with changed files that is not reflected in `project-state.md`
+
 Check whether active TODO items have gone stale or vague:
 
 ```bash

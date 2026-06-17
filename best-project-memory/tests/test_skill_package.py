@@ -653,6 +653,152 @@ class BestProjectMemoryPackageTests(unittest.TestCase):
                 text=True,
             )
 
+    def test_memory_lint_errors_when_project_state_references_missing_snapshot(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "init_memory.py"),
+                    "--repo",
+                    str(repo),
+                    "--with-governance-dirs",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / ".codex-memory" / "project-state.md").write_text(
+                "# Project State\n\n"
+                "## Objective\n- Demo\n\n"
+                "## Current Phase\n- Phase 4\n\n"
+                "## Current Branch\n- feature/demo\n\n"
+                "## Last Verified\n- unit tests passing\n- Snapshot: `2026-06-18-branch-state.md`\n\n"
+                "## Active Risks\n- None.\n\n"
+                "## Active Blockers\n- None.\n\n"
+                "## Current Focus\n- Finish checks\n\n"
+                "## Next Milestone\n- Review package\n\n"
+                "## Key Artifacts\n- `README.md`\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "memory_lint.py"),
+                    "--repo",
+                    str(repo),
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("referenced snapshot does not exist", result.stdout)
+
+    def test_memory_lint_warns_when_session_log_should_be_compacted(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "init_memory.py"),
+                    "--repo",
+                    str(repo),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            entries = []
+            for index in range(9):
+                hour = 10 + index
+                entries.append(
+                    f"## 2026-06-17 {hour:02d}:00\n"
+                    f"- Task: Task {index}\n"
+                    f"- Actions: Action {index}\n"
+                    f"- Results: Result {index}\n"
+                    f"- Next: Next {index}\n"
+                    "- Blockers: None.\n"
+                )
+            (repo / ".codex-memory" / "session-log.md").write_text(
+                "# Session Log\n" + "".join(entries),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "memory_lint.py"),
+                    "--repo",
+                    str(repo),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertIn("session-log.md: structured history is getting long", result.stdout)
+            self.assertEqual(result.returncode, 0)
+
+    def test_memory_lint_warns_when_latest_snapshot_with_changes_is_not_referenced(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "init_memory.py"),
+                    "--repo",
+                    str(repo),
+                    "--with-governance-dirs",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / ".codex-memory" / "project-state.md").write_text(
+                "# Project State\n\n"
+                "## Objective\n- Demo\n\n"
+                "## Current Phase\n- Phase 4\n\n"
+                "## Current Branch\n- feature/demo\n\n"
+                "## Last Verified\n- unit tests passing\n\n"
+                "## Active Risks\n- None.\n\n"
+                "## Active Blockers\n- None.\n\n"
+                "## Current Focus\n- Finish checks\n\n"
+                "## Next Milestone\n- Review package\n\n"
+                "## Key Artifacts\n- `README.md`\n",
+                encoding="utf-8",
+            )
+            snapshots_dir = repo / ".codex-memory" / "snapshots"
+            snapshots_dir.mkdir(exist_ok=True)
+            (snapshots_dir / "2026-06-18-branch-state.md").write_text(
+                "# Snapshot\n\n"
+                "## Captured At\n- 2026-06-18 10:00\n\n"
+                "## Branch\n- feature/demo\n\n"
+                "## Changed Files\n- README.md\n\n"
+                "## Validation State\n- tests pending\n\n"
+                "## Notes\n- Demo\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "memory_lint.py"),
+                    "--repo",
+                    str(repo),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertIn("latest snapshot `2026-06-18-branch-state.md` shows changed files", result.stdout)
+            self.assertEqual(result.returncode, 0)
+
     def test_stale_todo_check_fails_for_vague_items(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)

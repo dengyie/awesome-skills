@@ -25,6 +25,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 - skipped POSIX install/update helper tests on Windows where Git Bash path semantics are not representative of the target shell environment
 - skipped symlink-recursion coverage on Windows when the process lacks symlink creation privileges
 - aligned website templates with `binding-route` and `temporary-binding` provenance language plus framework-ready versus delivery-ready reporting
+- strengthened `best-project-memory/scripts/memory_lint.py` to catch missing referenced snapshots, long session history without compaction, and snapshot-to-state visibility drift
 
 ## v0.1.6 - 2026-06-17
 
