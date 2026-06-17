@@ -9,6 +9,8 @@
 - V5 template hardening is complete in the working tree for delivery-state, provenance, and handoff artifacts.
 - V6 historical-mock framework hardening is implemented in the working tree across the skill text, references, templates, usage guide, and regression coverage.
 - V6 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
+- V7 provenance-contract hardening is implemented in the working tree across `visual-provenance.md`, `visual-source-map.md`, and regression coverage.
+- V7 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -18,7 +20,10 @@
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v5-memory-aware-templates-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v7-provenance-contract-hardening-plan.md`
 - `zero-to-website-design/SKILL.md`
+- `zero-to-website-design/references/visual-provenance.md`
+- `zero-to-website-design/assets/templates/visual-source-map.md`
 - `zero-to-website-design/assets/templates/visual-source-map.md`
 - `zero-to-website-design/assets/templates/implementation-plan.md`
 - `zero-to-website-design/assets/templates/page-spec.md`
@@ -27,8 +32,8 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Stage, commit, and push the V6 historical-mock framework hardening pass.
-- [ ] Choose the next staged `zero-to-website-design` improvement after V6 lands.
+- [ ] Stage, commit, and push the V7 provenance-contract hardening pass.
+- [ ] Choose the next staged `zero-to-website-design` improvement after V7 lands.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

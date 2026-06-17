@@ -4,7 +4,7 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: V6 historical-mock framework-delivery hardening is implemented and verified in the working tree for `zero-to-website-design`.
+- Current stage: V7 provenance-contract hardening is implemented and verified in the working tree for `zero-to-website-design`.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -39,10 +39,10 @@
 - None.
 
 ## Current Focus
-- Close out the V6 `zero-to-website-design` pass with atomic commit and leave the package ready for the next staged hardening target.
+- Close out the V7 provenance-contract pass with atomic commit and leave `zero-to-website-design` ready for the next staged hardening target.
 
 ## Next Milestone
-- Commit the V6 package updates, then choose the next staged `zero-to-website-design` improvement after historical-mock framework delivery hardening.
+- Commit the V7 provenance-contract hardening pass, then choose the next staged `zero-to-website-design` improvement.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -61,6 +61,7 @@
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v5-memory-aware-templates-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v7-provenance-contract-hardening-plan.md`
 - `best-project-memory/scripts/compact_session.py`
 - `best-project-memory/scripts/memory_lint.py`
 - `production-code-quality-review/scripts/review-entrypoint.py`
@@ -68,6 +69,7 @@
 - `README.md`
 - `docs/zh/README.zh-CN.md`
 - `zero-to-website-design/SKILL.md`
+- `zero-to-website-design/references/visual-provenance.md`
 - `zero-to-website-design/references/historical-mock-pass.md`
 - `zero-to-website-design/references/framework-first-delivery.md`
 - `zero-to-website-design/references/project-memory-integration.md`

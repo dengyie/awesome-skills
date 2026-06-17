@@ -11,13 +11,16 @@
 
 ## Sources
 
-| Asset | Source Method | Date | Status | Controls | Viewport | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
+| Asset | Source Method | Date | Status | Controls | Viewport | Authority Reason | Milestone Supported | Replacement Trigger | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Authority Notes
 
 - Current route-binding source:
 - Temporary-binding assets:
+- Route composition owners:
+- Slot-only or texture-only owners:
+- Temporary-binding upgrades in flight:
 - Superseded sources:
 - Conflicts:
 - Open decisions:

@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Provenance Templates Must Match The Stronger Temporary-Binding Contract
+- Decision: Treat `references/visual-provenance.md` and `assets/templates/visual-source-map.md` as part of the same hard requirement surface as the workflow text, and harden them immediately after V6.
+- Rationale: V6 raised the bar for temporary-binding ownership, milestone support, and replacement tracking. Leaving the provenance artifacts on the older lighter schema would reintroduce doc drift exactly where projects record source-of-truth decisions.
+- Alternatives considered: Waiting for a later general cleanup pass, or relying on users to infer the missing provenance fields from SKILL-level wording alone.
+- Impact: The next `zero-to-website-design` stage should tighten provenance rows and authority guidance so the package's workflow and project artifacts stay aligned.
+- Rollback trigger: If downstream projects show that the stricter provenance row becomes too heavy for ordinary site work, trim low-value fields while preserving ownership scope and replacement tracking.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v7-provenance-contract-hardening-plan.md`, `zero-to-website-design/references/visual-provenance.md`, `zero-to-website-design/assets/templates/visual-source-map.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Historical Repo Images Should Drive Framework-First Website Passes Before New Generation
 - Decision: Treat repo-owned mockups, screenshots, and prior concept images as the preferred visual authority for a website's framework-ready pass when they are already strong enough to control route composition.
 - Rationale: In real project work, users often want layout, route framing, and responsive structure delivered before bespoke imagery is ready. Forcing fresh image generation too early adds latency and can distract from the higher-value shell and interaction work.

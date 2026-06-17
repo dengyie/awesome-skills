@@ -99,6 +99,19 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         ]:
             self.assertIn(f"`{source_method}`", provenance)
 
+        for expected in [
+            "Authority Reason",
+            "Milestone Supported",
+            "Replacement Trigger",
+            "whole route composition",
+            "section composition",
+            "illustration slot shape",
+            "palette or texture only",
+            "`Framework Ready`",
+            "`Visual Delivery Ready`",
+        ]:
+            self.assertIn(expected, provenance)
+
     def test_skill_and_usage_docs_include_historical_mock_and_framework_ready_language(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
@@ -155,6 +168,11 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("decisions.md", memory_integration)
         self.assertIn("binding-route", visual_source_template)
         self.assertIn("temporary-binding", visual_source_template)
+        self.assertIn("Authority Reason", visual_source_template)
+        self.assertIn("Milestone Supported", visual_source_template)
+        self.assertIn("Replacement Trigger", visual_source_template)
+        self.assertIn("Route composition owners", visual_source_template)
+        self.assertIn("Temporary-binding upgrades in flight", visual_source_template)
         self.assertIn("temporary-binding assets say whether they still control route composition", production_delivery)
         self.assertIn("Route owner", mock_asset_template)
         self.assertIn("Replacement trigger", mock_asset_template)

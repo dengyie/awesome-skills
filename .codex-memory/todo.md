@@ -1,10 +1,13 @@
 # TODO
 ## In Progress
-- [ ] Review, commit, and push the `zero-to-website-design` V6 historical-mock framework hardening pass.
+- [ ] Review, commit, and push the V7 provenance-contract hardening pass.
 ## Next
-- [ ] Choose the next staged `zero-to-website-design` hardening target after V6.
+- [ ] Choose the next staged `zero-to-website-design` hardening target after V7.
 - [ ] Decide whether the next docs pass should add a dedicated top-level skill matrix or release summary page.
 ## Done
+- [x] Implement the `zero-to-website-design` V7 provenance-contract hardening pass.
+- [x] Choose the next staged `zero-to-website-design` hardening target after V6.
+- [x] Review, commit, and push the `zero-to-website-design` V6 historical-mock framework hardening pass.
 - [x] Implement the V6 `zero-to-website-design` doc/template/test wording updates.
 - [x] Write the V6 development note for historical-mock, framework-first website delivery hardening.
 - [x] Added a dedicated design plan for the repository overview documentation refresh.
