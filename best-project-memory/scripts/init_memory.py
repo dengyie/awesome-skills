@@ -130,7 +130,17 @@ def ensure_file(path: Path, content: str) -> None:
 
 def ensure_optional_dirs(memory_dir: Path) -> None:
     for directory in OPTIONAL_DIRS:
-        (memory_dir / directory).mkdir(exist_ok=True)
+        (memory_dir / directory).mkdir(parents=True, exist_ok=True)
+
+
+def ensure_core_files(memory_dir: Path) -> None:
+    for name, content in CORE_FILES.items():
+        ensure_file(memory_dir / name, content)
+
+
+def repair_memory_layout(memory_dir: Path) -> None:
+    ensure_optional_dirs(memory_dir)
+    ensure_core_files(memory_dir)
 
 
 def normalize_slug(value: str) -> str:
@@ -143,11 +153,13 @@ def main() -> int:
     memory_dir = repo / ".codex-memory"
     memory_dir.mkdir(parents=True, exist_ok=True)
 
-    if args.with_optional_dirs or args.with_governance_dirs or args.repair:
+    if args.with_optional_dirs or args.with_governance_dirs:
         ensure_optional_dirs(memory_dir)
 
-    for name, content in CORE_FILES.items():
-        ensure_file(memory_dir / name, content)
+    if args.repair:
+        repair_memory_layout(memory_dir)
+    else:
+        ensure_core_files(memory_dir)
 
     if args.default_workstream:
         ensure_optional_dirs(memory_dir)

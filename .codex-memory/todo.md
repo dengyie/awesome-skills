@@ -1,9 +1,11 @@
 # TODO
 ## In Progress
-- [ ] Record the shipped zero-to-website V5, best-project-memory V6/V7, and production-code-quality-review V8/V9 passes in broader release-facing documentation.
+- [ ] Choose the next staged V2 target after the repair-hardening pass lands.
 ## Next
-- [ ] Choose the next staged V2 target after the documentation-sync pass lands.
+- [ ] Revisit whether any remaining V2 gaps need more code proof beyond the now-shipped repair, compaction, lint, and integration stages.
 ## Done
+- [x] Hardened `best-project-memory/scripts/init_memory.py --repair` so partial `.codex-memory/` layouts are restored without overwriting existing files.
+- [x] Added a V11 repair-hardening plan for `best-project-memory`.
 - [x] Chose a V10 documentation-sync pass as the next staged V2 target after the follow-up-routing hardening landed.
 - [x] Designed, implemented, validated, and reviewed the next Level 2 routing hardening step for production review follow-ups.
 - [x] Recorded a V2 milestone summary covering the shipped Phase 5-to-V8 integration work.

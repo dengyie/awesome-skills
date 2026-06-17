@@ -126,6 +126,55 @@ class BestProjectMemoryPackageTests(unittest.TestCase):
             self.assertTrue((memory_dir / "phases").is_dir())
             self.assertTrue((memory_dir / "handoffs").is_dir())
 
+    def test_init_memory_repair_restores_missing_layout_without_overwriting_existing_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            memory_dir = repo / ".codex-memory"
+            memory_dir.mkdir()
+            (memory_dir / "project-state.md").write_text(
+                "# Project State\n\n## Objective\n- Existing objective\n",
+                encoding="utf-8",
+            )
+            (memory_dir / "workstreams").mkdir()
+            (memory_dir / "workstreams" / "release-hardening.md").write_text(
+                "# Workstream\n\n## Objective\n- Existing workstream\n",
+                encoding="utf-8",
+            )
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "init_memory.py"),
+                    "--repo",
+                    str(repo),
+                    "--repair",
+                    "--default-workstream",
+                    "release hardening",
+                    "--default-snapshot",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(
+                (memory_dir / "project-state.md").read_text(encoding="utf-8"),
+                "# Project State\n\n## Objective\n- Existing objective\n",
+            )
+            self.assertEqual(
+                (memory_dir / "workstreams" / "release-hardening.md").read_text(
+                    encoding="utf-8"
+                ),
+                "# Workstream\n\n## Objective\n- Existing workstream\n",
+            )
+            self.assertTrue((memory_dir / "session-log.md").exists())
+            self.assertTrue((memory_dir / "decisions.md").exists())
+            self.assertTrue((memory_dir / "todo.md").exists())
+            self.assertTrue((memory_dir / "phases").is_dir())
+            self.assertTrue((memory_dir / "handoffs").is_dir())
+            self.assertTrue((memory_dir / "snapshots").is_dir())
+            self.assertTrue((memory_dir / "snapshots" / "initial-snapshot.md").exists())
+
     def test_append_session_script_appends_structured_entry(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)

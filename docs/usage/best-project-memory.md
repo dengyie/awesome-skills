@@ -73,6 +73,18 @@ python3 best-project-memory/scripts/init_memory.py \
   --default-snapshot
 ```
 
+Repair a partial `.codex-memory/` layout without overwriting existing files:
+
+```bash
+python3 best-project-memory/scripts/init_memory.py \
+  --repo . \
+  --repair \
+  --default-workstream "release hardening" \
+  --default-snapshot
+```
+
+`--repair` restores missing core files and governance directories, and can also backfill a starter workstream or snapshot when those flags are provided. Existing non-missing files stay untouched.
+
 Append a structured session entry:
 
 ```bash

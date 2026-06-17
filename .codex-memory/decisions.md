@@ -48,3 +48,10 @@
 - Impact: The next target selection will be grounded in a current, auditable summary of the proven Level 1, Level 2, and Level 3 continuity surface.
 - Rollback trigger: If the repo later adopts a separate release-management flow that already mirrors these staged outcomes, keep only the main V2 plan sync and trim the broader doc updates.
 - Related files: `docs/dev/2026-06-17-best-project-memory-v2-governance-plan.md`, `docs/dev/2026-06-18-best-project-memory-v10-doc-sync-plan.md`, `docs/usage/best-project-memory.md`, `README.md`, `.codex-memory/project-state.md`, `.codex-memory/todo.md`
+## 2026-06-18 - Harden Repair Before Expanding The Remaining V2 Surface
+- Decision: Use `init_memory.py --repair` as the next code stage and make it explicitly restore partial memory layouts without overwriting existing files.
+- Rationale: The V2 plan names repair as part of the helper surface, but the current implementation is only minimally proven. Repair is the clearest remaining code-backed gap after V10 documentation sync.
+- Alternatives considered: Start another broader integration phase first, or leave repair behavior as-is and only document it.
+- Impact: `best-project-memory` now gets a deterministic recovery path for incomplete `.codex-memory/` layouts, with a regression that proves existing files are preserved.
+- Rollback trigger: If repair later needs to support more corrupted layouts, extend the helper carefully rather than broadening overwrite behavior.
+- Related files: `best-project-memory/scripts/init_memory.py`, `best-project-memory/tests/test_skill_package.py`, `docs/dev/2026-06-18-best-project-memory-v11-repair-hardening-plan.md`, `docs/usage/best-project-memory.md`

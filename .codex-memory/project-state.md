@@ -4,7 +4,7 @@
 - Expand `best-project-memory` V2 by landing staged governance and multi-skill integration work.
 
 ## Current Phase
-- Current stage: `best-project-memory` V10 documentation sync.
+- Current stage: `best-project-memory` V11 repair hardening.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -34,15 +34,16 @@
 
 ## Active Risks
 - The Level 2 review-write path is still intentionally conservative, so later stages may still need workstream-aware follow-up routing or richer priority semantics if review traffic grows more complex.
+- The `init / repair` helper surface was previously under-proven relative to the V2 plan, so this stage needs to keep repair deterministic and non-destructive.
 
 ## Active Blockers
 - None.
 
 ## Current Focus
-- Record the shipped V5-V9 continuity surface in the V2 governance plan and release-facing docs, then choose the next code-heavy staged target from that baseline.
+- Harden and verify `init_memory.py --repair` so partial `.codex-memory/` layouts can be restored without overwriting existing files.
 
 ## Next Milestone
-- Finish the V10 documentation-sync pass so the next staged V2 target is chosen from up-to-date public docs and project memory.
+- Ship V11 repair hardening with regression coverage, then choose the next remaining V2 code-heavy gap from the refreshed baseline.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -52,6 +53,7 @@
 - `docs/dev/2026-06-18-production-code-quality-review-v8-level2-memory-integration-plan.md`
 - `docs/dev/2026-06-18-production-code-quality-review-v9-followup-routing-plan.md`
 - `docs/dev/2026-06-18-best-project-memory-v10-doc-sync-plan.md`
+- `docs/dev/2026-06-18-best-project-memory-v11-repair-hardening-plan.md`
 - `.codex-memory/phases/2026-06-18-v2-integration-summary.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
