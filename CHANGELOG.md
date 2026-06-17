@@ -19,6 +19,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 - added `zero-to-website-design` usage documentation and package regression tests
 - added a development plan documenting the workflow extracted from the Little Lighthouse Folk Canvas rebuild
 - added `zero-to-website-design` V5 template hardening for delivery-state tracking, memory-aware handoffs, and reusable website workstreams
+- added a V10 documentation-sync pass that records the shipped V2 continuity surface across the main governance plan, usage docs, and repo summaries
 
 ### Fixed
 

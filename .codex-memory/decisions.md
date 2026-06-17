@@ -41,3 +41,10 @@
 - Impact: Repeated review cycles can record urgent actions without burying them in backlog noise, while exact normalized duplicates stop accumulating across active TODO sections.
 - Rollback trigger: If explicit marker routing proves too rigid in real review flows, broaden the accepted markers before adding heavier priority inference.
 - Related files: `production-code-quality-review/scripts/review_skill_lib.py`, `production-code-quality-review/tests/test_review_skill_lib.py`, `production-code-quality-review/tests/test_collect_review_context_cli.py`, `docs/dev/2026-06-18-production-code-quality-review-v9-followup-routing-plan.md`
+## 2026-06-18 - Sync Public Docs Before Choosing The Next Code-Heavy V2 Target
+- Decision: Use a documentation-sync pass as V10 before opening the next code-heavy V2 integration stage.
+- Rationale: The repository has already shipped meaningful V5-V9 continuity behavior, but the main governance plan and release-facing docs still lag behind filesystem truth. Choosing the next engineering target from stale docs would weaken traceability.
+- Alternatives considered: Jump directly into another code integration stage and defer doc sync until a later release.
+- Impact: The next target selection will be grounded in a current, auditable summary of the proven Level 1, Level 2, and Level 3 continuity surface.
+- Rollback trigger: If the repo later adopts a separate release-management flow that already mirrors these staged outcomes, keep only the main V2 plan sync and trim the broader doc updates.
+- Related files: `docs/dev/2026-06-17-best-project-memory-v2-governance-plan.md`, `docs/dev/2026-06-18-best-project-memory-v10-doc-sync-plan.md`, `docs/usage/best-project-memory.md`, `README.md`, `.codex-memory/project-state.md`, `.codex-memory/todo.md`

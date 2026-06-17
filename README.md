@@ -18,12 +18,19 @@ It is optimized for:
 - actionable TODO state
 - compact handoff generation
 - low-friction Markdown workflows
+- staged integration with other repo skills
 
 Skill entrypoint:
 
 ```text
 best-project-memory/SKILL.md
 ```
+
+Repository proof points already shipped:
+
+- `production-code-quality-review` uses it as a Level 1 read-only consumer and a Level 2 opt-in continuity writer
+- `zero-to-website-design` uses it as a Level 3 governance-aware delivery workflow
+- session compaction and drift-aware linting are available for long-running repos
 
 ### `production-code-quality-review/`
 

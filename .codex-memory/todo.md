@@ -1,9 +1,10 @@
 # TODO
 ## In Progress
-- [ ] Choose the next staged V2 target after the follow-up-routing hardening lands.
+- [ ] Record the shipped zero-to-website V5, best-project-memory V6/V7, and production-code-quality-review V8/V9 passes in broader release-facing documentation.
 ## Next
-- [ ] Record the shipped zero-to-website V5, best-project-memory V6/V7, and production-code-quality-review V8 passes in broader release-facing documentation if needed.
+- [ ] Choose the next staged V2 target after the documentation-sync pass lands.
 ## Done
+- [x] Chose a V10 documentation-sync pass as the next staged V2 target after the follow-up-routing hardening landed.
 - [x] Designed, implemented, validated, and reviewed the next Level 2 routing hardening step for production review follow-ups.
 - [x] Recorded a V2 milestone summary covering the shipped Phase 5-to-V8 integration work.
 - [x] Implemented, validated, and reviewed the production-code-quality-review V8 Level 2 memory integration pass.

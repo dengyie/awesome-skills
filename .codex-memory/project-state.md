@@ -4,7 +4,7 @@
 - Expand `best-project-memory` V2 by landing staged governance and multi-skill integration work.
 
 ## Current Phase
-- Current stage: `production-code-quality-review` V9 follow-up routing hardening.
+- Current stage: `best-project-memory` V10 documentation sync.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -39,10 +39,10 @@
 - None.
 
 ## Current Focus
-- Land and verify the V9 follow-up routing hardening step for Level 2 review memory writes.
+- Record the shipped V5-V9 continuity surface in the V2 governance plan and release-facing docs, then choose the next code-heavy staged target from that baseline.
 
 ## Next Milestone
-- Ship V9 and then choose the next staged V2 target after the Level 2 review routing path is stabilized.
+- Finish the V10 documentation-sync pass so the next staged V2 target is chosen from up-to-date public docs and project memory.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -51,6 +51,7 @@
 - `docs/dev/2026-06-18-best-project-memory-v7-quality-drift-hardening-plan.md`
 - `docs/dev/2026-06-18-production-code-quality-review-v8-level2-memory-integration-plan.md`
 - `docs/dev/2026-06-18-production-code-quality-review-v9-followup-routing-plan.md`
+- `docs/dev/2026-06-18-best-project-memory-v10-doc-sync-plan.md`
 - `.codex-memory/phases/2026-06-18-v2-integration-summary.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
