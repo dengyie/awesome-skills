@@ -22,6 +22,7 @@ Historical repo images are first-class inputs. When a project already has usable
 2. Run intake.
    - If the brief is vague, read `references/intake-brief.md`.
    - Ask only for decisions that materially change the result. Otherwise make reasonable assumptions and record them.
+   - Preserve a compact intake output or equivalent assumptions before concept expansion or broad implementation begins.
 
 3. Collect visual sources.
    - Inspect repo-owned assets, historical mockups, screenshots, or user-provided references before deciding that new generation is needed.
@@ -50,10 +51,12 @@ Historical repo images are first-class inputs. When a project already has usable
 
 7. Write design docs before code.
    - Read `references/design-system-docs.md`.
+   - Do not treat design docs as post-hoc cleanup. Broad implementation starts only after the intake output, route inventory, source-path choice, and milestone target are visible in project docs.
    - Use the templates in `assets/templates/` when the project lacks equivalent docs.
 
 8. Produce an implementation map.
    - Read `references/implementation-map.md`.
+   - Treat the implementation map as a pre-code gate, not an after-action summary.
    - Map visual regions to components, routes, assets, data sources, and responsive behavior before editing.
    - Record route owner, asset-slot owner, milestone target, and upgrade trigger when temporary-binding assets are involved.
 
@@ -117,6 +120,7 @@ Adapt templates to the project. Do not copy placeholders into final deliverables
 A zero-to-website pass is complete only when:
 
 - the project brief and assumptions are documented
+- the pre-code document gate exists: intake output, design docs, and implementation map
 - the visual source map identifies image origins and authority
 - design-system and route docs exist or have been updated
 - core routes are implemented responsively

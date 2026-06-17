@@ -2,6 +2,18 @@
 
 Use this reference after design docs exist and before editing code.
 
+Do not use implementation mapping as retroactive paperwork. If the intake output, visual source map, route docs, or milestone target are still missing, treat that as a blocker for broad implementation rather than something to patch later.
+
+## Preconditions
+
+Before broad code changes, confirm the project has:
+
+- a compact intake output or equivalent assumption record
+- a visual source map or equivalent authority record
+- design-system and implementation-plan docs or project equivalents
+- page specs or route notes for touched core routes
+- a stated milestone target and route-verification destination
+
 ## Mapping Steps
 
 1. Identify route scope.
@@ -19,6 +31,7 @@ Use this reference after design docs exist and before editing code.
 9. List files to edit.
 10. Record milestone target, route owner, and replacement trigger for any temporary-binding asset.
 11. State verification commands and browser QA routes.
+12. Record intentionally deferred routes or blockers that limit the current pass.
 
 ## Component Mapping Prompts
 
@@ -65,6 +78,7 @@ Write a compact map before code:
 ## Implementation Map
 - Routes:
 - Binding references:
+- Intake basis:
 - Components:
 - Assets:
 - Asset strategy:
@@ -77,4 +91,6 @@ Write a compact map before code:
 - Milestone target:
 - Temporary route owners:
 - Upgrade triggers:
+- Deferred routes:
+- Blockers:
 ```

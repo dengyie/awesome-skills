@@ -4,7 +4,7 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: V10 template-contract hardening is implemented and verified in the working tree for `zero-to-website-design`.
+- Current stage: `zero-to-website-design` V11 pre-code document-gate hardening is implemented in the working tree.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -45,10 +45,10 @@
 - None.
 
 ## Current Focus
-- Verify and review the V10 template-contract pass, then commit and push the atomic stage.
+- Close out the `zero-to-website-design` V11 pre-code document-gate pass with memory sync and an atomic skill-only commit while leaving unrelated repository-level docs work untouched.
 
 ## Next Milestone
-- Commit and push the V10 template-contract hardening pass, then choose the next staged `zero-to-website-design` improvement.
+- Commit the `zero-to-website-design` V11 pre-code document-gate pass and keep any unrelated repository-level docs work out of the stage commit.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -71,6 +71,7 @@
 - `docs/dev/2026-06-18-zero-to-website-design-v8-concept-authority-hardening-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v9-qa-evidence-contract-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v10-template-contract-hardening-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v11-precode-doc-gate-plan.md`
 - `best-project-memory/scripts/compact_session.py`
 - `best-project-memory/scripts/memory_lint.py`
 - `production-code-quality-review/scripts/review-entrypoint.py`

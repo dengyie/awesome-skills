@@ -1,9 +1,12 @@
 # TODO
 ## In Progress
-- [ ] Review, commit, and push the V10 template-contract hardening pass.
+- [ ] Review, commit, and push the `zero-to-website-design` V11 pre-code document-gate pass.
 ## Next
-- [ ] Decide whether the next docs pass should add a dedicated top-level skill matrix or release summary page.
+- [ ] Decide the next `zero-to-website-design` hardening target after V11 lands.
+- [ ] Decide whether the paused repository-level docs line should be resumed later.
 ## Done
+- [x] Design and implement the `zero-to-website-design` V11 pre-code document-gate pass.
+- [x] Review, commit, and push the V10 template-contract hardening pass.
 - [x] Design and implement the V10 template-contract hardening pass for `zero-to-website-design`.
 - [x] Choose the next staged `zero-to-website-design` hardening target after V9.
 - [x] Review, commit, and push the V9 QA evidence contract hardening pass.

@@ -69,6 +69,17 @@ The skill guides Codex through eleven gates:
 10. Verify with build and browser QA.
 11. Harden and deliver.
 
+## Pre-Code Document Gate
+
+Before broad implementation starts, the workflow should leave behind a compact durable artifact chain:
+
+1. intake output or explicit assumptions
+2. visual source map and source-path choice
+3. design-system plus route-doc baseline
+4. implementation map with milestone target and verification destination
+
+Do not treat these as post-hoc paperwork. If the route inventory, deferred routes, source-path choice, milestone target, or implementation order only exist in chat, the workflow is still under-documented for broad editing.
+
 When the repository uses `.codex-memory/`, the workflow should also:
 
 - restore current state before major work
@@ -87,7 +98,7 @@ When no strong reference exists, the skill should:
 4. Wait for a selected direction before making it route-authoritative.
 5. Expand the chosen direction into route specs.
 6. Record why generation was needed instead of stronger existing visuals.
-7. Implement only after the visual source map and design docs exist.
+7. Implement only after the visual source map, design docs, and implementation map exist.
 
 ## Reference-Image Path
 
