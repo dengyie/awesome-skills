@@ -31,6 +31,7 @@ class BestProjectMemoryPackageTests(unittest.TestCase):
             ROOT / "scripts" / "sync_workstream.py",
             ROOT / "scripts" / "generate_handoff.py",
             ROOT / "scripts" / "promote_decision.py",
+            ROOT / "scripts" / "compact_session.py",
             ROOT / "scripts" / "memory_lint.py",
             ROOT / "scripts" / "stale_todo_check.py",
         ]
@@ -414,6 +415,132 @@ class BestProjectMemoryPackageTests(unittest.TestCase):
             self.assertIn("README.md", handoff_text)
             self.assertIn("Run full review", handoff_text)
             self.assertIn("unit tests passing", handoff_text)
+
+    def test_compact_session_script_compacts_old_entries_and_keeps_recent_history(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "init_memory.py"),
+                    "--repo",
+                    str(repo),
+                    "--with-optional-dirs",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            session_log = repo / ".codex-memory" / "session-log.md"
+            session_log.write_text(
+                "# Session Log\n"
+                "## 2026-06-17 10:00\n"
+                "- Task: First task\n"
+                "- Actions: Did first thing\n"
+                "- Results: First result\n"
+                "- Next: First next\n"
+                "- Blockers: None.\n"
+                "## 2026-06-17 11:00\n"
+                "- Task: Second task\n"
+                "- Actions: Did second thing\n"
+                "- Results: Second result\n"
+                "- Next: Second next\n"
+                "- Blockers: None.\n"
+                "## 2026-06-17 12:00\n"
+                "- Task: Third task\n"
+                "- Actions: Did third thing\n"
+                "- Results: Third result\n"
+                "- Next: Third next\n"
+                "- Blockers: External dependency\n"
+                "## 2026-06-17 13:00\n"
+                "- Task: Fourth task\n"
+                "- Actions: Did fourth thing\n"
+                "- Results: Fourth result\n"
+                "- Next: Fourth next\n"
+                "- Blockers: None.\n",
+                encoding="utf-8",
+            )
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compact_session.py"),
+                    "--repo",
+                    str(repo),
+                    "--keep-last",
+                    "2",
+                    "--max-entries",
+                    "3",
+                    "--phase-slug",
+                    "release-hardening",
+                    "--title",
+                    "Release hardening history",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            compacted_text = session_log.read_text(encoding="utf-8")
+            self.assertIn("## Compacted History", compacted_text)
+            self.assertIn("- Title: Release hardening history", compacted_text)
+            self.assertIn("- Covered entries: 2", compacted_text)
+            self.assertIn("Second result", compacted_text)
+            self.assertNotIn("## 2026-06-17 10:00", compacted_text)
+            self.assertNotIn("## 2026-06-17 11:00", compacted_text)
+            self.assertIn("## 2026-06-17 12:00", compacted_text)
+            self.assertIn("## 2026-06-17 13:00", compacted_text)
+
+            phase_files = list((repo / ".codex-memory" / "phases").glob("*-release-hardening.md"))
+            self.assertEqual(len(phase_files), 1)
+            phase_text = phase_files[0].read_text(encoding="utf-8")
+            self.assertIn("# Phase Summary", phase_text)
+            self.assertIn("Release hardening history", phase_text)
+            self.assertIn("Second result", phase_text)
+
+    def test_compact_session_script_dry_run_and_threshold_leave_log_unchanged(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "init_memory.py"),
+                    "--repo",
+                    str(repo),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            session_log = repo / ".codex-memory" / "session-log.md"
+            original = (
+                "# Session Log\n"
+                "## 2026-06-17 10:00\n"
+                "- Task: Demo task\n"
+                "- Actions: Demo action\n"
+                "- Results: Demo result\n"
+                "- Next: Demo next\n"
+                "- Blockers: None.\n"
+            )
+            session_log.write_text(original, encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compact_session.py"),
+                    "--repo",
+                    str(repo),
+                    "--dry-run",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertIn("No compaction needed", result.stdout)
+            self.assertEqual(session_log.read_text(encoding="utf-8"), original)
 
     def test_promote_decision_script_appends_structured_entry(self):
         with tempfile.TemporaryDirectory() as temp_dir:

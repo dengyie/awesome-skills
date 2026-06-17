@@ -1,9 +1,11 @@
 # TODO
 ## In Progress
-- [ ] Stage, commit, and push the zero-to-website V5 template-hardening changes.
+- [ ] Stage, commit, and push the best-project-memory V6 session-compaction changes.
 ## Next
-- [ ] Record the shipped zero-to-website V5 pass in a broader V2 milestone summary if the next integration starts immediately.
+- [ ] Record the shipped zero-to-website V5 and best-project-memory V6 passes in a broader V2 milestone summary if the next integration starts immediately.
+- [ ] Choose the next staged V2 target after session compaction lands.
 ## Done
+- [x] Implemented, validated, and reviewed the best-project-memory V6 session-compaction pass.
 - [x] Validated and reviewed the zero-to-website V5 memory-aware template hardening pass.
 - [x] Updated zero-to-website templates and docs for V5 memory-aware delivery state.
 - [x] Added Level 3 project-memory integration guidance to `zero-to-website-design`.

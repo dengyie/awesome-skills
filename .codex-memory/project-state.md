@@ -4,7 +4,7 @@
 - Expand `best-project-memory` V2 by landing staged governance and multi-skill integration work.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V5 memory-aware template hardening.
+- Current stage: `best-project-memory` V6 session compaction.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -17,25 +17,30 @@
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
 - 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
+- 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\best-project-memory\tests -v`
+- 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\best-project-memory`
+- 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- The V5 template hardening pass must keep shipped scaffolds synchronized with the V3/V4 workflow contract, or downstream project docs will drift again.
+- Session compaction now exists, but long-running real-world repos may still reveal edge cases around partially malformed legacy `session-log.md` entries.
 
 ## Active Blockers
 - None.
 
 ## Current Focus
-- Stage, ship, and document `zero-to-website-design` V5 now that template hardening, validation, and production review have completed cleanly.
+- Ship `best-project-memory` V6 session compaction now that tests, validation, and production review have passed for the helper and docs.
 
 ## Next Milestone
-- Ship the `zero-to-website-design` V5 template-hardening pass after tests, validation, review, and memory updates are complete.
+- Land the `best-project-memory` V6 compaction pass, then choose the next staged V2 governance or integration increment.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
 - `docs/dev/2026-06-17-best-project-memory-v2-governance-plan.md`
+- `docs/dev/2026-06-18-best-project-memory-v6-session-compaction-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v5-memory-aware-templates-plan.md`
+- `best-project-memory/scripts/compact_session.py`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/references/historical-mock-pass.md`
 - `zero-to-website-design/references/framework-first-delivery.md`

@@ -152,6 +152,17 @@ Check whether active TODO items have gone stale or vague:
 python3 best-project-memory/scripts/stale_todo_check.py --repo .
 ```
 
+Compact older session history while keeping the newest entries in place:
+
+```bash
+python3 best-project-memory/scripts/compact_session.py \
+  --repo . \
+  --keep-last 3 \
+  --max-entries 6 \
+  --phase-slug release-hardening \
+  --title "Release hardening history"
+```
+
 ## Package contents
 
 - `best-project-memory/SKILL.md`
@@ -168,6 +179,7 @@ python3 best-project-memory/scripts/stale_todo_check.py --repo .
 - `best-project-memory/scripts/sync_workstream.py`
 - `best-project-memory/scripts/generate_handoff.py`
 - `best-project-memory/scripts/promote_decision.py`
+- `best-project-memory/scripts/compact_session.py`
 - `best-project-memory/scripts/memory_lint.py`
 - `best-project-memory/scripts/stale_todo_check.py`
 

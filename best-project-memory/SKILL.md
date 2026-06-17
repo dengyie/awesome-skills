@@ -91,6 +91,7 @@ Use the helper scripts when they reduce repeated hand editing:
 - `scripts/init_memory.py`: initialize `.codex-memory/` with the standard files and optional phase/handoff directories
 - `scripts/append_session.py`: append a structured session entry to `session-log.md`
 - `scripts/handoff_pack.py`: generate a compact handoff file from the current memory snapshot
+- `scripts/compact_session.py`: compact older `session-log.md` history into a shorter summary and optional phase recap
 
 Resolve script paths relative to this skill directory. For a user-scope install, they are usually under `$HOME/.agents/skills/best-project-memory/scripts/`.
 
