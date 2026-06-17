@@ -1,8 +1,8 @@
 ﻿# TODO
 ## In Progress
 ## Next
-- [ ] Decide whether the paused repository-level docs line should be resumed later.
 ## Done
+- [x] Decide whether the paused repository-level docs line should be resumed later.
 - [x] Decide the next `zero-to-website-design` hardening target after V11 lands.
 - [x] Implement the `zero-to-website-design` V14 workflow-doc alignment pass.
 - [x] Decide whether to commit the `production-code-quality-review` GitHub sync.

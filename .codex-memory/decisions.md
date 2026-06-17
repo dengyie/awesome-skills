@@ -1,4 +1,8 @@
 # Decisions
+## 2026-06-18 - Close The Paused Repository Docs Line
+- Decision: Do not resume another repository-level documentation phase without a concrete new gap.
+- Rationale: The refreshed README, release-scope correction, skill matrix, docs regression tests, and zero-to-website usage alignment already close the known repository-level navigation and scope issues.
+- Impact: The active TODO set can close cleanly. Future repository docs work should start from a new explicit trigger such as a new package, release surface, install path, or skill-selection ambiguity.
 ## 2026-06-18 - Public Usage Workflow Must Match The Skill Workflow
 - Decision: Treat the public `zero-to-website-design` usage workflow summary as part of the package contract and align it to the 12-step `SKILL.md` workflow.
 - Rationale: The skill body already requires project-memory integration as step 12, while the usage guide still described only eleven gates. This drift could cause users to miss long-running memory behavior even though the skill implements it as a completion expectation.

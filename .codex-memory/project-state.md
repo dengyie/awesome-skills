@@ -1,10 +1,10 @@
 # Project State
 
 ## Objective
-- Keep the published `zero-to-website-design` website-generation workflow internally consistent across SKILL instructions, public usage docs, tests, and project memory.
+- Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V14 `zero-to-website-design` workflow-doc alignment is implemented in the working tree.
+- Current stage: V15 repository docs line closure is implemented in the working tree.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -52,16 +52,16 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- The remaining repository-level docs line is paused; resume it only as a separately documented phase.
+- No active risks for the current documented TODO set.
 
 ## Active Blockers
 - None for the website-generation skill publication path.
 
 ## Current Focus
-- Commit and push V14 workflow-doc alignment after passing tests and production review.
+- Commit and push V15 docs-line closure, then complete the active goal if the TODO list is empty and the worktree is clean.
 
 ## Next Milestone
-- Decide whether the paused repository-level docs line should be resumed, or close the active goal if no further TODO remains.
+- No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -89,6 +89,7 @@
 - `docs/dev/2026-06-18-awesome-skills-v12-skill-matrix-plan.md`
 - `docs/dev/2026-06-18-production-code-quality-review-v13-mainline-sync-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v14-workflow-doc-alignment-plan.md`
+- `docs/dev/2026-06-18-awesome-skills-v15-repository-docs-line-closure-plan.md`
 - `best-project-memory/scripts/compact_session.py`
 - `best-project-memory/scripts/memory_lint.py`
 - `production-code-quality-review/scripts/review-entrypoint.py`
