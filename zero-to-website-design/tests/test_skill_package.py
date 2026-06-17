@@ -104,6 +104,11 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             "Authority Reason",
             "Milestone Supported",
             "Replacement Trigger",
+            "Route Family",
+            "Readiness Limiter",
+            "Upgrade Queue",
+            "Next Verification Target",
+            "Blocker Owner",
             "whole route composition",
             "section composition",
             "illustration slot shape",
@@ -202,6 +207,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("what still blocks the route and who owns the unblock", usage_text)
         self.assertIn("Generated-Authority Path", usage_text)
         self.assertIn("Record why generation was needed", usage_text)
+        self.assertIn("Asset Authority Continuity", usage_text)
+        self.assertIn("which provisional assets belong to the same upgrade queue", usage_text)
+        self.assertIn("what next verification or replacement step another session must run", usage_text)
+        self.assertIn("A visual-source note should be enough for another session", usage_text)
         self.assertIn("route evidence rows", usage_text)
         self.assertIn("not-checked", usage_text)
         self.assertIn("Visual Delivery Ready", usage_text)
@@ -229,6 +238,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("page spec as the route-level source of truth for route-data, metadata, and route-specific blockers", implementation_map)
         self.assertIn("strong enough for `Framework Ready`", historical_mock)
         self.assertIn("route owner", historical_mock)
+        self.assertIn("active upgrade queue", historical_mock)
+        self.assertIn("readiness limiter", historical_mock)
+        self.assertIn("next verification or replacement step", historical_mock)
+        self.assertIn("blocker owner", historical_mock)
         self.assertIn("replacement or upgrade trigger", historical_mock)
         self.assertIn("route composition is accepted", framework_delivery)
         self.assertIn("placeholder, curated, or generated-draft content policy is documented", framework_delivery)
@@ -262,15 +275,24 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("decisions.md", memory_integration)
         self.assertIn("current route matrix slice", memory_integration)
         self.assertIn("weakest route evidence status", memory_integration)
+        self.assertIn("asset upgrade queue", memory_integration)
         self.assertIn("Treat handoff generation as mandatory", memory_integration)
         self.assertIn("Minimum handoff or resume note fields", memory_integration)
         self.assertIn("binding-route", visual_source_template)
         self.assertIn("temporary-binding", visual_source_template)
         self.assertIn("Authority Reason", visual_source_template)
         self.assertIn("Milestone Supported", visual_source_template)
+        self.assertIn("Route Family", visual_source_template)
+        self.assertIn("Readiness Limiter", visual_source_template)
+        self.assertIn("Upgrade Queue", visual_source_template)
+        self.assertIn("Next Verification Target", visual_source_template)
+        self.assertIn("Blocker Owner", visual_source_template)
         self.assertIn("Replacement Trigger", visual_source_template)
         self.assertIn("Route composition owners", visual_source_template)
+        self.assertIn("Active upgrade queue", visual_source_template)
         self.assertIn("Temporary-binding upgrades in flight", visual_source_template)
+        self.assertIn("Next verification target", visual_source_template)
+        self.assertIn("Blocker owner", visual_source_template)
         self.assertIn("content source status by route family", (ROOT / "references" / "design-system-docs.md").read_text(encoding="utf-8"))
         self.assertIn("placeholder replacement conditions", (ROOT / "references" / "design-system-docs.md").read_text(encoding="utf-8"))
         self.assertIn("route-family ownership", (ROOT / "references" / "design-system-docs.md").read_text(encoding="utf-8"))
@@ -353,8 +375,20 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Next-session verification target", qa_report_template)
         self.assertIn("Handoff artifact", qa_report_template)
         self.assertIn("Route owner", mock_asset_template)
+        self.assertIn("Route family", mock_asset_template)
+        self.assertIn("Readiness limiter", mock_asset_template)
+        self.assertIn("Upgrade queue", mock_asset_template)
+        self.assertIn("Next verification target", mock_asset_template)
+        self.assertIn("Blocker owner", mock_asset_template)
+        self.assertIn("Active upgrade queue", mock_asset_template)
+        self.assertIn("Validate, replace, or retire next", mock_asset_template)
         self.assertIn("Replacement trigger", mock_asset_template)
         self.assertIn("Authority Reason", visual_inventory_template)
+        self.assertIn("Route Family", visual_inventory_template)
+        self.assertIn("Readiness Limiter", visual_inventory_template)
+        self.assertIn("Upgrade Queue", visual_inventory_template)
+        self.assertIn("Next Verification Target", visual_inventory_template)
+        self.assertIn("Blocker Owner", visual_inventory_template)
         self.assertIn("Replacement Trigger", visual_inventory_template)
         self.assertIn("Generation Entry Conditions", concept_generation)
         self.assertIn("record why the stronger non-generated source paths were not sufficient", concept_generation)

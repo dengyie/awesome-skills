@@ -33,8 +33,9 @@ Read when:
    - strong enough for `Visual Delivery Ready`
    - only useful as supporting texture or inspiration
 5. Mark temporary route owners as `temporary-binding` when they are valid for the current pass but expected to be upgraded later.
-6. Record route owner, section owner, limitations, and upgrade triggers.
-7. Use the assets as local mock inputs or direct binding references, depending on authority.
+6. Group related provisional assets into an active upgrade queue when they will be validated or replaced together.
+7. Record route owner, section owner, readiness limiter, blocker owner, limitations, and upgrade triggers.
+8. Use the assets as local mock inputs or direct binding references, depending on authority.
 
 ## Required Output
 
@@ -43,10 +44,15 @@ Record a compact note with:
 - historical assets found
 - authority status for each
 - route or section ownership
+- route family or active route slice still controlled
 - what each asset controls
 - why it is sufficient for the current pass
 - any `temporary-binding` usage
 - milestone supported
+- readiness limiter
+- active upgrade queue
+- next verification or replacement step
+- blocker owner
 - replacement or upgrade trigger
 - what must later be upgraded
 

@@ -5,6 +5,18 @@
 - Results: V15 is implemented in the working tree. The route-level page spec now carries stronger data/metadata, blocker, and handoff context, with passing tests, passing validation, and no confirmed blocking review findings.
 - Next: Sync project memory, stage the V15 skill-specific files, commit the phase atomically, and push the clean branch.
 - Blockers: None.
+## 2026-06-18 02:12
+- Task: Sync project memory after the V15 page-spec contract shipped and choose the next `zero-to-website-design` target.
+- Actions: Updated `.codex-memory/project-state.md`, `.codex-memory/todo.md`, and `.codex-memory/workstreams/zero-to-website-design-integration.md` to mark V15 as shipped; re-read the remaining `zero-to-website-design` contract surface to look for the next bounded gap.
+- Results: Project memory now reflects the clean post-V15 baseline. The strongest remaining gap appears to be the asset-level authority and handoff contract around visual source maps, inventories, and mock-asset passes.
+- Next: Write the V16 development plan for asset/provenance handoff hardening, then implement and verify it.
+- Blockers: None.
+## 2026-06-18 02:17
+- Task: Implement and verify the `zero-to-website-design` V16 asset authority and handoff hardening pass.
+- Actions: Wrote the V16 plan; tightened `visual-provenance.md`, `historical-mock-pass.md`, `project-memory-integration.md`, `visual-source-map.md`, `visual-source-inventory.md`, `mock-asset-pass.md`, `docs/usage/zero-to-website-design.md`, and `zero-to-website-design/tests/test_skill_package.py` around route-family ownership, readiness limiter, upgrade queue, verification target, and blocker ownership for provisional assets; ran `python -m unittest discover E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design\tests -v`; ran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design`; ran `production-code-quality-review` against the working tree.
+- Results: V16 is implemented in the working tree. Asset-facing provenance and mock-pass artifacts now preserve stronger upgrade and handoff state, with passing tests, passing validation, and no confirmed blocking review findings.
+- Next: Sync project memory, stage the V16 skill-specific files, commit the phase atomically, and push the clean branch.
+- Blockers: None.
 ## 2026-06-18 01:51
 - Task: Implement and verify the `zero-to-website-design` V14 metadata-route-data-feed integrity hardening pass.
 - Actions: Wrote the V14 plan; tightened `implementation-map.md`, `route-acceptance.md`, `visual-qa-checklist.md`, `production-delivery.md`, `implementation-plan.md`, `qa-report.md`, `docs/usage/zero-to-website-design.md`, and `zero-to-website-design/tests/test_skill_package.py` around route-data, metadata, and feed/output parity; ran `python -m unittest discover E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design\tests -v`; ran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design`; ran `production-code-quality-review` against the working tree.

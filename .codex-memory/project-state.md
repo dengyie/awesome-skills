@@ -4,7 +4,7 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V15 page-spec contract hardening is implemented in the working tree.
+- Current stage: `zero-to-website-design` V16 asset authority and handoff hardening is implemented in the working tree.
 
 ## Current Branch
 - `codex/zero-to-website-design-v11-clean`
@@ -45,10 +45,10 @@
 - None.
 
 ## Current Focus
-- Close out the `zero-to-website-design` V15 page-spec contract pass with memory sync and an atomic skill-only commit.
+- Verify, commit, and push the V16 asset authority and handoff hardening pass.
 
 ## Next Milestone
-- Commit the `zero-to-website-design` V15 page-spec contract pass, then choose the next bounded hardening target from the shipped baseline.
+- Commit the V16 asset authority and handoff hardening pass, then choose the next bounded hardening target.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`

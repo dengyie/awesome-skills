@@ -27,9 +27,9 @@ Record one:
 ## Visual Source Map Template
 
 ```md
-| Asset | Source Method | Date | Status | Controls | Viewport | Authority Reason | Milestone Supported | Replacement Trigger | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| output/design/homepage.png | imagegen | YYYY-MM-DD | binding-route | `/` route composition | desktop+mobile | User selected concept A for the shipped homepage structure | Visual Delivery Ready | Replace only if a newer route mockup is approved | User selected concept A |
+| Asset | Source Method | Date | Status | Controls | Route Family | Viewport | Authority Reason | Milestone Supported | Readiness Limiter | Upgrade Queue | Next Verification Target | Blocker Owner | Replacement Trigger | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| output/design/homepage.png | imagegen | YYYY-MM-DD | binding-route | `/` route composition | marketing shell | desktop+mobile | User selected concept A for the shipped homepage structure | Visual Delivery Ready | none | homepage-final-pass | verify final desktop/mobile QA row | design owner | Replace only if a newer route mockup is approved | User selected concept A |
 ```
 
 ## Authority Rules
@@ -60,8 +60,13 @@ Each binding image must have:
 - source method
 - date
 - route or section ownership
+- route family or active route slice ownership
 - authority reason
 - milestone supported
+- readiness limiter
+- upgrade queue when the asset is still provisional
+- next verification target when the asset still needs QA or replacement
+- blocker owner when the asset still limits readiness
 - replacement trigger
 - viewport represented
 - approval status
@@ -72,6 +77,8 @@ For `temporary-binding` images, also record whether the asset is strong enough f
 - `Framework Ready`
 - `Visual Delivery Ready`
 - support only, not direct ownership
+
+If multiple `temporary-binding` assets are moving through the same replacement plan, record them as one active upgrade queue instead of leaving the relationship implicit.
 
 ## Known Limitation Examples
 

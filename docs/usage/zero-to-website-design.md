@@ -205,6 +205,18 @@ Recognized source methods should include historical project inputs such as `exis
 
 This prevents concept art, generated mockups, screenshots, and final acceptance images from being mixed accidentally.
 
+## Asset Authority Continuity
+
+When visual-source assets still control a route or section, preserve:
+
+- which route family or route slice they own
+- whether they are `Framework Ready` only, `Visual Delivery Ready`, or support only
+- which provisional assets belong to the same upgrade queue
+- what next verification or replacement step another session must run
+- who owns the blocker or upgrade follow-up
+
+A visual-source note should be enough for another session to resume the asset track without reconstructing the current upgrade state from chat.
+
 ## Project Documents
 
 When the project lacks equivalent docs, the skill uses templates from `zero-to-website-design/assets/templates/`:
@@ -260,6 +272,7 @@ Template support now includes:
 - `website-workstream.md` for a reusable delivery workstream artifact
 - updated implementation/QA/page-spec templates that record framework-ready versus delivery-ready state
 - updated visual source map language for `binding-route` and `temporary-binding`
+- updated asset-authority fields for route-family ownership, readiness limiter, and upgrade queue state
 
 ## When Not To Use
 

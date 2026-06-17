@@ -35,6 +35,9 @@
 - V14 is committed and pushed as `19239e8 feat(阶段23): harden metadata route-data feed integrity`.
 - V15 page-spec contract hardening is implemented in the working tree across `design-system-docs.md`, `implementation-map.md`, `page-spec.md`, usage docs, and regression coverage.
 - V15 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
+- V15 is committed and pushed as `8d43e7b feat(阶段24): harden page spec contract`.
+- V16 asset-authority handoff hardening is implemented in the working tree across `visual-provenance.md`, `historical-mock-pass.md`, `project-memory-integration.md`, the visual-source/mock-asset templates, usage docs, and regression coverage.
+- V16 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -70,8 +73,7 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Commit and push the `zero-to-website-design` V15 page-spec contract pass.
-- [ ] Choose the next bounded `zero-to-website-design` hardening target after V13 lands.
+- [ ] Commit and push the `zero-to-website-design` V16 asset authority and handoff hardening pass.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

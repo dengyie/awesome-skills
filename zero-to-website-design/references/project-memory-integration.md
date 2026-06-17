@@ -78,6 +78,7 @@ Keep the workstream specific enough that another session can resume without gues
 - the current route matrix slice
 - the weakest route evidence status still in play
 - which `temporary-binding` assets still control route composition
+- which asset upgrade queue is still active
 - the next verification or implementation target
 - who or what owns each blocking follow-up
 
@@ -124,6 +125,7 @@ When summarizing website work in memory, prefer short bullets covering:
 - current route or delivery phase
 - current route matrix slice
 - binding or temporary visual sources in use
+- active asset upgrade queue when temporary visuals still control a route
 - framework-ready versus delivery-ready status
 - weakest route evidence status
 - QA state

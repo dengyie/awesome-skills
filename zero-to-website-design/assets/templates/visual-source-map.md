@@ -11,8 +11,8 @@
 
 ## Sources
 
-| Asset | Source Method | Date | Status | Controls | Viewport | Authority Reason | Milestone Supported | Replacement Trigger | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Asset | Source Method | Date | Status | Controls | Route Family | Viewport | Authority Reason | Milestone Supported | Readiness Limiter | Upgrade Queue | Next Verification Target | Blocker Owner | Replacement Trigger | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Authority Notes
 
@@ -20,7 +20,10 @@
 - Temporary-binding assets:
 - Route composition owners:
 - Slot-only or texture-only owners:
+- Active upgrade queue:
 - Temporary-binding upgrades in flight:
+- Next verification target:
+- Blocker owner:
 - Superseded sources:
 - Conflicts:
 - Open decisions:
