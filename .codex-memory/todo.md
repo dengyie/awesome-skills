@@ -1,9 +1,11 @@
 # TODO
 ## In Progress
-- [ ] Review, commit, and push the `zero-to-website-design` V16 asset authority and handoff hardening pass.
+- [ ] Review, commit, and push the `zero-to-website-design` V17 generated route mockup handoff hardening pass.
 ## Next
 - [ ] Decide whether the paused repository-level docs line should be resumed later.
 ## Done
+- [x] Decide the next `zero-to-website-design` hardening target after V16 lands.
+- [x] Review, commit, and push the `zero-to-website-design` V16 asset authority and handoff hardening pass.
 - [x] Decide the next `zero-to-website-design` hardening target after V15 lands.
 - [x] Review, commit, and push the `zero-to-website-design` V15 page-spec contract pass.
 - [x] Decide the next `zero-to-website-design` hardening target after V14 lands.

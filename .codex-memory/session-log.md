@@ -17,6 +17,12 @@
 - Results: V16 is implemented in the working tree. Asset-facing provenance and mock-pass artifacts now preserve stronger upgrade and handoff state, with passing tests, passing validation, and no confirmed blocking review findings.
 - Next: Sync project memory, stage the V16 skill-specific files, commit the phase atomically, and push the clean branch.
 - Blockers: None.
+## 2026-06-18 02:25
+- Task: Sync project memory after the V16 asset authority and handoff pass shipped and choose the next `zero-to-website-design` target.
+- Actions: Updated `.codex-memory/project-state.md`, `.codex-memory/todo.md`, and `.codex-memory/workstreams/zero-to-website-design-integration.md` to mark V16 as shipped; re-read `concept-generation.md`, provenance guidance, framework reporting, and source templates to identify the next bounded contract gap.
+- Results: Project memory now reflects the clean post-V16 baseline. The strongest remaining gap appears to be the handoff from selected concept directions into route-specific generated mockups and route-authoritative implementation inputs.
+- Next: Write the V17 development plan for generated route-mockup handoff hardening, then implement and verify it.
+- Blockers: None.
 ## 2026-06-18 01:51
 - Task: Implement and verify the `zero-to-website-design` V14 metadata-route-data-feed integrity hardening pass.
 - Actions: Wrote the V14 plan; tightened `implementation-map.md`, `route-acceptance.md`, `visual-qa-checklist.md`, `production-delivery.md`, `implementation-plan.md`, `qa-report.md`, `docs/usage/zero-to-website-design.md`, and `zero-to-website-design/tests/test_skill_package.py` around route-data, metadata, and feed/output parity; ran `python -m unittest discover E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design\tests -v`; ran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design`; ran `production-code-quality-review` against the working tree.

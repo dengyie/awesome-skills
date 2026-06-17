@@ -7,7 +7,11 @@
 ## Routes In Scope
 - Route:
   - Owner image:
+  - Concept selected from:
   - Milestone supported:
+  - Required route expansion:
+  - Hardest viewport covered:
+  - Route-mockup escalation target:
 
 ## Historical Assets Used
 - Asset:
@@ -25,6 +29,9 @@
   - Controls:
   - Route owner:
   - Section or slot owner:
+  - Inherited from selected concept:
+  - Route-mockup coverage:
+  - Escalation target:
   - Readiness limiter:
   - Upgrade queue:
   - Next verification target:

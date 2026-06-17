@@ -61,8 +61,11 @@ Each binding image must have:
 - date
 - route or section ownership
 - route family or active route slice ownership
+- inherited from selected concept or route-specific generated pass
 - authority reason
 - milestone supported
+- route-mockup coverage status
+- escalation target for this asset
 - readiness limiter
 - upgrade queue when the asset is still provisional
 - next verification target when the asset still needs QA or replacement

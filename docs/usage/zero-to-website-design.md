@@ -179,6 +179,18 @@ When generation is justified, the skill should:
 4. Record replacement triggers for any generated image that owns a route during implementation.
 5. Retire replaced generated images as `obsolete` instead of silently overwriting the authority trail.
 
+## Generated Route Mockups
+
+A chosen concept direction is not enough by itself when generated assets will guide implementation. Preserve:
+
+- which routes must be expanded from the chosen concept before coding
+- whether each generated route mockup inherits authority from the selected concept or comes from a route-specific pass
+- which desktop/mobile coverage still remains unresolved
+- whether the route mockup is only `temporary-binding` or strong enough for `binding-route`
+- what another session must verify before implementation begins from that mockup
+
+The next session should be able to read the visual-source artifacts and know exactly which generated route mockups exist, what they control, and what still blocks stronger authority.
+
 ## Visual Provenance
 
 This skill treats image origin as a first-class requirement.

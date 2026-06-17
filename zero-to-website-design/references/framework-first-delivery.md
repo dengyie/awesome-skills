@@ -26,6 +26,7 @@ A route is `Framework Ready` when:
 - placeholder or `temporary-binding` assets are correctly placed
 - placeholder, curated, or generated-draft content policy is documented
 - route-family owner and replacement trigger are named when content is provisional
+- route-mockup coverage and escalation target are named when generated assets still shape routes
 - temporary assets are documented with route ownership and replacement triggers
 - responsive behavior is stable
 - no overflow, clipping, or dead interactions remain

@@ -22,8 +22,9 @@ Before generation, record why the stronger non-generated source paths were not s
 3. Show or name the tradeoffs clearly.
 4. Ask the user to choose or combine directions.
 5. Extend the selected direction into route-specific mockups.
-6. Record selected images in the visual source map.
-7. Record whether the generated outputs are only for direction, `temporary-binding`, or intended to become `binding-route` later.
+6. Record which required routes and hardest viewports are already covered, and which still need route-specific expansion before implementation.
+7. Record selected images in the visual source map.
+8. Record whether the generated outputs are only for direction, `temporary-binding`, or intended to become `binding-route` later.
 
 ## Image Generation Guidance
 
@@ -83,13 +84,17 @@ Only move it to `approved-direction` when the chosen image is also recorded with
 - route family or system scope
 - viewport coverage or known gap
 - known limitations that matter for implementation
+- required route-mockup expansion still to be produced
 
 Move it to `binding-route` only when it controls implementation for a route or section.
 
 Only move it to `binding-route` when all of these are true:
 
 - route ownership is explicit
+- the route mockup is explicit about whether it inherits authority from the selected concept or comes from a route-specific generated pass
 - milestone supported is explicit
+- route-mockup coverage is explicit for the route and relevant viewport
+- next verification target is explicit
 - replacement trigger is explicit
 - the image is specific enough to guide implementation without relying on private guesswork
 
@@ -98,7 +103,9 @@ Move it to `temporary-binding` when it is valid for the current framework or moc
 Only move it to `temporary-binding` when:
 
 - the generated image is strong enough for the current milestone
+- the route-mockup escalation target is explicit
 - the expected upgrade path is known
+- the next verification or replacement target is known
 - final delivery does not pretend the generated output is already the final source of truth
 
 If a later design replaces it, mark the old image `obsolete` instead of deleting history.
@@ -119,7 +126,15 @@ After the user chooses a concept, generate or define mockups for the routes that
 - category/filter/archive page when relevant
 - one mobile frame for the hardest layout
 
-Implementation should begin only after the route ownership is clear.
+For each generated route mockup, record:
+
+- which selected concept it inherits from, if any
+- whether the route mockup inherits authority or overrides the chosen concept
+- whether the route can begin at `temporary-binding` or is strong enough for `binding-route`
+- which viewport is still the hardest unresolved case
+- what must be verified before implementation begins from that mockup
+
+Implementation should begin only after the route ownership, route-mockup coverage, and next verification target are clear.
 
 ## Guardrails
 

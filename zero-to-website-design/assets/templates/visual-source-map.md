@@ -11,8 +11,8 @@
 
 ## Sources
 
-| Asset | Source Method | Date | Status | Controls | Route Family | Viewport | Authority Reason | Milestone Supported | Readiness Limiter | Upgrade Queue | Next Verification Target | Blocker Owner | Replacement Trigger | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Asset | Source Method | Date | Status | Controls | Route Family | Viewport | Authority Reason | Milestone Supported | Inherited From | Route-Mockup Coverage | Escalation Target | Readiness Limiter | Upgrade Queue | Next Verification Target | Blocker Owner | Replacement Trigger | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Authority Notes
 
@@ -23,6 +23,7 @@
 - Active upgrade queue:
 - Temporary-binding upgrades in flight:
 - Next verification target:
+- Escalation target:
 - Blocker owner:
 - Superseded sources:
 - Conflicts:

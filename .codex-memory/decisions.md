@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-18 - The Next Gap Is The Handoff From Chosen Concept To Route Mockup Authority
+- Decision: After V16, target the generated route-mockup handoff contract as V17 by tightening how a chosen concept direction becomes route-scoped mockups, temporary-binding inputs, or binding-route references.
+- Rationale: Generation-entry and authority-escalation rules already exist, but the bridge from an approved direction to route-specific implementation authority is still lighter than the rest of the workflow. That leaves too much implicit judgment in the expansion step.
+- Impact: The next stage will make route-mockup expansion, viewport coverage, ownership handoff, and escalation criteria more resumable and auditable.
+- Rollback trigger: If downstream projects show the route-mockup expansion fields are too heavy for simple sites, keep route ownership, viewport coverage, and escalation conditions while trimming less critical prose.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v17-generated-route-mockup-handoff-plan.md`, `zero-to-website-design/references/concept-generation.md`, `zero-to-website-design/references/visual-provenance.md`, `zero-to-website-design/assets/templates/visual-source-map.md`, `zero-to-website-design/assets/templates/mock-asset-pass.md`
 ## 2026-06-18 - Asset Authority And Handoff State Need A Dedicated Continuity Contract
 - Decision: Use asset authority and handoff hardening as the V16 stage for `zero-to-website-design`, and make visual-source artifacts preserve route-family ownership, readiness limiter, upgrade queue, and next verification target.
 - Rationale: Route-level and delivery-level contracts are already strong, but provisional assets still needed a dedicated continuity layer so another session can resume upgrade work without reconstructing the asset queue from chat.
