@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Release-Facing Docs Must Describe The Repository Scope, Not Only One Package
+- Decision: Use a repository-level release-docs scope correction as V11 so public release-facing docs stop implying that only `production-code-quality-review` defines the repo's shipped documentation surface.
+- Rationale: After V6-V10, the strongest remaining public-facing drift is in the repository navigation layer. The repo README already describes a three-skill collection, but the English and Chinese release indexes still describe themselves as if they belonged only to one package.
+- Alternatives considered: Opening another `zero-to-website-design` contract-hardening pass first, or creating formal versioned release-note files for every skill immediately.
+- Impact: Release-facing docs now explain that formal versioned release notes currently ship for `production-code-quality-review`, while `best-project-memory` and `zero-to-website-design` are routed through usage docs and staged development notes.
+- Rollback trigger: If the repository later adds formal release-note files for the other packages, simplify this wording into a broader package matrix instead of keeping the "current scope" explanation.
+- Related files: `docs/dev/2026-06-18-awesome-skills-v11-release-docs-scope-correction-plan.md`, `README.md`, `docs/releases/README.md`, `docs/zh/README.zh-CN.md`, `docs/zh/releases/README.zh-CN.md`, `tests/test_repository_docs.py`
 ## 2026-06-18 - Delivery Templates Must Carry The Stronger Workflow Contract
 - Decision: Use template-contract hardening as the V10 stage for `zero-to-website-design`, and align the shipped implementation, page-spec, asset/data, and design-system templates with the stricter V6-V9 provenance and QA rules.
 - Rationale: The reference docs now require route readiness state, route evidence, source ownership, replacement triggers, and handoff-sensitive gaps, but several copied scaffolds still under-recorded those fields. That mismatch would cause downstream repos to drift back to weaker delivery artifacts.

@@ -106,6 +106,9 @@ zero-to-website-design/SKILL.md
 - [`docs/usage/review-workflows.md`](../usage/review-workflows.md)
 - [`docs/releases/README.md`](../releases/README.md)
 
+当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`。
+`best-project-memory` 和 `zero-to-website-design` 目前主要通过 usage 文档与 `docs/dev/` 阶段开发文档记录演进。
+
 ## 使用建议
 
 - 如果你首先关心“仓库里到底有什么”，先读英文 `README.md`

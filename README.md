@@ -2,7 +2,7 @@
 
 Reusable Codex skills with an evidence-first, production-engineering bias.
 
-Latest release: `v0.1.6`
+Latest formal package release notes: `production-code-quality-review v0.1.6`
 
 ## What This Repo Contains
 
@@ -197,6 +197,9 @@ Repository overview and usage:
 - [FAQ](docs/usage/faq.md)
 - [Troubleshooting](docs/usage/troubleshooting.md)
 - [Release Notes](docs/releases/README.md)
+
+Current formal versioned release notes are published for `production-code-quality-review`.
+For `best-project-memory` and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
 
 Chinese documentation:
 

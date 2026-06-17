@@ -35,6 +35,18 @@
 - Results: Quick validation passed and production review surfaced no confirmed blocking findings for the V10 diff.
 - Next: Commit and push the V10 pass, then choose the next staged hardening target.
 - Blockers: None.
+## 2026-06-18 15:10
+- Task: Close out V10 and choose the next bounded stage.
+- Actions: Verified from git history that `a05196f feat(阶段18): harden delivery templates` is already committed and pushed; corrected project-memory drift; inspected repository-level README, Chinese README, release indexes, and public usage docs; identified that release-facing docs still describe a single-skill release surface centered on `production-code-quality-review`.
+- Results: V10 is fully landed. The next stage is a repository-level V11 release-facing docs scope-correction pass.
+- Next: Write the V11 design note, update release-facing docs and tests, run validation plus production review, then commit the pass.
+- Blockers: None.
+## 2026-06-18 15:35
+- Task: Implement and verify the repository-level V11 release-facing docs scope-correction pass.
+- Actions: Added the V11 design note; updated `README.md`, `docs/releases/README.md`, `docs/zh/README.zh-CN.md`, and `docs/zh/releases/README.zh-CN.md` so release-facing docs describe the repository-level scope and current package coverage accurately; added a repository-level regression test in `tests/test_repository_docs.py`; ran `python -m unittest discover -s E:\project\blog\awesome-skills\tests -p test_repository_docs.py -v`; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.
+- Results: V11 is implemented in the working tree. Repository-level release docs now match the actual multi-skill repo scope, the new docs regression test passes, existing zero-to-website tests still pass, quick validation passes, and production review surfaced no confirmed blocking findings.
+- Next: Commit and push the V11 pass, then choose the next staged improvement.
+- Blockers: None.
 ## 2026-06-18 14:05
 - Task: Implement and verify the `zero-to-website-design` V8 concept-authority hardening pass.
 - Actions: Added the V8 development note; hardened `zero-to-website-design/references/concept-generation.md` with generation-entry conditions, authority escalation, and retirement rules; updated `SKILL.md` and `docs/usage/zero-to-website-design.md` to align the public workflow; expanded regression tests; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.

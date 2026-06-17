@@ -1,9 +1,11 @@
 # TODO
 ## In Progress
-- [ ] Review, commit, and push the V10 template-contract hardening pass.
+- [ ] Review, commit, and push the V11 release-facing docs scope-correction pass.
 ## Next
 - [ ] Decide whether the next docs pass should add a dedicated top-level skill matrix or release summary page.
 ## Done
+- [x] Design and implement the V11 release-facing docs scope-correction pass.
+- [x] Review, commit, and push the V10 template-contract hardening pass.
 - [x] Design and implement the V10 template-contract hardening pass for `zero-to-website-design`.
 - [x] Choose the next staged `zero-to-website-design` hardening target after V9.
 - [x] Review, commit, and push the V9 QA evidence contract hardening pass.

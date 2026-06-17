@@ -21,6 +21,7 @@
 - V10 template-contract hardening is selected as the next stage. The target is to align the core delivery templates with the stronger provenance, QA evidence, and readiness contract shipped in earlier stages.
 - V10 is implemented in the working tree across `implementation-plan.md`, `page-spec.md`, `asset-and-data-spec.md`, `design-system-master.md`, and regression coverage.
 - V10 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
+- V10 is committed and pushed as `a05196f feat(阶段18): harden delivery templates`.
 
 ## Blockers
 - None.
@@ -52,8 +53,7 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Run tests, quick validation, and production review for V10.
-- [ ] Commit and push the V10 pass.
+- [ ] Keep the next repository-level docs pass aligned with the shipped V6-V10 `zero-to-website-design` surface.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
