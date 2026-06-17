@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-18 01:02
+- Task: Implement and verify the `zero-to-website-design` V11 pre-code document-gate hardening pass.
+- Actions: Wrote `docs/dev/2026-06-18-zero-to-website-design-v11-precode-doc-gate-plan.md`; tightened `SKILL.md`, `references/intake-brief.md`, `references/design-system-docs.md`, `references/implementation-map.md`, and `docs/usage/zero-to-website-design.md` around the pre-code artifact gate; expanded regression coverage in `zero-to-website-design/tests/test_skill_package.py`; ran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; ran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; reran `production-code-quality-review` with UTF-8 process encoding after a Windows console decode failure on the first attempt.
+- Results: V11 is implemented in the working tree. The package now requires a preserved intake output, a visible design-doc baseline, and an implementation map before broad implementation starts, with passing tests, passing validation, and no confirmed blocking review findings.
+- Next: Sync project memory, stage only the V11 skill-specific files, commit the phase atomically, and leave unrelated repository-level docs work out of the commit.
+- Blockers: Existing unrelated repository-level docs edits remain in the working tree and must be excluded from the V11 stage commit.
 ## 2026-06-17 23:34
 - Task: Close out V8 and choose the next staged `zero-to-website-design` hardening target.
 - Actions: Committed and pushed `2f07fe5 feat(阶段16): harden concept authority`; re-read route acceptance, visual QA, production delivery, usage docs, and the zero-to-website workstream; selected V9 QA evidence contract hardening as the next stage.
@@ -47,6 +53,12 @@
 - Results: V11 is implemented in the working tree. Repository-level release docs now match the actual multi-skill repo scope, the new docs regression test passes, existing zero-to-website tests still pass, quick validation passes, and production review surfaced no confirmed blocking findings.
 - Next: Commit and push the V11 pass, then choose the next staged improvement.
 - Blockers: None.
+## 2026-06-18 16:05
+- Task: Push V11 and decide how to continue despite external transport issues.
+- Actions: Created `786fd25 docs(阶段19): correct release docs scope`; attempted `git push origin codex/best-project-memory-expansion` twice with longer timeouts; confirmed the remote is reachable via `git ls-remote` and still points to `a05196f`; confirmed the local branch remains `ahead 1`; inspected repository-level usage docs and identified the next remaining public-doc gap as the missing top-level skill matrix.
+- Results: V11 is committed locally but not yet on GitHub because push attempts time out without a repository-side rejection. The next local stage should be a repository-level skill matrix pass.
+- Next: Record the push timeout in project memory, write the V12 design note, and continue the docs hardening loop locally.
+- Blockers: External git push timeout for V11.
 ## 2026-06-18 14:05
 - Task: Implement and verify the `zero-to-website-design` V8 concept-authority hardening pass.
 - Actions: Added the V8 development note; hardened `zero-to-website-design/references/concept-generation.md` with generation-entry conditions, authority escalation, and retirement rules; updated `SKILL.md` and `docs/usage/zero-to-website-design.md` to align the public workflow; expanded regression tests; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.

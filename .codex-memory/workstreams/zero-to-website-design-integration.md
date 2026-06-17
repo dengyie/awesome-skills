@@ -22,6 +22,8 @@
 - V10 is implemented in the working tree across `implementation-plan.md`, `page-spec.md`, `asset-and-data-spec.md`, `design-system-master.md`, and regression coverage.
 - V10 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 - V10 is committed and pushed as `a05196f feat(阶段18): harden delivery templates`.
+- V11 pre-code document-gate hardening is implemented in the working tree across `intake-brief.md`, `design-system-docs.md`, `implementation-map.md`, `SKILL.md`, usage docs, and regression coverage.
+- V11 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues after rerunning with UTF-8 process encoding.
 
 ## Blockers
 - None.
@@ -35,6 +37,10 @@
 - `docs/dev/2026-06-18-zero-to-website-design-v8-concept-authority-hardening-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v9-qa-evidence-contract-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v10-template-contract-hardening-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v11-precode-doc-gate-plan.md`
+- `zero-to-website-design/references/intake-brief.md`
+- `zero-to-website-design/references/design-system-docs.md`
+- `zero-to-website-design/references/implementation-map.md`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/references/concept-generation.md`
 - `zero-to-website-design/references/visual-provenance.md`
@@ -53,7 +59,8 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Keep the next repository-level docs pass aligned with the shipped V6-V10 `zero-to-website-design` surface.
+- [ ] Commit and push the `zero-to-website-design` V11 pre-code document-gate pass.
+- [ ] Choose the next bounded `zero-to-website-design` hardening target after V11 lands.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Pre-Code Artifacts Must Gate Broad Website Implementation
+- Decision: Use a pre-code document-gate hardening pass as the V11 stage for `zero-to-website-design`, and require a preserved intake output, design-doc baseline, and implementation map before broad implementation begins.
+- Rationale: The V6-V10 workflow already makes provenance, QA evidence, and delivery state much stricter, but the intake-to-implementation handoff still left too much room for backfilling key planning artifacts after code had already started. Tightening the earlier gate reduces workflow drift where route scope, source-path choice, and milestone intent first become binding.
+- Alternatives considered: Opening another later-stage QA or template pass first, or relying on users to infer the pre-code gate from scattered wording across the existing references.
+- Impact: The package now makes route inventory, deferred routes, source-path choice, milestone target, prerequisite docs, and implementation-map blockers more explicit across the references, `SKILL.md`, usage docs, and regression coverage.
+- Rollback trigger: If downstream projects show that the pre-code gate has become too heavy for small sites, keep the artifact chain requirement but trim low-value wording while preserving the intake, route-scope, and implementation-map checkpoints.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v11-precode-doc-gate-plan.md`, `zero-to-website-design/references/intake-brief.md`, `zero-to-website-design/references/design-system-docs.md`, `zero-to-website-design/references/implementation-map.md`, `zero-to-website-design/SKILL.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Release-Facing Docs Must Describe The Repository Scope, Not Only One Package
 - Decision: Use a repository-level release-docs scope correction as V11 so public release-facing docs stop implying that only `production-code-quality-review` defines the repo's shipped documentation surface.
 - Rationale: After V6-V10, the strongest remaining public-facing drift is in the repository navigation layer. The repo README already describes a three-skill collection, but the English and Chinese release indexes still describe themselves as if they belonged only to one package.
