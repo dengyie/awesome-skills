@@ -17,6 +17,10 @@
 - V9 QA evidence contract hardening is selected as the next stage. The target is to make route acceptance and visual QA evidence explicit enough to support production-grade final claims.
 - V9 is implemented in the working tree across `route-acceptance.md`, `visual-qa-checklist.md`, `production-delivery.md`, `SKILL.md`, usage docs, and regression coverage.
 - V9 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
+- V9 is committed and pushed as `8fbe2f5 feat(阶段17): harden qa evidence contract`.
+- V10 template-contract hardening is selected as the next stage. The target is to align the core delivery templates with the stronger provenance, QA evidence, and readiness contract shipped in earlier stages.
+- V10 is implemented in the working tree across `implementation-plan.md`, `page-spec.md`, `asset-and-data-spec.md`, `design-system-master.md`, and regression coverage.
+- V10 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -29,12 +33,17 @@
 - `docs/dev/2026-06-18-zero-to-website-design-v7-provenance-contract-hardening-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v8-concept-authority-hardening-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v9-qa-evidence-contract-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v10-template-contract-hardening-plan.md`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/references/concept-generation.md`
 - `zero-to-website-design/references/visual-provenance.md`
 - `zero-to-website-design/references/route-acceptance.md`
 - `zero-to-website-design/references/visual-qa-checklist.md`
 - `zero-to-website-design/references/production-delivery.md`
+- `zero-to-website-design/assets/templates/design-system-master.md`
+- `zero-to-website-design/assets/templates/implementation-plan.md`
+- `zero-to-website-design/assets/templates/page-spec.md`
+- `zero-to-website-design/assets/templates/asset-and-data-spec.md`
 - `zero-to-website-design/assets/templates/visual-source-map.md`
 - `zero-to-website-design/assets/templates/implementation-plan.md`
 - `zero-to-website-design/assets/templates/page-spec.md`
@@ -43,8 +52,8 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Commit and push the V9 pass.
-- [ ] Choose the next staged `zero-to-website-design` improvement after V9 lands.
+- [ ] Run tests, quick validation, and production review for V10.
+- [ ] Commit and push the V10 pass.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

@@ -1,10 +1,12 @@
 # TODO
 ## In Progress
-- [ ] Review, commit, and push the V9 QA evidence contract hardening pass.
+- [ ] Review, commit, and push the V10 template-contract hardening pass.
 ## Next
-- [ ] Choose the next staged `zero-to-website-design` hardening target after V9.
 - [ ] Decide whether the next docs pass should add a dedicated top-level skill matrix or release summary page.
 ## Done
+- [x] Design and implement the V10 template-contract hardening pass for `zero-to-website-design`.
+- [x] Choose the next staged `zero-to-website-design` hardening target after V9.
+- [x] Review, commit, and push the V9 QA evidence contract hardening pass.
 - [x] Design and implement the V9 QA evidence contract hardening pass for `zero-to-website-design`.
 - [x] Review, commit, and push the V8 concept-authority hardening pass.
 - [x] Choose the next staged `zero-to-website-design` hardening target after V8.

@@ -141,6 +141,18 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         visual_source_template = (ROOT / "assets" / "templates" / "visual-source-map.md").read_text(
             encoding="utf-8"
         )
+        implementation_plan_template = (
+            ROOT / "assets" / "templates" / "implementation-plan.md"
+        ).read_text(encoding="utf-8")
+        page_spec_template = (ROOT / "assets" / "templates" / "page-spec.md").read_text(
+            encoding="utf-8"
+        )
+        asset_data_template = (
+            ROOT / "assets" / "templates" / "asset-and-data-spec.md"
+        ).read_text(encoding="utf-8")
+        design_system_template = (
+            ROOT / "assets" / "templates" / "design-system-master.md"
+        ).read_text(encoding="utf-8")
         concept_generation = (ROOT / "references" / "concept-generation.md").read_text(
             encoding="utf-8"
         )
@@ -198,6 +210,30 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Replacement Trigger", visual_source_template)
         self.assertIn("Route composition owners", visual_source_template)
         self.assertIn("Temporary-binding upgrades in flight", visual_source_template)
+        self.assertIn("Weakest expected route status", implementation_plan_template)
+        self.assertIn("Route Ownership And Risks", implementation_plan_template)
+        self.assertIn("Route evidence destination", implementation_plan_template)
+        self.assertIn("Accepted-gap policy", implementation_plan_template)
+        self.assertIn("Blocking failure rule", implementation_plan_template)
+        self.assertIn("## Route Identity", page_spec_template)
+        self.assertIn("Source owner", page_spec_template)
+        self.assertIn("Viewport evidence target", page_spec_template)
+        self.assertIn("Current route status", page_spec_template)
+        self.assertIn("## QA Evidence", page_spec_template)
+        self.assertIn("Blocking failures", page_spec_template)
+        self.assertIn("Accepted gaps", page_spec_template)
+        self.assertIn("Source Method", asset_data_template)
+        self.assertIn("Authority Status", asset_data_template)
+        self.assertIn("Ownership Scope", asset_data_template)
+        self.assertIn("Replacement Trigger", asset_data_template)
+        self.assertIn("Temporary visual scope", asset_data_template)
+        self.assertIn("Replacement triggers are recorded", asset_data_template)
+        self.assertIn("## Delivery State", design_system_template)
+        self.assertIn("Milestone target", design_system_template)
+        self.assertIn("Final route-readiness gate", design_system_template)
+        self.assertIn("Binding-route references", design_system_template)
+        self.assertIn("Temporary-binding references", design_system_template)
+        self.assertIn("Weakest allowed route evidence status", design_system_template)
         self.assertIn("temporary-binding assets say whether they still control route composition", production_delivery)
         self.assertIn("route evidence status for each touched core route", production_delivery)
         self.assertIn("Readiness Claim Rules", production_delivery)

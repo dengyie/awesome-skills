@@ -4,6 +4,13 @@
 
 Describe the website outcome in one paragraph.
 
+## Delivery State
+
+- Milestone target:
+- Final route-readiness gate:
+- Related workstream:
+- Handoff-sensitive follow-up:
+
 ## Audience
 
 - Primary audience:
@@ -20,6 +27,10 @@ Describe the website outcome in one paragraph.
 ## Visual Source
 
 Link to `VISUAL-SOURCE-MAP.md` and name the binding references.
+
+- Binding-route references:
+- Temporary-binding references:
+- Temporary visual scope:
 
 ## Visual Principles
 
@@ -73,4 +84,4 @@ Link to `VISUAL-SOURCE-MAP.md` and name the binding references.
 - Browser QA:
 - Visual fidelity:
 - Production review:
-
+- Weakest allowed route evidence status:

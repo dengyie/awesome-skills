@@ -11,6 +11,30 @@
 - Results: V9 is implemented and verified in the working tree. The package now requires route evidence rows, explicit failure classification, and readiness claims tied to recorded QA status, with passing tests and no confirmed blocking review findings.
 - Next: Commit and push the V9 pass, then choose the next staged hardening target.
 - Blockers: None.
+## 2026-06-18 00:05
+- Task: Close out the V9 stage and move the workstream to the next planning loop.
+- Actions: Committed `8fbe2f5 feat(阶段17): harden qa evidence contract`; pushed `codex/best-project-memory-expansion`; verified the worktree is clean; refreshed TODO and project-state focus toward next-stage selection.
+- Results: V9 is now fully landed on GitHub and the repository is ready for V10 scoping.
+- Next: Inspect the remaining `zero-to-website-design` references and templates, choose the next bounded hardening target, and write its design note.
+- Blockers: None.
+## 2026-06-18 00:20
+- Task: Choose and document the next `zero-to-website-design` stage after V9.
+- Actions: Re-read the current implementation, page, asset/data, design-system, and QA templates against the strengthened V6-V9 references; identified that several shipped templates still under-specify provenance, route readiness, QA evidence, and handoff state; selected template-contract hardening as V10 and updated project memory toward the new stage.
+- Results: The next stage is now explicit: `docs/dev/2026-06-18-zero-to-website-design-v10-template-contract-hardening-plan.md`.
+- Next: Write the V10 design note, implement the template and test updates, run validation and production review, then commit the stage.
+- Blockers: None.
+## 2026-06-18 00:35
+- Task: Implement the `zero-to-website-design` V10 template-contract hardening pass.
+- Actions: Added the V10 design note; strengthened the implementation, page-spec, asset/data, and design-system templates so they capture route status, source ownership, replacement triggers, QA evidence, and handoff-sensitive delivery state; expanded regression tests; ran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`.
+- Results: V10 is implemented in the working tree and package tests pass.
+- Next: Run quick validation and production review; fix confirmed issues; then commit and push.
+- Blockers: None.
+## 2026-06-18 00:45
+- Task: Verify the `zero-to-website-design` V10 template-contract hardening pass.
+- Actions: Ran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree with UTF-8 process encoding to avoid Windows console decode noise.
+- Results: Quick validation passed and production review surfaced no confirmed blocking findings for the V10 diff.
+- Next: Commit and push the V10 pass, then choose the next staged hardening target.
+- Blockers: None.
 ## 2026-06-18 14:05
 - Task: Implement and verify the `zero-to-website-design` V8 concept-authority hardening pass.
 - Actions: Added the V8 development note; hardened `zero-to-website-design/references/concept-generation.md` with generation-entry conditions, authority escalation, and retirement rules; updated `SKILL.md` and `docs/usage/zero-to-website-design.md` to align the public workflow; expanded regression tests; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.

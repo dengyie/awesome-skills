@@ -4,12 +4,15 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: V9 QA evidence contract hardening is implemented and verified in the working tree for `zero-to-website-design`.
+- Current stage: V10 template-contract hardening is implemented and verified in the working tree for `zero-to-website-design`.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
 
 ## Last Verified
+- 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
+- 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-17: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
 - 2026-06-17: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-17: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
@@ -42,10 +45,10 @@
 - None.
 
 ## Current Focus
-- Close out the V9 route acceptance and visual QA evidence contract with an atomic commit and push, then choose the next staged hardening target.
+- Verify and review the V10 template-contract pass, then commit and push the atomic stage.
 
 ## Next Milestone
-- Commit and push the V9 QA evidence contract hardening pass, then choose the next staged `zero-to-website-design` improvement.
+- Commit and push the V10 template-contract hardening pass, then choose the next staged `zero-to-website-design` improvement.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -67,6 +70,7 @@
 - `docs/dev/2026-06-18-zero-to-website-design-v7-provenance-contract-hardening-plan.md`
 - `docs/dev/2026-06-18-zero-to-website-design-v8-concept-authority-hardening-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v9-qa-evidence-contract-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v10-template-contract-hardening-plan.md`
 - `best-project-memory/scripts/compact_session.py`
 - `best-project-memory/scripts/memory_lint.py`
 - `production-code-quality-review/scripts/review-entrypoint.py`

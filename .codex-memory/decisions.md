@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Delivery Templates Must Carry The Stronger Workflow Contract
+- Decision: Use template-contract hardening as the V10 stage for `zero-to-website-design`, and align the shipped implementation, page-spec, asset/data, and design-system templates with the stricter V6-V9 provenance and QA rules.
+- Rationale: The reference docs now require route readiness state, route evidence, source ownership, replacement triggers, and handoff-sensitive gaps, but several copied scaffolds still under-recorded those fields. That mismatch would cause downstream repos to drift back to weaker delivery artifacts.
+- Alternatives considered: Opening another reference-only prose pass, or adding brand-new templates instead of strengthening the existing ones.
+- Impact: The package templates now make it natural to record route-owner risk, weakest route status, viewport evidence targets, source method, authority status, replacement triggers, and final route-readiness gates.
+- Rollback trigger: If downstream projects show the new template fields are too heavy for small sites, trim low-value wording while keeping the route status, ownership, and replacement fields.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v10-template-contract-hardening-plan.md`, `zero-to-website-design/assets/templates/implementation-plan.md`, `zero-to-website-design/assets/templates/page-spec.md`, `zero-to-website-design/assets/templates/asset-and-data-spec.md`, `zero-to-website-design/assets/templates/design-system-master.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-17 - Route QA Must Produce Evidence Before Readiness Claims
 - Decision: Treat route acceptance and browser QA evidence as the V9 hardening target for `zero-to-website-design`.
 - Rationale: V6-V8 made visual source authority stricter, but a production website pass can still overclaim readiness if route, viewport, screenshot, console, overflow, link, asset, and gap evidence are not recorded together.
