@@ -4,7 +4,7 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V21 public workflow alignment is implemented in the working tree.
+- Current stage: `zero-to-website-design` V21 public workflow alignment is shipped.
 
 ## Current Branch
 - `codex/zero-to-website-design-v11-clean`
@@ -48,7 +48,7 @@
 - None.
 
 ## Current Focus
-- Finish the V21 public workflow alignment pass by syncing memory, committing, and pushing it.
+- Choose the next bounded `zero-to-website-design` hardening target from the shipped V21 baseline.
 
 ## Next Milestone
 - Select the next bounded `zero-to-website-design` hardening target after V21 lands, write its plan, and validate the new diff.

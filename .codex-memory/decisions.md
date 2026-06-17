@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-18 - Public Workflow Summaries Should Be Resynced After The Push Lands
+- Decision: Use a dedicated V22 memory-state sync pass to reconcile `.codex-memory` with the already-shipped V21 Git state before choosing the next `zero-to-website-design` hardening target.
+- Rationale: The repository treats filesystem memory as the authoritative resume surface. Leaving V21 recorded as only "implemented in the working tree" would make the next stage start from weaker evidence than the actual repository state.
+- Impact: The workstream, session log, and TODO now move forward from a clean shipped V21 baseline instead of carrying stale pre-push language.
+- Rollback trigger: If future stages automate this closeout reliably, this kind of sync-only phase can collapse back into the parent delivery stage.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v22-memory-shipped-state-sync-plan.md`, `.codex-memory/workstreams/zero-to-website-design-integration.md`, `.codex-memory/session-log.md`, `.codex-memory/todo.md`
 ## 2026-06-18 - Public Workflow Summaries Should Match The Shipped Twelve-Step Contract
 - Decision: Use public workflow alignment as the V21 stage for `zero-to-website-design`, and correct the public gate count plus top-level repo framing before opening a deeper contract pass.
 - Rationale: The shipped package already includes twelve workflow steps and a dedicated project-memory/handoff stage. Leaving the public docs on the older "eleven gates" and brief-to-QA framing would keep the most visible entry points behind filesystem truth.
