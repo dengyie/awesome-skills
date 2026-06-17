@@ -4,7 +4,7 @@
 - Expand `best-project-memory` V2 by landing staged governance and multi-skill integration work.
 
 ## Current Phase
-- Next stage: `zero-to-website-design` V3 historical-mock-first workflow hardening.
+- Current stage: `zero-to-website-design` V4 project-memory integration.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -16,21 +16,23 @@
 - 2026-06-17: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 
 ## Active Risks
-- The zero-to-website V3 pass currently updates workflow/docs/tests only; commit, push, and review-finding cleanup still need to be recorded cleanly.
+- The V4 memory integration pass currently updates workflow/docs/tests only; commit, push, and memory handoff examples are still pending if this stage grows.
 
 ## Active Blockers
 - None.
 
 ## Current Focus
-- Harden `zero-to-website-design` around historical mock inputs, framework-first delivery, and stronger provenance gates.
+- Make `zero-to-website-design` a real Level 3 `best-project-memory` consumer for workstreams, decisions, session logs, and handoffs.
 
 ## Next Milestone
-- Stage and ship the `zero-to-website-design` V3 package changes after memory and review notes are updated.
+- Ship the `zero-to-website-design` V4 memory-integration pass after docs, tests, and review notes are recorded.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
 - `docs/dev/2026-06-17-best-project-memory-v2-governance-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
+- `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/references/historical-mock-pass.md`
 - `zero-to-website-design/references/framework-first-delivery.md`
+- `zero-to-website-design/references/project-memory-integration.md`

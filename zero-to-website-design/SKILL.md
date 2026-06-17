@@ -65,6 +65,12 @@ Do not treat "looks nice" or "build passed" as completion. A website is ready on
    - Use a production review skill when available before publishing or final signoff.
    - Report routes touched, source references used, files changed, verification results, framework-ready versus delivery-ready status, and known visual gaps.
 
+12. Integrate project memory when the work is long-running.
+   - Read `references/project-memory-integration.md` when the repository uses `.codex-memory/`.
+   - Update the relevant workstream, `todo.md`, and `session-log.md` after meaningful progress.
+   - Promote durable delivery decisions when the source path, route status, or asset strategy becomes binding.
+   - Generate a handoff when the work pauses midstream or another session must resume delivery.
+
 ## Reference Routing
 
 - `references/intake-brief.md`: read when the user starts with a vague idea or incomplete product/site definition.
@@ -76,6 +82,7 @@ Do not treat "looks nice" or "build passed" as completion. A website is ready on
 - `references/route-acceptance.md`: read before implementing or reviewing route types.
 - `references/visual-qa-checklist.md`: read before signoff.
 - `references/framework-first-delivery.md`: read when framework-first delivery is an explicit milestone.
+- `references/project-memory-integration.md`: read when the repository uses `.codex-memory/` and the work spans multiple sessions.
 - `references/production-delivery.md`: read before deploy, publish, PR, or final handoff.
 
 ## Template Routing

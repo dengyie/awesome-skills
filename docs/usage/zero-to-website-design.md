@@ -57,6 +57,14 @@ The skill guides Codex through eleven gates:
 10. Verify with build and browser QA.
 11. Harden and deliver.
 
+When the repository uses `.codex-memory/`, the workflow should also:
+
+- restore current state before major work
+- keep a bounded website workstream up to date
+- append meaningful session progress
+- promote durable delivery decisions
+- generate a handoff when another session must resume
+
 ## Blank-Brief Path
 
 When no strong reference exists, the skill should:
@@ -143,6 +151,18 @@ Minimum verification:
 - known visual gaps are reported
 - framework-ready versus visual-delivery-ready status is stated clearly
 - production review is run before final delivery
+
+## Project Memory
+
+When `best-project-memory` is available, `zero-to-website-design` should act like a governance-aware consumer rather than a read-only guest.
+
+Typical memory behavior:
+
+- read `project-state.md` and `todo.md` before major delivery work
+- keep route or delivery effort in a dedicated workstream such as `website-delivery.md` or `visual-qa-pass.md`
+- append a session entry after meaningful implementation or QA progress
+- promote binding source-path or asset-strategy decisions
+- generate a handoff when the website pass pauses midstream
 
 ## When Not To Use
 

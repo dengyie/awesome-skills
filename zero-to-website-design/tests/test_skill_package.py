@@ -20,6 +20,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             ROOT / "references" / "visual-qa-checklist.md",
             ROOT / "references" / "historical-mock-pass.md",
             ROOT / "references" / "framework-first-delivery.md",
+            ROOT / "references" / "project-memory-integration.md",
             ROOT / "references" / "production-delivery.md",
             ROOT / "assets" / "templates" / "design-system-master.md",
             ROOT / "assets" / "templates" / "implementation-plan.md",
@@ -105,13 +106,21 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         route_acceptance = (ROOT / "references" / "route-acceptance.md").read_text(
             encoding="utf-8"
         )
+        memory_integration = (ROOT / "references" / "project-memory-integration.md").read_text(
+            encoding="utf-8"
+        )
 
         self.assertIn("historical mock", skill_text.lower())
         self.assertIn("framework-first", skill_text.lower())
+        self.assertIn("project memory", skill_text.lower())
         self.assertIn("Historical-Mock Path", usage_text)
         self.assertIn("temporary-binding", usage_text)
+        self.assertIn("Project Memory", usage_text)
         self.assertIn("Framework Ready", route_acceptance)
         self.assertIn("Visual Delivery Ready", route_acceptance)
+        self.assertIn("workstream", memory_integration.lower())
+        self.assertIn("handoff", memory_integration.lower())
+        self.assertIn("decisions.md", memory_integration)
 
     def test_templates_are_scaffolds_without_todo_markers(self):
         templates_dir = ROOT / "assets" / "templates"

@@ -11,3 +11,9 @@
 - Results: `zero-to-website-design` now supports historical mock inputs, framework-first milestones, and `temporary-binding` provenance with passing package tests.
 - Next: Record final stage notes, stage the V3 changes, and push the next commit.
 - Blockers: None.
+## 2026-06-17 23:40
+- Task: Begin `zero-to-website-design` V4 project-memory integration.
+- Actions: Wrote a V4 memory-integration plan, added a dedicated `project-memory-integration.md` reference, updated `SKILL.md` and usage docs for Level 3 memory behavior, expanded tests, ran package validation, and checked the diff through `production-code-quality-review`.
+- Results: The package now explicitly covers workstreams, decisions, session logs, and handoffs when `.codex-memory/` is present, with passing tests and validation.
+- Next: Stage, commit, and push the V4 memory-integration pass.
+- Blockers: None.
