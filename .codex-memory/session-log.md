@@ -47,3 +47,9 @@
 - Results: The review package now supports opt-in append/update continuity writes to `session-log.md` and `todo.md` while preserving the original read-only review setup path, with passing tests and no confirmed review findings.
 - Next: Stage, commit, and push the V8 Level 2 integration changes.
 - Blockers: None.
+## 2026-06-18 04:10
+- Task: Implement `production-code-quality-review` V9 follow-up routing hardening.
+- Actions: Wrote the V9 routing plan, updated `review_skill_lib.py` to classify explicit urgent follow-ups and dedupe normalized items across `In Progress` plus `Next`, expanded CLI and library regression coverage, synchronized package docs and repo memory, reran both package test suites plus `quick_validate.py`, and reviewed the working tree with `production-code-quality-review`.
+- Results: The Level 2 review-write path now routes `P1:`/`Blocker:`/`Urgent:` follow-ups into `## In Progress`, keeps non-urgent items in `## Next`, prevents duplicate active TODO entries, and passed validation plus production review without confirmed findings.
+- Next: Stage, commit, and push the V9 follow-up routing hardening changes, then choose the next staged V2 target.
+- Blockers: None.

@@ -506,6 +506,94 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("Address P1 findings", todo_text)
             self.assertIn("Re-run validation", todo_text)
 
+    def test_review_entrypoint_routes_urgent_follow_ups_and_dedupes_across_sections(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / ".codex-memory").mkdir()
+            (repo / ".codex-memory" / "project-state.md").write_text(
+                "# Project State\n\n"
+                "## Objective\n- Review demo\n\n"
+                "## Current Phase\n- Phase 9\n\n"
+                "## Current Focus\n- Harden review follow-up routing\n\n"
+                "## Next Milestone\n- Validate urgent routing\n\n"
+                "## Active Risks\n- None.\n\n"
+                "## Active Blockers\n- None.\n\n"
+                "## Key Artifacts\n- production-code-quality-review/scripts/review_skill_lib.py\n",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "todo.md").write_text(
+                "# TODO\n"
+                "## In Progress\n"
+                "- [ ] Address auth finding\n"
+                "## Next\n"
+                "- [ ] Re-run validation\n"
+                "## Done\n",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "session-log.md").write_text(
+                "# Session Log\n",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "decisions.md").write_text("# Decisions\n", encoding="utf-8")
+
+            (repo / "README.md").write_text("initial\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "README.md").write_text("updated\n", encoding="utf-8")
+
+            subprocess.run(
+                [
+                    "python3",
+                    str(REVIEW_ENTRYPOINT),
+                    "--repo",
+                    str(repo),
+                    "--format",
+                    "compact",
+                    "--append-memory-session",
+                    "--review-status",
+                    "passed",
+                    "--review-score",
+                    "90",
+                    "--todo-follow-up",
+                    "P1: Address auth finding",
+                    "Urgent: Re-run validation",
+                    "Document release note",
+                    "document release note",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            todo_text = (repo / ".codex-memory" / "todo.md").read_text(encoding="utf-8")
+
+            self.assertIn("## In Progress\n- [ ] Address auth finding\n", todo_text)
+            self.assertEqual(todo_text.count("Address auth finding"), 1)
+            self.assertEqual(todo_text.count("Re-run validation"), 1)
+            self.assertEqual(todo_text.count("Document release note"), 1)
+
     def test_branch_scope_excludes_uncommitted_worktree_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)

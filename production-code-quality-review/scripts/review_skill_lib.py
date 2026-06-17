@@ -40,6 +40,7 @@ WORKSTREAM_MATCH_STOPWORDS = {
     "workstream",
 }
 TODO_SECTION_RE = re.compile(r"^##\s+(In Progress|Next|Done)\s*$", re.MULTILINE)
+URGENT_FOLLOW_UP_RE = re.compile(r"^(P1|Blocker|Urgent)\s*:\s*(.+)$", re.IGNORECASE)
 
 
 def run_git(repo: pathlib.Path, args: List[str], check: bool = True) -> str:
@@ -904,23 +905,84 @@ def build_review_session_entry(
 
 
 def merge_review_follow_ups(todo_text: str, follow_ups: Iterable[str]) -> str:
-    normalized_follow_ups = dedupe_keep_order(
-        [item.strip() for item in follow_ups if item and item.strip()]
-    )
-    if not normalized_follow_ups:
+    planned_follow_ups = plan_review_follow_ups(follow_ups)
+    if not planned_follow_ups:
         return todo_text
 
     sections = read_markdown_sections_from_text(todo_text)
+    in_progress_items = summarize_markdown_section(sections, "In Progress")
     next_items = summarize_markdown_section(sections, "Next")
-    for item in normalized_follow_ups:
-        if item not in next_items:
-            next_items.append(item)
+    existing_keys = {
+        normalize_follow_up_item(item)
+        for item in [*in_progress_items, *next_items]
+        if normalize_follow_up_item(item)
+    }
+
+    for follow_up in planned_follow_ups:
+        normalized_key = normalize_follow_up_item(follow_up["text"])
+        if not normalized_key or normalized_key in existing_keys:
+            continue
+        if follow_up["section"] == "In Progress":
+            in_progress_items.append(follow_up["text"])
+        else:
+            next_items.append(follow_up["text"])
+        existing_keys.add(normalized_key)
+
+    updated = replace_markdown_section(
+        todo_text,
+        "## In Progress",
+        [f"- [ ] {item}" for item in in_progress_items] or ["- [ ] Define the current priority."],
+    )
 
     return replace_markdown_section(
-        todo_text,
+        updated,
         "## Next",
         [f"- [ ] {item}" for item in next_items] or ["- [ ] Define the next action."],
     )
+
+
+def plan_review_follow_ups(follow_ups: Iterable[str]) -> List[Dict[str, str]]:
+    planned: List[Dict[str, str]] = []
+    seen_keys: set[str] = set()
+
+    for item in follow_ups:
+        cleaned = clean_follow_up_item(item)
+        if not cleaned:
+            continue
+        normalized_key = normalize_follow_up_item(cleaned["text"])
+        if not normalized_key or normalized_key in seen_keys:
+            continue
+        planned.append(cleaned)
+        seen_keys.add(normalized_key)
+
+    return planned
+
+
+def clean_follow_up_item(item: str) -> Dict[str, str] | None:
+    raw = item.strip()
+    if not raw:
+        return None
+
+    match = URGENT_FOLLOW_UP_RE.match(raw)
+    if match:
+        text = match.group(2).strip()
+        if not text:
+            return None
+        return {"section": "In Progress", "text": text}
+
+    return {"section": "Next", "text": raw}
+
+
+def normalize_follow_up_item(item: str) -> str:
+    raw = item.strip()
+    if not raw:
+        return ""
+
+    match = URGENT_FOLLOW_UP_RE.match(raw)
+    if match:
+        raw = match.group(2).strip()
+
+    return re.sub(r"\s+", " ", raw).lower()
 
 
 def record_review_memory(

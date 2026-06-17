@@ -34,3 +34,10 @@
 - Impact: The repository now proves both Level 1 and Level 2 integration patterns while preserving a conservative default review workflow.
 - Rollback trigger: If the write path causes noisy or duplicate continuity updates in real review workflows, keep the helper but narrow the flags or extract the behavior into a separate wrapper command.
 - Related files: `production-code-quality-review/scripts/review-entrypoint.py`, `production-code-quality-review/scripts/review_skill_lib.py`, `production-code-quality-review/tests/test_collect_review_context_cli.py`, `production-code-quality-review/tests/test_review_skill_lib.py`, `docs/dev/2026-06-18-production-code-quality-review-v8-level2-memory-integration-plan.md`
+## 2026-06-18 - Route Explicitly Urgent Review Follow-Ups Into In-Progress Work
+- Decision: Treat only explicitly marked `P1:`, `Blocker:`, and `Urgent:` review follow-ups as `## In Progress` TODO items, and dedupe normalized follow-ups across both active TODO sections.
+- Rationale: V9 needs better continuity signal than the all-to-`Next` V8 behavior, but should still avoid fuzzy prioritization or silent workstream rewrites.
+- Alternatives considered: Keep routing all items to `## Next`, or add broader fuzzy matching and automatic reprioritization.
+- Impact: Repeated review cycles can record urgent actions without burying them in backlog noise, while exact normalized duplicates stop accumulating across active TODO sections.
+- Rollback trigger: If explicit marker routing proves too rigid in real review flows, broaden the accepted markers before adding heavier priority inference.
+- Related files: `production-code-quality-review/scripts/review_skill_lib.py`, `production-code-quality-review/tests/test_review_skill_lib.py`, `production-code-quality-review/tests/test_collect_review_context_cli.py`, `docs/dev/2026-06-18-production-code-quality-review-v9-followup-routing-plan.md`

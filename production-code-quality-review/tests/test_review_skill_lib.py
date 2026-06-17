@@ -503,6 +503,73 @@ rename to src/new_name.ts
             self.assertIn("Re-run release verification", todo_text)
             self.assertIn("Existing next", todo_text)
 
+    def test_merge_review_follow_ups_routes_urgent_items_to_in_progress(self):
+        module = load_module()
+
+        todo_text = (
+            "# TODO\n"
+            "## In Progress\n"
+            "- [ ] Existing task\n"
+            "## Next\n"
+            "- [ ] Existing next\n"
+            "## Done\n"
+        )
+
+        updated = module.merge_review_follow_ups(
+            todo_text,
+            [
+                "P1: Address auth finding",
+                "Blocker: Restore CI signal",
+                "Urgent: Re-run validation",
+                "Document lower-priority follow-up",
+            ],
+        )
+
+        in_progress = module.summarize_markdown_section(
+            module.read_markdown_sections_from_text(updated),
+            "In Progress",
+        )
+        next_items = module.summarize_markdown_section(
+            module.read_markdown_sections_from_text(updated),
+            "Next",
+        )
+
+        self.assertIn("Address auth finding", in_progress)
+        self.assertIn("Restore CI signal", in_progress)
+        self.assertIn("Re-run validation", in_progress)
+        self.assertIn("Document lower-priority follow-up", next_items)
+        self.assertNotIn("P1: Address auth finding", in_progress)
+
+    def test_merge_review_follow_ups_dedupes_across_active_sections(self):
+        module = load_module()
+
+        todo_text = (
+            "# TODO\n"
+            "## In Progress\n"
+            "- [ ] Address auth finding\n"
+            "## Next\n"
+            "- [ ] Re-run validation\n"
+            "## Done\n"
+        )
+
+        updated = module.merge_review_follow_ups(
+            todo_text,
+            [
+                "P1: Address auth finding",
+                "Urgent: Re-run validation",
+                "Document release note",
+                "document release note",
+            ],
+        )
+
+        sections = module.read_markdown_sections_from_text(updated)
+        in_progress = module.summarize_markdown_section(sections, "In Progress")
+        next_items = module.summarize_markdown_section(sections, "Next")
+
+        self.assertEqual(in_progress.count("Address auth finding"), 1)
+        self.assertEqual(next_items.count("Re-run validation"), 1)
+        self.assertEqual(next_items.count("Document release note"), 1)
+
     def test_record_review_memory_is_noop_without_project_memory(self):
         module = load_module()
 
