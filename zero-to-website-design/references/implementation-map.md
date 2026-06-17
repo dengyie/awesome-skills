@@ -30,8 +30,9 @@ Before broad code changes, confirm the project has:
 8. Choose the smallest implementation order that produces a coherent site.
 9. List files to edit.
 10. Record milestone target, route owner, and replacement trigger for any temporary-binding asset.
-11. State verification commands and browser QA routes.
-12. Record intentionally deferred routes or blockers that limit the current pass.
+11. Record route-data source of truth, metadata source of truth, and feed/export source of truth when those outputs exist.
+12. State verification commands and browser QA routes.
+13. Record intentionally deferred routes or blockers that limit the current pass.
 
 ## Component Mapping Prompts
 
@@ -46,6 +47,7 @@ For each route, decide:
 - footer
 - decorative/brand assets
 - empty/loading/error states when relevant
+- route-data and metadata source ownership
 
 ## Implementation Order
 
@@ -68,6 +70,7 @@ Prefer:
 - Do not delete files without explicit confirmation.
 - Keep static export/deploy constraints visible.
 - Replace split or duplicated data sources before final delivery.
+- Treat slug collisions, route-data mismatches, and feed/output drift as delivery blockers until owned and resolved.
 - Name whether the current target is `Framework Ready` or `Visual Delivery Ready`.
 
 ## Implementation Map Output
@@ -83,12 +86,16 @@ Write a compact map before code:
 - Assets:
 - Asset strategy:
 - Data sources:
+- Route-data source of truth:
+- Metadata source of truth:
+- Feed/export source of truth:
 - Desktop behavior:
 - Mobile behavior:
 - Files to edit:
 - Verification:
 - Known risks:
 - Milestone target:
+- Route identity risks:
 - Temporary route owners:
 - Upgrade triggers:
 - Deferred routes:

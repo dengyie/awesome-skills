@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Metadata, Route-Data, And Feed Outputs Need A Single Integrity Contract
+- Decision: Use metadata-route-data-feed integrity hardening as the V14 stage for `zero-to-website-design`, and bind route-data source of truth, metadata source of truth, and feed/export source of truth into the route acceptance and delivery contract.
+- Rationale: V13 closed the content-source gap, but route generation and exported outputs can still drift independently from rendered pages. A dedicated integrity contract reduces the chance that a site looks correct while its slugs, metadata, or feed outputs disagree.
+- Alternatives considered: Leave the output-parity checks distributed across existing references, or add runtime checks before the package-level wording was tightened.
+- Impact: The package now makes route-data, metadata, and feed parity visible in implementation planning, route acceptance, QA reporting, and final delivery.
+- Rollback trigger: If small static projects find the new wording too heavy, keep route-data ownership and parity checks while trimming feed-specific language where outputs do not exist.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v14-metadata-route-data-feed-integrity-plan.md`, `zero-to-website-design/references/implementation-map.md`, `zero-to-website-design/references/route-acceptance.md`, `zero-to-website-design/references/visual-qa-checklist.md`, `zero-to-website-design/references/production-delivery.md`, `zero-to-website-design/assets/templates/implementation-plan.md`, `zero-to-website-design/assets/templates/qa-report.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Content And Data Source Readiness Must Limit Delivery Claims
 - Decision: Use content-and-data readiness hardening as the V13 stage for `zero-to-website-design`, and add a dedicated content-readiness reference plus aligned template and delivery wording.
 - Rationale: The workflow already made visual sources, QA evidence, pre-code docs, and continuity explicit, but content/data readiness remained distributed across several lighter references. A dedicated contract reduces drift around placeholder policy, route-family ownership, metadata integrity, and when framework-first content can still support a valid milestone.

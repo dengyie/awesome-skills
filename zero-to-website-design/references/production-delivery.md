@@ -26,6 +26,7 @@ Check:
 - touched route families have an explicit content source status
 - route-family owner and metadata owner are defined
 - route generation uses the same data source as rendered pages
+- route-data source of truth is named for touched route families
 - detail pages render the selected item, not shared placeholder content
 - slugs are unique
 - sitemap/RSS/robots match exported or deployed routes when present
@@ -52,6 +53,7 @@ Report:
 
 - routes touched
 - content source status for each touched route family
+- route-data source owner
 - route evidence status for each touched core route
 - source references used
 - design docs created or updated
@@ -61,6 +63,7 @@ Report:
 - production review result
 - framework-ready versus visual-delivery-ready status
 - metadata and route/data integrity result
+- sitemap/RSS/robots or equivalent feed/output integrity result
 - temporary-binding ownership and upgrade triggers
 - known gaps
 - deployment or PR link when applicable
@@ -73,4 +76,5 @@ Report:
 - A site can be `Framework Ready` while still carrying content gaps only when those route-family blockers, owners, and replacement triggers are explicitly recorded.
 - A site can be `Visual Delivery Ready` only when every required route is `visual-delivery-ready` or explicitly out of scope.
 - A site with unresolved placeholder-brand drift, undefined content ownership, or route/detail content mismatch cannot claim final delivery readiness.
+- A site with unresolved slug collisions, route-data drift, or feed/output mismatch cannot claim final delivery readiness.
 - Final reports must not summarize QA as "passed" when route evidence contains unresolved blocking failures.

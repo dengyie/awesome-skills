@@ -53,6 +53,8 @@ For every route evidence row, record:
 - desktop viewport checked
 - mobile viewport checked
 - screenshot path or QA note path
+- route-data integrity result
+- metadata integrity result
 - console result
 - overflow result
 - navigation/link result
@@ -63,6 +65,8 @@ For every route evidence row, record:
 - accepted gaps
 
 Browser QA must cover both desktop and mobile for the route matrix unless an exception is recorded with a reason and risk.
+
+When sitemap, RSS, robots, or similar exported outputs exist, also record the feed/output integrity result or an explicit exception.
 
 ## Screenshot Evidence
 
@@ -86,6 +90,7 @@ Classify every failed browser check as:
 
 - `blocking-framework`: layout, overflow, broken route, broken navigation, broken primary action, missing local asset, or console-blocking error
 - `blocking-visual`: mismatch against a binding reference, unresolved metadata issue, weak final asset quality, or unacknowledged temporary visual source
+- `blocking-data`: slug collision, route-data mismatch, metadata mismatch, or feed/output drift that prevents the claimed readiness state
 - `accepted-gap`: known and explicitly allowed for the current milestone
 - `out-of-scope`: not included in this pass and not used to support readiness claims
 

@@ -10,6 +10,9 @@
 
 - Framework-ready or delivery-ready:
 - Temporary-binding assets still in use:
+- Route-data integrity status:
+- Metadata integrity status:
+- Feed/output integrity status:
 - Handoff needed:
 - Handoff artifact:
 - Next-session follow-up:
@@ -17,8 +20,8 @@
 
 ## Route Evidence
 
-| Route | Route Type | Source Owner | Viewports Checked | Evidence | Status | Blocking Failures | Accepted Gaps | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Route | Route Type | Source Owner | Viewports Checked | Evidence | Data/Metadata Integrity | Status | Blocking Failures | Accepted Gaps | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Interaction Checks
 
@@ -48,6 +51,7 @@
 ## Continuation Ownership
 
 - Route owner follow-up:
+- Route/data drift owner:
 - Unresolved blocker owner:
 - Next-session verification target:
 

@@ -29,6 +29,9 @@
 - V12 is committed and pushed as `cc03f09 feat(阶段21): harden workstream handoff continuity`.
 - V13 content-and-data readiness hardening is implemented in the working tree across `content-readiness.md`, `SKILL.md`, delivery references, `asset-and-data-spec.md`, usage docs, and regression coverage.
 - V13 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
+- V13 is committed and pushed as `164bd4d feat(阶段22): harden content readiness contract`.
+- V14 metadata-route-data-feed integrity hardening is implemented in the working tree across `implementation-map.md`, `route-acceptance.md`, `visual-qa-checklist.md`, `production-delivery.md`, `implementation-plan.md`, `qa-report.md`, usage docs, and regression coverage.
+- V14 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -64,7 +67,7 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Commit and push the `zero-to-website-design` V13 content-and-data readiness pass.
+- [ ] Commit and push the `zero-to-website-design` V14 metadata-route-data-feed integrity pass.
 - [ ] Choose the next bounded `zero-to-website-design` hardening target after V13 lands.
 
 ## Validation

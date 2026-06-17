@@ -38,8 +38,11 @@ Describe the implementation phase and target outcome.
 - Components:
 - Routes:
 - Data/content:
+- Data source of truth:
 - Assets:
 - Metadata:
+- Metadata source of truth:
+- Feed/export source of truth:
 
 ## Files
 
@@ -51,6 +54,9 @@ Describe the implementation phase and target outcome.
 
 - Build command:
 - Route evidence destination:
+- Route-data integrity check:
+- Metadata integrity check:
+- Feed/output integrity check:
 - Desktop routes:
 - Mobile routes:
 - Interaction checks:
@@ -63,6 +69,8 @@ Describe the implementation phase and target outcome.
 
 - Risk:
 - Mitigation:
+- Route identity risk:
+- Mismatch blocker:
 
 ## Done Criteria
 

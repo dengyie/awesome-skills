@@ -9,9 +9,9 @@ Every touched core route needs a compact evidence row before final handoff.
 Use this format in the project QA report or equivalent delivery note:
 
 ```md
-| Route | Route Type | Source Owner | Viewports Checked | Evidence | Status | Blocking Failures | Accepted Gaps | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/posts` | listing | `binding-route`: output/design/posts.png | 1600x900, 390x844 | output/qa/posts-1600x900.png; output/qa/posts-390x844.png | framework-ready | none | final art remains temporary | Mobile menu and links verified |
+| Route | Route Type | Source Owner | Viewports Checked | Evidence | Data/Metadata Integrity | Status | Blocking Failures | Accepted Gaps | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `/posts` | listing | `binding-route`: output/design/posts.png | 1600x900, 390x844 | output/qa/posts-1600x900.png; output/qa/posts-390x844.png | list/detail source aligned; metadata source aligned | framework-ready | none | final art remains temporary | Mobile menu and links verified |
 ```
 
 Allowed route evidence statuses:
@@ -36,6 +36,7 @@ Do not claim a route status that is stronger than its evidence row supports.
 - Placeholder or `temporary-binding` assets are correctly placed.
 - Temporary-binding assets have documented route ownership and replacement triggers.
 - Metadata is coherent enough for the current framework pass.
+- Route-data source matches rendered route identity for the current milestone.
 - No rejected placeholder brand remains.
 - Route works in the target build/export mode.
 - Route composition is accepted even if final imagery is still provisional.
@@ -48,9 +49,11 @@ Failed layout, link, asset-loading, console-blocking, or page-level overflow che
 - Visual hierarchy is tuned against the binding reference.
 - Asset quality is acceptable for delivery.
 - Metadata is correct.
+- Slug identity, route-data source, and metadata source still agree.
 - Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps with their remaining scope clearly stated.
 
 Unresolved fidelity gaps, incorrect metadata, weak asset quality, or unacknowledged `temporary-binding` ownership block `Visual Delivery Ready`.
+Slug collisions, route-data drift, or feed/output mismatches also block stronger readiness claims when those outputs exist.
 
 ## Failure Handling
 
@@ -58,6 +61,7 @@ Classify each failed check as:
 
 - `blocking-framework`: prevents `Framework Ready`
 - `blocking-visual`: allows `Framework Ready` but prevents `Visual Delivery Ready`
+- `blocking-data`: route-data, slug, metadata, or feed/output mismatch prevents the claimed readiness state
 - `accepted-gap`: explicitly allowed for this milestone and documented with scope
 - `out-of-scope`: not part of the route matrix for this pass
 
@@ -85,6 +89,7 @@ Accepted gaps must name the route, viewport, reason, remaining owner, and what w
 - long text remains readable
 - code, tables, images, lists, and quotes are styled if content can contain them
 - related/navigation links do not trap the user
+- detail route identity still matches the source record used for generation
 - mobile line length and overflow are checked
 
 ## Category, Filter, Or Archive Page
@@ -94,6 +99,7 @@ Accepted gaps must name the route, viewport, reason, remaining owner, and what w
 - category navigation remains available
 - low-count categories still produce a balanced layout
 - generated/static paths match actual data
+- taxonomy/archive outputs match the rendered route set
 
 ## Landing Or Product Page
 

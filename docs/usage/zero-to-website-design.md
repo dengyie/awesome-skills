@@ -105,6 +105,18 @@ When placeholder, curated, generated-draft, or mixed content is still active:
 
 Framework-first delivery can still be valid with provisional content, but final delivery cannot overclaim past placeholder-brand drift, undefined ownership, or route/detail data mismatch.
 
+## Route-Data Integrity
+
+When routes are generated from data, the workflow should also preserve:
+
+- route-data source of truth
+- metadata source of truth
+- feed/output source of truth when sitemap, RSS, robots, or similar outputs exist
+- slug uniqueness and route identity checks
+- explicit blocker ownership when rendered pages and exported outputs drift apart
+
+Final delivery cannot overclaim past slug collisions, route-data mismatch, metadata mismatch, or feed/output drift.
+
 When the repository uses `.codex-memory/`, the workflow should also:
 
 - restore current state before major work
