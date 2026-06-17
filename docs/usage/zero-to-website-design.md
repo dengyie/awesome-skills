@@ -53,6 +53,12 @@ Historical mock workflow:
 Use $zero-to-website-design to rebuild this site from the historical PNG mockups already in the repo. Do not generate new images yet; first get the framework and route layout to a deliverable state.
 ```
 
+## Delivery Handoff
+
+When the pass pauses, keep the weakest route, any temporary-binding or generated-route ownership, the active escalation target, and the next verification target visible in the handoff notes.
+
+Framework-ready work can still be valid, but it should not be mistaken for final visual delivery.
+
 ## Workflow
 
 The skill guides Codex through eleven gates:

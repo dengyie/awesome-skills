@@ -4,12 +4,15 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V18 delivery handoff cohesion is shipped and the worktree is clean.
+- Current stage: `zero-to-website-design` V19 entrypoint and usage visibility hardening is shipped.
 
 ## Current Branch
 - `codex/zero-to-website-design-v11-clean`
 
 ## Last Verified
+- 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design\tests -v`
+- 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\zero-to-website-design`
+- 2026-06-18: `python E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills-worktrees\zero-to-website-v11-clean --base HEAD --scope working_tree --format markdown`
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
 - 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
@@ -45,10 +48,10 @@
 - None.
 
 ## Current Focus
-- Choose and implement the next bounded `zero-to-website-design` hardening target from the shipped baseline.
+- Choose the next bounded `zero-to-website-design` hardening target from the shipped V19 baseline.
 
 ## Next Milestone
-- Select the next `zero-to-website-design` hardening target, write its plan, and validate the new diff.
+- Select the next bounded `zero-to-website-design` hardening target after V19, write its plan, and validate the new diff.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`

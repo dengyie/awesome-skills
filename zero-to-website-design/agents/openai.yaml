@@ -1,7 +1,7 @@
 interface:
   display_name: "Zero-To-Website Design"
-  short_description: "Website design workflow from brief to QA"
-  default_prompt: "Use $zero-to-website-design to turn this website idea into design docs, visual sources, implementation, QA, and delivery readiness."
+  short_description: "Website delivery workflow from brief to QA and handoff"
+  default_prompt: "Use $zero-to-website-design to turn this website idea into design docs, visual sources, route specs, implementation, browser QA, and delivery handoff readiness."
 policy:
   allow_implicit_invocation: true
 

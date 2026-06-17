@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-18 - The Entrypoint Should Surface The Strongest Delivery Vocabulary Earlier
+- Decision: Use entrypoint and public usage visibility hardening as the V19 stage for `zero-to-website-design`, and align the agent metadata prompt with the expanded package scope.
+- Rationale: The package already has strong internal contracts for generated route mockups, temporary-binding delivery, and handoff continuity, but a user starting from the top-level entry text could still miss those expectations until later references.
+- Impact: The skill entrypoint, usage guide, metadata prompt, and tests now surface framework-first delivery, escalation targets, and handoff-aware expectations earlier.
+- Rollback trigger: If downstream users find the entrypoint too dense, keep the stronger milestone and handoff terms while trimming explanatory prose.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v19-entrypoint-and-usage-visibility-plan.md`, `zero-to-website-design/SKILL.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/agents/openai.yaml`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Delivery Artifacts Must Carry The Stronger Generated And Temporary Authority State
 - Decision: After V17, target delivery handoff cohesion as V18 by tightening `production-delivery.md`, `qa-report.md`, and `website-workstream.md` around generated route-mockup coverage, inherited authority, escalation target, and final reporting continuity.
 - Rationale: The package now captures pre-code, route, asset, and concept-to-route authority much more explicitly, but the final delivery and continuation artifacts still lag behind that richer state. Another session could still lose detail at the handoff/report layer.

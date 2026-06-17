@@ -12,6 +12,7 @@ Build complete websites from zero with explicit visual sources, documented desig
 Do not treat "looks nice" or "build passed" as completion. A website is ready only when the visual source, implementation, responsive behavior, content/data source, and delivery path have all been checked.
 
 Historical repo images are first-class inputs. When a project already has usable mockups, screenshots, or concept PNGs, use them to drive a framework-ready pass before reaching for new image generation.
+Framework-first delivery is valid when route layout and interaction are correct, but final handoff still needs the weakest route, active escalation target, and next verification target recorded clearly.
 
 ## Required Workflow
 
