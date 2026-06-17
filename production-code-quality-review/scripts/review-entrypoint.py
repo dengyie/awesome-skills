@@ -37,6 +37,29 @@ def main() -> int:
         default="markdown",
         help="Output format.",
     )
+    parser.add_argument(
+        "--append-memory-session",
+        action="store_true",
+        help="Append a structured review session entry when .codex-memory is present.",
+    )
+    parser.add_argument(
+        "--review-status",
+        choices=["passed", "conditional", "failed"],
+        default="passed",
+        help="Review outcome recorded when appending continuity to project memory.",
+    )
+    parser.add_argument(
+        "--review-score",
+        type=int,
+        default=85,
+        help="Quality score recorded in appended review continuity notes.",
+    )
+    parser.add_argument(
+        "--todo-follow-up",
+        nargs="*",
+        default=[],
+        help="Optional review follow-up items to merge into .codex-memory/todo.md.",
+    )
     args = parser.parse_args()
 
     repo = pathlib.Path(args.repo).resolve()
@@ -45,6 +68,15 @@ def main() -> int:
         base_ref_override=args.base,
         scope_mode_override=args.scope,
     )
+    if args.append_memory_session or args.todo_follow_up:
+        lib.record_review_memory(
+            repo,
+            context,
+            review_status=args.review_status,
+            review_score=args.review_score,
+            todo_follow_ups=args.todo_follow_up,
+            append_session=args.append_memory_session,
+        )
 
     if args.format == "json":
         sys.stdout.write(lib.to_pretty_json(context))

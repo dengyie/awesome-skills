@@ -4,6 +4,7 @@ import json
 import pathlib
 import re
 import subprocess
+from datetime import datetime
 from typing import Dict, Iterable, List
 
 
@@ -38,6 +39,7 @@ WORKSTREAM_MATCH_STOPWORDS = {
     "update",
     "workstream",
 }
+TODO_SECTION_RE = re.compile(r"^##\s+(In Progress|Next|Done)\s*$", re.MULTILINE)
 
 
 def run_git(repo: pathlib.Path, args: List[str], check: bool = True) -> str:
@@ -803,6 +805,49 @@ def read_markdown_sections(path: pathlib.Path) -> Dict[str, List[str]]:
     return sections
 
 
+def read_markdown_sections_from_text(text: str) -> Dict[str, List[str]]:
+    lines = text.splitlines()
+    sections: Dict[str, List[str]] = {}
+    current_section: str | None = None
+    for line in lines:
+        match = SECTION_RE.match(line)
+        if match:
+            current_section = match.group("title").strip()
+            sections.setdefault(current_section, [])
+            continue
+        if current_section is not None:
+            sections[current_section].append(line)
+    return sections
+
+
+def replace_markdown_section(text: str, heading: str, body_lines: List[str]) -> str:
+    lines = text.splitlines()
+    new_lines: List[str] = []
+    i = 0
+    replaced = False
+
+    while i < len(lines):
+        line = lines[i]
+        if line == heading:
+            replaced = True
+            new_lines.append(line)
+            new_lines.extend(body_lines)
+            i += 1
+            while i < len(lines) and not lines[i].startswith("## "):
+                i += 1
+            continue
+        new_lines.append(line)
+        i += 1
+
+    if not replaced:
+        if new_lines and new_lines[-1] != "":
+            new_lines.append("")
+        new_lines.append(heading)
+        new_lines.extend(body_lines)
+
+    return "\n".join(new_lines).rstrip() + "\n"
+
+
 def summarize_markdown_section(sections: Dict[str, List[str]], title: str) -> List[str]:
     raw_lines = sections.get(title, [])
     summary: List[str] = []
@@ -814,6 +859,104 @@ def summarize_markdown_section(sections: Dict[str, List[str]], title: str) -> Li
             continue
         summary.append(LEADING_LIST_MARKER_RE.sub("", stripped).strip())
     return summary
+
+
+def format_review_status(review_status: str) -> str:
+    return {
+        "passed": "通过",
+        "conditional": "有条件通过",
+        "failed": "不通过",
+    }.get(review_status, review_status)
+
+
+def build_review_session_entry(
+    context: Dict[str, object],
+    *,
+    review_status: str,
+    review_score: int,
+    todo_follow_ups: Iterable[str],
+) -> str:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+    changed_files = context.get("changed_files", [])
+    scope_mode = context.get("scope_mode", "unknown")
+    base = context.get("base", "unknown")
+    changed_summary = ", ".join(changed_files[:6]) if changed_files else "No changed files recorded."
+    actions = (
+        f"Ran review setup for base `{base}` in `{scope_mode}` scope and generated the review brief."
+    )
+    results = (
+        f"Review status: {format_review_status(review_status)} | 评分: {review_score} | "
+        f"Changed files: {changed_summary}"
+    )
+    next_step = (
+        "Review follow-ups: " + "; ".join(todo_follow_ups)
+        if list(todo_follow_ups)
+        else "No new follow-up items were recorded."
+    )
+    return (
+        f"\n## {timestamp}\n"
+        "- Task: Run production-code-quality-review.\n"
+        f"- Actions: {actions}\n"
+        f"- Results: {results}\n"
+        f"- Next: {next_step}\n"
+        "- Blockers: None.\n"
+    )
+
+
+def merge_review_follow_ups(todo_text: str, follow_ups: Iterable[str]) -> str:
+    normalized_follow_ups = dedupe_keep_order(
+        [item.strip() for item in follow_ups if item and item.strip()]
+    )
+    if not normalized_follow_ups:
+        return todo_text
+
+    sections = read_markdown_sections_from_text(todo_text)
+    next_items = summarize_markdown_section(sections, "Next")
+    for item in normalized_follow_ups:
+        if item not in next_items:
+            next_items.append(item)
+
+    return replace_markdown_section(
+        todo_text,
+        "## Next",
+        [f"- [ ] {item}" for item in next_items] or ["- [ ] Define the next action."],
+    )
+
+
+def record_review_memory(
+    repo: pathlib.Path,
+    context: Dict[str, object],
+    *,
+    review_status: str,
+    review_score: int,
+    todo_follow_ups: Iterable[str],
+    append_session: bool,
+) -> None:
+    project_memory = context.get("project_memory", {})
+    if not project_memory or not project_memory.get("present"):
+        return
+
+    memory_dir = repo / ".codex-memory"
+    follow_ups = [item for item in todo_follow_ups if item and item.strip()]
+
+    if append_session:
+        session_log_path = memory_dir / "session-log.md"
+        if session_log_path.exists():
+            entry = build_review_session_entry(
+                context,
+                review_status=review_status,
+                review_score=review_score,
+                todo_follow_ups=follow_ups,
+            )
+            with session_log_path.open("a", encoding="utf-8", newline="\n") as handle:
+                handle.write(entry)
+
+    if follow_ups:
+        todo_path = memory_dir / "todo.md"
+        if todo_path.exists():
+            original = todo_path.read_text(encoding="utf-8")
+            updated = merge_review_follow_ups(original, follow_ups)
+            todo_path.write_text(updated, encoding="utf-8")
 
 
 def normalize_text_for_match(value: str) -> str:

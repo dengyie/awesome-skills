@@ -27,3 +27,10 @@
 - Impact: The quality gate now catches obvious evidence drift earlier without becoming noisy enough to discourage use.
 - Rollback trigger: If the new warnings prove too chatty in real repos, raise the thresholds before removing the checks entirely.
 - Related files: `best-project-memory/scripts/memory_lint.py`, `best-project-memory/tests/test_skill_package.py`, `docs/usage/best-project-memory.md`, `docs/dev/2026-06-18-best-project-memory-v7-quality-drift-hardening-plan.md`
+## 2026-06-18 - Keep Review Memory Writes Opt-In And Level 2 Scoped
+- Decision: Add review continuity writes to `production-code-quality-review` only as an explicit opt-in path that appends a session block and merges follow-up TODO items, without promoting decisions or generating handoffs.
+- Rationale: The V2 plan needs proof of a Level 2 read+append integration, but production review should remain safe and low-surprise by default.
+- Alternatives considered: Keep the review skill fully read-only, or automatically write memory on every review invocation.
+- Impact: The repository now proves both Level 1 and Level 2 integration patterns while preserving a conservative default review workflow.
+- Rollback trigger: If the write path causes noisy or duplicate continuity updates in real review workflows, keep the helper but narrow the flags or extract the behavior into a separate wrapper command.
+- Related files: `production-code-quality-review/scripts/review-entrypoint.py`, `production-code-quality-review/scripts/review_skill_lib.py`, `production-code-quality-review/tests/test_collect_review_context_cli.py`, `production-code-quality-review/tests/test_review_skill_lib.py`, `docs/dev/2026-06-18-production-code-quality-review-v8-level2-memory-integration-plan.md`

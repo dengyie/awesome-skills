@@ -12,6 +12,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 - added deterministic project-memory helper scripts for memory initialization, session-log appends, and handoff pack creation
 - added `best-project-memory/scripts/compact_session.py` plus regression coverage so long-running repos can compact old session history into shorter summaries and phase recaps
 - added a Phase 5 read-only integration pilot that lets `production-code-quality-review` consume `.codex-memory/` project context and relevant workstreams
+- added an opt-in Level 2 memory-write path for `production-code-quality-review` so review runs can append session continuity and merge explicit follow-up TODO items
 - added `zero-to-website-design`, an end-to-end website design skill for going from a blank brief to visual references, design docs, implementation, browser QA, and production delivery
 - added reusable project templates for design-system docs, implementation plans, asset/data specs, page specs, visual source maps, and QA reports
 - added `zero-to-website-design` usage documentation and package regression tests

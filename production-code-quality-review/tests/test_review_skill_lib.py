@@ -470,6 +470,56 @@ rename to src/new_name.ts
 
         self.assertEqual(compact, expected)
 
+    def test_record_review_memory_appends_session_and_merges_follow_ups(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            memory_dir = repo / ".codex-memory"
+            memory_dir.mkdir()
+            (memory_dir / "session-log.md").write_text("# Session Log\n", encoding="utf-8")
+            (memory_dir / "todo.md").write_text(
+                "# TODO\n## In Progress\n- [ ] Existing task\n## Next\n- [ ] Existing next\n## Done\n",
+                encoding="utf-8",
+            )
+            context = self.sample_context()
+            context["project_memory"] = {"present": True}
+
+            module.record_review_memory(
+                repo,
+                context,
+                review_status="passed",
+                review_score=88,
+                todo_follow_ups=["Address P1 findings", "Re-run release verification"],
+                append_session=True,
+            )
+
+            session_log = (memory_dir / "session-log.md").read_text(encoding="utf-8")
+            todo_text = (memory_dir / "todo.md").read_text(encoding="utf-8")
+
+            self.assertIn("Run production-code-quality-review", session_log)
+            self.assertIn("评分: 88", session_log)
+            self.assertIn("Address P1 findings", todo_text)
+            self.assertIn("Re-run release verification", todo_text)
+            self.assertIn("Existing next", todo_text)
+
+    def test_record_review_memory_is_noop_without_project_memory(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+
+            module.record_review_memory(
+                repo,
+                self.sample_context(),
+                review_status="passed",
+                review_score=85,
+                todo_follow_ups=["Address findings"],
+                append_session=True,
+            )
+
+            self.assertFalse((repo / ".codex-memory").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

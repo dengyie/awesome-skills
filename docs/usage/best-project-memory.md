@@ -169,6 +169,12 @@ python3 best-project-memory/scripts/compact_session.py \
   --title "Release hardening history"
 ```
 
+`production-code-quality-review` can also act as an opt-in Level 2 consumer:
+
+- keep the existing read-only review setup
+- append a structured review session summary into `session-log.md`
+- merge explicit review follow-up items into `todo.md`
+
 ## Package contents
 
 - `best-project-memory/SKILL.md`

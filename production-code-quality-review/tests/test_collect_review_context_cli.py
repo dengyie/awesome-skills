@@ -424,6 +424,88 @@ class CollectReviewContextCliTests(unittest.TestCase):
                 "production-code-quality-review-integration",
             )
 
+    def test_review_entrypoint_can_append_memory_session_and_follow_ups(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / ".codex-memory").mkdir()
+            (repo / ".codex-memory" / "project-state.md").write_text(
+                "# Project State\n\n"
+                "## Objective\n- Review demo\n\n"
+                "## Current Phase\n- Phase 5\n\n"
+                "## Current Focus\n- Review memory writes\n\n"
+                "## Next Milestone\n- Validate Level 2 integration\n\n"
+                "## Active Risks\n- None.\n\n"
+                "## Active Blockers\n- None.\n\n"
+                "## Key Artifacts\n- production-code-quality-review/scripts/review-entrypoint.py\n",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "todo.md").write_text(
+                "# TODO\n## In Progress\n- [ ] Existing task\n## Next\n- [ ] Existing next\n## Done\n",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "session-log.md").write_text(
+                "# Session Log\n",
+                encoding="utf-8",
+            )
+            (repo / ".codex-memory" / "decisions.md").write_text("# Decisions\n", encoding="utf-8")
+
+            (repo / "README.md").write_text("initial\n", encoding="utf-8")
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (repo / "README.md").write_text("updated\n", encoding="utf-8")
+
+            subprocess.run(
+                [
+                    "python3",
+                    str(REVIEW_ENTRYPOINT),
+                    "--repo",
+                    str(repo),
+                    "--format",
+                    "compact",
+                    "--append-memory-session",
+                    "--review-status",
+                    "conditional",
+                    "--review-score",
+                    "82",
+                    "--todo-follow-up",
+                    "Address P1 findings",
+                    "Re-run validation",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            session_log = (repo / ".codex-memory" / "session-log.md").read_text(encoding="utf-8")
+            todo_text = (repo / ".codex-memory" / "todo.md").read_text(encoding="utf-8")
+
+            self.assertIn("Run production-code-quality-review", session_log)
+            self.assertIn("有条件通过", session_log)
+            self.assertIn("Address P1 findings", todo_text)
+            self.assertIn("Re-run validation", todo_text)
+
     def test_branch_scope_excludes_uncommitted_worktree_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)
