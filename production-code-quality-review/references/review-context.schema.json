@@ -15,8 +15,7 @@
     "risk_flags",
     "risk_level",
     "safe_check_commands",
-    "review_plan",
-    "project_memory"
+    "review_plan"
   ],
   "properties": {
     "schema_version": {
@@ -96,23 +95,6 @@
         "review_mode_reason": { "type": "string" }
       },
       "additionalProperties": false
-    },
-    "project_memory": {
-      "type": "object",
-      "required": ["present"],
-      "properties": {
-        "present": { "type": "boolean" },
-        "memory_root": { "type": "string" },
-        "project_state_path": { "type": "string" },
-        "todo_path": { "type": "string" },
-        "summary": { "$ref": "#/$defs/projectMemorySummary" },
-        "todo_summary": { "$ref": "#/$defs/projectMemoryTodoSummary" },
-        "relevant_workstreams": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/projectMemoryWorkstream" }
-        }
-      },
-      "additionalProperties": true
     }
   },
   "additionalProperties": true,
@@ -132,43 +114,6 @@
         },
         "additionalProperties": false
       }
-    },
-    "projectMemorySummary": {
-      "type": "object",
-      "properties": {
-        "objective": { "$ref": "#/$defs/stringArray" },
-        "current_phase": { "$ref": "#/$defs/stringArray" },
-        "current_focus": { "$ref": "#/$defs/stringArray" },
-        "next_milestone": { "$ref": "#/$defs/stringArray" },
-        "active_risks": { "$ref": "#/$defs/stringArray" },
-        "active_blockers": { "$ref": "#/$defs/stringArray" },
-        "key_artifacts": { "$ref": "#/$defs/stringArray" }
-      },
-      "additionalProperties": false
-    },
-    "projectMemoryTodoSummary": {
-      "type": "object",
-      "properties": {
-        "in_progress": { "$ref": "#/$defs/stringArray" },
-        "next": { "$ref": "#/$defs/stringArray" }
-      },
-      "additionalProperties": false
-    },
-    "projectMemoryWorkstream": {
-      "type": "object",
-      "required": ["slug", "path", "objective", "current_state", "blockers", "files", "next_actions", "validation", "relevance_score"],
-      "properties": {
-        "slug": { "type": "string" },
-        "path": { "type": "string" },
-        "objective": { "$ref": "#/$defs/stringArray" },
-        "current_state": { "$ref": "#/$defs/stringArray" },
-        "blockers": { "$ref": "#/$defs/stringArray" },
-        "files": { "$ref": "#/$defs/stringArray" },
-        "next_actions": { "$ref": "#/$defs/stringArray" },
-        "validation": { "$ref": "#/$defs/stringArray" },
-        "relevance_score": { "type": "integer", "minimum": 0 }
-      },
-      "additionalProperties": false
     }
   }
 }

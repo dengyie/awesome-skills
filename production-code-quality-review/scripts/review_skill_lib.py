@@ -4,43 +4,10 @@ import json
 import pathlib
 import re
 import subprocess
-from datetime import datetime
 from typing import Dict, Iterable, List
 
 
 HUNK_RE = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
-SECTION_RE = re.compile(r"^##\s+(?P<title>.+?)\s*$")
-LEADING_LIST_MARKER_RE = re.compile(r"^-\s*(?:\[[ xX]\]\s*)?")
-WORKSTREAM_MATCH_STOPWORDS = {
-    "and",
-    "best",
-    "branch",
-    "change",
-    "changes",
-    "code",
-    "context",
-    "current",
-    "file",
-    "files",
-    "integration",
-    "memory",
-    "phase",
-    "production",
-    "project",
-    "quality",
-    "review",
-    "script",
-    "skill",
-    "state",
-    "stream",
-    "test",
-    "tests",
-    "todo",
-    "update",
-    "workstream",
-}
-TODO_SECTION_RE = re.compile(r"^##\s+(In Progress|Next|Done)\s*$", re.MULTILINE)
-URGENT_FOLLOW_UP_RE = re.compile(r"^(P1|Blocker|Urgent)\s*:\s*(.+)$", re.IGNORECASE)
 
 
 def run_git(repo: pathlib.Path, args: List[str], check: bool = True) -> str:
@@ -611,45 +578,6 @@ def build_review_brief_markdown(context: Dict[str, object]) -> str:
     lines.extend(
         [
             "",
-            "## Project Memory",
-        ]
-    )
-    project_memory = context.get("project_memory", {})
-    if project_memory and project_memory.get("present"):
-        summary = project_memory.get("summary", {})
-        todo_summary = project_memory.get("todo_summary", {})
-        lines.append(f"- Memory root: `{project_memory.get('memory_root', '.codex-memory')}`")
-        if summary.get("objective"):
-            lines.append(f"- Objective: {'; '.join(summary['objective'])}")
-        if summary.get("current_phase"):
-            lines.append(f"- Current phase: {'; '.join(summary['current_phase'])}")
-        if summary.get("current_focus"):
-            lines.append(f"- Current focus: {'; '.join(summary['current_focus'])}")
-        if todo_summary.get("in_progress"):
-            lines.append(f"- TODO in progress: {'; '.join(todo_summary['in_progress'])}")
-        relevant_workstreams = project_memory.get("relevant_workstreams", [])
-        if relevant_workstreams:
-            lines.append("- Relevant workstreams:")
-            for workstream in relevant_workstreams:
-                lines.append(
-                    f"  - `{workstream['slug']}` ({workstream['path']})"
-                )
-                if workstream.get("objective"):
-                    lines.append(
-                        f"    objective: {'; '.join(workstream['objective'])}"
-                    )
-                if workstream.get("current_state"):
-                    lines.append(
-                        f"    state: {'; '.join(workstream['current_state'])}"
-                    )
-        else:
-            lines.append("- Relevant workstreams: _none matched current change_")
-    else:
-        lines.append("- Project memory not present.")
-
-    lines.extend(
-        [
-            "",
             "## Changed Line Ranges",
         ]
     )
@@ -695,19 +623,12 @@ def build_review_brief_compact(context: Dict[str, object]) -> str:
     changed_files = ",".join(context["changed_files"])
     refs = ",".join(context["suggested_references"])
     risks = ",".join(context["risk_flags"]) if context["risk_flags"] else "none"
-    project_memory = context.get("project_memory", {})
-    memory_state = "present" if project_memory and project_memory.get("present") else "absent"
-    workstreams = ",".join(
-        item["slug"] for item in project_memory.get("relevant_workstreams", [])
-    ) or "none"
     return (
         f"review-mode={plan['mode']} "
         f"risk-level={risk_level} "
         f"changed-files={changed_files or 'none'} "
         f"risk-flags={risks} "
-        f"refs={refs or 'none'} "
-        f"memory={memory_state} "
-        f"workstreams={workstreams}\n"
+        f"refs={refs or 'none'}\n"
     )
 
 
@@ -787,351 +708,6 @@ def dedupe_keep_order(items: Iterable[str]) -> List[str]:
     return result
 
 
-def read_markdown_sections(path: pathlib.Path) -> Dict[str, List[str]]:
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except (FileNotFoundError, UnicodeDecodeError):
-        return {}
-
-    sections: Dict[str, List[str]] = {}
-    current_section: str | None = None
-    for line in lines:
-        match = SECTION_RE.match(line)
-        if match:
-            current_section = match.group("title").strip()
-            sections.setdefault(current_section, [])
-            continue
-        if current_section is not None:
-            sections[current_section].append(line)
-    return sections
-
-
-def read_markdown_sections_from_text(text: str) -> Dict[str, List[str]]:
-    lines = text.splitlines()
-    sections: Dict[str, List[str]] = {}
-    current_section: str | None = None
-    for line in lines:
-        match = SECTION_RE.match(line)
-        if match:
-            current_section = match.group("title").strip()
-            sections.setdefault(current_section, [])
-            continue
-        if current_section is not None:
-            sections[current_section].append(line)
-    return sections
-
-
-def replace_markdown_section(text: str, heading: str, body_lines: List[str]) -> str:
-    lines = text.splitlines()
-    new_lines: List[str] = []
-    i = 0
-    replaced = False
-
-    while i < len(lines):
-        line = lines[i]
-        if line == heading:
-            replaced = True
-            new_lines.append(line)
-            new_lines.extend(body_lines)
-            i += 1
-            while i < len(lines) and not lines[i].startswith("## "):
-                i += 1
-            continue
-        new_lines.append(line)
-        i += 1
-
-    if not replaced:
-        if new_lines and new_lines[-1] != "":
-            new_lines.append("")
-        new_lines.append(heading)
-        new_lines.extend(body_lines)
-
-    return "\n".join(new_lines).rstrip() + "\n"
-
-
-def summarize_markdown_section(sections: Dict[str, List[str]], title: str) -> List[str]:
-    raw_lines = sections.get(title, [])
-    summary: List[str] = []
-    for line in raw_lines:
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if stripped == "-" or stripped == "- [ ]" or stripped == "- [x]":
-            continue
-        summary.append(LEADING_LIST_MARKER_RE.sub("", stripped).strip())
-    return summary
-
-
-def format_review_status(review_status: str) -> str:
-    return {
-        "passed": "通过",
-        "conditional": "有条件通过",
-        "failed": "不通过",
-    }.get(review_status, review_status)
-
-
-def build_review_session_entry(
-    context: Dict[str, object],
-    *,
-    review_status: str,
-    review_score: int,
-    todo_follow_ups: Iterable[str],
-) -> str:
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-    changed_files = context.get("changed_files", [])
-    scope_mode = context.get("scope_mode", "unknown")
-    base = context.get("base", "unknown")
-    changed_summary = ", ".join(changed_files[:6]) if changed_files else "No changed files recorded."
-    actions = (
-        f"Ran review setup for base `{base}` in `{scope_mode}` scope and generated the review brief."
-    )
-    results = (
-        f"Review status: {format_review_status(review_status)} | 评分: {review_score} | "
-        f"Changed files: {changed_summary}"
-    )
-    next_step = (
-        "Review follow-ups: " + "; ".join(todo_follow_ups)
-        if list(todo_follow_ups)
-        else "No new follow-up items were recorded."
-    )
-    return (
-        f"\n## {timestamp}\n"
-        "- Task: Run production-code-quality-review.\n"
-        f"- Actions: {actions}\n"
-        f"- Results: {results}\n"
-        f"- Next: {next_step}\n"
-        "- Blockers: None.\n"
-    )
-
-
-def merge_review_follow_ups(todo_text: str, follow_ups: Iterable[str]) -> str:
-    planned_follow_ups = plan_review_follow_ups(follow_ups)
-    if not planned_follow_ups:
-        return todo_text
-
-    sections = read_markdown_sections_from_text(todo_text)
-    in_progress_items = summarize_markdown_section(sections, "In Progress")
-    next_items = summarize_markdown_section(sections, "Next")
-    existing_keys = {
-        normalize_follow_up_item(item)
-        for item in [*in_progress_items, *next_items]
-        if normalize_follow_up_item(item)
-    }
-
-    for follow_up in planned_follow_ups:
-        normalized_key = normalize_follow_up_item(follow_up["text"])
-        if not normalized_key or normalized_key in existing_keys:
-            continue
-        if follow_up["section"] == "In Progress":
-            in_progress_items.append(follow_up["text"])
-        else:
-            next_items.append(follow_up["text"])
-        existing_keys.add(normalized_key)
-
-    updated = replace_markdown_section(
-        todo_text,
-        "## In Progress",
-        [f"- [ ] {item}" for item in in_progress_items] or ["- [ ] Define the current priority."],
-    )
-
-    return replace_markdown_section(
-        updated,
-        "## Next",
-        [f"- [ ] {item}" for item in next_items] or ["- [ ] Define the next action."],
-    )
-
-
-def plan_review_follow_ups(follow_ups: Iterable[str]) -> List[Dict[str, str]]:
-    planned: List[Dict[str, str]] = []
-    seen_keys: set[str] = set()
-
-    for item in follow_ups:
-        cleaned = clean_follow_up_item(item)
-        if not cleaned:
-            continue
-        normalized_key = normalize_follow_up_item(cleaned["text"])
-        if not normalized_key or normalized_key in seen_keys:
-            continue
-        planned.append(cleaned)
-        seen_keys.add(normalized_key)
-
-    return planned
-
-
-def clean_follow_up_item(item: str) -> Dict[str, str] | None:
-    raw = item.strip()
-    if not raw:
-        return None
-
-    match = URGENT_FOLLOW_UP_RE.match(raw)
-    if match:
-        text = match.group(2).strip()
-        if not text:
-            return None
-        return {"section": "In Progress", "text": text}
-
-    return {"section": "Next", "text": raw}
-
-
-def normalize_follow_up_item(item: str) -> str:
-    raw = item.strip()
-    if not raw:
-        return ""
-
-    match = URGENT_FOLLOW_UP_RE.match(raw)
-    if match:
-        raw = match.group(2).strip()
-
-    return re.sub(r"\s+", " ", raw).lower()
-
-
-def record_review_memory(
-    repo: pathlib.Path,
-    context: Dict[str, object],
-    *,
-    review_status: str,
-    review_score: int,
-    todo_follow_ups: Iterable[str],
-    append_session: bool,
-) -> None:
-    project_memory = context.get("project_memory", {})
-    if not project_memory or not project_memory.get("present"):
-        return
-
-    memory_dir = repo / ".codex-memory"
-    follow_ups = [item for item in todo_follow_ups if item and item.strip()]
-
-    if append_session:
-        session_log_path = memory_dir / "session-log.md"
-        if session_log_path.exists():
-            entry = build_review_session_entry(
-                context,
-                review_status=review_status,
-                review_score=review_score,
-                todo_follow_ups=follow_ups,
-            )
-            with session_log_path.open("a", encoding="utf-8", newline="\n") as handle:
-                handle.write(entry)
-
-    if follow_ups:
-        todo_path = memory_dir / "todo.md"
-        if todo_path.exists():
-            original = todo_path.read_text(encoding="utf-8")
-            updated = merge_review_follow_ups(original, follow_ups)
-            todo_path.write_text(updated, encoding="utf-8")
-
-
-def normalize_text_for_match(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
-
-
-def tokenize_for_match(value: str) -> set[str]:
-    normalized = normalize_text_for_match(value)
-    return {
-        token
-        for token in normalized.split()
-        if len(token) >= 3 and token not in WORKSTREAM_MATCH_STOPWORDS
-    }
-
-
-def score_workstream_relevance(
-    slug: str,
-    summary: Dict[str, object],
-    changed_files: Iterable[str],
-) -> int:
-    score = 0
-    slug_tokens = tokenize_for_match(slug.replace("-", " "))
-    changed_file_list = list(changed_files)
-    file_text = " ".join(changed_file_list)
-    changed_tokens = tokenize_for_match(file_text)
-
-    for token in slug_tokens:
-        if token in changed_tokens:
-            score += 4
-
-    summary_tokens = tokenize_for_match(
-        " ".join(
-            [
-                " ".join(summary.get("objective", [])),
-                " ".join(summary.get("current_state", [])),
-                " ".join(summary.get("files", [])),
-                " ".join(summary.get("next_actions", [])),
-            ]
-        )
-    )
-    score += len(summary_tokens.intersection(changed_tokens)) * 2
-
-    listed_files = [item.lstrip("- ").strip("`") for item in summary.get("files", [])]
-    for changed_file in changed_file_list:
-        changed_path = normalize_text_for_match(changed_file)
-        for listed in listed_files:
-            listed_path = normalize_text_for_match(listed)
-            if listed_path and (listed_path in changed_path or changed_path in listed_path):
-                score += 6
-
-    return score
-
-
-def load_project_memory(repo: pathlib.Path, changed_files: Iterable[str]) -> Dict[str, object]:
-    memory_dir = repo / ".codex-memory"
-    if not memory_dir.exists():
-        return {"present": False}
-
-    project_state_path = memory_dir / "project-state.md"
-    todo_path = memory_dir / "todo.md"
-    workstreams_dir = memory_dir / "workstreams"
-
-    project_sections = read_markdown_sections(project_state_path)
-    summary = {
-        "objective": summarize_markdown_section(project_sections, "Objective"),
-        "current_phase": summarize_markdown_section(project_sections, "Current Phase"),
-        "current_focus": summarize_markdown_section(project_sections, "Current Focus"),
-        "next_milestone": summarize_markdown_section(project_sections, "Next Milestone"),
-        "active_risks": summarize_markdown_section(project_sections, "Active Risks"),
-        "active_blockers": summarize_markdown_section(project_sections, "Active Blockers"),
-        "key_artifacts": summarize_markdown_section(project_sections, "Key Artifacts"),
-    }
-
-    todo_sections = read_markdown_sections(todo_path)
-    todo_summary = {
-        "in_progress": summarize_markdown_section(todo_sections, "In Progress"),
-        "next": summarize_markdown_section(todo_sections, "Next"),
-    }
-
-    relevant_workstreams: List[Dict[str, object]] = []
-    if workstreams_dir.exists():
-        for path in sorted(workstreams_dir.glob("*.md")):
-            sections = read_markdown_sections(path)
-            workstream_summary = {
-                "slug": path.stem,
-                "path": f".codex-memory/workstreams/{path.name}",
-                "objective": summarize_markdown_section(sections, "Objective"),
-                "current_state": summarize_markdown_section(sections, "Current State"),
-                "blockers": summarize_markdown_section(sections, "Blockers"),
-                "files": summarize_markdown_section(sections, "Files"),
-                "next_actions": summarize_markdown_section(sections, "Next Actions"),
-                "validation": summarize_markdown_section(sections, "Validation"),
-            }
-            score = score_workstream_relevance(path.stem, workstream_summary, changed_files)
-            workstream_summary["relevance_score"] = score
-            if score > 0:
-                relevant_workstreams.append(workstream_summary)
-
-    relevant_workstreams.sort(
-        key=lambda item: (-int(item["relevance_score"]), str(item["slug"]))
-    )
-
-    return {
-        "present": True,
-        "memory_root": ".codex-memory",
-        "project_state_path": ".codex-memory/project-state.md",
-        "todo_path": ".codex-memory/todo.md",
-        "summary": summary,
-        "todo_summary": todo_summary,
-        "relevant_workstreams": relevant_workstreams[:3],
-    }
-
-
 def collect_review_context(
     repo: pathlib.Path,
     *,
@@ -1161,7 +737,6 @@ def collect_review_context(
     )
 
     review_plan = select_review_mode(changed_files, risk_flags)
-    project_memory = load_project_memory(repo, changed_files)
 
     return {
         "schema_version": "review-context/v1",
@@ -1183,7 +758,6 @@ def collect_review_context(
             repo_files=repo_files,
         ),
         "review_plan": review_plan,
-        "project_memory": project_memory,
     }
 
 

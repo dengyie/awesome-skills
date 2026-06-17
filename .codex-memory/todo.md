@@ -1,10 +1,10 @@
 ﻿# TODO
 ## In Progress
-- [ ] Decide whether to commit the `production-code-quality-review` GitHub sync.
 ## Next
 - [ ] Decide the next `zero-to-website-design` hardening target after V11 lands.
 - [ ] Decide whether the paused repository-level docs line should be resumed later.
 ## Done
+- [x] Decide whether to commit the `production-code-quality-review` GitHub sync.
 - [x] Review, commit, and push the repository-level skill matrix pass.
 - [x] Retry the V11 push after the external git timeout issue clears.
 - [x] Review, commit, and push the `zero-to-website-design` V11 pre-code document-gate pass.

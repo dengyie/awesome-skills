@@ -1,4 +1,8 @@
 # Decisions
+## 2026-06-18 - Commit Production Review Mainline Sync As A Standalone Phase
+- Decision: Commit the pending `production-code-quality-review/` sync as V13 after proving the directory matches `origin/main`.
+- Rationale: The dirty diff is not an accidental local edit; it aligns the package with GitHub mainline `f1eac46 Refine staged review modes`, passes the package tests, and validates as a skill. Keeping it uncommitted would keep unrelated review-package changes in every future working-tree review.
+- Impact: The branch-local review-memory write path is removed from the active package in favor of the mainline staged-review-mode implementation, while historical docs keep the earlier experiment traceable.
 ## 2026-06-18 - Pre-Code Artifacts Must Gate Broad Website Implementation
 - Decision: Use a pre-code document-gate hardening pass as the V11 stage for `zero-to-website-design`, and require a preserved intake output, design-doc baseline, and implementation map before broad implementation begins.
 - Rationale: The V6-V10 workflow already makes provenance, QA evidence, and delivery state much stricter, but the intake-to-implementation handoff still left too much room for backfilling key planning artifacts after code had already started. Tightening the earlier gate reduces workflow drift where route scope, source-path choice, and milestone intent first become binding.

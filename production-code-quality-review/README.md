@@ -81,20 +81,6 @@ When running commands from this checkout, use:
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
 ```
 
-For an opt-in Level 2 continuity write after review:
-
-```bash
-python3 production-code-quality-review/scripts/review-entrypoint.py \
-  --repo . \
-  --format markdown \
-  --append-memory-session \
-  --review-status passed \
-  --review-score 88 \
-  --todo-follow-up "P1: Address auth finding" "Urgent: Re-run release verification" "Document lower-priority follow-up"
-```
-
-Urgent follow-ups prefixed with `P1:`, `Blocker:`, or `Urgent:` are routed into `.codex-memory/todo.md` `## In Progress`. Other follow-ups route into `## Next`, and exact normalized duplicates are skipped across both active sections.
-
 When running commands from an installed copy outside the checkout, use:
 
 ```bash
