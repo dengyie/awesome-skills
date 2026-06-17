@@ -28,9 +28,13 @@ Read when:
    - section composition
    - illustration slot shape
    - palette or texture only
-4. Mark temporary route owners as `temporary-binding` when they are valid for the current pass but expected to be upgraded later.
-5. Record limitations and upgrade triggers.
-6. Use the assets as local mock inputs or direct binding references, depending on authority.
+4. Decide whether each asset is strong enough for the current milestone:
+   - strong enough for `Framework Ready`
+   - strong enough for `Visual Delivery Ready`
+   - only useful as supporting texture or inspiration
+5. Mark temporary route owners as `temporary-binding` when they are valid for the current pass but expected to be upgraded later.
+6. Record route owner, section owner, limitations, and upgrade triggers.
+7. Use the assets as local mock inputs or direct binding references, depending on authority.
 
 ## Required Output
 
@@ -39,7 +43,11 @@ Record a compact note with:
 - historical assets found
 - authority status for each
 - route or section ownership
+- what each asset controls
+- why it is sufficient for the current pass
 - any `temporary-binding` usage
+- milestone supported
+- replacement or upgrade trigger
 - what must later be upgraded
 
 Use `assets/templates/mock-asset-pass.md` when the project lacks an equivalent document.
@@ -47,6 +55,7 @@ Use `assets/templates/mock-asset-pass.md` when the project lacks an equivalent d
 ## Guardrails
 
 - do not force `imagegen` when historical visual sources are already sufficient
+- do not force generation when project-owned mockups already control route composition for the current milestone
 - do not present provisional historical imagery as final bespoke artwork
 - do not mix obsolete and binding references in one acceptance pass
 - do not hotlink when a local project-owned file exists

@@ -1,10 +1,10 @@
 # Project State
 
 ## Objective
-- Refresh the repository overview docs so the main introduction clearly explains all shipped skills and points readers to the right follow-up guides.
+- Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: repository overview documentation refresh and push.
+- Current stage: V6 historical-mock framework-delivery hardening is implemented and verified in the working tree for `zero-to-website-design`.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -39,10 +39,10 @@
 - None.
 
 ## Current Focus
-- Update the repository introduction so the multi-skill layout is obvious in both English and Chinese entry docs, then review and push the doc refresh.
+- Close out the V6 `zero-to-website-design` pass with atomic commit and leave the package ready for the next staged hardening target.
 
 ## Next Milestone
-- Land the overview-doc refresh commit and push `codex/best-project-memory-expansion`.
+- Commit the V6 package updates, then choose the next staged `zero-to-website-design` improvement after historical-mock framework delivery hardening.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -60,6 +60,7 @@
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v5-memory-aware-templates-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`
 - `best-project-memory/scripts/compact_session.py`
 - `best-project-memory/scripts/memory_lint.py`
 - `production-code-quality-review/scripts/review-entrypoint.py`

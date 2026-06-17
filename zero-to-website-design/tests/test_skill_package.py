@@ -104,6 +104,18 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
             encoding="utf-8"
         )
+        historical_mock = (ROOT / "references" / "historical-mock-pass.md").read_text(
+            encoding="utf-8"
+        )
+        framework_delivery = (ROOT / "references" / "framework-first-delivery.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_map = (ROOT / "references" / "implementation-map.md").read_text(
+            encoding="utf-8"
+        )
+        production_delivery = (ROOT / "references" / "production-delivery.md").read_text(
+            encoding="utf-8"
+        )
         route_acceptance = (ROOT / "references" / "route-acceptance.md").read_text(
             encoding="utf-8"
         )
@@ -113,20 +125,41 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         visual_source_template = (ROOT / "assets" / "templates" / "visual-source-map.md").read_text(
             encoding="utf-8"
         )
+        mock_asset_template = (ROOT / "assets" / "templates" / "mock-asset-pass.md").read_text(
+            encoding="utf-8"
+        )
+        visual_inventory_template = (
+            ROOT / "assets" / "templates" / "visual-source-inventory.md"
+        ).read_text(encoding="utf-8")
 
         self.assertIn("historical mock", skill_text.lower())
         self.assertIn("framework-first", skill_text.lower())
+        self.assertIn("not to generate new images yet", skill_text.lower())
         self.assertIn("project memory", skill_text.lower())
         self.assertIn("Historical-Mock Path", usage_text)
+        self.assertIn("Do not generate new images yet", usage_text)
         self.assertIn("temporary-binding", usage_text)
         self.assertIn("Project Memory", usage_text)
+        self.assertIn("strong enough for `Framework Ready`", historical_mock)
+        self.assertIn("route owner", historical_mock)
+        self.assertIn("replacement or upgrade trigger", historical_mock)
+        self.assertIn("route composition is accepted", framework_delivery)
+        self.assertIn("slot/texture behavior", framework_delivery)
+        self.assertIn("route owner", implementation_map)
+        self.assertIn("Upgrade triggers", implementation_map)
         self.assertIn("Framework Ready", route_acceptance)
         self.assertIn("Visual Delivery Ready", route_acceptance)
+        self.assertIn("replacement triggers", route_acceptance)
         self.assertIn("workstream", memory_integration.lower())
         self.assertIn("handoff", memory_integration.lower())
         self.assertIn("decisions.md", memory_integration)
         self.assertIn("binding-route", visual_source_template)
         self.assertIn("temporary-binding", visual_source_template)
+        self.assertIn("temporary-binding assets say whether they still control route composition", production_delivery)
+        self.assertIn("Route owner", mock_asset_template)
+        self.assertIn("Replacement trigger", mock_asset_template)
+        self.assertIn("Authority Reason", visual_inventory_template)
+        self.assertIn("Replacement Trigger", visual_inventory_template)
 
     def test_templates_are_scaffolds_without_todo_markers(self):
         templates_dir = ROOT / "assets" / "templates"

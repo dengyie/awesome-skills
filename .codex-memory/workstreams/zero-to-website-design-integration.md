@@ -7,6 +7,8 @@
 - V3 historical-mock-first routing is shipped.
 - V4 Level 3 project-memory behavior is shipped.
 - V5 template hardening is complete in the working tree for delivery-state, provenance, and handoff artifacts.
+- V6 historical-mock framework hardening is implemented in the working tree across the skill text, references, templates, usage guide, and regression coverage.
+- V6 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -15,6 +17,7 @@
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v5-memory-aware-templates-plan.md`
+- `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`
 - `zero-to-website-design/SKILL.md`
 - `zero-to-website-design/assets/templates/visual-source-map.md`
 - `zero-to-website-design/assets/templates/implementation-plan.md`
@@ -24,8 +27,8 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Stage, commit, and push the V5 template-hardening changes.
-- [ ] Fold the shipped V5 notes into the next broader V2 milestone summary when the next package integration starts.
+- [ ] Stage, commit, and push the V6 historical-mock framework hardening pass.
+- [ ] Choose the next staged `zero-to-website-design` improvement after V6 lands.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

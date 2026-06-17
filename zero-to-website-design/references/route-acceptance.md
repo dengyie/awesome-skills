@@ -13,9 +13,11 @@ Use this reference before implementing or reviewing routes.
 - Images and local assets load.
 - Links and primary actions are clickable.
 - Placeholder or `temporary-binding` assets are correctly placed.
+- Temporary-binding assets have documented route ownership and replacement triggers.
 - Metadata is coherent enough for the current framework pass.
 - No rejected placeholder brand remains.
 - Route works in the target build/export mode.
+- Route composition is accepted even if final imagery is still provisional.
 
 ## Level B: Visual Delivery Ready
 
@@ -23,7 +25,7 @@ Use this reference before implementing or reviewing routes.
 - Visual hierarchy is tuned against the binding reference.
 - Asset quality is acceptable for delivery.
 - Metadata is correct.
-- Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps.
+- Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps with their remaining scope clearly stated.
 
 ## Homepage
 

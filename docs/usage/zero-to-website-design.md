@@ -41,6 +41,12 @@ Generated concept workflow:
 Use $zero-to-website-design to generate three visual directions for this product site, let me choose one, then create route specs and implement it.
 ```
 
+Historical mock workflow:
+
+```text
+Use $zero-to-website-design to rebuild this site from the historical PNG mockups already in the repo. Do not generate new images yet; first get the framework and route layout to a deliverable state.
+```
+
 ## Workflow
 
 The skill guides Codex through eleven gates:
@@ -92,9 +98,10 @@ When the repo already contains useful design images, archived mockups, or approv
 
 1. Inventory project-owned visual sources before generating anything new.
 2. Classify them with provenance and authority.
-3. Use `temporary-binding` only when the current stage is framework-first delivery.
-4. Record what each asset controls and what still needs to be upgraded later.
-5. Keep temporary asset usage visible in design docs and final handoff notes.
+3. Decide whether each asset is strong enough for `Framework Ready`, `Visual Delivery Ready`, or only supporting texture.
+4. Use `temporary-binding` only when the current stage is framework-first delivery.
+5. Record route owner, section or slot owner, what each asset controls, and what still needs to be upgraded later.
+6. Keep temporary asset usage visible in design docs and final handoff notes.
 
 ## Visual Provenance
 
@@ -131,6 +138,8 @@ When the project lacks equivalent docs, the skill uses templates from `zero-to-w
 - `asset-and-data-spec.md`
 - `page-spec.md`
 - `visual-source-map.md`
+- `visual-source-inventory.md`
+- `mock-asset-pass.md`
 - `website-workstream.md`
 - `qa-report.md`
 
@@ -151,6 +160,7 @@ Minimum verification:
 - local assets load
 - known visual gaps are reported
 - framework-ready versus visual-delivery-ready status is stated clearly
+- temporary-binding ownership and upgrade triggers are stated when provisional imagery remains
 - production review is run before final delivery
 
 ## Project Memory

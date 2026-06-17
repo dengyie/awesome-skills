@@ -17,7 +17,8 @@ Use this reference after design docs exist and before editing code.
    - generated assets
 8. Choose the smallest implementation order that produces a coherent site.
 9. List files to edit.
-10. State verification commands and browser QA routes.
+10. Record milestone target, route owner, and replacement trigger for any temporary-binding asset.
+11. State verification commands and browser QA routes.
 
 ## Component Mapping Prompts
 
@@ -74,4 +75,6 @@ Write a compact map before code:
 - Verification:
 - Known risks:
 - Milestone target:
+- Temporary route owners:
+- Upgrade triggers:
 ```

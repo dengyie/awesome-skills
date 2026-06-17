@@ -1,6 +1,6 @@
 ---
 name: zero-to-website-design
-description: Use when creating a complete website from a blank or vague starting point, turning user goals, visual references, screenshots, or generated concept images into design-system docs, route/page specs, implementation, browser visual QA, and delivery readiness. Especially useful when the user asks to design from zero, generate mockups before implementation, build from reference images, or ship a personal site, blog, portfolio, product site, landing page, or documentation site.
+description: Use when creating a complete website from a blank or vague starting point, turning user goals, visual references, screenshots, historical repo mockups, or generated concept images into design-system docs, route/page specs, implementation, browser visual QA, and delivery readiness. Especially useful when the user asks to design from zero, generate mockups before implementation, build from reference images, rebuild from historical project PNGs, ship framework-first before final artwork, or explicitly says not to generate new images yet.
 ---
 
 # Zero-To-Website Design
@@ -10,6 +10,8 @@ description: Use when creating a complete website from a blank or vague starting
 Build complete websites from zero with explicit visual sources, documented design decisions, route-level implementation plans, screenshot-based QA, and production delivery gates.
 
 Do not treat "looks nice" or "build passed" as completion. A website is ready only when the visual source, implementation, responsive behavior, content/data source, and delivery path have all been checked.
+
+Historical repo images are first-class inputs. When a project already has usable mockups, screenshots, or concept PNGs, use them to drive a framework-ready pass before reaching for new image generation.
 
 ## Required Workflow
 
@@ -23,6 +25,7 @@ Do not treat "looks nice" or "build passed" as completion. A website is ready on
 
 3. Collect visual sources.
    - Inspect repo-owned assets, historical mockups, screenshots, or user-provided references before deciding that new generation is needed.
+   - If the user says not to generate new images yet, treat the best available project-owned visuals as the default source path for the current pass.
    - If the user has no usable binding or temporary visual sources, read `references/concept-generation.md` and create concept directions before implementation.
 
 4. Record visual provenance.
@@ -33,10 +36,12 @@ Do not treat "looks nice" or "build passed" as completion. A website is ready on
    - Prefer repo-owned final assets or approved user references first.
    - Use historical mock assets when they are strong enough for framework or route composition.
    - Use local structural mock assets when final imagery is not ready but framework delivery should continue.
+   - Do not generate new concepts when repo-owned images already provide enough route authority for the current milestone.
    - Generate new concepts only when the project still lacks enough authority to proceed.
 
 6. Promote route owners into authoritative source material.
    - Map each `binding-route` or `temporary-binding` reference to routes, sections, and viewports.
+   - Record whether each temporary asset controls whole-route composition, section composition, illustration slot shape, or only palette/texture.
    - Never mix exploratory concept images with final acceptance images without saying so.
    - Read `references/historical-mock-pass.md` when historical visuals drive the current pass.
 
@@ -47,12 +52,14 @@ Do not treat "looks nice" or "build passed" as completion. A website is ready on
 8. Produce an implementation map.
    - Read `references/implementation-map.md`.
    - Map visual regions to components, routes, assets, data sources, and responsive behavior before editing.
+   - Record route owner, asset-slot owner, milestone target, and upgrade trigger when temporary-binding assets are involved.
 
 9. Implement route by route.
    - Read `references/framework-first-delivery.md` when the project should stop at a framework milestone before final asset polish.
    - Build the site framework first: layout, navigation, core routes, card systems, responsive rhythm, and local assets.
    - Prefer project-owned assets over hotlinked assets.
    - Keep content placeholder or curated when the user wants framework-first delivery.
+   - Treat `Framework Ready` as a valid milestone when layout, interaction, and responsive structure are correct even if final bespoke art is not ready yet.
    - Keep `temporary-binding` assets explicit in docs and delivery notes.
 
 10. Verify with build and browser QA.
@@ -110,6 +117,7 @@ A zero-to-website pass is complete only when:
 - design-system and route docs exist or have been updated
 - core routes are implemented responsively
 - any framework-first milestone is explicitly labeled as such
+- temporary-binding route owners and upgrade triggers are documented when provisional imagery remains
 - local or owned assets are used where possible
 - build/typecheck passes
 - desktop and mobile browser QA have been run

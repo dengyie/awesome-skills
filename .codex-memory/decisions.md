@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Historical Repo Images Should Drive Framework-First Website Passes Before New Generation
+- Decision: Treat repo-owned mockups, screenshots, and prior concept images as the preferred visual authority for a website's framework-ready pass when they are already strong enough to control route composition.
+- Rationale: In real project work, users often want layout, route framing, and responsive structure delivered before bespoke imagery is ready. Forcing fresh image generation too early adds latency and can distract from the higher-value shell and interaction work.
+- Alternatives considered: Keeping historical visuals as only a soft fallback, or making fresh image generation the default next move whenever the site still lacks final artwork.
+- Impact: The next `zero-to-website-design` hardening pass should make "use local historical images first, do not generate new ones yet" a first-class documented workflow while keeping asset provenance and upgrade triggers explicit.
+- Rollback trigger: If downstream projects show that this path causes too much ambiguity about what is acceptable for delivery, tighten the route-acceptance and temporary-binding rules rather than removing the path entirely.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`, `zero-to-website-design/references/historical-mock-pass.md`, `zero-to-website-design/references/framework-first-delivery.md`, `docs/usage/zero-to-website-design.md`
 ## 2026-06-17 - Start V2 Multi-skill Integration at Read-only Level
 - Decision: Integrate `production-code-quality-review` with `best-project-memory` as a Level 1 read-only consumer first.
 - Rationale: The review skill benefits immediately from project-state and workstream awareness, while read-only integration limits coupling and keeps the new contract easy to validate.

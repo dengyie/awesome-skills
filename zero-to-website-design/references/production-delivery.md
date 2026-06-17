@@ -38,6 +38,7 @@ Check:
 - asset paths work in the target deployment base path
 - large assets are justified
 - temporary-binding assets are acknowledged in the final report
+- temporary-binding assets say whether they still control route composition, slot shape, or only texture/palette
 - framework-first versus final-content status is clearly stated
 
 ## Final Handoff Format
@@ -52,5 +53,6 @@ Report:
 - desktop and mobile QA result
 - production review result
 - framework-ready versus visual-delivery-ready status
+- temporary-binding ownership and upgrade triggers
 - known gaps
 - deployment or PR link when applicable

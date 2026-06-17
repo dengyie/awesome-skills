@@ -24,8 +24,10 @@ A route is `Framework Ready` when:
 - card, list, and detail systems exist
 - typography hierarchy is coherent
 - placeholder or `temporary-binding` assets are correctly placed
+- temporary assets are documented with route ownership and replacement triggers
 - responsive behavior is stable
 - no overflow, clipping, or dead interactions remain
+- the route composition is accepted even if final bespoke artwork is not ready yet
 
 ## Visual Delivery Ready
 
@@ -35,6 +37,7 @@ A route is `Visual Delivery Ready` when:
 - spacing, hierarchy, and emphasis are tuned
 - asset quality is acceptable for delivery
 - metadata and content framing are coherent
+- any remaining temporary assets are explicitly acknowledged as post-pass gaps
 - remaining differences are minor and explicitly documented
 
 ## Required Reporting
@@ -45,6 +48,7 @@ Report:
 
 - which routes are only `Framework Ready`
 - which assets remain temporary
+- whether those assets control route composition or only slot/texture behavior
 - what has to change before visual delivery signoff
 - what QA evidence already exists
 

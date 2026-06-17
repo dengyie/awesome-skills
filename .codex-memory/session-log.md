@@ -1,4 +1,16 @@
 # Session Log
+## 2026-06-18 12:10
+- Task: Implement and verify the `zero-to-website-design` V6 historical-mock framework hardening pass.
+- Actions: Updated `zero-to-website-design/SKILL.md`, the historical-mock/framework/implementation/acceptance/production references, the mock-asset plus visual-source templates, the usage guide, and package regression tests; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; collected review context and ran `production-code-quality-review` against the working tree.
+- Results: V6 is implemented in the working tree. The package now more explicitly supports repo-owned mockups as first-class inputs for `Framework Ready` website passes, requires clearer temporary-binding ownership/upgrade reporting, and includes direct "do not generate new images yet" usage guidance. Tests and validation pass, and the production review surfaced no confirmed blocking findings.
+- Next: Stage, commit, and push the V6 pass, then choose the next staged hardening target.
+- Blockers: None.
+## 2026-06-18 11:25
+- Task: Continue the `zero-to-website-design` line by documenting the next historical-mock framework-delivery hardening phase.
+- Actions: Re-read the shipped `zero-to-website-design` workflow, historical-mock, design-doc, and project-memory references; reviewed the current workstream, templates, and usage docs; wrote a new V6 development note focused on repo-owned mockups, framework-ready delivery, and explicit "do not generate new images yet" behavior; updated project memory to point at the next stage.
+- Results: The repository now has an alignment document for the next `zero-to-website-design` phase: `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`. Project memory and the zero-to-website workstream now reflect that the current focus has moved from earlier shipped phases to the next hardening target.
+- Next: Align on the V6 plan, then implement the approved doc/template/usage changes and run validation plus production review.
+- Blockers: None.
 ## 2026-06-17 22:10
 - Task: Advance `best-project-memory` V2 and integrate it with `production-code-quality-review`.
 - Actions: Initialized `.codex-memory/`, added a dedicated integration workstream, extended review context collection to read project memory, updated schema and review briefs, and added/updated tests and goldens.

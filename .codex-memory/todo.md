@@ -1,9 +1,12 @@
 # TODO
 ## In Progress
-- [ ] Review, commit, and push the repository overview documentation refresh.
+- [ ] Review, commit, and push the `zero-to-website-design` V6 historical-mock framework hardening pass.
 ## Next
+- [ ] Choose the next staged `zero-to-website-design` hardening target after V6.
 - [ ] Decide whether the next docs pass should add a dedicated top-level skill matrix or release summary page.
 ## Done
+- [x] Implement the V6 `zero-to-website-design` doc/template/test wording updates.
+- [x] Write the V6 development note for historical-mock, framework-first website delivery hardening.
 - [x] Added a dedicated design plan for the repository overview documentation refresh.
 - [x] Reworked `README.md` into a clearer multi-skill repository introduction with explicit shipped-skill coverage.
 - [x] Rewrote `docs/zh/README.zh-CN.md` so the Chinese introduction covers all shipped skills instead of only the review package.
