@@ -4,7 +4,7 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V17 generated route mockup handoff hardening is implemented in the working tree.
+- Current stage: `zero-to-website-design` V17 generated route mockup handoff hardening is shipped and the worktree is clean.
 
 ## Current Branch
 - `codex/zero-to-website-design-v11-clean`
@@ -45,10 +45,10 @@
 - None.
 
 ## Current Focus
-- Verify, commit, and push the V17 generated route mockup handoff hardening pass.
+- Choose and implement the next bounded `zero-to-website-design` hardening target from the shipped baseline.
 
 ## Next Milestone
-- Commit the V17 generated route mockup handoff hardening pass, then choose the next bounded hardening target.
+- Select the next `zero-to-website-design` hardening target, write its plan, and validate the new diff.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
