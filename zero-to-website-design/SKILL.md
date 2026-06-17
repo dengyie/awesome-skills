@@ -80,10 +80,11 @@ Historical repo images are first-class inputs. When a project already has usable
    - Report routes touched, source references used, files changed, verification results, framework-ready versus delivery-ready status, and known visual gaps.
 
 12. Integrate project memory when the work is long-running.
-   - Read `references/project-memory-integration.md` when the repository uses `.codex-memory/`.
-   - Update the relevant workstream, `todo.md`, and `session-log.md` after meaningful progress.
-   - Promote durable delivery decisions when the source path, route status, or asset strategy becomes binding.
-   - Generate a handoff when the work pauses midstream or another session must resume delivery.
+    - Read `references/project-memory-integration.md` when the repository uses `.codex-memory/`.
+    - Update the relevant workstream, `todo.md`, and `session-log.md` after meaningful progress.
+    - Promote durable delivery decisions when the source path, route status, or asset strategy becomes binding.
+    - Preserve resume-critical route, QA, and blocker state in the workstream or handoff artifact.
+    - Generate a handoff when the work pauses midstream, any required route is blocked or not checked, or another session must resume delivery.
 
 ## Reference Routing
 
@@ -98,6 +99,7 @@ Historical repo images are first-class inputs. When a project already has usable
 - `references/framework-first-delivery.md`: read when framework-first delivery is an explicit milestone.
 - `references/project-memory-integration.md`: read when the repository uses `.codex-memory/` and the work spans multiple sessions.
 - `references/production-delivery.md`: read before deploy, publish, PR, or final handoff.
+- `references/project-memory-integration.md`: read again when a paused pass needs a handoff or resume note.
 
 ## Template Routing
 
@@ -131,3 +133,4 @@ A zero-to-website pass is complete only when:
 - desktop and mobile browser QA have been run
 - production readiness has been reviewed
 - known gaps are explicitly reported
+- resume-critical route, QA, and blocker state is preserved when work pauses

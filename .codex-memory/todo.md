@@ -1,10 +1,11 @@
 # TODO
 ## In Progress
-- [ ] Review, commit, and push the `zero-to-website-design` V11 pre-code document-gate pass.
+- [ ] Review, commit, and push the `zero-to-website-design` V12 workstream-and-handoff continuity pass.
 ## Next
-- [ ] Decide the next `zero-to-website-design` hardening target after V11 lands.
+- [ ] Decide the next `zero-to-website-design` hardening target after V12 lands.
 - [ ] Decide whether the paused repository-level docs line should be resumed later.
 ## Done
+- [x] Review, commit, and push the `zero-to-website-design` V11 pre-code document-gate pass.
 - [x] Design and implement the `zero-to-website-design` V11 pre-code document-gate pass.
 - [x] Review, commit, and push the V10 template-contract hardening pass.
 - [x] Design and implement the V10 template-contract hardening pass for `zero-to-website-design`.

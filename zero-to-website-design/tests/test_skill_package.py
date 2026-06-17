@@ -180,6 +180,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Do not generate new images yet", usage_text)
         self.assertIn("temporary-binding", usage_text)
         self.assertIn("Project Memory", usage_text)
+        self.assertIn("Continuity Gate", usage_text)
+        self.assertIn("current route slice", usage_text)
+        self.assertIn("weakest route evidence status", usage_text)
+        self.assertIn("handoff artifact or resume note", usage_text)
         self.assertIn("Generated-Authority Path", usage_text)
         self.assertIn("Record why generation was needed", usage_text)
         self.assertIn("route evidence rows", usage_text)
@@ -223,6 +227,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("workstream", memory_integration.lower())
         self.assertIn("handoff", memory_integration.lower())
         self.assertIn("decisions.md", memory_integration)
+        self.assertIn("current route matrix slice", memory_integration)
+        self.assertIn("weakest route evidence status", memory_integration)
+        self.assertIn("Treat handoff generation as mandatory", memory_integration)
+        self.assertIn("Minimum handoff or resume note fields", memory_integration)
         self.assertIn("binding-route", visual_source_template)
         self.assertIn("temporary-binding", visual_source_template)
         self.assertIn("Authority Reason", visual_source_template)
@@ -264,6 +272,11 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Accepted Gaps", qa_report_template)
         self.assertIn("Overall route evidence status", qa_report_template)
         self.assertIn("Final readiness claim follows weakest required route evidence status", qa_report_template)
+        self.assertIn("## Continuation Ownership", qa_report_template)
+        self.assertIn("Route owner follow-up", qa_report_template)
+        self.assertIn("Unresolved blocker owner", qa_report_template)
+        self.assertIn("Next-session verification target", qa_report_template)
+        self.assertIn("Handoff artifact", qa_report_template)
         self.assertIn("Route owner", mock_asset_template)
         self.assertIn("Replacement trigger", mock_asset_template)
         self.assertIn("Authority Reason", visual_inventory_template)
@@ -273,6 +286,8 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Only move it to `binding-route`", concept_generation)
         self.assertIn("replacement trigger is explicit", concept_generation)
         self.assertIn("do not generate merely because generation is available", concept_generation)
+        self.assertIn("Preserve resume-critical route, QA, and blocker state", skill_text)
+        self.assertIn("any required route is blocked or not checked", skill_text)
 
     def test_templates_are_scaffolds_without_todo_markers(self):
         templates_dir = ROOT / "assets" / "templates"
@@ -292,8 +307,13 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         for expected in [
             "Current milestone",
             "Framework-ready or delivery-ready",
+            "Current route matrix slice",
             "Temporary-binding assets",
+            "Weakest route evidence status",
             "Production review",
+            "Next evidence target",
+            "Blocker owner",
+            "Handoff artifact",
             "decisions.md",
             "Another session needed",
         ]:

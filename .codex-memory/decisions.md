@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Workstream And Handoff Artifacts Must Preserve Resume-Critical State
+- Decision: Use workstream-and-handoff continuity hardening as the V12 stage for `zero-to-website-design`, and require route matrix slices, weakest-route evidence, blocker ownership, and explicit handoff cues in the shipped continuity artifacts.
+- Rationale: The V11 gate protects the start of implementation, but long-running website work still risks losing the restart context once a session pauses. Encoding the resume-critical state in filesystem artifacts reduces chat dependence without expanding the contract beyond what a resumed session actually needs.
+- Alternatives considered: Leave continuity as an implied best practice, or add broader orchestration behavior before the artifact contract was proven.
+- Impact: The package now makes workstream and QA scaffolds carry the next-session starting point, and tests lock the new wording in place.
+- Rollback trigger: If the continuity fields prove too heavy for small sites, trim nonessential wording while preserving route slice, blocker owner, and handoff artifact requirements.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v12-workstream-handoff-hardening-plan.md`, `zero-to-website-design/references/project-memory-integration.md`, `zero-to-website-design/assets/templates/website-workstream.md`, `zero-to-website-design/assets/templates/qa-report.md`, `zero-to-website-design/SKILL.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Pre-Code Artifacts Must Gate Broad Website Implementation
 - Decision: Use a pre-code document-gate hardening pass as the V11 stage for `zero-to-website-design`, and require a preserved intake output, design-doc baseline, and implementation map before broad implementation begins.
 - Rationale: The V6-V10 workflow already makes provenance, QA evidence, and delivery state much stricter, but the intake-to-implementation handoff still left too much room for backfilling key planning artifacts after code had already started. Tightening the earlier gate reduces workflow drift where route scope, source-path choice, and milestone intent first become binding.

@@ -4,7 +4,7 @@
 - Continue hardening `zero-to-website-design` so it better encodes the proven historical-mock, framework-first website delivery workflow.
 
 ## Current Phase
-- Current stage: `zero-to-website-design` V11 pre-code document-gate hardening is implemented in the working tree.
+- Current stage: `zero-to-website-design` V12 workstream-and-handoff continuity hardening is implemented in the working tree.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -45,10 +45,10 @@
 - None.
 
 ## Current Focus
-- Close out the `zero-to-website-design` V11 pre-code document-gate pass with memory sync and an atomic skill-only commit while leaving unrelated repository-level docs work untouched.
+- Close out the `zero-to-website-design` V12 workstream-and-handoff continuity pass with memory sync and an atomic skill-only commit while leaving unrelated repository-level docs work untouched.
 
 ## Next Milestone
-- Commit the `zero-to-website-design` V11 pre-code document-gate pass and keep any unrelated repository-level docs work out of the stage commit.
+- Commit the `zero-to-website-design` V12 workstream-and-handoff continuity pass and keep any unrelated repository-level docs work out of the stage commit.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`

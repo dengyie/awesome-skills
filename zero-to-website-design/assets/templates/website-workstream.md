@@ -7,8 +7,10 @@
 
 ## Current State
 - Route status:
+- Current route matrix slice:
 - Visual source status:
 - Framework-ready or delivery-ready:
+- Weakest route evidence status:
 - Memory sync status:
 
 ## Routes In Scope
@@ -25,9 +27,11 @@
 - Desktop QA:
 - Mobile QA:
 - Production review:
+- Next evidence target:
 
 ## Blockers
 - Blocker:
+- Blocker owner:
 - Mitigation:
 
 ## Next Actions
@@ -44,5 +48,6 @@
 
 ## Handoff Notes
 - Another session needed:
+- Handoff artifact:
 - Resume from:
 - Critical context to preserve:

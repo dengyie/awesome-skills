@@ -11,6 +11,7 @@
 - Framework-ready or delivery-ready:
 - Temporary-binding assets still in use:
 - Handoff needed:
+- Handoff artifact:
 - Next-session follow-up:
 - Overall route evidence status:
 
@@ -43,6 +44,12 @@
 
 | Gap | Severity | Follow-up |
 | --- | --- | --- |
+
+## Continuation Ownership
+
+- Route owner follow-up:
+- Unresolved blocker owner:
+- Next-session verification target:
 
 ## Exceptions Or Out-Of-Scope Routes
 

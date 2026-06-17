@@ -80,6 +80,19 @@ Before broad implementation starts, the workflow should leave behind a compact d
 
 Do not treat these as post-hoc paperwork. If the route inventory, deferred routes, source-path choice, milestone target, or implementation order only exist in chat, the workflow is still under-documented for broad editing.
 
+## Continuity Gate
+
+When work spans multiple sessions, preserve:
+
+- current route slice
+- weakest route evidence status
+- temporary-binding assets still in control
+- next QA or implementation target
+- blocker owner
+- handoff artifact or resume note
+
+If a pass pauses while any required route is still blocked or unchecked, the next session should resume from the workstream or handoff rather than chat memory.
+
 When the repository uses `.codex-memory/`, the workflow should also:
 
 - restore current state before major work
