@@ -6,6 +6,13 @@
 - Result:
 - Notes:
 
+## Delivery State
+
+- Framework-ready or delivery-ready:
+- Temporary-binding assets still in use:
+- Handoff needed:
+- Next-session follow-up:
+
 ## Browser Matrix
 
 | Route | Viewport | Result | Screenshot | Notes |
@@ -41,4 +48,3 @@
 - Production review:
 - Deployment/PR:
 - Remaining work:
-

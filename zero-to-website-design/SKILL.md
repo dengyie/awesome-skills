@@ -96,6 +96,7 @@ Use these files as copyable project scaffolds when equivalent files do not alrea
 - `assets/templates/visual-source-map.md`
 - `assets/templates/visual-source-inventory.md`
 - `assets/templates/mock-asset-pass.md`
+- `assets/templates/website-workstream.md`
 - `assets/templates/qa-report.md`
 
 Adapt templates to the project. Do not copy placeholders into final deliverables without filling them in.

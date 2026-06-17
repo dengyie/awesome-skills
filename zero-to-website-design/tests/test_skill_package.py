@@ -29,6 +29,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             ROOT / "assets" / "templates" / "visual-source-map.md",
             ROOT / "assets" / "templates" / "visual-source-inventory.md",
             ROOT / "assets" / "templates" / "mock-asset-pass.md",
+            ROOT / "assets" / "templates" / "website-workstream.md",
             ROOT / "assets" / "templates" / "qa-report.md",
         ]
 
@@ -66,7 +67,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         template_paths = sorted(set(re.findall(r"`(assets/templates/[^`]+\.md)`", skill_text)))
 
-        self.assertEqual(len(template_paths), 8)
+        self.assertEqual(len(template_paths), 9)
         missing = [path for path in template_paths if not (ROOT / path).exists()]
 
         self.assertEqual(missing, [])
@@ -109,6 +110,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         memory_integration = (ROOT / "references" / "project-memory-integration.md").read_text(
             encoding="utf-8"
         )
+        visual_source_template = (ROOT / "assets" / "templates" / "visual-source-map.md").read_text(
+            encoding="utf-8"
+        )
 
         self.assertIn("historical mock", skill_text.lower())
         self.assertIn("framework-first", skill_text.lower())
@@ -121,16 +125,33 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("workstream", memory_integration.lower())
         self.assertIn("handoff", memory_integration.lower())
         self.assertIn("decisions.md", memory_integration)
+        self.assertIn("binding-route", visual_source_template)
+        self.assertIn("temporary-binding", visual_source_template)
 
     def test_templates_are_scaffolds_without_todo_markers(self):
         templates_dir = ROOT / "assets" / "templates"
         template_files = sorted(templates_dir.glob("*.md"))
 
-        self.assertEqual(len(template_files), 8)
+        self.assertEqual(len(template_files), 9)
         for template in template_files:
             text = template.read_text(encoding="utf-8")
             self.assertTrue(text.startswith("# "), template.name)
             self.assertNotIn("TODO", text.upper(), template.name)
+
+    def test_website_workstream_template_captures_memory_aware_delivery_fields(self):
+        template = (ROOT / "assets" / "templates" / "website-workstream.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "Current milestone",
+            "Framework-ready or delivery-ready",
+            "Temporary-binding assets",
+            "Production review",
+            "decisions.md",
+            "Another session needed",
+        ]:
+            self.assertIn(expected, template)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,12 @@
 
 Describe what this route is for.
 
+## Delivery State
+
+- Current milestone:
+- Related workstream:
+- Temporary-binding assets:
+
 ## Binding References
 
 - Image or URL:
@@ -54,4 +60,4 @@ Describe what this route is for.
 - Gap:
 - Severity:
 - Follow-up:
-
+- Handoff-sensitive:

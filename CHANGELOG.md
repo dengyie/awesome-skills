@@ -15,6 +15,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 - added reusable project templates for design-system docs, implementation plans, asset/data specs, page specs, visual source maps, and QA reports
 - added `zero-to-website-design` usage documentation and package regression tests
 - added a development plan documenting the workflow extracted from the Little Lighthouse Folk Canvas rebuild
+- added `zero-to-website-design` V5 template hardening for delivery-state tracking, memory-aware handoffs, and reusable website workstreams
 
 ### Fixed
 
@@ -22,6 +23,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 - normalized review context paths to POSIX-style separators on Windows for untracked directory and submodule expansion
 - skipped POSIX install/update helper tests on Windows where Git Bash path semantics are not representative of the target shell environment
 - skipped symlink-recursion coverage on Windows when the process lacks symlink creation privileges
+- aligned website templates with `binding-route` and `temporary-binding` provenance language plus framework-ready versus delivery-ready reporting
 
 ## v0.1.6 - 2026-06-17
 

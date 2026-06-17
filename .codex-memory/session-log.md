@@ -17,3 +17,15 @@
 - Results: The package now explicitly covers workstreams, decisions, session logs, and handoffs when `.codex-memory/` is present, with passing tests and validation.
 - Next: Stage, commit, and push the V4 memory-integration pass.
 - Blockers: None.
+## 2026-06-18 00:15
+- Task: Start `zero-to-website-design` V5 memory-aware template hardening.
+- Actions: Wrote a V5 template plan, updated the visual source map plus implementation, QA, and page-spec templates for delivery-state tracking, added a reusable `website-workstream.md`, expanded usage docs/tests, and synchronized repository memory toward the new stage.
+- Results: The package scaffolds now reflect `binding-route`/`temporary-binding` provenance, framework-ready versus delivery-ready reporting, and workstream/handoff continuity prompts.
+- Next: Run package validation, production review, fix any confirmed findings, then commit and push the V5 pass.
+- Blockers: None.
+## 2026-06-18 00:30
+- Task: Validate and review the `zero-to-website-design` V5 pass.
+- Actions: Ran the package unittest suite, ran `quick_validate.py`, executed `production-code-quality-review` against the working tree, and tightened the new workstream template plus memory/changelog state based on the final pass.
+- Results: V5 validation passed cleanly, quick validation passed, and the production review surfaced no confirmed findings for the working tree.
+- Next: Stage, commit, and push the V5 template-hardening changes.
+- Blockers: None.

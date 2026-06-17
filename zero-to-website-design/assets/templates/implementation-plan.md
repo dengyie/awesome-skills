@@ -4,6 +4,14 @@
 
 Describe the implementation phase and target outcome.
 
+## Delivery State
+
+- Milestone target:
+- Related workstream:
+- Memory update plan:
+- Decision promotion trigger:
+- Handoff trigger:
+
 ## Scope
 
 - In scope:
@@ -37,6 +45,8 @@ Describe the implementation phase and target outcome.
 - Mobile routes:
 - Interaction checks:
 - Asset checks:
+- Framework-ready check:
+- Delivery-ready check:
 
 ## Risks
 
@@ -51,4 +61,4 @@ Describe the implementation phase and target outcome.
 - [ ] Browser QA passes
 - [ ] Production review complete
 - [ ] Known gaps recorded
-
+- [ ] Memory/workstream state updated

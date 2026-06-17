@@ -131,6 +131,7 @@ When the project lacks equivalent docs, the skill uses templates from `zero-to-w
 - `asset-and-data-spec.md`
 - `page-spec.md`
 - `visual-source-map.md`
+- `website-workstream.md`
 - `qa-report.md`
 
 These should be copied into the target project and filled in. Do not leave placeholders as final documentation.
@@ -163,6 +164,12 @@ Typical memory behavior:
 - append a session entry after meaningful implementation or QA progress
 - promote binding source-path or asset-strategy decisions
 - generate a handoff when the website pass pauses midstream
+
+Template support now includes:
+
+- `website-workstream.md` for a reusable delivery workstream artifact
+- updated implementation/QA/page-spec templates that record framework-ready versus delivery-ready state
+- updated visual source map language for `binding-route` and `temporary-binding`
 
 ## When Not To Use
 
