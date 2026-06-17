@@ -42,6 +42,8 @@
 - V17 generated-route-mockup handoff hardening is implemented in the working tree across `concept-generation.md`, `visual-provenance.md`, `framework-first-delivery.md`, the visual-source/mock-asset templates, usage docs, and regression coverage.
 - V17 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 - V17 is committed and pushed as `35ec309 feat(阶段26): harden generated route mockup handoff`.
+- V18 delivery-handoff cohesion is implemented in the working tree across `production-delivery.md`, `qa-report.md`, `website-workstream.md`, usage docs, and regression coverage.
+- V18 verification passed: `zero-to-website-design` tests pass, `quick_validate.py` passes, and production review found no confirmed blocking issues.
 
 ## Blockers
 - None.
@@ -77,7 +79,7 @@
 - `zero-to-website-design/tests/test_skill_package.py`
 
 ## Next Actions
-- [ ] Choose the next bounded `zero-to-website-design` hardening target after V17 lands.
+- [ ] Commit and push the `zero-to-website-design` V18 delivery handoff cohesion pass.
 
 ## Validation
 - `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`

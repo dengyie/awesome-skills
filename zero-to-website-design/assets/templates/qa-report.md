@@ -10,9 +10,13 @@
 
 - Framework-ready or delivery-ready:
 - Temporary-binding assets still in use:
+- Generated route-mockup coverage status:
+- Inherited authority notes:
+- Active escalation target:
 - Route-data integrity status:
 - Metadata integrity status:
 - Feed/output integrity status:
+- Weakest route limiting reason:
 - Handoff needed:
 - Handoff artifact:
 - Next-session follow-up:

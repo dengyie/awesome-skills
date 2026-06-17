@@ -11,6 +11,10 @@
 - Visual source status:
 - Framework-ready or delivery-ready:
 - Weakest route evidence status:
+- Weakest route limiting reason:
+- Generated route-mockup coverage status:
+- Inherited authority summary:
+- Active escalation target:
 - Memory sync status:
 
 ## Routes In Scope

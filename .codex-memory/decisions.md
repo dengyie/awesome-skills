@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-18 - Delivery Artifacts Must Carry The Stronger Generated And Temporary Authority State
+- Decision: After V17, target delivery handoff cohesion as V18 by tightening `production-delivery.md`, `qa-report.md`, and `website-workstream.md` around generated route-mockup coverage, inherited authority, escalation target, and final reporting continuity.
+- Rationale: The package now captures pre-code, route, asset, and concept-to-route authority much more explicitly, but the final delivery and continuation artifacts still lag behind that richer state. Another session could still lose detail at the handoff/report layer.
+- Impact: The next stage will make final QA, handoff, and workstream artifacts preserve the same authority and verification detail already required earlier in the workflow.
+- Rollback trigger: If downstream projects show the delivery scaffolds become too heavy, keep route-mockup coverage, authority inheritance, and escalation reporting while trimming less useful prose.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v18-delivery-handoff-cohesion-plan.md`, `zero-to-website-design/references/production-delivery.md`, `zero-to-website-design/assets/templates/qa-report.md`, `zero-to-website-design/assets/templates/website-workstream.md`, `docs/usage/zero-to-website-design.md`
 ## 2026-06-18 - The Next Gap Is The Handoff From Chosen Concept To Route Mockup Authority
 - Decision: After V16, target the generated route-mockup handoff contract as V17 by tightening how a chosen concept direction becomes route-scoped mockups, temporary-binding inputs, or binding-route references.
 - Rationale: Generation-entry and authority-escalation rules already exist, but the bridge from an approved direction to route-specific implementation authority is still lighter than the rest of the workflow. That leaves too much implicit judgment in the expansion step.

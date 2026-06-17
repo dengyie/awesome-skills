@@ -215,6 +215,11 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("which provisional assets belong to the same upgrade queue", usage_text)
         self.assertIn("what next verification or replacement step another session must run", usage_text)
         self.assertIn("A visual-source note should be enough for another session", usage_text)
+        self.assertIn("Delivery Handoff", usage_text)
+        self.assertIn("weakest route limiting reason", usage_text)
+        self.assertIn("whether generated route mockups still control any route family", usage_text)
+        self.assertIn("authority is inherited from a selected concept or is route-specific", usage_text)
+        self.assertIn("active escalation target and next verification target", usage_text)
         self.assertIn("route evidence rows", usage_text)
         self.assertIn("not-checked", usage_text)
         self.assertIn("Visual Delivery Ready", usage_text)
@@ -361,6 +366,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("content source status for each touched route family", production_delivery)
         self.assertIn("metadata and route/data integrity result", production_delivery)
         self.assertIn("sitemap/RSS/robots or equivalent feed/output integrity result", production_delivery)
+        self.assertIn("generated route-mockup coverage status when applicable", production_delivery)
+        self.assertIn("inherited authority versus route-specific authority when generated route owners remain active", production_delivery)
+        self.assertIn("active escalation target for unresolved route owners", production_delivery)
+        self.assertIn("weakest required route and why it still limits the overall claim", production_delivery)
         self.assertIn("unresolved placeholder-brand drift", production_delivery)
         self.assertIn("unresolved slug collisions, route-data drift, or feed/output mismatch", production_delivery)
         self.assertIn("route evidence status for each touched core route", production_delivery)
@@ -370,6 +379,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Route-data integrity status", qa_report_template)
         self.assertIn("Metadata integrity status", qa_report_template)
         self.assertIn("Feed/output integrity status", qa_report_template)
+        self.assertIn("Generated route-mockup coverage status", qa_report_template)
+        self.assertIn("Inherited authority notes", qa_report_template)
+        self.assertIn("Active escalation target", qa_report_template)
+        self.assertIn("Weakest route limiting reason", qa_report_template)
         self.assertIn("Data/Metadata Integrity", qa_report_template)
         self.assertIn("Source Owner", qa_report_template)
         self.assertIn("Blocking Failures", qa_report_template)
@@ -453,6 +466,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             "Current route matrix slice",
             "Temporary-binding assets",
             "Weakest route evidence status",
+            "Weakest route limiting reason",
+            "Generated route-mockup coverage status",
+            "Inherited authority summary",
+            "Active escalation target",
             "Production review",
             "Next evidence target",
             "Blocker owner",

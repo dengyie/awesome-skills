@@ -267,6 +267,17 @@ Minimum verification:
 
 Final readiness claims must follow recorded route evidence: `not-checked` or `blocked` routes cannot support a ready claim, and `Framework Ready` must not be described as `Visual Delivery Ready`.
 
+
+## Delivery Handoff
+
+Final delivery artifacts should preserve the same authority detail as the earlier route, asset, and concept-to-mockup artifacts. When a pass is not fully final, record:
+
+- the weakest route limiting reason
+- whether generated route mockups still control any route family
+- whether authority is inherited from a selected concept or is route-specific
+- the active escalation target and next verification target
+
+A handoff should be enough for another session to resume the delivery state without reconstructing the last verified authority from chat.
 ## Project Memory
 
 When `best-project-memory` is available, `zero-to-website-design` should act like a governance-aware consumer rather than a read-only guest.

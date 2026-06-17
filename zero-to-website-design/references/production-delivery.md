@@ -45,6 +45,9 @@ Check:
 - large assets are justified
 - temporary-binding assets are acknowledged in the final report
 - temporary-binding assets say whether they still control route composition, slot shape, or only texture/palette
+- generated route-mockup coverage status is explicit when route authority still depends on generated assets
+- inherited authority versus route-specific authority is explicit for generated route owners
+- active escalation target is visible when a generated or temporary route owner is not yet final
 - framework-first versus final-content status is clearly stated
 
 ## Final Handoff Format
@@ -65,6 +68,10 @@ Report:
 - metadata and route/data integrity result
 - sitemap/RSS/robots or equivalent feed/output integrity result
 - temporary-binding ownership and upgrade triggers
+- generated route-mockup coverage status when applicable
+- inherited authority versus route-specific authority when generated route owners remain active
+- active escalation target for unresolved route owners
+- weakest required route and why it still limits the overall claim
 - known gaps
 - deployment or PR link when applicable
 
