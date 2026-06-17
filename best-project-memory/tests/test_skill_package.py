@@ -871,6 +871,47 @@ class BestProjectMemoryPackageTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("looks stale or too vague", result.stdout)
 
+    def test_stale_todo_check_fails_when_active_item_is_already_done(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            memory_dir = repo / ".codex-memory"
+            memory_dir.mkdir()
+            (memory_dir / "todo.md").write_text(
+                "# TODO\n"
+                "## In Progress\n"
+                "- [ ] Run full review\n"
+                "## Next\n"
+                "- [ ] Prepare release notes\n"
+                "## Done\n"
+                "- [x] Run full review\n",
+                encoding="utf-8",
+            )
+            (memory_dir / "session-log.md").write_text(
+                "# Session Log\n"
+                "## 2026-06-18 10:00\n"
+                "- Task: Validate package\n"
+                "- Actions: Ran verification\n"
+                "- Results: Review completed\n"
+                "- Next: Run full review\n"
+                "- Blockers: None.\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "stale_todo_check.py"),
+                    "--repo",
+                    str(repo),
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("already appears in ## Done", result.stdout)
+            self.assertIn("session history and ## Done both imply it should be closed", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import re
 
 
 STALE_TOKENS = (
@@ -57,11 +58,26 @@ def clean_items(lines: list[str]) -> list[str]:
     return items
 
 
+def normalize_item(item: str) -> str:
+    return re.sub(r"\s+", " ", item.strip().lower())
+
+
 def is_stale(item: str) -> bool:
     lowered = item.lower()
     if len(lowered.split()) <= 1:
         return True
     return any(token in lowered for token in STALE_TOKENS)
+
+
+def extract_recent_session_nexts(text: str) -> list[str]:
+    next_items: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("- Next:"):
+            value = stripped[len("- Next:") :].strip()
+            if value:
+                next_items.append(value)
+    return next_items
 
 
 def main() -> int:
@@ -74,12 +90,28 @@ def main() -> int:
 
     text = read_text(todo_path)
     issues: list[str] = []
+    done_items = clean_items(extract_section(text, "## Done"))
+    done_keys = {normalize_item(item) for item in done_items}
+
+    session_log_path = repo / ".codex-memory" / "session-log.md"
+    session_next_keys: set[str] = set()
+    if session_log_path.exists():
+        session_next_keys = {
+            normalize_item(item) for item in extract_recent_session_nexts(read_text(session_log_path))
+        }
 
     for heading in ("## In Progress", "## Next"):
         items = clean_items(extract_section(text, heading))
         for item in items:
+            normalized = normalize_item(item)
             if is_stale(item):
                 issues.append(f"{heading}: '{item}' looks stale or too vague")
+            if normalized in done_keys:
+                issues.append(f"{heading}: '{item}' is still active but already appears in ## Done")
+            if normalized in done_keys and normalized in session_next_keys:
+                issues.append(
+                    f"{heading}: '{item}' is still active even though session history and ## Done both imply it should be closed"
+                )
 
     if issues:
         for issue in issues:

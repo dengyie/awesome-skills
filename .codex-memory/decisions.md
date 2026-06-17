@@ -55,3 +55,10 @@
 - Impact: `best-project-memory` now gets a deterministic recovery path for incomplete `.codex-memory/` layouts, with a regression that proves existing files are preserved.
 - Rollback trigger: If repair later needs to support more corrupted layouts, extend the helper carefully rather than broadening overwrite behavior.
 - Related files: `best-project-memory/scripts/init_memory.py`, `best-project-memory/tests/test_skill_package.py`, `docs/dev/2026-06-18-best-project-memory-v11-repair-hardening-plan.md`, `docs/usage/best-project-memory.md`
+## 2026-06-18 - Harden Stale TODO Detection With Conservative Evidence Rules
+- Decision: Upgrade `stale_todo_check.py` to flag active TODO items that already appear in `## Done`, and strengthen that warning when recent `session-log.md` `Next:` evidence points at the same normalized item.
+- Rationale: The V2 plan promises stale/dirty-state detection, but the previous script only checked vague wording. Active-versus-done duplication is a deterministic, low-noise signal that fits the package's conservative quality-gate style.
+- Alternatives considered: Keep the script as a wording-only checker, or jump straight to fuzzy semantic completion inference.
+- Impact: The stale TODO gate now catches a more meaningful class of dirty active state without needing brittle natural-language interpretation.
+- Rollback trigger: If real repositories show too many false positives from exact normalized duplication, narrow the duplicate rule before adding any broader inference.
+- Related files: `best-project-memory/scripts/stale_todo_check.py`, `best-project-memory/tests/test_skill_package.py`, `docs/dev/2026-06-18-best-project-memory-v12-stale-todo-hardening-plan.md`, `docs/usage/best-project-memory.md`

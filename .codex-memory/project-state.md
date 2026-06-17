@@ -4,7 +4,7 @@
 - Expand `best-project-memory` V2 by landing staged governance and multi-skill integration work.
 
 ## Current Phase
-- Current stage: `best-project-memory` V11 repair hardening.
+- Current stage: `best-project-memory` V12 stale TODO hardening.
 
 ## Current Branch
 - `codex/best-project-memory-expansion`
@@ -35,15 +35,16 @@
 ## Active Risks
 - The Level 2 review-write path is still intentionally conservative, so later stages may still need workstream-aware follow-up routing or richer priority semantics if review traffic grows more complex.
 - The `init / repair` helper surface was previously under-proven relative to the V2 plan, so this stage needs to keep repair deterministic and non-destructive.
+- The stale TODO checker was previously too shallow to prove the V2 promise around dirty active-task detection, so this stage needs to keep the new heuristics conservative.
 
 ## Active Blockers
 - None.
 
 ## Current Focus
-- Harden and verify `init_memory.py --repair` so partial `.codex-memory/` layouts can be restored without overwriting existing files.
+- Harden `stale_todo_check.py` so it catches stale active items, not just vague wording.
 
 ## Next Milestone
-- Ship V11 repair hardening with regression coverage, then choose the next remaining V2 code-heavy gap from the refreshed baseline.
+- Ship V12 stale-TODO hardening with regression coverage, then reassess whether any code-heavy V2 gaps still remain.
 
 ## Key Artifacts
 - `best-project-memory/SKILL.md`
@@ -54,6 +55,7 @@
 - `docs/dev/2026-06-18-production-code-quality-review-v9-followup-routing-plan.md`
 - `docs/dev/2026-06-18-best-project-memory-v10-doc-sync-plan.md`
 - `docs/dev/2026-06-18-best-project-memory-v11-repair-hardening-plan.md`
+- `docs/dev/2026-06-18-best-project-memory-v12-stale-todo-hardening-plan.md`
 - `.codex-memory/phases/2026-06-18-v2-integration-summary.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v3-implementation-plan.md`
 - `docs/dev/2026-06-17-zero-to-website-design-v4-memory-integration-plan.md`

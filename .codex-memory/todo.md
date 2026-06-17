@@ -1,9 +1,11 @@
 # TODO
 ## In Progress
-- [ ] Choose the next staged V2 target after the repair-hardening pass lands.
+- [ ] Reassess whether any remaining V2 gaps need more code proof beyond the now-shipped repair, compaction, lint, and integration stages.
 ## Next
-- [ ] Revisit whether any remaining V2 gaps need more code proof beyond the now-shipped repair, compaction, lint, and integration stages.
+- [ ] Decide whether V2 is now complete enough for a final delivery summary or still needs one more narrow hardening stage.
 ## Done
+- [x] Hardened `best-project-memory/scripts/stale_todo_check.py` so it catches stale active items, not just vague wording.
+- [x] Chose a V12 stale-TODO hardening pass as the next staged V2 target after repair hardening.
 - [x] Hardened `best-project-memory/scripts/init_memory.py --repair` so partial `.codex-memory/` layouts are restored without overwriting existing files.
 - [x] Added a V11 repair-hardening plan for `best-project-memory`.
 - [x] Chose a V10 documentation-sync pass as the next staged V2 target after the follow-up-routing hardening landed.

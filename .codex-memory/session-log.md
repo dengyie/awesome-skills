@@ -65,3 +65,9 @@
 - Results: The repository now has an explicit V11 implementation path for repair hardening, with code and tests ready for validation.
 - Next: Run the `best-project-memory` test suite, package validation, and production review; fix any confirmed findings; then commit and push the V11 pass.
 - Blockers: None.
+## 2026-06-18 05:35
+- Task: Start `best-project-memory` V12 stale TODO hardening.
+- Actions: Re-read the V2 plan section for `stale_todo_check.py`, confirmed that the existing script only checked vague wording, wrote a V12 hardening plan, upgraded the checker with conservative active-versus-done duplicate detection plus recent session `Next:` evidence, added regression coverage, and updated usage/docs plus project memory.
+- Results: The stale TODO gate now has a concrete implementation path for dirty active-state detection that is closer to the original V2 quality-control promise.
+- Next: Run the `best-project-memory` test suite, package validation, and production review; fix any confirmed findings; then commit and push the V12 pass.
+- Blockers: None.

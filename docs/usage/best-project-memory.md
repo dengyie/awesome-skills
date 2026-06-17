@@ -170,6 +170,12 @@ Check whether active TODO items have gone stale or vague:
 python3 best-project-memory/scripts/stale_todo_check.py --repo .
 ```
 
+The stale TODO check now fails when:
+
+- an active item is too vague to act on
+- an active item already appears in `## Done`
+- active TODO state conflicts with recent session-history `Next:` evidence and a matching done item
+
 Compact older session history while keeping the newest entries in place:
 
 ```bash
