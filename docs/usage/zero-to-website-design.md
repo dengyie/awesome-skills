@@ -41,6 +41,12 @@ Generated concept workflow:
 Use $zero-to-website-design to generate three visual directions for this product site, let me choose one, then create route specs and implement it.
 ```
 
+Generated route-owner workflow:
+
+```text
+Use $zero-to-website-design to generate route mockups for this site only if the repo's existing visuals are not strong enough to continue. Record why generation is needed, then map the chosen mockup to the route before implementation.
+```
+
 Historical mock workflow:
 
 ```text
@@ -80,7 +86,8 @@ When no strong reference exists, the skill should:
 3. Generate or describe 3-4 distinct visual directions.
 4. Wait for a selected direction before making it route-authoritative.
 5. Expand the chosen direction into route specs.
-6. Implement only after the visual source map and design docs exist.
+6. Record why generation was needed instead of stronger existing visuals.
+7. Implement only after the visual source map and design docs exist.
 
 ## Reference-Image Path
 
@@ -102,6 +109,16 @@ When the repo already contains useful design images, archived mockups, or approv
 4. Use `temporary-binding` only when the current stage is framework-first delivery.
 5. Record route owner, section or slot owner, what each asset controls, and what still needs to be upgraded later.
 6. Keep temporary asset usage visible in design docs and final handoff notes.
+
+## Generated-Authority Path
+
+When generation is justified, the skill should:
+
+1. Record why repo-owned or historical visuals were insufficient.
+2. Keep newly generated images `exploratory` until they are concrete enough for user or route selection.
+3. Promote them to `candidate`, `approved-direction`, `temporary-binding`, or `binding-route` only with explicit ownership and milestone records.
+4. Record replacement triggers for any generated image that owns a route during implementation.
+5. Retire replaced generated images as `obsolete` instead of silently overwriting the authority trail.
 
 ## Visual Provenance
 

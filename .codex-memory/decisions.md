@@ -1,4 +1,11 @@
 # Decisions
+## 2026-06-18 - Generated Concepts Need Explicit Authority Escalation Rules
+- Decision: Treat generated-image escalation as its own hardening target immediately after provenance-contract hardening, so `concept-generation.md` no longer relies on implied judgment about when a generated mockup can become route-authoritative.
+- Rationale: Once provenance artifacts are strict, the next likely source of workflow drift is not where authority is recorded but how generation enters the system and climbs the authority ladder. This is especially important for preventing unnecessary generation when repo-owned visuals were already sufficient.
+- Alternatives considered: Leaving the generated-image path as-is, or postponing generation hardening until after another template-focused pass.
+- Impact: The next `zero-to-website-design` stage should encode stricter generation-entry conditions, escalation rules, and replacement triggers for generated route owners.
+- Rollback trigger: If downstream usage shows that the stricter generation rules add too much ceremony for genuine zero-to-one website work, reduce the wording burden while keeping the explicit route-owner and replacement checks.
+- Related files: `docs/dev/2026-06-18-zero-to-website-design-v8-concept-authority-hardening-plan.md`, `zero-to-website-design/references/concept-generation.md`, `zero-to-website-design/SKILL.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-18 - Provenance Templates Must Match The Stronger Temporary-Binding Contract
 - Decision: Treat `references/visual-provenance.md` and `assets/templates/visual-source-map.md` as part of the same hard requirement surface as the workflow text, and harden them immediately after V6.
 - Rationale: V6 raised the bar for temporary-binding ownership, milestone support, and replacement tracking. Leaving the provenance artifacts on the older lighter schema would reintroduce doc drift exactly where projects record source-of-truth decisions.

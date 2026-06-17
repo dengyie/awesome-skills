@@ -1,4 +1,16 @@
 # Session Log
+## 2026-06-18 14:05
+- Task: Implement and verify the `zero-to-website-design` V8 concept-authority hardening pass.
+- Actions: Added the V8 development note; hardened `zero-to-website-design/references/concept-generation.md` with generation-entry conditions, authority escalation, and retirement rules; updated `SKILL.md` and `docs/usage/zero-to-website-design.md` to align the public workflow; expanded regression tests; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.
+- Results: V8 is implemented in the working tree. Generated-image escalation is now more explicit about when generation is justified and how a concept can become authoritative, tests and validation pass, and production review surfaced no confirmed blocking findings.
+- Next: Stage, commit, and push the V8 pass, then choose the next staged hardening target.
+- Blockers: None.
+## 2026-06-18 13:35
+- Task: Choose and document the next `zero-to-website-design` stage after V7.
+- Actions: Re-read current project memory, the V7 outcome, `concept-generation.md`, public usage docs, and the remaining zero-to-website workflow surface; identified that the main remaining soft spot is generated-image entry and authority escalation; wrote a V8 development note focused on concept-authority hardening; updated project memory and the zero-to-website workstream to point at the next stage.
+- Results: The next stage is now explicit: `docs/dev/2026-06-18-zero-to-website-design-v8-concept-authority-hardening-plan.md`. Project memory now points at generation-entry and authority-escalation hardening instead of staying parked on the already-finished V7 pass.
+- Next: Implement V8, rerun tests and validation, run production review, and commit the phase.
+- Blockers: None.
 ## 2026-06-18 13:05
 - Task: Implement and verify the `zero-to-website-design` V7 provenance-contract hardening pass.
 - Actions: Added the V7 development note; strengthened `zero-to-website-design/references/visual-provenance.md` with ownership scope, authority reason, milestone support, and replacement-trigger requirements; expanded `assets/templates/visual-source-map.md` to capture the stricter provenance fields; updated regression tests; reran `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`; reran `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`; ran `production-code-quality-review` against the working tree.

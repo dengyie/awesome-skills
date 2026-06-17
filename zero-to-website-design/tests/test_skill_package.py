@@ -138,6 +138,9 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         visual_source_template = (ROOT / "assets" / "templates" / "visual-source-map.md").read_text(
             encoding="utf-8"
         )
+        concept_generation = (ROOT / "references" / "concept-generation.md").read_text(
+            encoding="utf-8"
+        )
         mock_asset_template = (ROOT / "assets" / "templates" / "mock-asset-pass.md").read_text(
             encoding="utf-8"
         )
@@ -153,6 +156,8 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Do not generate new images yet", usage_text)
         self.assertIn("temporary-binding", usage_text)
         self.assertIn("Project Memory", usage_text)
+        self.assertIn("Generated-Authority Path", usage_text)
+        self.assertIn("Record why generation was needed", usage_text)
         self.assertIn("strong enough for `Framework Ready`", historical_mock)
         self.assertIn("route owner", historical_mock)
         self.assertIn("replacement or upgrade trigger", historical_mock)
@@ -178,6 +183,11 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Replacement trigger", mock_asset_template)
         self.assertIn("Authority Reason", visual_inventory_template)
         self.assertIn("Replacement Trigger", visual_inventory_template)
+        self.assertIn("Generation Entry Conditions", concept_generation)
+        self.assertIn("record why the stronger non-generated source paths were not sufficient", concept_generation)
+        self.assertIn("Only move it to `binding-route`", concept_generation)
+        self.assertIn("replacement trigger is explicit", concept_generation)
+        self.assertIn("do not generate merely because generation is available", concept_generation)
 
     def test_templates_are_scaffolds_without_todo_markers(self):
         templates_dir = ROOT / "assets" / "templates"

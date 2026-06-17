@@ -26,6 +26,7 @@ Historical repo images are first-class inputs. When a project already has usable
 3. Collect visual sources.
    - Inspect repo-owned assets, historical mockups, screenshots, or user-provided references before deciding that new generation is needed.
    - If the user says not to generate new images yet, treat the best available project-owned visuals as the default source path for the current pass.
+   - If generation is still chosen, record why existing source paths were insufficient for this milestone.
    - If the user has no usable binding or temporary visual sources, read `references/concept-generation.md` and create concept directions before implementation.
 
 4. Record visual provenance.
@@ -37,11 +38,13 @@ Historical repo images are first-class inputs. When a project already has usable
    - Use historical mock assets when they are strong enough for framework or route composition.
    - Use local structural mock assets when final imagery is not ready but framework delivery should continue.
    - Do not generate new concepts when repo-owned images already provide enough route authority for the current milestone.
+   - Explicit user request can justify generation, but it does not bypass source-path evaluation or provenance recording.
    - Generate new concepts only when the project still lacks enough authority to proceed.
 
 6. Promote route owners into authoritative source material.
    - Map each `binding-route` or `temporary-binding` reference to routes, sections, and viewports.
    - Record whether each temporary asset controls whole-route composition, section composition, illustration slot shape, or only palette/texture.
+   - For generated route owners, record milestone supported and replacement trigger before implementation begins.
    - Never mix exploratory concept images with final acceptance images without saying so.
    - Read `references/historical-mock-pass.md` when historical visuals drive the current pass.
 
