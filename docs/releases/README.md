@@ -1,12 +1,17 @@
 # Release Notes
 
-This directory contains the English release notes for `production-code-quality-review`.
+This directory is the repository-level English release-notes surface for `awesome-skills`.
 
 Use it to:
 
-- review what changed in each shipped version
+- review what changed in formally versioned package releases
 - understand upgrade intent and validation steps
-- navigate historical productization work without scanning commit history
+- navigate shipped release history without scanning commit history
+
+Current scope:
+
+- formal versioned release notes currently ship for `production-code-quality-review`
+- `best-project-memory` and `zero-to-website-design` currently publish their ongoing delivery history through usage guides and `docs/dev/` staged development notes instead of versioned release-note files
 
 ## Index
 
@@ -23,3 +28,9 @@ Use it to:
 ## Chinese Mirror
 
 - [`docs/zh/releases/README.zh-CN.md`](../zh/releases/README.zh-CN.md)
+
+## Related Package Docs
+
+- [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
+- [`docs/usage/zero-to-website-design.md`](../usage/zero-to-website-design.md)
+- [`production-code-quality-review/README.md`](../../production-code-quality-review/README.md)

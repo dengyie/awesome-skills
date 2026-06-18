@@ -66,9 +66,20 @@ Before concept generation or implementation, write a compact brief:
 - objective
 - audience
 - route inventory
+- intentionally deferred routes or route types
 - visual direction inputs
+- chosen source path for this milestone
+- milestone target
 - content and asset strategy
 - delivery target
 - assumptions
 - open decisions
+- blockers that could change route scope or implementation order
 
+Keep this output in the project's design docs, workstream, or equivalent durable artifact. Do not leave the brief only in chat memory if broad implementation will follow.
+
+When assumptions are filling missing user input, make them explicit enough that another session can tell:
+
+- what was inferred
+- what remains unresolved
+- what would force a route or milestone change

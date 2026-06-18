@@ -20,8 +20,8 @@
 
 ## Visual Assets
 
-| Asset | Source | Status | Used By | Notes |
-| --- | --- | --- | --- | --- |
+| Asset | Source Method | Authority Status | Used By | Ownership Scope | Replacement Trigger | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
 
 ## Asset Rules
 
@@ -30,6 +30,7 @@
 - Generated assets:
 - Icons:
 - Fonts:
+- Temporary visual scope:
 
 ## Verification
 
@@ -37,4 +38,4 @@
 - [ ] No unapproved hotlinks
 - [ ] Asset paths work in production
 - [ ] Metadata/feed data matches rendered routes
-
+- [ ] Replacement triggers are recorded for temporary or generated route owners

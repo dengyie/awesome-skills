@@ -1,0 +1,51 @@
+﻿# TODO
+## In Progress
+## Next
+## Done
+- [x] Decide whether the paused repository-level docs line should be resumed later.
+- [x] Decide the next `zero-to-website-design` hardening target after V11 lands.
+- [x] Implement the `zero-to-website-design` V14 workflow-doc alignment pass.
+- [x] Decide whether to commit the `production-code-quality-review` GitHub sync.
+- [x] Review, commit, and push the repository-level skill matrix pass.
+- [x] Retry the V11 push after the external git timeout issue clears.
+- [x] Review, commit, and push the `zero-to-website-design` V11 pre-code document-gate pass.
+- [x] Add a repository-level skill matrix page and route readers to it from the English and Chinese intros.
+- [x] Design and implement the V11 release-facing docs scope-correction pass.
+- [x] Design and implement the `zero-to-website-design` V11 pre-code document-gate pass.
+- [x] Review, commit, and push the V10 template-contract hardening pass.
+- [x] Design and implement the V10 template-contract hardening pass for `zero-to-website-design`.
+- [x] Choose the next staged `zero-to-website-design` hardening target after V9.
+- [x] Review, commit, and push the V9 QA evidence contract hardening pass.
+- [x] Design and implement the V9 QA evidence contract hardening pass for `zero-to-website-design`.
+- [x] Review, commit, and push the V8 concept-authority hardening pass.
+- [x] Choose the next staged `zero-to-website-design` hardening target after V8.
+- [x] Implement the `zero-to-website-design` V8 concept-authority hardening pass.
+- [x] Choose the next staged `zero-to-website-design` hardening target after V7.
+- [x] Review, commit, and push the V7 provenance-contract hardening pass.
+- [x] Implement the `zero-to-website-design` V7 provenance-contract hardening pass.
+- [x] Choose the next staged `zero-to-website-design` hardening target after V6.
+- [x] Review, commit, and push the `zero-to-website-design` V6 historical-mock framework hardening pass.
+- [x] Implement the V6 `zero-to-website-design` doc/template/test wording updates.
+- [x] Write the V6 development note for historical-mock, framework-first website delivery hardening.
+- [x] Added a dedicated design plan for the repository overview documentation refresh.
+- [x] Reworked `README.md` into a clearer multi-skill repository introduction with explicit shipped-skill coverage.
+- [x] Rewrote `docs/zh/README.zh-CN.md` so the Chinese introduction covers all shipped skills instead of only the review package.
+- [x] Completed the V2 delivery audit and confirmed the planned governance, quality, and integration scope is shipped.
+- [x] Produced the final V2 delivery summary.
+- [x] Hardened `best-project-memory/scripts/stale_todo_check.py` so it catches stale active items, not just vague wording.
+- [x] Chose a V12 stale-TODO hardening pass as the next staged V2 target after repair hardening.
+- [x] Hardened `best-project-memory/scripts/init_memory.py --repair` so partial `.codex-memory/` layouts are restored without overwriting existing files.
+- [x] Added a V11 repair-hardening plan for `best-project-memory`.
+- [x] Chose a V10 documentation-sync pass as the next staged V2 target after the follow-up-routing hardening landed.
+- [x] Designed, implemented, validated, and reviewed the next Level 2 routing hardening step for production review follow-ups.
+- [x] Recorded a V2 milestone summary covering the shipped Phase 5-to-V8 integration work.
+- [x] Implemented, validated, and reviewed the production-code-quality-review V8 Level 2 memory integration pass.
+- [x] Implemented, validated, and reviewed the best-project-memory V7 quality-drift hardening pass.
+- [x] Implemented, validated, and reviewed the best-project-memory V6 session-compaction pass.
+- [x] Validated and reviewed the zero-to-website V5 memory-aware template hardening pass.
+- [x] Updated zero-to-website templates and docs for V5 memory-aware delivery state.
+- [x] Added Level 3 project-memory integration guidance to `zero-to-website-design`.
+- [x] Selected `zero-to-website-design` as the next staged development target.
+- [x] Implemented the V3 historical-mock-first workflow, new references/templates, and regression coverage.
+- [x] Landed read-only `production-code-quality-review` integration with project-memory-aware review context.
+- [x] Added schema, brief output, and CLI/unit coverage for project memory consumption.

@@ -4,6 +4,19 @@
 
 Describe what this route is for.
 
+## Route Identity
+
+- Route type:
+- Source owner:
+- Viewport evidence target:
+
+## Delivery State
+
+- Current milestone:
+- Current route status:
+- Related workstream:
+- Temporary-binding assets:
+
 ## Binding References
 
 - Image or URL:
@@ -49,9 +62,16 @@ Describe what this route is for.
 - [ ] Links/actions work
 - [ ] Metadata correct
 
+## QA Evidence
+
+- Evidence row:
+- Screenshot paths:
+- Blocking failures:
+- Accepted gaps:
+
 ## Known Gaps
 
 - Gap:
 - Severity:
 - Follow-up:
-
+- Handoff-sensitive:

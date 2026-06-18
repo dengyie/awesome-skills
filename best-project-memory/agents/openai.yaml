@@ -1,0 +1,6 @@
+interface:
+  display_name: "Best Project Memory"
+  short_description: "Repo-native continuity and handoff memory"
+  default_prompt: "Use $best-project-memory to restore project context, update state, record decisions, and maintain handoff-ready memory files."
+policy:
+  allow_implicit_invocation: true

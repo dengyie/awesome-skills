@@ -2,19 +2,66 @@
 
 Use this reference before implementing or reviewing routes.
 
-## Universal Route Checklist
+## Route Evidence Contract
+
+Every touched core route needs a compact evidence row before final handoff.
+
+Use this format in the project QA report or equivalent delivery note:
+
+```md
+| Route | Route Type | Source Owner | Viewports Checked | Evidence | Status | Blocking Failures | Accepted Gaps | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `/posts` | listing | `binding-route`: output/design/posts.png | 1600x900, 390x844 | output/qa/posts-1600x900.png; output/qa/posts-390x844.png | framework-ready | none | final art remains temporary | Mobile menu and links verified |
+```
+
+Allowed route evidence statuses:
+
+- `not-checked`: route exists but lacks browser evidence
+- `blocked`: route was checked and has failures that prevent the claimed milestone
+- `framework-ready`: route satisfies Level A with recorded evidence
+- `visual-delivery-ready`: route satisfies Level A and Level B with recorded evidence
+
+Do not claim a route status that is stronger than its evidence row supports.
+
+## Level A: Framework Ready
 
 - Route has a clear purpose.
 - Header/navigation works.
 - Footer or end state is present when appropriate.
-- Desktop layout matches the design docs.
+- Desktop layout matches the intended composition.
 - Mobile layout is intentional, not accidental stacking.
 - Text does not overlap or overflow.
 - Images and local assets load.
 - Links and primary actions are clickable.
-- Metadata is correct.
+- Placeholder or `temporary-binding` assets are correctly placed.
+- Temporary-binding assets have documented route ownership and replacement triggers.
+- Metadata is coherent enough for the current framework pass.
 - No rejected placeholder brand remains.
 - Route works in the target build/export mode.
+- Route composition is accepted even if final imagery is still provisional.
+
+Failed layout, link, asset-loading, console-blocking, or page-level overflow checks block `Framework Ready` unless the route is explicitly out of scope.
+
+## Level B: Visual Delivery Ready
+
+- Route satisfies all `Framework Ready` expectations.
+- Visual hierarchy is tuned against the binding reference.
+- Asset quality is acceptable for delivery.
+- Metadata is correct.
+- Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps with their remaining scope clearly stated.
+
+Unresolved fidelity gaps, incorrect metadata, weak asset quality, or unacknowledged `temporary-binding` ownership block `Visual Delivery Ready`.
+
+## Failure Handling
+
+Classify each failed check as:
+
+- `blocking-framework`: prevents `Framework Ready`
+- `blocking-visual`: allows `Framework Ready` but prevents `Visual Delivery Ready`
+- `accepted-gap`: explicitly allowed for this milestone and documented with scope
+- `out-of-scope`: not part of the route matrix for this pass
+
+Accepted gaps must name the route, viewport, reason, remaining owner, and what would close the gap.
 
 ## Homepage
 
@@ -63,4 +110,3 @@ Use this reference before implementing or reviewing routes.
 - code blocks and examples are readable
 - search or table of contents exists when content volume needs it
 - mobile docs navigation is usable
-

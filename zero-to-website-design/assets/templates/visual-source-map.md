@@ -4,19 +4,23 @@
 
 - `exploratory`: useful for direction, not binding
 - `candidate`: available for user selection
-- `approved`: user selected this direction
-- `binding`: implementation must match this reference
+- `approved-direction`: user selected this direction, but route authority may still be pending
+- `binding-route`: implementation must match this route reference
+- `temporary-binding`: valid for the current framework or mock-asset pass, but expected to be upgraded later
 - `obsolete`: retained for history, not used
 
 ## Sources
 
-| Asset | Source Method | Date | Status | Controls | Viewport | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
+| Asset | Source Method | Date | Status | Controls | Viewport | Authority Reason | Milestone Supported | Replacement Trigger | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Authority Notes
 
-- Current binding source:
+- Current route-binding source:
+- Temporary-binding assets:
+- Route composition owners:
+- Slot-only or texture-only owners:
+- Temporary-binding upgrades in flight:
 - Superseded sources:
 - Conflicts:
 - Open decisions:
-

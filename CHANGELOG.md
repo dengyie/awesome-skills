@@ -8,15 +8,29 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Added
 
+- added `best-project-memory`, a repo-native continuity skill for project-state restoration, decision capture, TODO maintenance, and handoff generation
+- added deterministic project-memory helper scripts for memory initialization, session-log appends, and handoff pack creation
+- added `best-project-memory/scripts/compact_session.py` plus regression coverage so long-running repos can compact old session history into shorter summaries and phase recaps
+- added a Phase 5 read-only integration pilot that lets `production-code-quality-review` consume `.codex-memory/` project context and relevant workstreams
+- added an opt-in Level 2 memory-write path for `production-code-quality-review` so review runs can append session continuity and merge explicit follow-up TODO items
+- added V9 follow-up routing hardening for `production-code-quality-review`, including urgent item routing to `In Progress` and normalized dedupe across active TODO sections
 - added `zero-to-website-design`, an end-to-end website design skill for going from a blank brief to visual references, design docs, implementation, browser QA, and production delivery
 - added reusable project templates for design-system docs, implementation plans, asset/data specs, page specs, visual source maps, and QA reports
+- added `zero-to-website-design` usage documentation and package regression tests
 - added a development plan documenting the workflow extracted from the Little Lighthouse Folk Canvas rebuild
+- added `zero-to-website-design` V5 template hardening for delivery-state tracking, memory-aware handoffs, and reusable website workstreams
+- added a V10 documentation-sync pass that records the shipped V2 continuity surface across the main governance plan, usage docs, and repo summaries
+- added V11 repair hardening for `best-project-memory`, making `init_memory.py --repair` restore partial memory layouts without overwriting existing files
+- added V12 stale-todo hardening so `stale_todo_check.py` can catch active/done drift in addition to vague TODO wording
 
 ### Fixed
 
+- tightened project-memory summary rendering in review briefs and reduced noisy workstream matching during the integration pilot
 - normalized review context paths to POSIX-style separators on Windows for untracked directory and submodule expansion
 - skipped POSIX install/update helper tests on Windows where Git Bash path semantics are not representative of the target shell environment
 - skipped symlink-recursion coverage on Windows when the process lacks symlink creation privileges
+- aligned website templates with `binding-route` and `temporary-binding` provenance language plus framework-ready versus delivery-ready reporting
+- strengthened `best-project-memory/scripts/memory_lint.py` to catch missing referenced snapshots, long session history without compaction, and snapshot-to-state visibility drift
 
 ## v0.1.6 - 2026-06-17
 
