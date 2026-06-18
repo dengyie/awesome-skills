@@ -36,18 +36,27 @@ Optional directories:
    - Read the memory files.
    - Summarize objective, phase, blockers, and next actions.
 
-2. Do the project work.
+2. Establish the milestone contract for concrete project work.
+   - Define the current milestone, goal, P0/P1 scope, out-of-scope P2/P3, Manual-required gaps, phase limit, phase split, acceptance criteria, and stop conditions.
+   - Execute only current-milestone P0/P1 work.
+   - Route optimizations and future improvements into backlog instead of opening new phases.
+
+3. Do the project work.
    - Keep the state current while the repo changes.
 
-3. Save continuity.
+4. Save continuity.
    - Update the current snapshot.
    - Append a session log entry.
    - Record durable decisions.
    - Refresh TODO state.
 
-4. Split parallel work when needed.
+5. Split parallel work when needed.
    - Use `workstreams/` for bounded streams inside larger projects.
    - Use `snapshots/` for evidence-oriented state capture.
+
+6. Stop at the milestone boundary.
+   - Summarize phase results, validation, review status, backlog additions, Manual-required gaps, and delivery state.
+   - Do not automatically continue into the next milestone after current P0/P1 acceptance passes.
 
 ## Helper scripts
 

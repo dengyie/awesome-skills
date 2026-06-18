@@ -77,6 +77,29 @@ class BestProjectMemoryPackageTests(unittest.TestCase):
         self.assertIn("High-quality workstreams", quality)
         self.assertIn("Level 3", integration)
 
+    def test_skill_requires_milestone_execution_contract_for_project_work(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        usage_text = (ROOT.parent / "docs" / "usage" / "best-project-memory.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "milestone execution contract",
+            "P0",
+            "P1",
+            "P2/P3",
+            "Manual-required",
+            "Phase limit",
+            "Acceptance criteria",
+            "Stop conditions",
+            "Do not automatically open the next milestone",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        self.assertIn("Establish the milestone contract", usage_text)
+        self.assertIn("Execute only current-milestone P0/P1 work", usage_text)
+        self.assertIn("Stop at the milestone boundary", usage_text)
+
     def test_init_memory_script_supports_v2_governance_dirs_and_templates(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)

@@ -3,6 +3,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -57,7 +58,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "Dockerfile").write_text("FROM node:20-alpine\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo)],
+                [sys.executable, str(SCRIPT), "--repo", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -111,7 +112,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             )
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo)],
+                [sys.executable, str(SCRIPT), "--repo", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -162,7 +163,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             )
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo)],
+                [sys.executable, str(SCRIPT), "--repo", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -206,7 +207,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "Dockerfile").write_text("FROM node:22-alpine\nRUN adduser -D app\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo)],
+                [sys.executable, str(SCRIPT), "--repo", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -254,7 +255,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
 
             result = subprocess.run(
                 [
-                    "python3",
+                    sys.executable,
                     str(REVIEW_ENTRYPOINT),
                     "--repo",
                     str(repo),
@@ -304,7 +305,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "README.md").write_text("updated\n")
 
             result = subprocess.run(
-                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "json"],
+                [sys.executable, str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "json"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -357,7 +358,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
 
             branch_result = subprocess.run(
                 [
-                    "python3",
+                    sys.executable,
                     str(SCRIPT),
                     "--repo",
                     str(repo),
@@ -372,7 +373,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             )
             working_tree_result = subprocess.run(
                 [
-                    "python3",
+                    sys.executable,
                     str(SCRIPT),
                     "--repo",
                     str(repo),
@@ -441,7 +442,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
 
             result = subprocess.run(
                 [
-                    "python3",
+                    sys.executable,
                     str(SCRIPT),
                     "--repo",
                     str(repo),
@@ -512,7 +513,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             )
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo), "--scope", "branch"],
+                [sys.executable, str(SCRIPT), "--repo", str(repo), "--scope", "branch"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -563,7 +564,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "src" / "job.py").write_text("def run():\n    return 2\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                [sys.executable, str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -612,7 +613,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "src.js").write_text("console.log(2);\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                [sys.executable, str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -655,7 +656,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "src.js").write_text("console.log(2);\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                [sys.executable, str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -695,7 +696,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "src.js").write_text("console.log(2);\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                [sys.executable, str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -739,7 +740,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "src" / "auth.ts").write_text("export const allow = true;\n")
 
             result = subprocess.run(
-                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "markdown"],
+                [sys.executable, str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "markdown"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -784,7 +785,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "src" / "app.ts").write_text("export const value = 2;\n")
 
             result = subprocess.run(
-                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "compact"],
+                [sys.executable, str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "compact"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -859,7 +860,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "README.md").write_text("updated\n")
 
             result = subprocess.run(
-                ["python3", str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "json"],
+                [sys.executable, str(REVIEW_ENTRYPOINT), "--repo", str(repo), "--format", "json"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -949,7 +950,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
 
             subprocess.run(
                 [
-                    "python3",
+                    sys.executable,
                     str(target / "scripts" / "review-entrypoint.py"),
                     "--repo",
                     str(review_repo),
@@ -1037,7 +1038,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (repo / "README.md").write_text("demo\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo)],
+                [sys.executable, str(SCRIPT), "--repo", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -1072,7 +1073,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             (submodule_dir / "README.md").write_text("nested file\n")
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo)],
+                [sys.executable, str(SCRIPT), "--repo", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -1121,7 +1122,7 @@ class CollectReviewContextCliTests(unittest.TestCase):
             )
 
             result = subprocess.run(
-                ["python3", str(SCRIPT), "--repo", str(repo)],
+                [sys.executable, str(SCRIPT), "--repo", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,

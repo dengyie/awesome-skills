@@ -39,27 +39,60 @@ Read `references/surface-contract.md` before changing the memory surface or deci
    - Read the four core files when they exist.
    - If phase or handoff docs exist and are obviously relevant, read only the needed ones.
    - Give a short loaded-context recap covering objective, phase, active TODOs, latest decisions, and blockers.
+   - For concrete project delivery work, establish the milestone execution contract before implementation starts.
 
-2. Keep the state panel current.
+2. Establish a milestone execution contract for production work.
+   - Use a milestone as the current-session scope container. It must deliver at least one of: user capability, release gate closure, core architecture boundary, or blocking defect fix.
+   - Classify discovered work before editing:
+     - `P0`: delivery blockers, severe bugs, security issues, build failures.
+     - `P1`: required current-milestone functionality, tests, or refactors.
+     - `P2/P3`: optimizations, enhancements, and long-term maintenance. Route these to backlog only.
+     - `Manual-required`: external accounts, certificates, signing, notarization, real devices, production secrets, or third-party permissions.
+   - Output and then obey this Step 0 contract:
+
+```text
+Milestone:
+Goal:
+P0/P1 scope:
+Out-of-scope P2/P3:
+Manual-required:
+Phase limit:
+Phase split:
+Acceptance criteria:
+Stop conditions:
+```
+
+   - Freeze scope after the contract. Expand only for a true P0/P1 blocker.
+   - Default to at most 3 phases; use at most 5 only for genuinely complex milestones.
+   - Make each phase a deliverable closure around feature, architecture, defect fix, test gate, build chain, permission path, or release gate. Do not create phases for single files, fields, scripts, evidence snippets, or standalone paperwork.
+   - Stop after the milestone's P0/P1 work passes necessary verification. Do not automatically open the next milestone.
+
+3. Keep the state panel current.
    - Treat `project-state.md` as the single current snapshot.
    - Overwrite only the live summary content there.
    - Keep it concise and operational.
    - Push workstream-level detail down into `workstreams/*.md` instead of bloating the global state.
 
-3. Append session history.
+4. Append session history.
    - Add a new entry to `session-log.md` after meaningful progress, at session close, or when the user asks to save progress.
    - Do not rewrite old session entries unless correcting obvious factual mistakes.
 
-4. Record important decisions.
+5. Record important decisions.
    - Add ADR-lite entries to `decisions.md` for meaningful choices, tradeoffs, or policy changes.
    - Include rationale and impact, not just the conclusion.
 
-5. Maintain actionable TODO state.
+6. Maintain actionable TODO state.
    - Keep `todo.md` focused on active work.
    - Mark completed items done instead of deleting them.
    - Move stale or obsolete items only when their status is clear.
+   - Do not promote backlog items into new phases unless they block the current milestone's P0/P1 acceptance criteria.
+   - Record `Manual-required` gaps with impact and validation entrypoint, but do not create development phases for them unless they materially shorten current-milestone verification.
 
-6. Create handoff artifacts when the work spans sessions or people.
+7. Summarize completed phases and milestone stops.
+   - After each phase, record completed content, validation, review score/status, key decisions, new backlog, manual-required gaps, and remaining phase budget.
+   - When stop conditions are met, write a milestone delivery summary or a manual-attention report. Do not continue into polish, extra evidence, or unrelated TODO cleanup after the stop condition is satisfied.
+
+8. Create handoff artifacts when the work spans sessions or people.
    - Use `handoffs/` for compact continuation packs.
    - Use `phases/` for milestone summaries.
    - Use `workstreams/` for bounded parallel tracks inside larger projects.
@@ -113,6 +146,7 @@ Load only the references needed for the current task.
 A project-memory pass is complete only when:
 
 - the repo memory folder exists or has been intentionally confirmed unnecessary
+- concrete project work has a visible milestone contract or an explicit reason it is unnecessary
 - current objective, phase, blockers, and next step are easy to find
 - durable decisions are captured with rationale
 - TODOs reflect the real state of work

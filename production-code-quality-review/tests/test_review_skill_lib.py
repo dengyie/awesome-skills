@@ -58,6 +58,31 @@ class ReviewSkillLibTests(unittest.TestCase):
             },
         }
 
+    def test_skill_documents_phase_gate_review_contract(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        usage_text = (ROOT.parent / "docs" / "usage" / "review-workflows.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "phase-gate",
+            "严重问题",
+            "中等问题",
+            "非阻塞建议",
+            "安全风险",
+            "稳定性风险",
+            "可维护性风险",
+            "测试覆盖",
+            "质量评分",
+            "通过状态",
+            "Manual-required",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        self.assertIn("Milestone Phase-Gate Review", usage_text)
+        self.assertIn("block only on P0/P1 issues", usage_text)
+        self.assertIn("send non-blocking suggestions to backlog", usage_text)
+
     def test_parse_unified_zero_diff_builds_changed_ranges(self):
         module = load_module()
         diff_text = """diff --git a/src/app.ts b/src/app.ts

@@ -4,12 +4,21 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V16 four-skill public documentation alignment is implemented and verified in the working tree.
+- Current stage: V17 milestone-driven production mode is implemented, verified, and ready to commit on `main`.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\best-project-memory\tests -v`
+- 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\production-code-quality-review\tests -v`
+- 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
+- 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\tests -v`
+- 2026-06-19: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\best-project-memory`
+- 2026-06-19: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\production-code-quality-review`
+- 2026-06-19: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-19: `$env:PYTHONUTF8='1'; python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
+- 2026-06-19: `git diff --check`
 - 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\tests -v`
 - 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\little-lighthouse-blog-publisher\tests -v`
 - 2026-06-19: `git diff --check`
@@ -58,16 +67,19 @@
 - No active risks for the current documented TODO set.
 
 ## Active Blockers
-- None for the website-generation skill publication path.
+- None for the V17 milestone-driven production mode pass.
 
 ## Current Focus
-- Commit and push the V16 four-skill public documentation alignment pass on `main`.
+- Commit and push the V17 milestone-driven production mode pass on `main`.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
 
 ## Key Artifacts
+- `docs/dev/2026-06-19-awesome-skills-v17-milestone-driven-production-mode-plan.md`
 - `best-project-memory/SKILL.md`
+- `production-code-quality-review/SKILL.md`
+- `zero-to-website-design/SKILL.md`
 - `docs/dev/2026-06-17-best-project-memory-v2-governance-plan.md`
 - `docs/dev/2026-06-18-best-project-memory-v6-session-compaction-plan.md`
 - `docs/dev/2026-06-18-best-project-memory-v7-quality-drift-hardening-plan.md`

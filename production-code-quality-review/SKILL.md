@@ -25,6 +25,8 @@ Use `deep` review when the core feature is implemented and the change needs a se
 
 Switch to `final` review only when the user explicitly asks for a full, comprehensive, final, pre-merge, release-readiness, or production-readiness review.
 
+Use `phase-gate` review when another skill or user asks for milestone or phase-end production review. This is a bounded review for the current phase increment, not a license to expand the milestone.
+
 ### Checkpoint Review
 
 Use this for normal development checkpoints.
@@ -71,6 +73,39 @@ In `deep` mode:
 - skip style-only feedback and shallow polish
 - report `P0`, `P1`, and important `P2`
 - keep the review focused on real issues, not speculative future work
+
+### Phase-Gate Review
+
+Use this at the end of a milestone phase.
+
+Primary goal:
+
+- decide whether the current phase can close, must fix a P0/P1 blocker, or needs manual attention
+
+In `phase-gate` mode:
+
+- review only the phase increment and critical associated paths
+- classify findings by whether they block the current milestone's P0/P1 acceptance criteria
+- route non-blocking suggestions to backlog
+- route external dependencies to `Manual-required`
+- do not create a new phase for polish, broad cleanup, extra evidence, or unrelated TODOs
+- allow at most 3 fix-review loops for the same blocking issue set before reporting manual attention
+
+Report with this structure when the host has no stricter format:
+
+```text
+严重问题：
+中等问题：
+非阻塞建议：
+安全风险：
+稳定性风险：
+可维护性风险：
+测试覆盖：
+质量评分：
+通过状态：通过 / 有条件通过 / 不通过
+```
+
+Use `通过` when no P0/P1 blocker remains. Use `有条件通过` when only non-blocking backlog or manual-required gaps remain and the phase's P0/P1 acceptance criteria are satisfied. Use `不通过` when current P0/P1 work is blocked.
 
 ### Final Review
 
@@ -130,7 +165,8 @@ First decide the mode:
 
 1. `checkpoint` for in-progress development
 2. `deep` for completed core functionality that still needs a serious mid-stream review
-3. `final` for explicit comprehensive review
+3. `phase-gate` for explicit milestone phase-end review
+4. `final` for explicit comprehensive review
 
 Use this sequence for `checkpoint` reviews:
 
@@ -160,6 +196,15 @@ Use this sequence for `deep` reviews:
 6. Tests
 7. Security, privacy, performance, and operational readiness when relevant
 8. Verification pass for every candidate finding
+
+Use this sequence for `phase-gate` reviews:
+
+1. Phase objective and P0/P1 acceptance criteria
+2. Changed behavior and critical associated paths
+3. Necessary verification results
+4. Blocking issue check
+5. Backlog and manual-required routing
+6. Pass state and quality score
 
 Load `references/review-framework.md` for detailed phase prompts and decision rules when running `deep` or `final` review, or when a checkpoint review touches a clearly high-risk surface.
 
@@ -257,6 +302,13 @@ In `deep` mode:
 - still skip pure style, micro-polish, and speculative future cleanup
 - keep `P3` and `Nit` out unless they materially affect correctness, safety, or maintainability of the completed feature
 
+In `phase-gate` mode:
+
+- block only on `P0` and milestone-relevant `P1`
+- treat strong `P2` as backlog unless it directly prevents current acceptance
+- never fail a phase for missing optional polish, unrelated docs, unrelated tests, or long-term refactors
+- record manual-required gaps separately from code blockers
+
 ## Output
 
 Follow host or user review-output instructions first. Otherwise use `references/output-contract.md`.
@@ -277,6 +329,13 @@ For `deep` reviews:
 - use the full review structure
 - stay focused on material findings
 - include broader production-readiness concerns when they are real and evidenced
+
+For `phase-gate` reviews:
+
+- use the required Chinese category labels when no host format overrides them
+- include a numeric or concise qualitative quality score
+- state whether the phase is `通过`, `有条件通过`, or `不通过`
+- explicitly say which findings must be fixed inside the current phase and which move to backlog or manual-required
 
 For `final` reviews:
 

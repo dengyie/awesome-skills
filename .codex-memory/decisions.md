@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - Make Submitted Skills Milestone-Driven
+- Decision: Align `best-project-memory`, `production-code-quality-review`, and `zero-to-website-design` around a finite milestone-driven production mode with frozen P0/P1 scope, backlog/manual-required routing, phase-gate reviews, atomic phase closure, and explicit stop conditions.
+- Rationale: The EvoMap submission should demonstrate a reusable production execution loop, not just individual skill capabilities. The three skills cover complementary parts of that loop: memory and milestone control, phase-end production review, and bounded website delivery.
+- Impact: Future project tasks that use these skills should define the current milestone, execute only P0/P1 work, review phase increments, record backlog/manual-required gaps, summarize, and stop instead of drifting into open-ended optimization.
+- Related files: `docs/dev/2026-06-19-awesome-skills-v17-milestone-driven-production-mode-plan.md`, `best-project-memory/SKILL.md`, `production-code-quality-review/SKILL.md`, `zero-to-website-design/SKILL.md`
 ## 2026-06-18 - Close The Paused Repository Docs Line
 - Decision: Do not resume another repository-level documentation phase without a concrete new gap.
 - Rationale: The refreshed README, release-scope correction, skill matrix, docs regression tests, and zero-to-website usage alignment already close the known repository-level navigation and scope issues.

@@ -64,6 +64,23 @@ In this mode, the skill may route toward a specialist review posture conceptuall
 
 and then use the synthesis prompt to merge findings.
 
+## Milestone Phase-Gate Review
+
+Use this at the end of a bounded development phase when the current milestone has a frozen P0/P1 scope.
+
+Suggested prompt:
+
+```text
+Use $production-code-quality-review as a phase-gate review for this milestone phase. Report 严重问题, 中等问题, 非阻塞建议, 安全风险, 稳定性风险, 可维护性风险, 测试覆盖, 质量评分, and 通过状态.
+```
+
+In this mode, the review should:
+
+- block only on P0/P1 issues that prevent the current milestone's acceptance criteria
+- send non-blocking suggestions to backlog
+- record external dependencies as Manual-required
+- avoid opening new phases for polish, unrelated cleanup, or long-term improvements
+
 ## Fast Human Briefing
 
 Use this when you do not need a full Codex review yet and only want a compact summary of review scope and likely attention areas.

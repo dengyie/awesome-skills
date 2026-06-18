@@ -15,9 +15,14 @@ Historical repo images are first-class inputs. When a project already has usable
 
 ## Required Workflow
 
-1. Restore project context.
+1. Restore project context and define the website milestone.
    - If the project has memory, agent, design-system, README, or planning files, read them before deciding what to build.
    - Preserve existing project conventions unless they block the requested design outcome.
+   - Define the current website milestone before design or implementation starts.
+   - Classify work as `P0`, `P1`, `P2/P3`, or `Manual-required`.
+   - Execute only P0/P1 work for this milestone. Put polish, extra routes, future artwork, and long-term design-system improvements into backlog unless they block current acceptance.
+   - Output and obey the milestone contract: milestone, goal, P0/P1 scope, out-of-scope P2/P3, manual-required, phase limit, phase split, acceptance criteria, and stop conditions.
+   - Use at most 3 phases by default and at most 5 for genuinely complex sites. Do not start a new milestone automatically after the current one is accepted.
 
 2. Run intake.
    - If the brief is vague, read `references/intake-brief.md`.
@@ -77,12 +82,16 @@ Historical repo images are first-class inputs. When a project already has usable
 11. Harden and deliver.
    - Read `references/production-delivery.md`.
    - Use a production review skill when available before publishing or final signoff.
+   - At each phase end, run a phase-gate review when available and fix only P0/P1 blockers for the current milestone.
+   - Move non-blocking suggestions to backlog and external gaps to `Manual-required`.
+   - Stop after the current milestone's P0/P1 acceptance criteria pass necessary verification; do not continue into additional design polish or the next milestone.
    - Report routes touched, source references used, files changed, verification results, framework-ready versus delivery-ready status, and known visual gaps.
 
 12. Integrate project memory when the work is long-running.
    - Read `references/project-memory-integration.md` when the repository uses `.codex-memory/`.
    - Update the relevant workstream, `todo.md`, and `session-log.md` after meaningful progress.
    - Promote durable delivery decisions when the source path, route status, or asset strategy becomes binding.
+   - Record phase summaries, review status, backlog additions, manual-required gaps, and milestone stop state.
    - Generate a handoff when the work pauses midstream or another session must resume delivery.
 
 ## Reference Routing
@@ -120,6 +129,7 @@ Adapt templates to the project. Do not copy placeholders into final deliverables
 A zero-to-website pass is complete only when:
 
 - the project brief and assumptions are documented
+- the current website milestone contract is visible and scoped to P0/P1 work
 - the pre-code document gate exists: intake output, design docs, and implementation map
 - the visual source map identifies image origins and authority
 - design-system and route docs exist or have been updated

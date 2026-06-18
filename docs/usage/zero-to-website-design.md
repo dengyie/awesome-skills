@@ -57,7 +57,7 @@ Use $zero-to-website-design to rebuild this site from the historical PNG mockups
 
 The skill guides Codex through 12 gates:
 
-1. Restore project context.
+1. Restore project context and define the website milestone.
 2. Run intake.
 3. Collect visual sources.
 4. Record visual provenance.
@@ -69,6 +69,19 @@ The skill guides Codex through 12 gates:
 10. Verify with build and browser QA.
 11. Harden and deliver.
 12. Integrate project memory when the work is long-running.
+
+## Milestone-Driven Delivery
+
+Each website pass should start with a finite milestone contract:
+
+- milestone and goal
+- P0/P1 scope for this session
+- out-of-scope P2/P3 backlog
+- Manual-required gaps such as accounts, production secrets, certificates, or third-party access
+- phase limit and phase split
+- acceptance criteria and stop conditions
+
+The workflow executes only current-milestone P0/P1 work. Extra routes, final bespoke artwork, polish, advanced animations, and long-term design-system improvements stay in backlog unless they block the accepted milestone. After the current milestone passes build, browser QA, and phase-gate review, the workflow stops instead of automatically starting another milestone.
 
 ## Pre-Code Document Gate
 

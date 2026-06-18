@@ -78,8 +78,31 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         )
 
         self.assertIn("The skill guides Codex through 12 gates:", usage_text)
+        self.assertIn("1. Restore project context and define the website milestone.", usage_text)
         self.assertIn("12. Integrate project memory when the work is long-running.", usage_text)
         self.assertNotIn("eleven gates", usage_text)
+
+    def test_skill_and_usage_docs_require_milestone_driven_delivery(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "define the website milestone",
+            "P0",
+            "P1",
+            "P2/P3",
+            "Manual-required",
+            "phase limit",
+            "phase-gate review",
+            "Do not start a new milestone automatically",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        self.assertIn("Milestone-Driven Delivery", usage_text)
+        self.assertIn("finite milestone contract", usage_text)
+        self.assertIn("workflow stops instead of automatically starting another milestone", usage_text)
 
     def test_visual_provenance_contract_names_statuses_and_sources(self):
         provenance = (ROOT / "references" / "visual-provenance.md").read_text(
