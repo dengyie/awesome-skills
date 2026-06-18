@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-19 07:55
+- Task: Deeply revise `zero-to-website-design` so pages built from design screenshots stay close to the provided design instead of stopping at broad structural similarity.
+- Actions: Added the V20 design plan; added `references/design-fidelity-loop.md`; updated the main workflow from 12 to 13 gates; required reference decomposition, fidelity budgets, generated UI asset prompt records, implementation screenshots, side-by-side comparisons, deviation backlogs, and fix loops; updated implementation and QA templates plus usage docs; expanded regression tests and metadata.
+- Results: Targeted fidelity test, full zero-to-website package tests, skill quick validation, repository docs tests, `git diff --check`, and review-entrypoint context generation pass. Phase-gate review found no P0/P1 blockers.
+- Next: Commit, push, and sync the local `.codex` installed skill.
+- Blockers: None.
 ## 2026-06-19 06:58
 - Task: Deep-think and fix the repository review finding around destructive `production-code-quality-review` install/update target cleanup.
 - Actions: Added the V19 design plan; wrote a failing guard-contract regression test; added `resolve_existing_path` and `guard_skill_target` to both install and update helpers; rejected empty, root-like, home/skill-root, source-equal, and bidirectionally nested source/target paths before `rm -rf`.

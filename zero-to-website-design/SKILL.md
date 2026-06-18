@@ -1,6 +1,6 @@
 ---
 name: zero-to-website-design
-description: Use when creating a complete website from a blank or vague starting point, turning user goals, visual references, screenshots, historical repo mockups, or generated concept images into design-system docs, route/page specs, implementation, browser visual QA, and delivery readiness. Especially useful when the user asks to design from zero, generate mockups before implementation, build from reference images, rebuild from historical project PNGs, ship framework-first before final artwork, or explicitly says not to generate new images yet.
+description: Use when creating a complete website from a blank or vague starting point, turning user goals, visual references, screenshots, historical repo mockups, or generated concept images into design-system docs, route/page specs, implementation, browser visual QA, and delivery readiness. Especially useful when the user asks to design from zero, generate mockups before implementation, build from reference images, rebuild from historical project PNGs, fix a page that differs too much from a design image, ship framework-first before final artwork, or explicitly says not to generate new images yet.
 ---
 
 # Zero-To-Website Design
@@ -59,35 +59,45 @@ Historical repo images are first-class inputs. When a project already has usable
    - Do not treat design docs as post-hoc cleanup. Broad implementation starts only after the intake output, route inventory, source-path choice, and milestone target are visible in project docs.
    - Use the templates in `assets/templates/` when the project lacks equivalent docs.
 
-8. Produce an implementation map.
+8. Run the design fidelity setup for binding references.
+   - Read `references/design-fidelity-loop.md` whenever a design screenshot, mockup, generated route mockup, Figma export, or historical image should control the page.
+   - Decompose each binding reference into layout, typography, color, spacing, component, asset, and responsive facts before implementation.
+   - Define the fidelity budget: blocking deviations, accepted gaps, and out-of-scope viewports or states.
+   - If existing assets cannot reproduce the reference, create UI asset or component prompt records before generation. Generate necessary UI images, illustrations, textures, icons, or panels only when they support the binding route.
+   - Plan implementation screenshot paths, side-by-side comparison evidence, deviation backlog, and the fix loop before coding.
+
+9. Produce an implementation map.
    - Read `references/implementation-map.md`.
    - Treat the implementation map as a pre-code gate, not an after-action summary.
    - Map visual regions to components, routes, assets, data sources, and responsive behavior before editing.
    - Record route owner, asset-slot owner, milestone target, and upgrade trigger when temporary-binding assets are involved.
 
-9. Implement route by route.
+10. Implement route by route.
    - Read `references/framework-first-delivery.md` when the project should stop at a framework milestone before final asset polish.
    - Build the site framework first: layout, navigation, core routes, card systems, responsive rhythm, and local assets.
+   - When a binding design image exists, implement against the reference decomposition instead of broad visual memory.
    - Prefer project-owned assets over hotlinked assets.
    - Keep content placeholder or curated when the user wants framework-first delivery.
    - Treat `Framework Ready` as a valid milestone when layout, interaction, and responsive structure are correct even if final bespoke art is not ready yet.
    - Keep `temporary-binding` assets explicit in docs and delivery notes.
 
-10. Verify with build and browser QA.
+11. Verify with build, browser QA, and screenshot fidelity checks.
    - Run the project's build or typecheck command.
    - Read `references/route-acceptance.md` and `references/visual-qa-checklist.md`.
    - Use browser/Playwright QA for desktop and mobile screenshots, overflow checks, link checks, menu states, and asset loading.
+   - For binding references, capture implementation screenshot evidence at matching viewports, compare side-by-side with the design screenshot, record the difference summary, and fix blocking visual deviations.
    - Record route evidence rows before claiming `Framework Ready` or `Visual Delivery Ready`.
 
-11. Harden and deliver.
+12. Harden and deliver.
    - Read `references/production-delivery.md`.
    - Use a production review skill when available before publishing or final signoff.
    - At each phase end, run a phase-gate review when available and fix only P0/P1 blockers for the current milestone.
    - Move non-blocking suggestions to backlog and external gaps to `Manual-required`.
    - Stop after the current milestone's P0/P1 acceptance criteria pass necessary verification; do not continue into additional design polish or the next milestone.
    - Report routes touched, source references used, files changed, verification results, framework-ready versus delivery-ready status, and known visual gaps.
+   - Do not claim visual parity unless the fidelity pass includes reference decomposition, implementation screenshot, comparison evidence, and no unresolved blocking visual deviations.
 
-12. Integrate project memory when the work is long-running.
+13. Integrate project memory when the work is long-running.
    - Read `references/project-memory-integration.md` when the repository uses `.codex-memory/`.
    - Update the relevant workstream, `todo.md`, and `session-log.md` after meaningful progress.
    - Promote durable delivery decisions when the source path, route status, or asset strategy becomes binding.
@@ -101,6 +111,7 @@ Historical repo images are first-class inputs. When a project already has usable
 - `references/historical-mock-pass.md`: read when repo-owned historical visuals or archived mockups should drive the current pass.
 - `references/visual-provenance.md`: read before any image becomes authoritative.
 - `references/design-system-docs.md`: read before creating or updating design docs.
+- `references/design-fidelity-loop.md`: read when a design screenshot, mockup, generated route image, Figma export, or historical image should be matched closely in the final page.
 - `references/implementation-map.md`: read before code changes.
 - `references/route-acceptance.md`: read before implementing or reviewing route types.
 - `references/visual-qa-checklist.md`: read before signoff.
@@ -139,5 +150,7 @@ A zero-to-website pass is complete only when:
 - local or owned assets are used where possible
 - build/typecheck passes
 - desktop and mobile browser QA have been run
+- binding design references have reference decomposition, implementation screenshot, side-by-side comparison, deviation backlog, and a final fidelity status
+- generated UI asset prompts and resulting assets are recorded when generation is needed to match the design
 - production readiness has been reviewed
 - known gaps are explicitly reported

@@ -50,6 +50,9 @@ For every route evidence row, record:
 - route path
 - route type
 - source owner or visual reference
+- reference screenshot path when a binding design controls the route
+- implementation screenshot path
+- side-by-side comparison path when a binding design controls the route
 - desktop viewport checked
 - mobile viewport checked
 - screenshot path or QA note path
@@ -59,7 +62,9 @@ For every route evidence row, record:
 - local asset result
 - mobile menu result when applicable
 - readiness status
+- fidelity status
 - blocking failures
+- blocking visual deviations
 - accepted gaps
 
 Browser QA must cover both desktop and mobile for the route matrix unless an exception is recorded with a reason and risk.
@@ -103,3 +108,20 @@ When working from reference images, report:
 - what would be needed for a closer pass
 
 Never claim pixel fidelity when only structural similarity was checked.
+
+## Design Fidelity Evidence
+
+When a route has a binding reference image, also follow `design-fidelity-loop.md`.
+
+The QA record must include:
+
+- reference decomposition summary or link
+- reference screenshot path
+- implementation screenshot path
+- side-by-side comparison path or comparison note
+- difference summary
+- blocking visual deviations
+- accepted visual gaps
+- next fix action or final fidelity status
+
+Use this evidence during development, not only at the end. If the screenshot is still far from the design, fix the route and capture a new implementation screenshot before claiming readiness.

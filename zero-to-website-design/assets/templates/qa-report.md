@@ -19,6 +19,11 @@
 | Route | Route Type | Source Owner | Viewports Checked | Evidence | Status | Blocking Failures | Accepted Gaps | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
+## Reference Fidelity
+
+| Route | Reference Screenshot | Implementation Screenshot | Side-by-side comparison | Fidelity Status | Blocking visual deviations | Accepted visual gaps | Next fix |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+
 ## Interaction Checks
 
 - [ ] Navigation links

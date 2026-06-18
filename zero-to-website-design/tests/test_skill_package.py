@@ -18,6 +18,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             ROOT / "references" / "implementation-map.md",
             ROOT / "references" / "route-acceptance.md",
             ROOT / "references" / "visual-qa-checklist.md",
+            ROOT / "references" / "design-fidelity-loop.md",
             ROOT / "references" / "historical-mock-pass.md",
             ROOT / "references" / "framework-first-delivery.md",
             ROOT / "references" / "project-memory-integration.md",
@@ -58,7 +59,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         reference_paths = sorted(set(re.findall(r"`(references/[^`]+\.md)`", skill_text)))
 
-        self.assertGreaterEqual(len(reference_paths), 8)
+        self.assertGreaterEqual(len(reference_paths), 9)
         missing = [path for path in reference_paths if not (ROOT / path).exists()]
 
         self.assertEqual(missing, [])
@@ -77,9 +78,10 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn("The skill guides Codex through 12 gates:", usage_text)
+        self.assertIn("The skill guides Codex through 13 gates:", usage_text)
         self.assertIn("1. Restore project context and define the website milestone.", usage_text)
-        self.assertIn("12. Integrate project memory when the work is long-running.", usage_text)
+        self.assertIn("8. Run the design fidelity setup for binding references.", usage_text)
+        self.assertIn("13. Integrate project memory when the work is long-running.", usage_text)
         self.assertNotIn("eleven gates", usage_text)
 
     def test_skill_and_usage_docs_require_milestone_driven_delivery(self):
@@ -103,6 +105,79 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Milestone-Driven Delivery", usage_text)
         self.assertIn("finite milestone contract", usage_text)
         self.assertIn("workflow stops instead of automatically starting another milestone", usage_text)
+
+    def test_design_reference_fidelity_loop_is_required(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+        fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(
+            encoding="utf-8"
+        )
+        visual_qa = (ROOT / "references" / "visual-qa-checklist.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_map = (ROOT / "references" / "implementation-map.md").read_text(
+            encoding="utf-8"
+        )
+        qa_report_template = (ROOT / "assets" / "templates" / "qa-report.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_plan_template = (
+            ROOT / "assets" / "templates" / "implementation-plan.md"
+        ).read_text(encoding="utf-8")
+
+        for expected in [
+            "design-fidelity-loop.md",
+            "reference decomposition",
+            "fidelity pass",
+            "implementation screenshot",
+            "deviation backlog",
+            "asset prompt",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        self.assertIn("Reference Fidelity", usage_text)
+        self.assertIn("design screenshot", usage_text)
+        self.assertIn("side-by-side", usage_text)
+
+        for expected in [
+            "Reference Decomposition",
+            "Fidelity Budget",
+            "UI Asset And Component Prompting",
+            "Use image generation when a design needs bespoke UI imagery",
+            "Prompt Template",
+            "Implementation Screenshot Loop",
+            "Side-by-side comparison",
+            "difference summary",
+            "Fix Loop",
+            "Final Acceptance",
+            "Do not claim visual parity",
+        ]:
+            self.assertIn(expected, fidelity)
+
+        for expected in [
+            "reference screenshot path",
+            "implementation screenshot path",
+            "side-by-side comparison path",
+            "fidelity status",
+            "blocking visual deviations",
+        ]:
+            self.assertIn(expected, visual_qa)
+
+        for expected in [
+            "Reference decomposition",
+            "Fidelity budget",
+            "Generated UI asset prompts",
+            "Screenshot comparison destination",
+        ]:
+            self.assertIn(expected, implementation_map)
+
+        self.assertIn("## Reference Fidelity", qa_report_template)
+        self.assertIn("Side-by-side comparison", qa_report_template)
+        self.assertIn("Blocking visual deviations", qa_report_template)
+        self.assertIn("Reference Fidelity Plan", implementation_plan_template)
+        self.assertIn("Generated UI asset prompts", implementation_plan_template)
 
     def test_visual_provenance_contract_names_statuses_and_sources(self):
         provenance = (ROOT / "references" / "visual-provenance.md").read_text(

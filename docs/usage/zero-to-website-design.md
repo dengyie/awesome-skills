@@ -55,7 +55,7 @@ Use $zero-to-website-design to rebuild this site from the historical PNG mockups
 
 ## Workflow
 
-The skill guides Codex through 12 gates:
+The skill guides Codex through 13 gates:
 
 1. Restore project context and define the website milestone.
 2. Run intake.
@@ -64,11 +64,12 @@ The skill guides Codex through 12 gates:
 5. Choose the right source path.
 6. Promote route owners into authoritative source material.
 7. Write design docs before code.
-8. Produce an implementation map.
-9. Implement route by route.
-10. Verify with build and browser QA.
-11. Harden and deliver.
-12. Integrate project memory when the work is long-running.
+8. Run the design fidelity setup for binding references.
+9. Produce an implementation map.
+10. Implement route by route.
+11. Verify with build, browser QA, and screenshot fidelity checks.
+12. Harden and deliver.
+13. Integrate project memory when the work is long-running.
 
 ## Milestone-Driven Delivery
 
@@ -122,7 +123,22 @@ When screenshots, mockups, or Figma exports already exist, the skill should:
 2. Record the source method and authority of each image.
 3. Separate exploratory images from binding implementation references.
 4. Map each binding reference to routes, sections, and viewports.
-5. Implement against the route-specific references first.
+5. Decompose the design screenshot into layout, typography, color, spacing, component, asset, and responsive facts.
+6. Implement against the route-specific references first.
+
+## Reference Fidelity
+
+When the final page must resemble a design screenshot, the skill should:
+
+1. Produce a reference decomposition before broad implementation.
+2. Define a fidelity budget with blocking deviations, accepted gaps, and out-of-scope states.
+3. Write asset prompt records for any UI images, illustrations, panels, textures, or component-like artwork that must be generated to match the design.
+4. Capture implementation screenshots at the same viewport as the design screenshot.
+5. Save or document side-by-side comparison evidence.
+6. Record the difference summary and deviation backlog.
+7. Iterate fixes until the final product is either matched or honestly marked with accepted gaps.
+
+The workflow must not claim design fidelity from memory or generic visual QA alone.
 
 ## Historical-Mock Path
 

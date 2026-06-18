@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - Make Design Screenshot Fidelity A First-Class Website Gate
+- Decision: Add a dedicated design fidelity loop to `zero-to-website-design` and make it a required gate whenever a screenshot, mockup, generated route image, Figma export, or historical image controls the final page.
+- Rationale: The previous workflow could pass build and screenshot QA while still producing a page that was only loosely similar to the reference. Binding design images need decomposition, asset prompt planning, implementation screenshots, side-by-side comparison evidence, and a fix loop before a visual readiness claim is credible.
+- Impact: Future website work should document reference decomposition, fidelity budget, generated UI asset prompts, comparison evidence, deviation backlog, and final fidelity status before claiming `Visual Delivery Ready`.
+- Related files: `zero-to-website-design/SKILL.md`, `zero-to-website-design/references/design-fidelity-loop.md`, `zero-to-website-design/references/visual-qa-checklist.md`, `zero-to-website-design/references/implementation-map.md`, `zero-to-website-design/assets/templates/implementation-plan.md`, `zero-to-website-design/assets/templates/qa-report.md`, `docs/usage/zero-to-website-design.md`
 ## 2026-06-19 - Guard Destructive Skill Install Targets Before Clean Copy
 - Decision: Keep the existing clean-copy install/update behavior for `production-code-quality-review`, but require both helper scripts to validate the resolved target before any `rm -rf`.
 - Rationale: Clean-copy is useful for removing generated cache artifacts, yet environment-derived install paths and recorded source metadata are too risky to trust without guardrails. The smallest production-safe fix is to prove the target still looks like the intended skill install directory and is not equal to or nested with the source checkout.

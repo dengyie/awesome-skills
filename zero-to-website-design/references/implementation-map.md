@@ -10,6 +10,7 @@ Before broad code changes, confirm the project has:
 
 - a compact intake output or equivalent assumption record
 - a visual source map or equivalent authority record
+- reference decomposition for binding design images
 - design-system and implementation-plan docs or project equivalents
 - page specs or route notes for touched core routes
 - a stated milestone target and route-verification destination
@@ -27,11 +28,14 @@ Before broad code changes, confirm the project has:
    - historical mock assets
    - local structural mock assets
    - generated assets
-8. Choose the smallest implementation order that produces a coherent site.
-9. List files to edit.
-10. Record milestone target, route owner, and replacement trigger for any temporary-binding asset.
-11. State verification commands and browser QA routes.
-12. Record intentionally deferred routes or blockers that limit the current pass.
+8. Define the fidelity budget for binding references.
+9. Record generated UI asset prompts when assets are needed to match the reference.
+10. Choose the smallest implementation order that produces a coherent site.
+11. List files to edit.
+12. Record milestone target, route owner, and replacement trigger for any temporary-binding asset.
+13. State verification commands and browser QA routes.
+14. Record screenshot comparison destination.
+15. Record intentionally deferred routes or blockers that limit the current pass.
 
 ## Component Mapping Prompts
 
@@ -79,14 +83,18 @@ Write a compact map before code:
 - Routes:
 - Binding references:
 - Intake basis:
+- Reference decomposition:
+- Fidelity budget:
 - Components:
 - Assets:
+- Generated UI asset prompts:
 - Asset strategy:
 - Data sources:
 - Desktop behavior:
 - Mobile behavior:
 - Files to edit:
 - Verification:
+- Screenshot comparison destination:
 - Known risks:
 - Milestone target:
 - Temporary route owners:

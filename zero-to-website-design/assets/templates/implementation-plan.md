@@ -32,6 +32,17 @@ Describe the implementation phase and target outcome.
 - Route-owner risk:
 - Upgrade or replacement triggers:
 
+## Reference Fidelity Plan
+
+- Reference decomposition:
+- Fidelity budget:
+- Blocking visual deviations:
+- Accepted visual gaps:
+- Generated UI asset prompts:
+- Implementation screenshot destinations:
+- Side-by-side comparison destinations:
+- Fix loop owner:
+
 ## Key Changes
 
 - Design system:
@@ -57,6 +68,7 @@ Describe the implementation phase and target outcome.
 - Asset checks:
 - Framework-ready check:
 - Delivery-ready check:
+- Reference fidelity check:
 - Blocking failure rule:
 
 ## Risks

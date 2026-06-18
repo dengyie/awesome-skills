@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Harden `zero-to-website-design` with a design screenshot fidelity loop for reference matching and generated UI asset prompting.
 - [x] Fix `production-code-quality-review` install/update helper target guards before destructive clean-copy operations.
 - [x] Fix `production-code-quality-review` setup docs to support Windows `python` and POSIX `python3` interpreter usage.
 - [x] Implement and verify the V17 milestone-driven production mode pass for `best-project-memory`, `production-code-quality-review`, and `zero-to-website-design`.

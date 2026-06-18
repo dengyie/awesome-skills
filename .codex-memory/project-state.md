@@ -4,12 +4,17 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V19 production-review install path guard is implemented and verified on `main`.
+- Current stage: V20 zero-to-website design fidelity loop is implemented and verified on `main`.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
+- 2026-06-19: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover tests -v`
+- 2026-06-19: `git diff --check`
+- 2026-06-19: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest production-code-quality-review.tests.test_collect_review_context_cli.CollectReviewContextCliTests.test_install_helpers_guard_destructive_target_cleanup -v`
 - 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover production-code-quality-review\tests -v`
 - 2026-06-19: `git diff --check`
@@ -72,18 +77,20 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- POSIX runtime install/update negative-case tests could not run in this Windows environment because `bash` resolves to the WSL shim and WSL virtualization is unavailable. Static guard-contract tests and package tests pass.
+- No active risks for the V20 zero-to-website design fidelity loop.
 
 ## Active Blockers
-- None for the V19 production-review install path guard.
+- None for the V20 zero-to-website design fidelity loop.
 
 ## Current Focus
-- Commit and push the V19 production-review install path guard on `main`.
+- Commit, push, and sync the V20 zero-to-website design fidelity loop.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
 
 ## Key Artifacts
+- `docs/dev/2026-06-19-zero-to-website-design-v20-design-fidelity-loop-plan.md`
+- `zero-to-website-design/references/design-fidelity-loop.md`
 - `docs/dev/2026-06-19-production-code-quality-review-v19-install-path-guard-plan.md`
 - `docs/dev/2026-06-19-production-code-quality-review-v18-python-interpreter-doc-fix-plan.md`
 - `docs/dev/2026-06-19-awesome-skills-v17-milestone-driven-production-mode-plan.md`
