@@ -11,7 +11,7 @@
 当前范围：
 
 - 正式的版本化发布说明目前只覆盖 `production-code-quality-review`
-- `best-project-memory` 和 `zero-to-website-design` 当前主要通过 usage 文档与 `docs/dev/` 阶段文档记录演进
+- `best-project-memory`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 当前主要通过 usage 文档与 `docs/dev/` 阶段文档记录演进
 
 ## 目录
 
@@ -40,5 +40,6 @@
 ## 相关文档入口
 
 - [`docs/usage/best-project-memory.md`](../../usage/best-project-memory.md)
+- [`docs/usage/little-lighthouse-blog-publisher.md`](../../usage/little-lighthouse-blog-publisher.md)
 - [`docs/usage/zero-to-website-design.md`](../../usage/zero-to-website-design.md)
 - [`production-code-quality-review/README.md`](../../../production-code-quality-review/README.md)

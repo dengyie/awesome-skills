@@ -215,3 +215,9 @@
 - Results: The repository now has a compact chooser page for `best-project-memory`, `production-code-quality-review`, and `zero-to-website-design`. The docs regression test and zero-to-website package tests pass, and the skill package still validates cleanly.
 - Next: Stage only the matrix-doc files, commit the pass atomically, and push it without mixing in the separate production-review sync work.
 - Blockers: None.
+## 2026-06-19 00:35
+- Task: Align repository docs after adding `little-lighthouse-blog-publisher`.
+- Actions: Added the V16 four-skill doc-sync plan; updated README release-scope and verification wording; updated English and Chinese release indexes; expanded the Chinese overview with the new skill; adjusted the skill matrix pairing wording; updated repository docs regression expectations.
+- Results: Public repository navigation now treats the repo as a four-skill catalog and routes non-versioned package docs for `best-project-memory`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`.
+- Next: Run docs and package tests, fix any confirmed failures, then commit and push the documentation alignment pass.
+- Blockers: None.

@@ -4,9 +4,10 @@
 
 仓库当前不是单一 skill，而是一个多 skill 集合，重点提供面向真实项目交付的 Codex 工作流能力。
 
-当前包含 3 个已交付 skill：
+当前包含 4 个已交付 skill：
 
 - `best-project-memory`：项目记忆、进度恢复、决策记录、交接延续
+- `little-lighthouse-blog-publisher`：Little Lighthouse 博客文章包发布、草稿、校验与修复
 - `production-code-quality-review`：面向生产环境的代码审查与合并前把关
 - `zero-to-website-design`：从模糊需求到设计落地的网站工作流
 
@@ -60,6 +61,29 @@ production-code-quality-review/SKILL.md
 - [`production-code-quality-review/README.md`](../../production-code-quality-review/README.md)
 - [`review-workflows.zh-CN.md`](review-workflows.zh-CN.md)
 
+### `little-lighthouse-blog-publisher`
+
+这个 skill 用于通过分阶段 AI 工作流发布、起草、更新、校验或修复 Little Lighthouse 博客文章包。它不把 GitHub Pages 当成 CMS，而是在本地仓库中管理 Markdown 正文、`.meta.json` 元数据、可选图片资源、验证步骤、review 与原子提交。
+
+适合场景：
+
+- 把 Markdown 草稿或笔记整理成 Little Lighthouse 博客文章
+- 创建只保留为草稿的文章包
+- 更新已有文章的元数据或资源
+- 在发布前校验路由、RSS、站点地图和构建状态
+- 记录缺失图片时的 fallback 行为
+
+入口文件：
+
+```text
+little-lighthouse-blog-publisher/SKILL.md
+```
+
+相关文档：
+
+- [`docs/usage/little-lighthouse-blog-publisher.md`](../usage/little-lighthouse-blog-publisher.md)
+- [`README.md`](../../README.md)
+
 ### `zero-to-website-design`
 
 这个 skill 用于把一个空白或模糊的网站需求推进成完整交付流程，包括视觉参考、设计方案、路线拆解、实现指引、截图验证和交付前检查。
@@ -101,6 +125,7 @@ zero-to-website-design/SKILL.md
 
 - [`README.md`](../../README.md)
 - [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
+- [`docs/usage/little-lighthouse-blog-publisher.md`](../usage/little-lighthouse-blog-publisher.md)
 - [`docs/usage/zero-to-website-design.md`](../usage/zero-to-website-design.md)
 - [`docs/usage/quickstart.md`](../usage/quickstart.md)
 - [`docs/usage/golden-path.md`](../usage/golden-path.md)
@@ -108,14 +133,15 @@ zero-to-website-design/SKILL.md
 - [`docs/releases/README.md`](../releases/README.md)
 
 当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`。
-`best-project-memory` 和 `zero-to-website-design` 目前主要通过 usage 文档与 `docs/dev/` 阶段开发文档记录演进。
+`best-project-memory`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 目前主要通过 usage 文档与 `docs/dev/` 阶段开发文档记录演进。
 
-如果你现在的核心问题是“这三个 skill 到底该先用哪个”，优先看 [`docs/usage/skill-matrix.md`](../usage/skill-matrix.md)。
+如果你现在的核心问题是“这几个 skill 到底该先用哪个”，优先看 [`docs/usage/skill-matrix.md`](../usage/skill-matrix.md)。
 
 ## 使用建议
 
 - 如果你首先关心“仓库里到底有什么”，先读英文 `README.md`
 - 如果你要把 skill 安装到本地，优先看对应 skill 的入口目录和安装说明
 - 如果你要理解审查工作流，优先看 `production-code-quality-review`
+- 如果你要发布 Little Lighthouse 博客文章，优先看 `little-lighthouse-blog-publisher`
 - 如果你要理解项目连续性与记忆文件流转，优先看 `best-project-memory`
 - 如果你要做网站类项目交付，优先看 `zero-to-website-design`

@@ -4,12 +4,15 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V15 repository docs line closure is implemented in the working tree.
+- Current stage: V16 four-skill public documentation alignment is implemented and verified in the working tree.
 
 ## Current Branch
-- `codex/best-project-memory-expansion`
+- `main`
 
 ## Last Verified
+- 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\tests -v`
+- 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\little-lighthouse-blog-publisher\tests -v`
+- 2026-06-19: `git diff --check`
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\zero-to-website-design\tests -v`
 - 2026-06-18: `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-18: `python -m unittest discover E:\project\blog\awesome-skills\tests -v`
@@ -58,7 +61,7 @@
 - None for the website-generation skill publication path.
 
 ## Current Focus
-- Commit and push V15 docs-line closure, then complete the active goal if the TODO list is empty and the worktree is clean.
+- Commit and push the V16 four-skill public documentation alignment pass on `main`.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.

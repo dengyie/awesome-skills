@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Verify and commit the V16 four-skill documentation alignment pass.
 - [x] Decide whether the paused repository-level docs line should be resumed later.
 - [x] Decide the next `zero-to-website-design` hardening target after V11 lands.
 - [x] Implement the `zero-to-website-design` V14 workflow-doc alignment pass.

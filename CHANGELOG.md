@@ -18,6 +18,8 @@ The format is intentionally lightweight and optimized for small skill releases.
 - added reusable project templates for design-system docs, implementation plans, asset/data specs, page specs, visual source maps, and QA reports
 - added `zero-to-website-design` usage documentation and package regression tests
 - added a development plan documenting the workflow extracted from the Little Lighthouse Folk Canvas rebuild
+- added `little-lighthouse-blog-publisher`, a staged publisher workflow for Little Lighthouse blog post packages
+- added four-skill repository navigation across the README, skill matrix, release indexes, and Chinese overview docs
 - added `zero-to-website-design` V5 template hardening for delivery-state tracking, memory-aware handoffs, and reusable website workstreams
 - added a V10 documentation-sync pass that records the shipped V2 continuity surface across the main governance plan, usage docs, and repo summaries
 - added V11 repair hardening for `best-project-memory`, making `init_memory.py --repair` restore partial memory layouts without overwriting existing files

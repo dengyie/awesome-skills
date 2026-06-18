@@ -232,7 +232,7 @@ Repository overview and usage:
 - [Release Notes](docs/releases/README.md)
 
 Current formal versioned release notes are published for `production-code-quality-review`.
-For `best-project-memory` and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
+For `best-project-memory`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
 
 Chinese documentation:
 
@@ -245,6 +245,7 @@ Chinese documentation:
 ```bash
 python3 -m unittest discover production-code-quality-review/tests -v
 python3 -m unittest discover best-project-memory/tests -v
+python3 -m unittest discover little-lighthouse-blog-publisher/tests -v
 python3 -m unittest discover zero-to-website-design/tests -v
 ```
 

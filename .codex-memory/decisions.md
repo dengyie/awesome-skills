@@ -145,3 +145,7 @@
 - Decision: Add a top-level `docs/usage/skill-matrix.md` page as the primary repository-level chooser for the shipped skills.
 - Rationale: The repo README and package docs already describe the individual skills, but a new reader still lacks one compact comparison page that answers "which skill should I use first?" quickly.
 - Impact: The repository now has a reusable skill-selection surface that points users toward `best-project-memory`, `production-code-quality-review`, or `zero-to-website-design` without forcing them to infer the differences from package-specific docs.
+## 2026-06-19 - Public Navigation Must Treat Little Lighthouse Publisher As A First-Class Skill
+- Decision: Update repository-level public docs after merging `little-lighthouse-blog-publisher` so the repo is consistently presented as a four-skill catalog.
+- Rationale: The package exists on `main`, but release indexes, Chinese overview text, verification commands, and regression tests still carried older three-skill assumptions.
+- Impact: Readers can now discover the blog publisher from the same README, matrix, release-index, Chinese overview, and verification surfaces as the other shipped skills.
