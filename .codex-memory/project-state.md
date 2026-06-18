@@ -4,12 +4,16 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V18 production-review Python interpreter documentation fix is implemented and verified on `main`.
+- Current stage: V19 production-review install path guard is implemented and verified on `main`.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest production-code-quality-review.tests.test_collect_review_context_cli.CollectReviewContextCliTests.test_install_helpers_guard_destructive_target_cleanup -v`
+- 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover production-code-quality-review\tests -v`
+- 2026-06-19: `git diff --check`
+- 2026-06-19: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-19: `python production-code-quality-review\tests\test_review_skill_lib.py -v`
 - 2026-06-19: `python -m unittest discover E:\project\blog\awesome-skills\production-code-quality-review\tests -v`
 - 2026-06-19: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\production-code-quality-review`
@@ -68,18 +72,19 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- No active risks for the current documented TODO set.
+- POSIX runtime install/update negative-case tests could not run in this Windows environment because `bash` resolves to the WSL shim and WSL virtualization is unavailable. Static guard-contract tests and package tests pass.
 
 ## Active Blockers
-- None for the V18 production-review Python interpreter documentation fix.
+- None for the V19 production-review install path guard.
 
 ## Current Focus
-- Commit and push the V18 production-review Python interpreter documentation fix on `main`.
+- Commit and push the V19 production-review install path guard on `main`.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
 
 ## Key Artifacts
+- `docs/dev/2026-06-19-production-code-quality-review-v19-install-path-guard-plan.md`
 - `docs/dev/2026-06-19-production-code-quality-review-v18-python-interpreter-doc-fix-plan.md`
 - `docs/dev/2026-06-19-awesome-skills-v17-milestone-driven-production-mode-plan.md`
 - `best-project-memory/SKILL.md`

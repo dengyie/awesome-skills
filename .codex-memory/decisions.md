@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - Guard Destructive Skill Install Targets Before Clean Copy
+- Decision: Keep the existing clean-copy install/update behavior for `production-code-quality-review`, but require both helper scripts to validate the resolved target before any `rm -rf`.
+- Rationale: Clean-copy is useful for removing generated cache artifacts, yet environment-derived install paths and recorded source metadata are too risky to trust without guardrails. The smallest production-safe fix is to prove the target still looks like the intended skill install directory and is not equal to or nested with the source checkout.
+- Impact: Installs and updates now reject empty, root-like, home/skill-root, source-equal, target-inside-source, and source-inside-target cases before deletion. Static regression coverage protects the contract in Windows environments where POSIX runtime helper tests are skipped.
+- Related files: `production-code-quality-review/scripts/install-local-skill.sh`, `production-code-quality-review/scripts/update-local-skill.sh`, `production-code-quality-review/tests/test_collect_review_context_cli.py`, `docs/dev/2026-06-19-production-code-quality-review-v19-install-path-guard-plan.md`
 ## 2026-06-19 - Make Submitted Skills Milestone-Driven
 - Decision: Align `best-project-memory`, `production-code-quality-review`, and `zero-to-website-design` around a finite milestone-driven production mode with frozen P0/P1 scope, backlog/manual-required routing, phase-gate reviews, atomic phase closure, and explicit stop conditions.
 - Rationale: The EvoMap submission should demonstrate a reusable production execution loop, not just individual skill capabilities. The three skills cover complementary parts of that loop: memory and milestone control, phase-end production review, and bounded website delivery.

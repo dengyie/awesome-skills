@@ -891,6 +891,29 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn(key, payload["review_plan"])
         self.assertIn(payload["review_plan"]["mode"], plan_schema["properties"]["mode"]["enum"])
 
+    def test_install_helpers_guard_destructive_target_cleanup(self):
+        for script in [INSTALL_SCRIPT, UPDATE_SCRIPT]:
+            with self.subTest(script=script.name):
+                text = script.read_text()
+                guard_index = text.index("guard_skill_target()")
+                copy_index = text.index("copy_skill_tree()")
+                rm_index = text.index('rm -rf "$target_dir"')
+
+                self.assertLess(guard_index, copy_index)
+                self.assertIn('guard_skill_target "$source_dir" "$target_dir"', text)
+                self.assertLess(
+                    text.index('guard_skill_target "$source_dir" "$target_dir"'),
+                    rm_index,
+                )
+                self.assertIn('while [[ ! -d "$existing"', text)
+                self.assertIn('basename "$resolved_target"', text)
+                self.assertIn('"production-code-quality-review"', text)
+                self.assertIn('[[ "$resolved_target" == "/" ]]', text)
+                self.assertIn('[[ "$resolved_target" == "$resolved_source" ]]', text)
+                self.assertIn('[[ "$resolved_target" == "$resolved_source"/* ]]', text)
+                self.assertIn('[[ "$resolved_source" == "$resolved_target"/* ]]', text)
+                self.assertIn('Refusing to remove unsafe skill target', text)
+
     @unittest.skipIf(os.name == "nt", "POSIX install helper test requires Unix path semantics")
     def test_install_script_omits_python_cache_artifacts(self):
         with tempfile.TemporaryDirectory() as temp_dir:
