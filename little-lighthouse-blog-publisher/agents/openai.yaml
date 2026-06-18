@@ -1,0 +1,4 @@
+interface:
+  display_name: "Little Lighthouse Blog Publisher"
+  short_description: "Publish Little Lighthouse posts through a staged AI workflow."
+  default_prompt: "Use $little-lighthouse-blog-publisher to publish a new blog post from my Markdown draft."

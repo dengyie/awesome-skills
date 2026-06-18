@@ -8,9 +8,10 @@ Latest formal package release notes: `production-code-quality-review v0.1.6`
 
 This repository is a multi-skill collection, not a single-package checkout.
 
-It currently ships three Codex skills:
+It currently ships four Codex skills:
 
 - `best-project-memory`: repo-native project continuity and handoff memory
+- `little-lighthouse-blog-publisher`: staged publisher workflow for the Little Lighthouse blog
 - `production-code-quality-review`: production-oriented review and merge-readiness workflow
 - `zero-to-website-design`: design-first website delivery workflow from brief to QA
 
@@ -41,6 +42,31 @@ Supporting package highlights:
 - `best-project-memory/scripts/` for memory initialization, linting, compaction, and repair helpers
 - `best-project-memory/references/` for schemas, examples, and operating guidance
 - `docs/usage/best-project-memory.md` for the user-facing guide
+
+### `little-lighthouse-blog-publisher`
+
+Use this skill when you want Codex to publish, draft, update, validate, or repair posts for the Little Lighthouse blog through a staged AI workflow. It keeps the public GitHub Pages site static while Codex handles local package creation, metadata planning, asset fallback decisions, verification, review, memory updates, and commits.
+
+Best fit:
+
+- turning Markdown drafts or notes into Little Lighthouse blog packages
+- creating draft-only post packages
+- updating existing post metadata or article assets
+- validating a post package before publication
+- keeping blog resources in `dengyie/dengyie.github.io` while skill workflow logic lives in this repo
+
+Skill entrypoint:
+
+```text
+little-lighthouse-blog-publisher/SKILL.md
+```
+
+Supporting package highlights:
+
+- `little-lighthouse-blog-publisher/references/` for staged interaction, package contract, editorial, asset, verification, and commit guidance
+- validates against the blog repo's `scripts/verify-blog-package.mjs` gate
+- designed for `dengyie/dengyie.github.io`, with the reusable skill source maintained here
+- `docs/usage/little-lighthouse-blog-publisher.md` for the user-facing guide
 
 ### `production-code-quality-review`
 
@@ -112,6 +138,10 @@ zero-to-website-design/
   references/           # Website design workflow references
   assets/templates/     # Copyable project documentation templates
   tests/                # Regression tests protecting package structure
+little-lighthouse-blog-publisher/
+  SKILL.md              # Required Codex skill entrypoint
+  agents/               # Platform metadata
+  references/           # Blog publishing workflow contracts and checklists
 docs/
   usage/                # User-facing documentation
   releases/             # Release notes and release checklist
@@ -130,6 +160,7 @@ Install a skill package by copying its folder:
 ```bash
 mkdir -p ~/.agents/skills
 cp -R best-project-memory ~/.agents/skills/
+cp -R little-lighthouse-blog-publisher ~/.agents/skills/
 cp -R production-code-quality-review ~/.agents/skills/
 cp -R zero-to-website-design ~/.agents/skills/
 ```
@@ -190,6 +221,7 @@ Repository overview and usage:
 
 - [Skill Matrix](docs/usage/skill-matrix.md)
 - [Best Project Memory](docs/usage/best-project-memory.md)
+- [Little Lighthouse Blog Publisher](docs/usage/little-lighthouse-blog-publisher.md)
 - [Zero-To-Website Design](docs/usage/zero-to-website-design.md)
 - [Golden Path](docs/usage/golden-path.md)
 - [Quickstart](docs/usage/quickstart.md)

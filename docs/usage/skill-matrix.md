@@ -7,6 +7,7 @@ Use this page when you want the fastest repository-level answer to: "Which skill
 | Skill | Best when you need | Core outputs | Common pairings | Avoid when |
 | --- | --- | --- | --- | --- |
 | `best-project-memory` | Continue work across sessions, keep durable project state, record decisions, and leave a handoff trail | `.codex-memory/` state, session logs, TODO updates, decision records, handoff artifacts | pairs naturally with both other shipped skills | the task is a one-shot edit with no continuity value |
+| `little-lighthouse-blog-publisher` | Publish, draft, update, or validate Little Lighthouse blog post packages | staged publishing plan, Markdown package, `.meta.json`, asset fallback summary, build/verifier/review/commit flow | pairs with `best-project-memory` for traceability and `production-code-quality-review` before commits | the target is not the Little Lighthouse blog or the user wants a browser CMS |
 | `production-code-quality-review` | Review a working tree, PR, or risky diff with production-engineering rigor | structured review context, review brief, merge-readiness findings, verification guidance | often paired with `best-project-memory` for long-running review tracks | the user wants implementation rather than review |
 | `zero-to-website-design` | Turn a vague website brief or visual reference set into a documented, QA-checked delivery workflow | design docs, route plans, implementation map, visual provenance, browser QA artifacts | often paired with `best-project-memory`; may use `production-code-quality-review` before final signoff | the change is a small component tweak or backend-only task |
 
@@ -25,6 +26,13 @@ Use `production-code-quality-review` first when the main problem is judgment abo
 - risky correctness check
 - production readiness check
 - diff triage with false-positive control
+
+Use `little-lighthouse-blog-publisher` first when the main problem is publishing Little Lighthouse content:
+
+- add a new Markdown article package
+- prepare a draft-only post
+- update blog metadata or article assets
+- validate route, RSS, and sitemap inclusion before committing
 
 Use `zero-to-website-design` first when the main problem is designing and delivering a website:
 
@@ -49,6 +57,14 @@ Choose `production-code-quality-review` when you want:
 - production-risk assessment
 - verification commands
 
+Choose `little-lighthouse-blog-publisher` when you want:
+
+- staged content intake
+- title, slug, category, excerpt, and related-post suggestions
+- asset fallback decisions
+- build and `verify-blog-package` checks
+- atomic blog publication commits
+
 Choose `zero-to-website-design` when you want:
 
 - design-system docs
@@ -70,6 +86,12 @@ Choose `zero-to-website-design` when you want:
 - multi-session website delivery
 - route workstreams and design handoffs
 - framework-ready versus delivery-ready milestone tracking
+
+`best-project-memory` + `little-lighthouse-blog-publisher`:
+
+- long-running article drafting
+- preserving publication decisions
+- recording draft versus published follow-ups
 
 `production-code-quality-review` + `zero-to-website-design`:
 
@@ -97,10 +119,17 @@ Use `zero-to-website-design`:
 Use $zero-to-website-design to turn this website brief and reference set into design docs, implementation guidance, and browser QA.
 ```
 
+Use `little-lighthouse-blog-publisher`:
+
+```text
+Use $little-lighthouse-blog-publisher to publish this Little Lighthouse Markdown draft as a blog post.
+```
+
 ## When Not To Use This Page
 
 Skip the matrix and go straight to a package guide when you already know the skill you need:
 
 - continuity and handoff: [`best-project-memory.md`](best-project-memory.md)
+- Little Lighthouse blog publishing: [`little-lighthouse-blog-publisher.md`](little-lighthouse-blog-publisher.md)
 - production review: [`quickstart.md`](quickstart.md), [`review-workflows.md`](review-workflows.md)
 - website delivery: [`zero-to-website-design.md`](zero-to-website-design.md)

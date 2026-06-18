@@ -35,10 +35,13 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertIn("# Skill Matrix", skill_matrix)
         self.assertIn("| Skill | Best when you need | Core outputs | Common pairings | Avoid when |", skill_matrix)
         self.assertIn("`best-project-memory`", skill_matrix)
+        self.assertIn("`little-lighthouse-blog-publisher`", skill_matrix)
         self.assertIn("`production-code-quality-review`", skill_matrix)
         self.assertIn("`zero-to-website-design`", skill_matrix)
         self.assertIn("## Common Pairings", skill_matrix)
         self.assertIn("## Fast Routing Prompts", skill_matrix)
+        self.assertIn("Little Lighthouse Blog Publisher", readme)
+        self.assertIn("docs/usage/little-lighthouse-blog-publisher.md", readme)
 
         self.assertIn(
             "当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`", zh_readme
