@@ -83,6 +83,25 @@ class ReviewSkillLibTests(unittest.TestCase):
         self.assertIn("block only on P0/P1 issues", usage_text)
         self.assertIn("send non-blocking suggestions to backlog", usage_text)
 
+    def test_skill_documents_portable_python_interpreter_setup(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        readme_text = (ROOT / "README.md").read_text(encoding="utf-8")
+        usage_text = (ROOT.parent / "docs" / "usage" / "review-workflows.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("active Python interpreter", skill_text)
+        self.assertIn("Windows:", skill_text)
+        self.assertIn("POSIX:", skill_text)
+        self.assertIn("python production-code-quality-review/scripts/collect-review-context.py", skill_text)
+        self.assertIn("python3 production-code-quality-review/scripts/collect-review-context.py", skill_text)
+
+        self.assertIn("active Python interpreter", readme_text)
+        self.assertIn("python production-code-quality-review/scripts/collect-review-context.py", readme_text)
+        self.assertIn("python3 production-code-quality-review/scripts/collect-review-context.py", readme_text)
+        self.assertIn("python production-code-quality-review/scripts/review-entrypoint.py", usage_text)
+        self.assertIn("python3 production-code-quality-review/scripts/review-entrypoint.py", usage_text)
+
     def test_parse_unified_zero_diff_builds_changed_ranges(self):
         module = load_module()
         diff_text = """diff --git a/src/app.ts b/src/app.ts

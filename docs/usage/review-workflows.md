@@ -11,12 +11,20 @@ Suggested flow:
 1. Collect context:
 
 ```bash
+# Windows
+python production-code-quality-review/scripts/collect-review-context.py --repo .
+
+# POSIX
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
 ```
 
 2. Generate the markdown brief:
 
 ```bash
+# Windows
+python production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
+
+# POSIX
 python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
 ```
 

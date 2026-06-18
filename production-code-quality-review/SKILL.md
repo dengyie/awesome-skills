@@ -128,7 +128,9 @@ Before judging the code, collect review scope and working-tree context.
 
 Default entrypoint when the repo is available:
 
-- `python3 production-code-quality-review/scripts/collect-review-context.py --repo <repo>`
+- Use the active Python interpreter for the current environment:
+  - Windows: `python production-code-quality-review/scripts/collect-review-context.py --repo <repo>`
+  - POSIX: `python3 production-code-quality-review/scripts/collect-review-context.py --repo <repo>`
 
 Resolve `production-code-quality-review/scripts/...` relative to this skill directory. For a user-scope install, the absolute path is usually `$HOME/.agents/skills/production-code-quality-review/scripts/...`.
 

@@ -75,15 +75,20 @@ The default Codex user-scope install path is:
 ~/.agents/skills/production-code-quality-review
 ```
 
-When running commands from this checkout, use:
+When running commands from this checkout, use the active Python interpreter for your environment:
 
 ```bash
+# Windows
+python production-code-quality-review/scripts/collect-review-context.py --repo .
+
+# POSIX
 python3 production-code-quality-review/scripts/collect-review-context.py --repo .
 ```
 
-When running commands from an installed copy outside the checkout, use:
+When running commands from an installed copy outside the checkout, use the same interpreter rule:
 
 ```bash
+python "$HOME/.agents/skills/production-code-quality-review/scripts/collect-review-context.py" --repo .
 python3 "$HOME/.agents/skills/production-code-quality-review/scripts/collect-review-context.py" --repo .
 ```
 
@@ -98,6 +103,6 @@ bash production-code-quality-review/scripts/verify-release.sh
 For faster local iteration:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover production-code-quality-review/tests -v
+PYTHONDONTWRITEBYTECODE=1 python -m unittest discover production-code-quality-review/tests -v
 git diff --check
 ```

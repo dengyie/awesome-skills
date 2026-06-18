@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-19 06:30
+- Task: Fix the production-review skill's Windows-unfriendly `python3` setup wording found during review.
+- Actions: Added the V18 design plan; updated `production-code-quality-review/SKILL.md`, package README, and review workflow usage docs to recommend the active Python interpreter with Windows `python` and POSIX `python3` examples; added regression coverage for portable interpreter guidance.
+- Results: Targeted review-lib tests, full production-review package tests, skill validation, and `git diff --check` pass.
+- Next: Commit and push the V18 documentation fix.
+- Blockers: None.
 ## 2026-06-19 06:18
 - Task: Align the three submitted skills with milestone-driven production development mode.
 - Actions: Wrote the V17 design plan; updated `best-project-memory`, `production-code-quality-review`, and `zero-to-website-design` with milestone contracts, phase-gate review behavior, backlog/manual-required routing, finite phase limits, and stop conditions; updated usage docs and regression tests; fixed the production-review CLI test harness to use `sys.executable` so Windows validation is not blocked by a broken `python3` shim.

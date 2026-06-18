@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Fix `production-code-quality-review` setup docs to support Windows `python` and POSIX `python3` interpreter usage.
 - [x] Implement and verify the V17 milestone-driven production mode pass for `best-project-memory`, `production-code-quality-review`, and `zero-to-website-design`.
 - [x] Verify and commit the V16 four-skill documentation alignment pass.
 - [x] Decide whether the paused repository-level docs line should be resumed later.
