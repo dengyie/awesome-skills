@@ -179,6 +179,32 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Reference Fidelity Plan", implementation_plan_template)
         self.assertIn("Generated UI asset prompts", implementation_plan_template)
 
+    def test_palette_only_reference_copy_is_explicitly_forbidden(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(
+            encoding="utf-8"
+        )
+        visual_qa = (ROOT / "references" / "visual-qa-checklist.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "Do not treat a reference image as a palette",
+            "Palette-only restyling is a blocking failure",
+            "just recolored the page",
+            "component silhouette",
+            "draw or generate the missing UI assets",
+            "reference-image failure mode",
+        ]:
+            self.assertIn(expected, fidelity)
+
+        self.assertIn("Do not treat binding references as mood boards or palettes", skill_text)
+        self.assertIn("Palette-only restyling is a blocking visual deviation", visual_qa)
+        self.assertIn("Palette-only restyling is not a fidelity pass", usage_text)
+
     def test_visual_provenance_contract_names_statuses_and_sources(self):
         provenance = (ROOT / "references" / "visual-provenance.md").read_text(
             encoding="utf-8"

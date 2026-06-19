@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-19 07:59
+- Task: Record the user-reported failure mode where `zero-to-website-design` treated a binding design image like a palette instead of a component/layout contract.
+- Actions: Added a failing regression test for palette-only restyling; documented the reference-image failure mode in `design-fidelity-loop.md`; updated the main skill, visual QA guidance, and usage docs to classify palette-only restyling as a blocking visual deviation and require drawing, coding, or generating missing UI assets/components.
+- Results: Targeted anti-example test, full zero-to-website tests, skill quick validation, `git diff --check`, and review-entrypoint context generation pass. Phase-gate review found no P0/P1 blockers.
+- Next: Commit, push, and sync the local `.codex` installed skill.
+- Blockers: None.
 ## 2026-06-19 07:55
 - Task: Deeply revise `zero-to-website-design` so pages built from design screenshots stay close to the provided design instead of stopping at broad structural similarity.
 - Actions: Added the V20 design plan; added `references/design-fidelity-loop.md`; updated the main workflow from 12 to 13 gates; required reference decomposition, fidelity budgets, generated UI asset prompt records, implementation screenshots, side-by-side comparisons, deviation backlogs, and fix loops; updated implementation and QA templates plus usage docs; expanded regression tests and metadata.

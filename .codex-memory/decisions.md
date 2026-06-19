@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - Palette-Only Restyling Is A Blocking Reference Fidelity Failure
+- Decision: Treat "just recolored the page" implementations as blocking visual failures when a binding design reference exists.
+- Rationale: A real usage failure showed that a page can reuse colors, rounded corners, or fonts while still missing the design image's actual layout geometry, component silhouettes, custom resources, hierarchy, and decorative systems. That behavior must not be accepted as a fidelity pass.
+- Impact: `zero-to-website-design` now explicitly requires agents to redraw, code, or generate missing UI components and resources, then re-check with side-by-side screenshots before claiming the implementation follows the design.
+- Related files: `zero-to-website-design/references/design-fidelity-loop.md`, `zero-to-website-design/SKILL.md`, `zero-to-website-design/references/visual-qa-checklist.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-19 - Make Design Screenshot Fidelity A First-Class Website Gate
 - Decision: Add a dedicated design fidelity loop to `zero-to-website-design` and make it a required gate whenever a screenshot, mockup, generated route image, Figma export, or historical image controls the final page.
 - Rationale: The previous workflow could pass build and screenshot QA while still producing a page that was only loosely similar to the reference. Binding design images need decomposition, asset prompt planning, implementation screenshots, side-by-side comparison evidence, and a fix loop before a visual readiness claim is credible.

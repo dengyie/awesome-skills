@@ -15,6 +15,22 @@ Run a fidelity pass when any of these is true:
 
 Do not claim visual parity from memory. Use screenshots.
 
+## Reference-Image Failure Mode
+
+Do not treat a reference image as a palette, mood board, or vague style hint when it has route authority.
+
+Palette-only restyling is a blocking failure: if the implementation just recolored the page, changed border radius, swapped fonts, or copied a few accents while the layout geometry, component silhouette, decorative resources, hierarchy, density, and responsive composition still differ from the reference, the route is still `blocked`.
+
+This reference-image failure mode must trigger a rework pass:
+
+- reclassify the design image as a binding component and layout contract
+- redraw or code the missing component silhouettes
+- draw or generate the missing UI assets, ornaments, illustrations, panels, textures, icons, or decorative resources
+- replace generic cards/sections with shapes that match the reference
+- capture a new implementation screenshot and compare it side-by-side before claiming improvement
+
+Do not downgrade this to polish. It is a P1 visual correctness issue when the milestone says to match the design.
+
 ## Reference Decomposition
 
 Before broad implementation, decompose every binding reference into implementable facts:
@@ -28,6 +44,7 @@ Before broad implementation, decompose every binding reference into implementabl
 - border radius, shadows, strokes, dividers, blur, and depth rules
 - navigation and interaction states visible or implied
 - mobile or responsive differences when the reference includes them
+- component silhouette and custom resource inventory, including any shapes or assets that must be drawn, coded, or generated
 
 Record unknowns instead of guessing silently. If a visual fact cannot be derived from the image, mark it as an assumption and validate it through the screenshot loop.
 
@@ -59,6 +76,8 @@ Good candidates:
 - route-specific empty-state art
 
 Prefer coded HTML/CSS components for real controls, readable text, layout, navigation, and repeated UI primitives. Generate images for visual assets, not for core interaction logic.
+
+If a design reference depends on a distinctive component silhouette or illustration resource, make the resource explicitly instead of approximating it with a generic rectangle.
 
 ### Prompt Template
 

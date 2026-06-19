@@ -61,6 +61,7 @@ Historical repo images are first-class inputs. When a project already has usable
 
 8. Run the design fidelity setup for binding references.
    - Read `references/design-fidelity-loop.md` whenever a design screenshot, mockup, generated route mockup, Figma export, or historical image should control the page.
+   - Do not treat binding references as mood boards or palettes. If the page only reuses colors, fonts, or rounded corners while missing the reference layout, component silhouettes, decorative assets, and hierarchy, the fidelity pass has failed.
    - Decompose each binding reference into layout, typography, color, spacing, component, asset, and responsive facts before implementation.
    - Define the fidelity budget: blocking deviations, accepted gaps, and out-of-scope viewports or states.
    - If existing assets cannot reproduce the reference, create UI asset or component prompt records before generation. Generate necessary UI images, illustrations, textures, icons, or panels only when they support the binding route.
@@ -76,6 +77,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Read `references/framework-first-delivery.md` when the project should stop at a framework milestone before final asset polish.
    - Build the site framework first: layout, navigation, core routes, card systems, responsive rhythm, and local assets.
    - When a binding design image exists, implement against the reference decomposition instead of broad visual memory.
+   - Draw, code, or generate the missing UI assets and component-shaped resources needed to reproduce the reference instead of substituting generic cards or stock-like sections.
    - Prefer project-owned assets over hotlinked assets.
    - Keep content placeholder or curated when the user wants framework-first delivery.
    - Treat `Framework Ready` as a valid milestone when layout, interaction, and responsive structure are correct even if final bespoke art is not ready yet.

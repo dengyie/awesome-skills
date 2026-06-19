@@ -140,6 +140,8 @@ When the final page must resemble a design screenshot, the skill should:
 
 The workflow must not claim design fidelity from memory or generic visual QA alone.
 
+Palette-only restyling is not a fidelity pass. If Codex only changes colors, rounded corners, or fonts while missing the design screenshot's layout, component silhouettes, decorative resources, and hierarchy, the route remains visually blocked. The skill should draw, code, or generate the missing UI assets and components before claiming the page follows the design.
+
 ## Historical-Mock Path
 
 When the repo already contains useful design images, archived mockups, or approved screenshots, the skill should:

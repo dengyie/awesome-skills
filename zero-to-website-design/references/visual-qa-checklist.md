@@ -94,6 +94,8 @@ Classify every failed browser check as:
 - `accepted-gap`: known and explicitly allowed for the current milestone
 - `out-of-scope`: not included in this pass and not used to support readiness claims
 
+Palette-only restyling is a blocking visual deviation when a binding design reference exists. If the page only copies colors, fonts, or rounded corners while missing layout geometry, component silhouettes, custom resources, or hierarchy, classify it as `blocking-visual`.
+
 Fix `blocking-framework` before claiming `Framework Ready`.
 
 Fix or explicitly downgrade `blocking-visual` before claiming `Visual Delivery Ready`.

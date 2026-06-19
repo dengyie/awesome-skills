@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Add the palette-only restyling anti-example to `zero-to-website-design` and make it a blocking visual failure.
 - [x] Harden `zero-to-website-design` with a design screenshot fidelity loop for reference matching and generated UI asset prompting.
 - [x] Fix `production-code-quality-review` install/update helper target guards before destructive clean-copy operations.
 - [x] Fix `production-code-quality-review` setup docs to support Windows `python` and POSIX `python3` interpreter usage.

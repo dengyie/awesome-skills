@@ -4,12 +4,17 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V20 zero-to-website design fidelity loop is implemented and verified on `main`.
+- Current stage: V21 zero-to-website palette-only reference-copy anti-example is implemented and verified on `main`.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest zero-to-website-design.tests.test_skill_package.ZeroToWebsiteDesignPackageTests.test_palette_only_reference_copy_is_explicitly_forbidden -v`
+- 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
+- 2026-06-19: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-19: `git diff --check`
+- 2026-06-19: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
 - 2026-06-19: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover tests -v`
@@ -77,13 +82,13 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- No active risks for the V20 zero-to-website design fidelity loop.
+- No active risks for the V21 palette-only anti-example hardening.
 
 ## Active Blockers
-- None for the V20 zero-to-website design fidelity loop.
+- None for the V21 palette-only anti-example hardening.
 
 ## Current Focus
-- Commit, push, and sync the V20 zero-to-website design fidelity loop.
+- Commit, push, and sync the V21 palette-only anti-example hardening.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
