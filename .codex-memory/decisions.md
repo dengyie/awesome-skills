@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - Binding References Must Be Rebuilt As Interactive UI
+- Decision: Forbid satisfying a binding design reference by shipping the whole reference screenshot as the page with transparent hotspots or invisible links.
+- Rationale: A full-page image can look visually identical while failing the real website requirements: accessible text, maintainable DOM, responsive behavior, stateful controls, real links, and component reuse.
+- Impact: `zero-to-website-design` now requires selected images to be decomposed into real DOM, components, local assets, controls, charts or diagrams, links, and responsive behavior. Full-page screenshot implementations block `Visual Delivery Ready`.
+- Related files: `zero-to-website-design/SKILL.md`, `zero-to-website-design/references/design-fidelity-loop.md`, `zero-to-website-design/references/visual-qa-checklist.md`, `zero-to-website-design/references/route-acceptance.md`, `zero-to-website-design/assets/templates/qa-report.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-19 - Design Audit Rows Need Verifiable Evidence
 - Decision: Require every binding-route fidelity audit row to include verifiable evidence: screenshot paths, viewport, reference region/crop/coordinate/annotation, implementation region/crop/coordinate/annotation, evidence quality, and fresh recheck evidence after fixes.
 - Rationale: Itemized audit tables can still become performative if rows only say "looks close" or "see screenshot." Another agent must be able to independently inspect the cited visual evidence.

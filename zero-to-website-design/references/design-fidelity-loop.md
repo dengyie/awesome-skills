@@ -31,6 +31,31 @@ This reference-image failure mode must trigger a rework pass:
 
 Do not downgrade this to polish. It is a P1 visual correctness issue when the milestone says to match the design.
 
+## Interactive Implementation Requirement
+
+Do not ship a binding reference as a full-page screenshot.
+
+A selected design image is a construction contract for an interactive webpage, not the webpage itself. The implementation must rebuild the page as real DOM, components, text, controls, charts, links, and responsive behavior. Use the reference screenshot for analysis and QA evidence, not as the primary rendered surface.
+
+Screenshot-as-page implementation is a blocking failure when a route uses the whole reference image as an `<img>`, page background, canvas bitmap, or similar full-viewport raster layer and then adds transparent hotspots, invisible links, or minimal overlay text to simulate interactivity.
+
+This anti-pattern fails even if the first viewport looks visually identical because it breaks accessibility, responsive adaptation, content maintainability, SEO, real interactions, state changes, and design-system evolution.
+
+Allowed uses of screenshots:
+
+- reference screenshot may be used for QA evidence, side-by-side comparison, annotation, or crop analysis
+- local raster assets may be created from the reference only for limited non-interactive artwork such as textures, illustrations, ornaments, or product-image slots
+- generated or sourced imagery may support a component slot when text, links, controls, layout, and state remain implemented as page structure
+
+When a design includes complex charts, diagrams, product panels, or custom artwork, build or source the necessary resources intentionally:
+
+- code charts, tables, controls, navigation, forms, cards, and text-heavy panels as real components
+- draw or generate illustrations, textures, and decorative resources as local assets
+- use web-sourced assets only when needed, record source and replacement risk, and localize them when licensing and project policy allow
+- keep transparent clickable overlays only as temporary annotation/debug aids, never as the shipped interaction model
+
+If the current implementation relies on a full-page screenshot, classify the route as `blocked`, replace the screenshot surface with real structure, and recapture screenshots before requesting signoff.
+
 ## Reference Decomposition
 
 Before broad implementation, decompose every binding reference into implementable facts:
@@ -40,6 +65,7 @@ Before broad implementation, decompose every binding reference into implementabl
 - grid, max width, columns, gutters, margins, and section heights
 - typography families or closest available substitutes, font sizes, weights, line heights, and casing
 - component inventory and repeated patterns
+- interactive element inventory, including buttons, links, forms, tabs, menus, charts, diagrams, and stateful regions that must be implemented rather than flattened into an image
 - image, icon, ornament, texture, and illustration slots
 - border radius, shadows, strokes, dividers, blur, and depth rules
 - navigation and interaction states visible or implied
@@ -88,6 +114,7 @@ Failure rules:
 - Any `blocked` item blocks `Visual Delivery Ready`.
 - A route with only a high-level screenshot comparison but no itemized audit blocks `Visual Delivery Ready`.
 - Audit rows with vague evidence such as "looks close", "same section", or "see screenshot" but no route, viewport, reference region, and implementation region count as `not-checked`.
+- A route implemented as a full-page reference screenshot with transparent hotspots remains `blocked` until the page is rebuilt as interactive DOM/components/assets.
 - A route with generic components where the reference shows distinctive silhouettes, assets, or ornaments remains `blocked` until those items are drawn, coded, generated, or explicitly accepted as gaps.
 - The final readiness claim must follow the weakest required item status across every binding route and viewport.
 

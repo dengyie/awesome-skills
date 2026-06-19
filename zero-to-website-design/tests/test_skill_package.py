@@ -271,6 +271,45 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Palette-only restyling is a blocking visual deviation", visual_qa)
         self.assertIn("Palette-only restyling is not a fidelity pass", usage_text)
 
+    def test_binding_reference_cannot_be_shipped_as_full_page_screenshot(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(
+            encoding="utf-8"
+        )
+        visual_qa = (ROOT / "references" / "visual-qa-checklist.md").read_text(
+            encoding="utf-8"
+        )
+        route_acceptance = (ROOT / "references" / "route-acceptance.md").read_text(
+            encoding="utf-8"
+        )
+        qa_report_template = (ROOT / "assets" / "templates" / "qa-report.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "Do not ship a binding reference as a full-page screenshot",
+            "transparent hotspots",
+            "real DOM, components, text, controls, charts, links, and responsive behavior",
+            "Screenshot-as-page implementation is a blocking failure",
+            "reference screenshot may be used for QA evidence",
+        ]:
+            self.assertIn(expected, fidelity)
+
+        for expected in [
+            "Do not satisfy a binding route by placing the whole reference screenshot on the page",
+            "Rebuild the selected image as real DOM, components, local assets, and interactions",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        self.assertIn("Full-page screenshot implementation is a blocking visual deviation", visual_qa)
+        self.assertIn("full-page screenshot implementation", route_acceptance)
+        self.assertIn("Full-page screenshot implementation check", qa_report_template)
+        self.assertIn("Do not ship the selected design image as the webpage", usage_text)
+        self.assertIn("Transparent hotspots over a screenshot do not count as implemented interactions", usage_text)
+
     def test_from_zero_sites_require_user_selected_visual_direction_gate(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         concept_generation = (ROOT / "references" / "concept-generation.md").read_text(

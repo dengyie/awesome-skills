@@ -33,6 +33,7 @@ Do not claim a route status that is stronger than its evidence row supports.
 - Text does not overlap or overflow.
 - Images and local assets load.
 - Links and primary actions are clickable.
+- Interactive regions are real controls or links, not transparent hotspots over a full-page screenshot.
 - Placeholder or `temporary-binding` assets are correctly placed.
 - Temporary-binding assets have documented route ownership and replacement triggers.
 - Metadata is coherent enough for the current framework pass.
@@ -51,7 +52,7 @@ Failed layout, link, asset-loading, console-blocking, or page-level overflow che
 - Metadata is correct.
 - Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps with their remaining scope clearly stated.
 
-Unresolved fidelity gaps, unchecked design items, blocked item-level mismatches, incorrect metadata, weak asset quality, or unacknowledged `temporary-binding` ownership block `Visual Delivery Ready`.
+Unresolved fidelity gaps, unchecked design items, blocked item-level mismatches, full-page screenshot implementation, incorrect metadata, weak asset quality, or unacknowledged `temporary-binding` ownership block `Visual Delivery Ready`.
 
 ## Failure Handling
 

@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-19 10:35
+- Task: Harden `zero-to-website-design` after a real failure where an agent proposed using the selected design screenshot as the rendered page with transparent hotspots.
+- Actions: Added a V25 design note, created a failing regression test for the full-page screenshot anti-pattern, updated the main skill, fidelity loop, visual QA checklist, route acceptance contract, QA report template, and usage docs to require real DOM/components/assets/interactions instead of screenshot-as-page implementations.
+- Results: Targeted V25 test, full zero-to-website package tests, skill quick validation, `git diff --check`, and production review entrypoint all passed. The workflow now blocks `Visual Delivery Ready` when a binding route is primarily a full-page reference screenshot with transparent hotspots.
+- Next: Commit, push, and sync the local `.codex` installed skill.
+- Blockers: None.
 ## 2026-06-19 07:59
 - Task: Record the user-reported failure mode where `zero-to-website-design` treated a binding design image like a palette instead of a component/layout contract.
 - Actions: Added a failing regression test for palette-only restyling; documented the reference-image failure mode in `design-fidelity-loop.md`; updated the main skill, visual QA guidance, and usage docs to classify palette-only restyling as a blocking visual deviation and require drawing, coding, or generating missing UI assets/components.

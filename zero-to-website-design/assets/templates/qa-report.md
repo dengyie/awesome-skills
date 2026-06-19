@@ -34,6 +34,11 @@ Unresolved `not-checked` or `blocked` items prevent visual delivery signoff.
 Rows with `weak` evidence quality do not support visual delivery signoff.
 Fixed rows must include fresh recheck evidence.
 
+Full-page screenshot implementation check:
+- Is any binding route primarily rendered from the whole reference screenshot:
+- Are any links or actions transparent hotspots over that screenshot:
+- If yes, status is blocked until the route is rebuilt as real DOM/components/assets/interactions:
+
 ## Interaction Checks
 
 - [ ] Navigation links

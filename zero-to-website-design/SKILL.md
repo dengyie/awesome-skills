@@ -66,6 +66,7 @@ Historical repo images are first-class inputs. When a project already has usable
 8. Run the design fidelity setup for binding references.
    - Read `references/design-fidelity-loop.md` whenever a design screenshot, mockup, generated route mockup, Figma export, or historical image should control the page.
    - Do not treat binding references as mood boards or palettes. If the page only reuses colors, fonts, or rounded corners while missing the reference layout, component silhouettes, decorative assets, and hierarchy, the fidelity pass has failed.
+   - Do not satisfy a binding route by placing the whole reference screenshot on the page, using it as a full-page background, or layering transparent hotspots over it. Rebuild the selected image as real DOM, components, local assets, and interactions.
    - Decompose each binding reference into layout, typography, color, spacing, component, asset, and responsive facts before implementation.
    - Create a page-by-page, item-by-item fidelity audit for every binding route before claiming visual readiness. Compare each route's hero, navigation, sections, cards, typography blocks, asset slots, decorative resources, spacing, and responsive states against the design image.
    - Define the fidelity budget: blocking deviations, accepted gaps, and out-of-scope viewports or states.
@@ -82,6 +83,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Read `references/framework-first-delivery.md` when the project should stop at a framework milestone before final asset polish.
    - Build the site framework first: layout, navigation, core routes, card systems, responsive rhythm, and local assets.
    - When a binding design image exists, implement against the reference decomposition instead of broad visual memory.
+   - Implement binding references as interactive page structure: text remains text, buttons and links are real controls, cards and sections are components, and charts or diagrams are built with code or fit-for-purpose local assets.
    - Draw, code, or generate the missing UI assets and component-shaped resources needed to reproduce the reference instead of substituting generic cards or stock-like sections.
    - Prefer project-owned assets over hotlinked assets.
    - Keep content placeholder or curated when the user wants framework-first delivery.

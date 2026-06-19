@@ -145,6 +145,8 @@ The workflow must not claim design fidelity from memory or generic visual QA alo
 
 Palette-only restyling is not a fidelity pass. If Codex only changes colors, rounded corners, or fonts while missing the design screenshot's layout, component silhouettes, decorative resources, and hierarchy, the route remains visually blocked. The skill should draw, code, or generate the missing UI assets and components before claiming the page follows the design.
 
+Do not ship the selected design image as the webpage. A binding reference must be rebuilt as actual DOM, text, components, links, controls, charts or diagrams, local assets, and responsive behavior. Transparent hotspots over a screenshot do not count as implemented interactions, and a page that primarily displays the full reference screenshot cannot be `Visual Delivery Ready`.
+
 The itemized audit must compare each page's hero, navigation, section order, cards, typography blocks, asset slots, decorative resources, spacing relationships, and responsive states against the selected design image. Any unchecked or blocked required item prevents `Visual Delivery Ready`.
 
 Each audit row must be independently verifiable. Record the reference screenshot, implementation screenshot, viewport, and a concrete reference/implementation region, crop, coordinate range, or annotation for the item. Vague evidence such as "looks close" or "see screenshot" is treated as not checked. Any fixed item must get fresh recheck evidence before signoff.

@@ -99,6 +99,8 @@ Classify every failed browser check as:
 
 Palette-only restyling is a blocking visual deviation when a binding design reference exists. If the page only copies colors, fonts, or rounded corners while missing layout geometry, component silhouettes, custom resources, or hierarchy, classify it as `blocking-visual`.
 
+Full-page screenshot implementation is a blocking visual deviation when a binding design reference exists. If the page renders the whole selected design image as an `<img>`, background, canvas bitmap, or equivalent raster surface and adds transparent hotspots or invisible links, classify it as `blocking-visual` even when the screenshot looks identical. The route must be rebuilt as real text, DOM structure, controls, links, charts or diagrams, local assets, and responsive layout before `Visual Delivery Ready`.
+
 Fix `blocking-framework` before claiming `Framework Ready`.
 
 Fix or explicitly downgrade `blocking-visual` before claiming `Visual Delivery Ready`.
