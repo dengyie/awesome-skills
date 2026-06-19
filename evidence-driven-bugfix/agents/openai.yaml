@@ -1,0 +1,4 @@
+display_name: "Evidence-Driven Bugfix"
+description: "A replacement-grade primary bugfix workflow that enforces evidence-first diagnosis, failing evidence before implementation, and fresh verification before any success claim."
+trigger_phrases:
+  - "$evidence-driven-bugfix"
