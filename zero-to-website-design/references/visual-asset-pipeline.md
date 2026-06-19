@@ -4,6 +4,8 @@ Use this reference when a binding route uses generated, sourced, drawn, or local
 
 The purpose is to keep visual assets connected to route authority, DOM ownership, implementation evidence, and final readiness claims. A visual asset is not just an image file; it is a controlled node in the website delivery chain.
 
+Read `resource-atomicity.md` before generating, sourcing, drawing, extracting, or saving asset files for a binding route. This pipeline controls readiness state; resource atomicity controls file boundaries.
+
 ## Core Chain
 
 Every visible asset-controlled region in a binding reference must move through this chain:
@@ -12,6 +14,7 @@ Every visible asset-controlled region in a binding reference must move through t
 visual authority
 -> reference region
 -> implementation owner
+-> resource unit
 -> asset slot or DOM component
 -> evidence screenshot
 -> difference status
@@ -32,6 +35,23 @@ Use these states:
 - `obsolete`: replaced or rejected
 
 Do not use `component-slot` for a full route screenshot, full viewport mockup, or sliced screenshot that carries layout, readable text, navigation, or core controls.
+
+## Resource Atomicity Gate
+
+Before an asset slot record is accepted, create or cite a Resource-To-File Map from `resource-atomicity.md`.
+
+The map must show whether each asset-controlled reference region is:
+
+- an atomic resource unit
+- a justified composite resource
+- a coded CSS/DOM primitive
+- an accepted gap
+
+Split resources by edit, reuse, responsive, interaction, text, licensing, and replacement boundaries. Do not combine independent cards, icons, labels, controls, ornaments, product panels, textures, or diagram layers into one raster merely because they appear together in the reference.
+
+If a single file carries multiple independently editable, reusable, interactive, localizable, sourced, or responsively positioned resources, classify it as `blocked-maintainability` until it is split or explicitly accepted for the milestone.
+
+Composite assets are allowed only when the Resource-To-File Map records child pieces, why they can stay together, what must stay separate, text policy, edit boundary, and replacement trigger.
 
 ## Implementation Owner State
 
@@ -59,6 +79,7 @@ Required fields:
 - section
 - reference region
 - owner component
+- resource unit from the Resource-To-File Map
 - target size or aspect ratio
 - crop and safe-padding rules
 - must-match list
@@ -70,6 +91,8 @@ Required fields:
 - evidence screenshot path
 - replacement trigger
 - current status
+
+The output path should identify the atomic resource purpose, not a vague bucket such as `hero.png` when the file contains several independent resources.
 
 ## Text Policy
 
@@ -168,8 +191,10 @@ The final route status cannot exceed the weakest asset slot or mapped region sta
 `Visual Delivery Ready` requires:
 
 - every visible binding-reference region has an implementation owner
+- every asset-owned region has a Resource-To-File Map row
 - every asset-owned region has an asset slot record
 - every asset slot has text policy, perspective/tilt policy, output path, evidence screenshot, and status
+- no asset slot remains `blocked-maintainability`
 - top 3 visible differences from the latest pass are resolved or accepted
 - first-viewport composition is `matched` or `accepted-gap`
 - mojibake/text encoding status passes

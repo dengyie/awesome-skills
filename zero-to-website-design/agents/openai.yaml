@@ -1,6 +1,6 @@
 interface:
   display_name: "Zero-To-Website Design"
-  short_description: "Website design workflow from brief or reference image to QA"
-  default_prompt: "Use $zero-to-website-design to turn this website idea or design screenshot into design docs, visual sources, implementation, screenshot fidelity QA, and delivery readiness."
+  short_description: "Website design workflow from brief or reference image to resource-safe QA"
+  default_prompt: "Use $zero-to-website-design to turn this website idea or design screenshot into design docs, visual sources, resource decomposition, implementation, screenshot fidelity QA, and delivery readiness."
 policy:
   allow_implicit_invocation: true

@@ -43,15 +43,24 @@ No visible binding-reference region may remain `visual memory only`.
 
 ## Component-Slot Asset Records
 
-| Route/Section | Target Size Or Aspect Ratio | Reference Region | Must Match | Must Avoid | Text Policy | Perspective/Tilt Ownership | Output Path |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| Route/Section | Resource Unit | Target Size Or Aspect Ratio | Reference Region | Must Match | Must Avoid | Split Reason | Text Policy | Perspective/Tilt Ownership | Output Path |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 Allowed component-slot raster assets do not carry full-route layout, readable text, navigation, or core controls.
 
+## Resource Atomicity Check
+
+| Route | Reference Region | Resource Unit | Unit Type | File Path | Owner Component | Split Reason | Must Stay Separate From | Composite Reason | Atomicity Status | Fix Or Accepted Gap |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Atomicity status must be one of `pass`, `blocked-maintainability`, `blocked-visual`, or `accepted-gap`.
+Files that bake together multiple independent cards, icons, labels, controls, ornaments, panels, textures, diagram layers, or responsive units are `blocked-maintainability` until split or explicitly accepted.
+Full-route screenshots, sliced route mockups, and layout-bearing raster shortcuts are `blocked-visual`.
+
 ## Visual Asset Evidence
 
-| Route | Asset Slot | Output Path | Source Method | Evidence Screenshot | Text Policy Pass | Perspective Policy Pass | Replacement Trigger | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Route | Asset Slot | Resource Unit | Output Path | Source Method | Evidence Screenshot | Text Policy Pass | Perspective Policy Pass | Atomicity Pass | Replacement Trigger | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 Final route readiness follows the weakest visual asset evidence status.
 
@@ -135,6 +144,7 @@ Full-page screenshot implementation check:
   - no overflow:
   - text encoding:
 - Visual asset pipeline status:
+- Resource atomicity status:
 - First-viewport composition status:
 - Mojibake/text encoding status:
 - User feedback state:

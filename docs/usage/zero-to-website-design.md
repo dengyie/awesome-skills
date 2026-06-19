@@ -169,6 +169,10 @@ Component-slot raster assets are allowed when they support the webpage instead o
 
 When generated, sourced, drawn, or local visual assets are used, create a visual asset pipeline record. The record connects visual authority, reference region, implementation owner, asset slot or DOM component, evidence screenshot, difference status, and delivery claim. The final route status cannot exceed the weakest visual asset pipeline status.
 
+Before generating, sourcing, drawing, extracting, or saving visual assets for a binding route, create a Resource-To-File Map. Split resources by edit, reuse, responsive, interaction, text, licensing, and replacement boundaries rather than visual proximity. A lightbulb ornament, a handwritten note, a product panel, an icon, a texture plate, and a chart label should not be baked into one image just because they are adjacent in the design screenshot.
+
+Composite assets are allowed only when they are one semantic illustration, product panel, texture plate, or diagram-art unit with a recorded reason. If a single raster carries multiple independently editable, reusable, interactive, localizable, sourced, or responsively positioned resources, the route is `blocked-maintainability` until the asset is split or the gap is explicitly accepted for the milestone.
+
 Asset records must include text policy and perspective/tilt policy. Default readable UI text to `real-dom-text-required`, and default reusable panels/cards to `css-applied` perspective unless the asset intentionally bakes perspective with a recorded reason.
 
 The itemized audit must compare each page's hero, navigation, section order, cards, typography blocks, asset slots, decorative resources, spacing relationships, and responsive states against the selected design image. Any unchecked or blocked required item prevents `Visual Delivery Ready`.

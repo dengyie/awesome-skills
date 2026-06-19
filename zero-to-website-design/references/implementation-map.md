@@ -23,19 +23,20 @@ Before broad code changes, confirm the project has:
 4. Identify shared primitives.
 5. Identify assets and data needed by each region.
 6. Define responsive behavior.
-7. Choose the asset strategy:
+7. For asset-controlled binding regions, read `resource-atomicity.md` and create a Resource-To-File Map before generation, sourcing, drawing, extraction, or local file creation.
+8. Choose the asset strategy:
    - final owned assets
    - historical mock assets
    - local structural mock assets
    - generated assets
-8. Define the fidelity budget for binding references.
-9. Record generated UI asset prompts when assets are needed to match the reference.
-10. Choose the smallest implementation order that produces a coherent site.
-11. List files to edit.
-12. Record milestone target, route owner, and replacement trigger for any temporary-binding asset.
-13. State verification commands and browser QA routes.
-14. Record screenshot comparison destination.
-15. Record intentionally deferred routes or blockers that limit the current pass.
+9. Define the fidelity budget for binding references.
+10. Record generated UI asset prompts when assets are needed to match the reference.
+11. Choose the smallest implementation order that produces a coherent site.
+12. List files to edit.
+13. Record milestone target, route owner, and replacement trigger for any temporary-binding asset.
+14. State verification commands and browser QA routes.
+15. Record screenshot comparison destination.
+16. Record intentionally deferred routes or blockers that limit the current pass.
 
 ## Component Mapping Prompts
 
@@ -87,6 +88,7 @@ Write a compact map before code:
 - Fidelity budget:
 - Components:
 - Assets:
+- Resource-To-File Map:
 - Generated UI asset prompts:
 - Asset strategy:
 - Data sources:

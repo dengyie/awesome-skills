@@ -21,6 +21,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             ROOT / "references" / "visual-qa-checklist.md",
             ROOT / "references" / "design-fidelity-loop.md",
             ROOT / "references" / "visual-asset-pipeline.md",
+            ROOT / "references" / "resource-atomicity.md",
             ROOT / "references" / "historical-mock-pass.md",
             ROOT / "references" / "framework-first-delivery.md",
             ROOT / "references" / "project-memory-integration.md",
@@ -428,6 +429,101 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("A route with component-slot assets cannot claim a status stronger than the weakest visual asset pipeline status", production_delivery)
         self.assertIn("visual asset pipeline record", usage_text)
         self.assertIn("text policy and perspective/tilt policy", usage_text)
+
+    def test_resource_atomicity_contract_is_required(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        atomicity = (ROOT / "references" / "resource-atomicity.md").read_text(
+            encoding="utf-8"
+        )
+        pipeline = (ROOT / "references" / "visual-asset-pipeline.md").read_text(
+            encoding="utf-8"
+        )
+        fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_map = (ROOT / "references" / "implementation-map.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_plan_template = (
+            ROOT / "assets" / "templates" / "implementation-plan.md"
+        ).read_text(encoding="utf-8")
+        asset_data_template = (
+            ROOT / "assets" / "templates" / "asset-and-data-spec.md"
+        ).read_text(encoding="utf-8")
+        qa_report_template = (ROOT / "assets" / "templates" / "qa-report.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "resource-atomicity.md",
+            "Resource-To-File Map",
+            "atomic resource unit",
+            "Do not combine independent cards, icons, labels, controls, ornaments, panels, or textures into one raster",
+            "blocked-maintainability",
+            "Split assets by edit, reuse, responsive, interaction, text, licensing, and replacement boundaries",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for expected in [
+            "Resource Atomicity",
+            "Do not let visual proximity in a reference image decide file boundaries",
+            "Resource-To-File Map",
+            "Resource Unit",
+            "Unit Type",
+            "Split Reason",
+            "Must Stay Separate From",
+            "May Compose With",
+            "Edit Boundary",
+            "Unit Types",
+            "`composite-with-reason`",
+            "Split Boundary Heuristics",
+            "Disallowed Mixed Assets",
+            "Allowed Composites",
+            "Spritesheets",
+            "Prompt And Sourcing Rules",
+            "Runtime Composition Rule",
+            "blocked-maintainability",
+            "over-composition",
+        ]:
+            self.assertIn(expected, atomicity)
+
+        for expected in [
+            "Read `resource-atomicity.md`",
+            "resource unit",
+            "Resource Atomicity Gate",
+            "Resource-To-File Map",
+            "blocked-maintainability",
+            "Composite assets are allowed only when",
+            "every asset-owned region has a Resource-To-File Map row",
+        ]:
+            self.assertIn(expected, pipeline)
+
+        for expected in [
+            "Resource-To-File Map",
+            "Read `resource-atomicity.md`",
+            "Over-composited assets are `blocked-maintainability`",
+            "Write one prompt, sourcing record, or drawing task per atomic resource unit",
+            "no required visual asset remains `blocked-maintainability`",
+        ]:
+            self.assertIn(expected, fidelity)
+
+        self.assertIn("Resource-To-File Map", implementation_map)
+        self.assertIn("before generation, sourcing, drawing, extraction, or local file creation", implementation_map)
+        self.assertIn("## Resource-To-File Map", implementation_plan_template)
+        self.assertIn("Atomicity Status", implementation_plan_template)
+        self.assertIn("## Resource Decomposition", asset_data_template)
+        self.assertIn("## Composite Assets", asset_data_template)
+        self.assertIn("Resource atomicity", asset_data_template)
+        self.assertIn("## Resource Atomicity Check", qa_report_template)
+        self.assertIn("blocked-maintainability", qa_report_template)
+        self.assertIn("Atomicity Pass", qa_report_template)
+        self.assertIn("Resource atomicity status", qa_report_template)
+        self.assertIn("Resource-To-File Map", usage_text)
+        self.assertIn("Split resources by edit, reuse, responsive, interaction, text, licensing, and replacement boundaries", usage_text)
+        self.assertIn("the route is `blocked-maintainability`", usage_text)
 
     def test_zero_to_website_docs_do_not_contain_mojibake(self):
         checked_files = [

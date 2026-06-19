@@ -53,6 +53,7 @@ When a design includes complex charts, diagrams, product panels, or custom artwo
 - draw or generate illustrations, textures, and decorative resources as local assets
 - use web-sourced assets only when needed, record source and replacement risk, and localize them when licensing and project policy allow
 - keep transparent clickable overlays only as temporary annotation/debug aids, never as the shipped interaction model
+- split local assets into maintainable resource units before generation or sourcing; do not bake independent cards, icons, labels, controls, ornaments, panels, or textures into one raster merely because they are close in the reference
 
 If the current implementation relies on a full-page screenshot, classify the route as `blocked`, replace the screenshot surface with real structure, and recapture screenshots before requesting signoff.
 
@@ -95,6 +96,30 @@ Each visible region in the binding screenshot must be classified as one of:
 
 No region may remain `visual memory only`. If a region is visible in the reference but has no mapped component, asset strategy, or accepted-gap rationale, broad implementation has not earned the right to start.
 
+## Resource-To-File Map
+
+Before generating, sourcing, drawing, extracting, or saving visual assets for a binding route, read `resource-atomicity.md` and create a Resource-To-File Map.
+
+Use this table shape in the implementation plan or equivalent artifact:
+
+```md
+| Reference Region | Resource Unit | Unit Type | File Path | Owner Component | Reuse Scope | Split Reason | Must Stay Separate From | May Compose With | Text Policy | Edit Boundary | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+```
+
+Each asset-controlled visible region in the binding screenshot must be classified as one of:
+
+- atomic resource unit
+- justified composite resource
+- CSS/DOM primitive
+- accepted gap
+
+No generated, sourced, drawn, extracted, or local asset can be accepted from visual memory alone. The Resource-To-File Map must say why the resource is separate or why a composite is justified.
+
+Split by change reason, not proximity. Separate resources when they have different owners, responsive behavior, hover/state behavior, text policy, reuse target, source/license, replacement trigger, or edit boundary.
+
+Over-composited assets are `blocked-maintainability`: if one raster carries multiple independent cards, icons, labels, controls, ornaments, panels, textures, or diagram layers, split it or record an accepted gap before claiming visual readiness.
+
 ## Component-Slot Raster Asset Rules
 
 Screenshots are not deliverables, but component-slot raster assets are allowed when they support a real webpage structure.
@@ -107,6 +132,7 @@ Allowed component-slot raster assets:
 - product or diagram panels
 - non-text ornamental notes
 - bespoke art that sits inside a component with real surrounding layout and controls
+- justified composite assets whose child pieces, edit boundary, and stay-separate rules are recorded in the Resource-To-File Map
 
 Disallowed runtime raster shortcuts:
 
@@ -115,6 +141,7 @@ Disallowed runtime raster shortcuts:
 - sliced screenshots that carry layout, readable text, navigation, or core controls
 - transparent hotspots over static images
 - generated page images that replace DOM hierarchy
+- mixed resource files that bake together independently editable, reusable, interactive, localizable, sourced, or responsively positioned units
 
 When in doubt, ask whether the page would still have meaningful structure, readable text, links, state, and responsive behavior if the asset failed to load. If not, the asset is carrying too much of the route.
 
@@ -220,6 +247,7 @@ Prefer coded HTML/CSS components for real controls, readable text, layout, navig
 If a design reference depends on a distinctive component silhouette or illustration resource, make the resource explicitly instead of approximating it with a generic rectangle.
 
 Read `visual-asset-pipeline.md` when generated, sourced, drawn, or local visual assets need ownership, text policy, perspective/tilt policy, evidence screenshots, and delivery-status tracking.
+Read `resource-atomicity.md` before asset generation or sourcing when file boundaries, composite assets, spritesheets, or resource maintainability need to be decided.
 
 ### Prompt Template
 
@@ -229,11 +257,16 @@ Write asset prompt records before generation:
 Asset prompt:
 - Route/section:
 - Source reference path:
+- Resource unit:
+- Unit type:
 - Target component size/aspect ratio:
 - Reference region:
 - Purpose:
 - Must match:
 - Must avoid:
+- Split reason:
+- Must stay separate from:
+- May compose with:
 - Aspect ratio / pixel target:
 - Transparent background needed:
 - Style keywords:
@@ -244,6 +277,8 @@ Asset prompt:
 ```
 
 Prompt for concrete website UI assets, not vague mood art. Name the visual role, palette, shape language, composition, and crop. If the asset must fit a component slot, include exact aspect ratio and safe padding.
+
+Write one prompt, sourcing record, or drawing task per atomic resource unit unless the Resource-To-File Map justifies a composite. If two resources need different responsive behavior, replacement triggers, text policy, or source constraints, produce separate assets and compose them in DOM/CSS.
 
 If generation output is used, record it in the visual source map with source method `imagegen`, authority status, ownership scope, milestone supported, and replacement trigger.
 
@@ -320,6 +355,7 @@ Before claiming `Visual Delivery Ready`, the final QA evidence must show:
 - each required viewport has a side-by-side comparison or equivalent comparison note
 - top 3 visible differences have been named after the latest visual pass and resolved or accepted
 - a Reference-To-DOM Map exists for every binding route
+- a Resource-To-File Map exists for every binding route that uses generated, sourced, drawn, extracted, or local assets
 - each binding route and required viewport has an itemized fidelity audit covering the required page items
 - no required page item remains `not-checked` or `blocked`
 - no required page item has `weak` evidence quality
@@ -328,6 +364,7 @@ Before claiming `Visual Delivery Ready`, the final QA evidence must show:
 - remaining gaps are accepted and named
 - generated UI assets are recorded with prompt, path, authority, and replacement trigger
 - component-slot asset records explain size/aspect ratio, reference region, text policy, and perspective/tilt ownership
+- no required visual asset remains `blocked-maintainability` due to over-composition
 - visual usability gate passes, including no mojibake and correct first-viewport composition
 - final readiness follows the weakest route fidelity status
 

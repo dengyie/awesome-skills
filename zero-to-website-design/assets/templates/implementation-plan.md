@@ -54,6 +54,7 @@ Describe the implementation phase and target outcome.
 - Fidelity budget:
 - Blocking visual deviations:
 - Accepted visual gaps:
+- Resource-To-File Map:
 - Generated UI asset prompts:
 - Component-slot asset records:
 - Implementation screenshot destinations:
@@ -68,17 +69,24 @@ Describe the implementation phase and target outcome.
 
 Every visible binding-reference region must be mapped to real DOM/layout, CSS-drawn primitive, generated/local component-slot asset, or accepted gap before broad implementation.
 
+## Resource-To-File Map
+
+| Reference Region | Resource Unit | Unit Type | File Path | Owner Component | Reuse Scope | Split Reason | Must Stay Separate From | May Compose With | Text Policy | Edit Boundary | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Every generated, sourced, drawn, extracted, or local visual asset for a binding route must be mapped to an atomic resource unit, justified composite, CSS/DOM primitive, or accepted gap before asset creation. Split by edit, reuse, responsive, interaction, text, licensing, and replacement boundaries rather than visual proximity.
+
 ## Component-Slot Asset Records
 
-| Route/Section | Target Size Or Aspect Ratio | Reference Region | Must Match | Must Avoid | Text Policy | Perspective/Tilt Ownership | Output Path |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| Route/Section | Resource Unit | Target Size Or Aspect Ratio | Reference Region | Must Match | Must Avoid | Split Reason | Text Policy | Perspective/Tilt Ownership | Output Path |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Visual Asset Pipeline
 
-| Route | Reference Region | Implementation Owner | Asset Slot | Text Policy | Perspective/Tilt Policy | Evidence Path | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| Route | Reference Region | Implementation Owner | Resource Unit | Asset Slot | Text Policy | Perspective/Tilt Policy | Evidence Path | Atomicity Status | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
-Implementation owner must be one of `dom-owner`, `css-owner`, `asset-owner`, or `accepted-gap`. The route readiness claim follows the weakest visual asset pipeline status.
+Implementation owner must be one of `dom-owner`, `css-owner`, `asset-owner`, or `accepted-gap`. Atomicity status must be `pass`, `accepted-gap`, `blocked-maintainability`, or `blocked-visual`. The route readiness claim follows the weakest visual asset pipeline status.
 
 ## Key Changes
 
