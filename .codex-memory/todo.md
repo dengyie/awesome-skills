@@ -1,5 +1,6 @@
 # TODO
 ## In Progress
+- [ ] Implement the V28 `zero-to-website-design` visual asset pipeline repair design.
 ## Next
 ## Done
 - [x] Validate, sync, commit, and push the V27 `zero-to-website-design` visual delivery closure hardening.

@@ -20,6 +20,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             ROOT / "references" / "route-acceptance.md",
             ROOT / "references" / "visual-qa-checklist.md",
             ROOT / "references" / "design-fidelity-loop.md",
+            ROOT / "references" / "visual-asset-pipeline.md",
             ROOT / "references" / "historical-mock-pass.md",
             ROOT / "references" / "framework-first-delivery.md",
             ROOT / "references" / "project-memory-integration.md",
@@ -351,6 +352,112 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             "User visual feedback updates route status",
         ]:
             self.assertIn(expected, usage_text)
+
+    def test_visual_asset_pipeline_contract_is_required(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        pipeline = (ROOT / "references" / "visual-asset-pipeline.md").read_text(
+            encoding="utf-8"
+        )
+        fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_plan_template = (
+            ROOT / "assets" / "templates" / "implementation-plan.md"
+        ).read_text(encoding="utf-8")
+        qa_report_template = (ROOT / "assets" / "templates" / "qa-report.md").read_text(
+            encoding="utf-8"
+        )
+        production_delivery = (ROOT / "references" / "production-delivery.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "visual-asset-pipeline.md",
+            "visual authority, reference region, implementation owner, asset slot or DOM component, evidence screenshot, difference status, and delivery claim",
+            "visual asset pipeline status is recorded",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for expected in [
+            "Visual Asset Pipeline",
+            "visual authority",
+            "reference region",
+            "implementation owner",
+            "asset slot or DOM component",
+            "evidence screenshot",
+            "difference status",
+            "delivery claim",
+            "Asset Authority State",
+            "`component-slot`",
+            "Implementation Owner State",
+            "`dom-owner`",
+            "`css-owner`",
+            "`asset-owner`",
+            "`accepted-gap`",
+            "No visible reference region can be `unowned`",
+            "Asset Slot Record",
+            "Text Policy",
+            "`real-dom-text-required`",
+            "`baked-text-approved`",
+            "Perspective/Tilt Policy",
+            "`css-applied`",
+            "`asset-baked`",
+            "Difference-Driven Repair Loop",
+            "User Feedback State Machine",
+            "First-Viewport Composition Gate",
+            "Mojibake And Text Encoding",
+            "The final route status cannot exceed the weakest asset slot or mapped region status",
+        ]:
+            self.assertIn(expected, pipeline)
+
+        self.assertIn("Read `visual-asset-pipeline.md`", fidelity)
+        self.assertIn("## Visual Asset Pipeline", implementation_plan_template)
+        self.assertIn("Implementation Owner", implementation_plan_template)
+        self.assertIn("Perspective/Tilt Policy", implementation_plan_template)
+        self.assertIn("The route readiness claim follows the weakest visual asset pipeline status", implementation_plan_template)
+        self.assertIn("## Visual Asset Evidence", qa_report_template)
+        self.assertIn("Text Policy Pass", qa_report_template)
+        self.assertIn("Perspective Policy Pass", qa_report_template)
+        self.assertIn("## First-Viewport Composition", qa_report_template)
+        self.assertIn("Visual asset pipeline status", production_delivery)
+        self.assertIn("First-viewport composition status", production_delivery)
+        self.assertIn("Mojibake/text encoding status", production_delivery)
+        self.assertIn("A route with component-slot assets cannot claim a status stronger than the weakest visual asset pipeline status", production_delivery)
+        self.assertIn("visual asset pipeline record", usage_text)
+        self.assertIn("text policy and perspective/tilt policy", usage_text)
+
+    def test_zero_to_website_docs_do_not_contain_mojibake(self):
+        checked_files = [
+            ROOT / "SKILL.md",
+            ROOT.parent / "docs" / "usage" / "zero-to-website-design.md",
+        ]
+        checked_files.extend(sorted((ROOT / "references").glob("*.md")))
+        checked_files.extend(sorted((ROOT / "assets" / "templates").glob("*.md")))
+
+        mojibake_fragments = [
+            "\u920b",
+            "\u9241",
+            "\u922e",
+            "\u5bb8",
+            "\u6769",
+            "\u951b",
+            "\u95c3",
+            "\u6d93",
+            "\u8b41",
+            "\ufffd",
+        ]
+
+        failures = []
+        for path in checked_files:
+            text = path.read_text(encoding="utf-8")
+            for fragment in mojibake_fragments:
+                if fragment in text:
+                    failures.append(f"{path.relative_to(ROOT.parent)} contains {fragment!r}")
+
+        self.assertEqual(failures, [])
 
     def test_binding_routes_require_page_item_fidelity_audit(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")

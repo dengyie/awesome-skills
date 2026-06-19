@@ -48,6 +48,18 @@ No visible binding-reference region may remain `visual memory only`.
 
 Allowed component-slot raster assets do not carry full-route layout, readable text, navigation, or core controls.
 
+## Visual Asset Evidence
+
+| Route | Asset Slot | Output Path | Source Method | Evidence Screenshot | Text Policy Pass | Perspective Policy Pass | Replacement Trigger | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Final route readiness follows the weakest visual asset evidence status.
+
+## First-Viewport Composition
+
+| Route | Binding Reference Viewport | Implementation Viewport | Dominant Visual System | Primary Content Position | Next-Section Exposure | Lower Sections Compete With Hero? | Decorative Sections Push Content Down? | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
 ## Page Item Fidelity Audit
 
 | Route | Viewport | Design Item | Reference Region | Implementation Region | Evidence Quality | Match Status | Deviation | Severity | Fix Action | Recheck Evidence |
@@ -122,6 +134,10 @@ Full-page screenshot implementation check:
   - real DOM links/text:
   - no overflow:
   - text encoding:
+- Visual asset pipeline status:
+- First-viewport composition status:
+- Mojibake/text encoding status:
+- User feedback state:
 - Verification:
 - Known remaining visual gaps:
 - Current status:

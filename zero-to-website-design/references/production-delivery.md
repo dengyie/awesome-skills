@@ -78,6 +78,10 @@ Final visual pass report:
   - text encoding:
 - Top 3 latest visual differences:
 - Visual usability gate:
+- Visual asset pipeline status:
+- First-viewport composition status:
+- Mojibake/text encoding status:
+- User feedback state:
 - Verification:
 - Known remaining visual gaps:
 - Current status:
@@ -95,3 +99,5 @@ Do not replace this with "done" or "QA passed." The report must let the user imm
 - Final reports must not summarize QA as "passed" when route evidence contains unresolved blocking failures.
 - Do not claim `Visual Delivery Ready` when the implementation only shares palette or mood with the reference, key custom assets remain generic placeholders, the user has not seen the latest screenshot, or the latest screenshot has obvious unresolved mismatches named by the user.
 - A final visual pass must not exceed the latest user feedback status. If user feedback says "not matching", the route remains `blocked-visual` until fixed or explicitly accepted.
+- A route with component-slot assets cannot claim a status stronger than the weakest visual asset pipeline status.
+- Mojibake in visible UI text, final report text, or skill reference examples blocks delivery readiness until repaired.

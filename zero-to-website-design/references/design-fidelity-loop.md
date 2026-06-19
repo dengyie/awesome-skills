@@ -219,6 +219,8 @@ Prefer coded HTML/CSS components for real controls, readable text, layout, navig
 
 If a design reference depends on a distinctive component silhouette or illustration resource, make the resource explicitly instead of approximating it with a generic rectangle.
 
+Read `visual-asset-pipeline.md` when generated, sourced, drawn, or local visual assets need ownership, text policy, perspective/tilt policy, evidence screenshots, and delivery-status tracking.
+
 ### Prompt Template
 
 Write asset prompt records before generation:
@@ -271,9 +273,9 @@ After every visual pass, name the top 3 visible differences before editing again
 
 Treat user visual feedback as route evidence, not as casual commentary.
 
-- "差距很大", "not matching", or equivalent feedback sets the route to `blocked-visual`.
+- "not matching", "far from the reference", or equivalent feedback sets the route to `blocked-visual`.
 - "not a screenshot", "must be interactive", or equivalent feedback makes the screenshot-as-page guard a P0 blocker.
-- "this is deliverable", "这才有交付样子", or equivalent feedback may set the current pass to `close-enough`, after which further work should be scoped polish, not a new broad redesign.
+- "this is deliverable", "close enough to review", or equivalent feedback may set the current pass to `close-enough`, after which further work should be scoped polish, not a new broad redesign.
 
 Do not report completion while the latest named user mismatch remains unresolved or unaccepted.
 

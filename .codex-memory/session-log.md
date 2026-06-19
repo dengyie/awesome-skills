@@ -1,4 +1,22 @@
 # Session Log
+## 2026-06-20 02:10
+- Task: Verify the V28 `zero-to-website-design` visual asset pipeline implementation.
+- Actions: Ran the zero-to-website package tests, skill quick validation, `git diff --check`, mojibake scan, repository docs tests, and production review context for the working tree; performed a phase-gate review of the changed contract surface.
+- Results: All validation passed. Phase-gate review found no P0/P1 blockers; quality score 9/10, pass.
+- Next: Commit and push V28, then sync and validate the local installed skill.
+- Blockers: None.
+## 2026-06-20 01:55
+- Task: Implement the V28 `zero-to-website-design` visual asset pipeline repair design.
+- Actions: Added `references/visual-asset-pipeline.md`; routed the main skill and fidelity reference to it; strengthened implementation, QA, production-delivery, and usage docs around visual asset ownership, text policy, perspective/tilt policy, first-viewport composition, mojibake status, and weakest-status delivery claims; added package regression coverage and converted mojibake test samples to Unicode escapes so scans do not self-report.
+- Results: V28 is implemented in the working tree and ready for final unit tests, skill validation, diff check, production review, commit, push, and local skill sync.
+- Next: Run final verification and publish the V28 update.
+- Blockers: None.
+## 2026-06-20 01:25
+- Task: Deeply think through the V27 visual-delivery details as an important reusable asset and design the next repair pass before implementation.
+- Actions: Re-read project memory, the V27 plan, current decisions, and the updated design fidelity loop; identified that the next failure mode is drift across visual authority, region mapping, asset production, difference-driven repair, and delivery claims; wrote a V28 design document.
+- Results: `docs/dev/2026-06-20-zero-to-website-design-v28-visual-asset-repair-design.md` now specifies a visual asset pipeline contract, owner states, asset slot state, text policy, perspective/tilt policy, difference-driven repair loop, user feedback state machine, first-viewport gate, mojibake repair, template changes, and regression test plan.
+- Next: Implement the V28 visual asset pipeline repair design as a bounded follow-up.
+- Blockers: None.
 ## 2026-06-20 01:05
 - Task: Harden `zero-to-website-design` around visual delivery closure after user feedback about loose design matching and skipped image-selection workflow.
 - Actions: Added a V27 design note; updated the main skill workflow, design fidelity loop, visual QA checklist, production delivery report contract, implementation and QA templates, public usage docs, project decisions, and regression coverage.

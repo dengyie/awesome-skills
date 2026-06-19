@@ -167,6 +167,10 @@ Do not ship the selected design image as the webpage. A binding reference must b
 
 Component-slot raster assets are allowed when they support the webpage instead of replacing it. Decorative props, material textures, illustrations inside cards, product or diagram panels, and non-text ornamental notes can be generated or sourced. Full-route screenshots, full-viewport background mockups, sliced screenshots that carry layout/text/navigation, and transparent hotspots over static images are runtime shortcuts and block visual delivery.
 
+When generated, sourced, drawn, or local visual assets are used, create a visual asset pipeline record. The record connects visual authority, reference region, implementation owner, asset slot or DOM component, evidence screenshot, difference status, and delivery claim. The final route status cannot exceed the weakest visual asset pipeline status.
+
+Asset records must include text policy and perspective/tilt policy. Default readable UI text to `real-dom-text-required`, and default reusable panels/cards to `css-applied` perspective unless the asset intentionally bakes perspective with a recorded reason.
+
 The itemized audit must compare each page's hero, navigation, section order, cards, typography blocks, asset slots, decorative resources, spacing relationships, and responsive states against the selected design image. Any unchecked or blocked required item prevents `Visual Delivery Ready`.
 
 Each audit row must be independently verifiable. Record the reference screenshot, implementation screenshot, viewport, and a concrete reference/implementation region, crop, coordinate range, or annotation for the item. Vague evidence such as "looks close" or "see screenshot" is treated as not checked. Any fixed item must get fresh recheck evidence before signoff.

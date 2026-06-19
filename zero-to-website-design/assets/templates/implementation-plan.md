@@ -73,6 +73,13 @@ Every visible binding-reference region must be mapped to real DOM/layout, CSS-dr
 | Route/Section | Target Size Or Aspect Ratio | Reference Region | Must Match | Must Avoid | Text Policy | Perspective/Tilt Ownership | Output Path |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 
+## Visual Asset Pipeline
+
+| Route | Reference Region | Implementation Owner | Asset Slot | Text Policy | Perspective/Tilt Policy | Evidence Path | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+
+Implementation owner must be one of `dom-owner`, `css-owner`, `asset-owner`, or `accepted-gap`. The route readiness claim follows the weakest visual asset pipeline status.
+
 ## Key Changes
 
 - Design system:

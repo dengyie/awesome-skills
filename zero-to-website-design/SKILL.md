@@ -74,6 +74,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Create a Reference-To-DOM Map before implementation so every visible reference region is assigned to real DOM/layout, CSS-drawn primitive, generated or local component-slot asset, or accepted gap. No visible region may remain `visual memory only`.
    - Create a page-by-page, item-by-item fidelity audit for every binding route before claiming visual readiness. Compare each route's hero, navigation, sections, cards, typography blocks, asset slots, decorative resources, spacing, and responsive states against the design image.
    - Define the fidelity budget: blocking deviations, accepted gaps, and out-of-scope viewports or states.
+   - Read `references/visual-asset-pipeline.md` when a binding route uses generated, sourced, drawn, or local visual assets. Track visual authority, reference region, implementation owner, asset slot or DOM component, evidence screenshot, difference status, and delivery claim together.
    - If existing assets cannot reproduce the reference, create UI asset or component prompt records before generation. Generate necessary UI images, illustrations, textures, icons, or panels only when they support the binding route.
    - For every generated or sourced visual asset, define the component slot first: route/section, target size or aspect ratio, reference region, must-match details, must-avoid details, text policy, perspective or tilt ownership, and output path.
    - Plan implementation screenshot paths, side-by-side comparison evidence, deviation backlog, and the fix loop before coding.
@@ -134,6 +135,7 @@ Historical repo images are first-class inputs. When a project already has usable
 - `references/design-system-docs.md`: read before creating or updating design docs.
 - `references/design-rounds.md`: read before design or broad implementation to enforce round outputs, exit criteria, and no-skip rules.
 - `references/design-fidelity-loop.md`: read when a design screenshot, mockup, generated route image, Figma export, or historical image should be matched closely in the final page.
+- `references/visual-asset-pipeline.md`: read when binding routes use generated, sourced, drawn, or local visual assets that need ownership, text policy, perspective policy, evidence, and delivery-status tracking.
 - `references/implementation-map.md`: read before code changes.
 - `references/route-acceptance.md`: read before implementing or reviewing route types.
 - `references/visual-qa-checklist.md`: read before signoff.
@@ -176,6 +178,7 @@ A zero-to-website pass is complete only when:
 - desktop and mobile browser QA have been run
 - binding design references have reference decomposition, Reference-To-DOM Map, implementation screenshot, side-by-side comparison, top 3 visible differences, deviation backlog, and a final fidelity status
 - every binding route has a page-by-page, item-by-item fidelity audit with no unchecked required items or unresolved blocking item mismatches
+- visual asset pipeline status is recorded for generated, sourced, drawn, or local component-slot assets
 - generated UI asset prompts, component-slot records, and resulting assets are recorded when generation is needed to match the design
 - visual usability gate passes, including text readable and not mojibake and first-viewport composition
 - production readiness has been reviewed
