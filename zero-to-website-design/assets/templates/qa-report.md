@@ -26,11 +26,13 @@
 
 ## Page Item Fidelity Audit
 
-| Route | Viewport | Design Item | Reference Evidence | Implementation Evidence | Match Status | Deviation | Severity | Fix Action |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Route | Viewport | Design Item | Reference Region | Implementation Region | Evidence Quality | Match Status | Deviation | Severity | Fix Action | Recheck Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 Required binding-route items must be `matched` or `accepted-gap` before `Visual Delivery Ready`.
 Unresolved `not-checked` or `blocked` items prevent visual delivery signoff.
+Rows with `weak` evidence quality do not support visual delivery signoff.
+Fixed rows must include fresh recheck evidence.
 
 ## Interaction Checks
 

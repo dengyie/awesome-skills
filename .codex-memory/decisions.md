@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - Design Audit Rows Need Verifiable Evidence
+- Decision: Require every binding-route fidelity audit row to include verifiable evidence: screenshot paths, viewport, reference region/crop/coordinate/annotation, implementation region/crop/coordinate/annotation, evidence quality, and fresh recheck evidence after fixes.
+- Rationale: Itemized audit tables can still become performative if rows only say "looks close" or "see screenshot." Another agent must be able to independently inspect the cited visual evidence.
+- Impact: `zero-to-website-design` now treats `weak` evidence quality as insufficient for `Visual Delivery Ready` and requires fixed rows to point to updated implementation evidence.
+- Related files: `zero-to-website-design/references/design-fidelity-loop.md`, `zero-to-website-design/assets/templates/qa-report.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-19 - Binding Design Matches Require Page Item Fidelity Audits
 - Decision: Require page-by-page, item-by-item fidelity audits for every binding route and required viewport before `Visual Delivery Ready` or design-match claims.
 - Rationale: A selected design image can still be implemented loosely if the agent only performs a high-level screenshot comparison. Real failures show the workflow must force comparison of hero, navigation, sections, repeated components, typography, asset slots, decorative resources, spacing, and responsive states one by one.

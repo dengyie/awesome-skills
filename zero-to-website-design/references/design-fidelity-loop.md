@@ -70,9 +70,9 @@ Required item categories:
 Use this table shape in the project QA report or equivalent artifact:
 
 ```md
-| Route | Viewport | Design Item | Reference Evidence | Implementation Evidence | Match Status | Deviation | Severity | Fix Action |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/` | 1440x900 | Hero illustration silhouette and position | reference-home.png top-right illustrated panel | qa-home-1440.png hero has generic card block | blocked | Missing custom illustration silhouette and crop | blocking | Draw or generate matching hero panel and recapture screenshot |
+| Route | Viewport | Design Item | Reference Region | Implementation Region | Evidence Quality | Match Status | Deviation | Severity | Fix Action | Recheck Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `/` | 1440x900 | Hero illustration silhouette and position | reference-home.png region: top-right hero panel, or crop ref-home-hero.png | qa-home-1440.png region: hero right column, or crop qa-home-hero.png | specific | blocked | Missing custom illustration silhouette and crop | blocking | Draw or generate matching hero panel and recapture screenshot | pending |
 ```
 
 Allowed item match statuses:
@@ -87,8 +87,35 @@ Failure rules:
 - Any `not-checked` required item blocks `Visual Delivery Ready`.
 - Any `blocked` item blocks `Visual Delivery Ready`.
 - A route with only a high-level screenshot comparison but no itemized audit blocks `Visual Delivery Ready`.
+- Audit rows with vague evidence such as "looks close", "same section", or "see screenshot" but no route, viewport, reference region, and implementation region count as `not-checked`.
 - A route with generic components where the reference shows distinctive silhouettes, assets, or ornaments remains `blocked` until those items are drawn, coded, generated, or explicitly accepted as gaps.
 - The final readiness claim must follow the weakest required item status across every binding route and viewport.
+
+## Verifiable Evidence Rules
+
+Each itemized audit row must be checkable by another agent without trusting the original author's judgment.
+
+For every required design item, record:
+
+- reference screenshot path
+- implementation screenshot path
+- viewport
+- reference region, crop path, coordinate range, or clearly named visual area
+- implementation region, crop path, coordinate range, or clearly named visual area
+- evidence quality: `specific`, `annotated`, `cropped`, or `weak`
+- match status
+- deviation and severity
+- fix action for `blocked` or `weak` rows
+- recheck evidence after any fix
+
+Evidence quality rules:
+
+- `specific`: row points to concrete screenshot paths and named regions that another reviewer can locate.
+- `annotated`: row points to an image or note with marked regions.
+- `cropped`: row points to reference and implementation crops for the item.
+- `weak`: row is too vague to verify independently.
+
+Rows marked `weak` cannot support `Visual Delivery Ready`. If a row is fixed, update its implementation screenshot or crop and set `Recheck Evidence`; do not leave the old evidence as proof of the final state.
 
 ## Fidelity Budget
 
@@ -187,6 +214,8 @@ Before claiming `Visual Delivery Ready`, the final QA evidence must show:
 - each required viewport has a side-by-side comparison or equivalent comparison note
 - each binding route and required viewport has an itemized fidelity audit covering the required page items
 - no required page item remains `not-checked` or `blocked`
+- no required page item has `weak` evidence quality
+- every fixed item has fresh recheck evidence after the fix
 - blocking visual deviations are fixed
 - remaining gaps are accepted and named
 - generated UI assets are recorded with prompt, path, authority, and replacement trigger

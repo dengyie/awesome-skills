@@ -147,6 +147,8 @@ Palette-only restyling is not a fidelity pass. If Codex only changes colors, rou
 
 The itemized audit must compare each page's hero, navigation, section order, cards, typography blocks, asset slots, decorative resources, spacing relationships, and responsive states against the selected design image. Any unchecked or blocked required item prevents `Visual Delivery Ready`.
 
+Each audit row must be independently verifiable. Record the reference screenshot, implementation screenshot, viewport, and a concrete reference/implementation region, crop, coordinate range, or annotation for the item. Vague evidence such as "looks close" or "see screenshot" is treated as not checked. Any fixed item must get fresh recheck evidence before signoff.
+
 ## Historical-Mock Path
 
 When the repo already contains useful design images, archived mockups, or approved screenshots, the skill should:

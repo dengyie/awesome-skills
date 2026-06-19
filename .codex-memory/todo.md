@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Validate, sync, commit, and push the V24 `zero-to-website-design` verifiable fidelity evidence hardening.
 - [x] Validate, sync, commit, and push the V23 `zero-to-website-design` page/item fidelity audit hardening.
 - [x] Validate, sync, commit, and push the V22 `zero-to-website-design` user-selected visual direction gate hardening.
 - [x] Add the palette-only restyling anti-example to `zero-to-website-design` and make it a blocking visual failure.

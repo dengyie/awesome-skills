@@ -251,6 +251,12 @@
 - Results: Public repository navigation now treats the repo as a four-skill catalog and routes non-versioned package docs for `best-project-memory`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`.
 - Next: Run docs and package tests, fix any confirmed failures, then commit and push the documentation alignment pass.
 - Blockers: None.
+## 2026-06-19 09:55
+- Task: Harden `zero-to-website-design` against unverifiable itemized fidelity audits.
+- Actions: Added a V24 design note, expanded the design fidelity evidence rules, updated the QA report template and usage docs, and extended regression tests so audit rows must cite concrete screenshot regions/crops/annotations and recheck evidence after fixes.
+- Results: The workflow now treats vague audit evidence as `not-checked` or `weak`, and `weak` rows cannot support `Visual Delivery Ready`. The package tests and both repository/local skill validation passes succeeded, and the local installed `zero-to-website-design` package matches the repository package.
+- Next: Commit and push the V24 hardening pass.
+- Blockers: None.
 ## 2026-06-19 09:35
 - Task: Harden `zero-to-website-design` because selected designs were still being implemented too loosely against design images.
 - Actions: Added a V23 design note, expanded the main workflow, design fidelity loop, visual QA checklist, route acceptance contract, QA template, usage docs, and tests to require page-by-page, item-by-item audits for binding routes and required viewports.

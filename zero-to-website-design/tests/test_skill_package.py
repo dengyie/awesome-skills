@@ -184,8 +184,12 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Side-by-side comparison", qa_report_template)
         self.assertIn("## Page Item Fidelity Audit", qa_report_template)
         self.assertIn("Design Item", qa_report_template)
+        self.assertIn("Reference Region", qa_report_template)
+        self.assertIn("Implementation Region", qa_report_template)
+        self.assertIn("Evidence Quality", qa_report_template)
         self.assertIn("Match Status", qa_report_template)
         self.assertIn("Unresolved `not-checked` or `blocked` items prevent visual delivery signoff", qa_report_template)
+        self.assertIn("Rows with `weak` evidence quality do not support visual delivery signoff", qa_report_template)
         self.assertIn("Blocking visual deviations", qa_report_template)
         self.assertIn("Reference Fidelity Plan", implementation_plan_template)
         self.assertIn("Generated UI asset prompts", implementation_plan_template)
@@ -212,6 +216,14 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
 
         for expected in [
             "Required item categories",
+            "Verifiable Evidence Rules",
+            "reference screenshot path",
+            "implementation screenshot path",
+            "reference region, crop path, coordinate range",
+            "implementation region, crop path, coordinate range",
+            "evidence quality: `specific`, `annotated`, `cropped`, or `weak`",
+            "Rows marked `weak` cannot support `Visual Delivery Ready`",
+            "fresh recheck evidence after the fix",
             "route canvas, viewport, background, and page bounds",
             "header, navigation, logo, and primary actions",
             "hero composition",
@@ -221,6 +233,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             "illustrations, product shots, icons, ornaments, textures",
             "responsive/mobile ordering",
             "A route with only a high-level screenshot comparison but no itemized audit blocks `Visual Delivery Ready`",
+            "vague evidence such as \"looks close\"",
         ]:
             self.assertIn(expected, fidelity)
 
@@ -229,6 +242,8 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("blocked item-level mismatches", route_acceptance)
         self.assertIn("item-by-item fidelity audit", usage_text)
         self.assertIn("Any unchecked or blocked required item prevents `Visual Delivery Ready`", usage_text)
+        self.assertIn("Each audit row must be independently verifiable", usage_text)
+        self.assertIn("Vague evidence such as \"looks close\" or \"see screenshot\" is treated as not checked", usage_text)
 
     def test_palette_only_reference_copy_is_explicitly_forbidden(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
