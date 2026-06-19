@@ -251,6 +251,12 @@
 - Results: Public repository navigation now treats the repo as a four-skill catalog and routes non-versioned package docs for `best-project-memory`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`.
 - Next: Run docs and package tests, fix any confirmed failures, then commit and push the documentation alignment pass.
 - Blockers: None.
+## 2026-06-19 09:35
+- Task: Harden `zero-to-website-design` because selected designs were still being implemented too loosely against design images.
+- Actions: Added a V23 design note, expanded the main workflow, design fidelity loop, visual QA checklist, route acceptance contract, QA template, usage docs, and tests to require page-by-page, item-by-item audits for binding routes and required viewports.
+- Results: The workflow now blocks `Visual Delivery Ready` when any required design item is unchecked or has a blocking mismatch, even if a high-level side-by-side screenshot exists. The package tests and both repository/local skill validation passes succeeded, and the local installed `zero-to-website-design` package matches the repository package.
+- Next: Commit and push the V23 hardening pass.
+- Blockers: None.
 ## 2026-06-19 09:10
 - Task: Harden `zero-to-website-design` after a real from-zero website workflow skipped user visual direction selection.
 - Actions: Added a V22 design note, updated the main skill workflow, concept generation, visual provenance, framework-first, production delivery, usage docs, and regression tests so from-zero visually open sites require user-selected candidate images or mockups before final visual implementation.

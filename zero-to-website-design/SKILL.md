@@ -67,6 +67,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Read `references/design-fidelity-loop.md` whenever a design screenshot, mockup, generated route mockup, Figma export, or historical image should control the page.
    - Do not treat binding references as mood boards or palettes. If the page only reuses colors, fonts, or rounded corners while missing the reference layout, component silhouettes, decorative assets, and hierarchy, the fidelity pass has failed.
    - Decompose each binding reference into layout, typography, color, spacing, component, asset, and responsive facts before implementation.
+   - Create a page-by-page, item-by-item fidelity audit for every binding route before claiming visual readiness. Compare each route's hero, navigation, sections, cards, typography blocks, asset slots, decorative resources, spacing, and responsive states against the design image.
    - Define the fidelity budget: blocking deviations, accepted gaps, and out-of-scope viewports or states.
    - If existing assets cannot reproduce the reference, create UI asset or component prompt records before generation. Generate necessary UI images, illustrations, textures, icons, or panels only when they support the binding route.
    - Plan implementation screenshot paths, side-by-side comparison evidence, deviation backlog, and the fix loop before coding.
@@ -92,6 +93,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Read `references/route-acceptance.md` and `references/visual-qa-checklist.md`.
    - Use browser/Playwright QA for desktop and mobile screenshots, overflow checks, link checks, menu states, and asset loading.
    - For binding references, capture implementation screenshot evidence at matching viewports, compare side-by-side with the design screenshot, record the difference summary, and fix blocking visual deviations.
+   - For each binding route, complete the itemized fidelity audit row by row. A route with unchecked design items, missing implementation evidence, or unresolved blocking item mismatches cannot be `Visual Delivery Ready`.
    - Record route evidence rows before claiming `Framework Ready` or `Visual Delivery Ready`.
 
 12. Harden and deliver.
@@ -159,6 +161,7 @@ A zero-to-website pass is complete only when:
 - build/typecheck passes
 - desktop and mobile browser QA have been run
 - binding design references have reference decomposition, implementation screenshot, side-by-side comparison, deviation backlog, and a final fidelity status
+- every binding route has a page-by-page, item-by-item fidelity audit with no unchecked required items or unresolved blocking item mismatches
 - generated UI asset prompts and resulting assets are recorded when generation is needed to match the design
 - production readiness has been reviewed
 - known gaps are explicitly reported

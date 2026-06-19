@@ -48,6 +48,48 @@ Before broad implementation, decompose every binding reference into implementabl
 
 Record unknowns instead of guessing silently. If a visual fact cannot be derived from the image, mark it as an assumption and validate it through the screenshot loop.
 
+## Page Item Fidelity Audit
+
+For every binding route and required viewport, create an itemized comparison table before claiming visual readiness.
+
+Do not replace this with a paragraph summary. The audit must make the agent compare the design image and implementation one page item at a time.
+
+Required item categories:
+
+- route canvas, viewport, background, and page bounds
+- header, navigation, logo, and primary actions
+- hero composition, headline block, supporting copy, calls to action, and hero assets
+- every visible section in order, including section height, grid, gutters, and alignment
+- repeated components such as cards, lists, chips, tabs, forms, stats, timelines, and galleries
+- typography blocks, font scale, line-height, weight, casing, and text density
+- color treatments, strokes, shadows, borders, radius, blur, and depth
+- illustrations, product shots, icons, ornaments, textures, dividers, and decorative resources
+- spacing relationships between neighboring components and sections
+- responsive/mobile ordering, cropping, stacking, and hidden or revealed elements
+
+Use this table shape in the project QA report or equivalent artifact:
+
+```md
+| Route | Viewport | Design Item | Reference Evidence | Implementation Evidence | Match Status | Deviation | Severity | Fix Action |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `/` | 1440x900 | Hero illustration silhouette and position | reference-home.png top-right illustrated panel | qa-home-1440.png hero has generic card block | blocked | Missing custom illustration silhouette and crop | blocking | Draw or generate matching hero panel and recapture screenshot |
+```
+
+Allowed item match statuses:
+
+- `matched`: implementation matches the reference closely enough for the current milestone
+- `accepted-gap`: deviation is named, allowed by the fidelity budget, and not used to overclaim readiness
+- `blocked`: deviation materially changes the design's layout, hierarchy, component silhouette, custom asset, or responsive behavior
+- `not-checked`: item has not been compared with evidence
+
+Failure rules:
+
+- Any `not-checked` required item blocks `Visual Delivery Ready`.
+- Any `blocked` item blocks `Visual Delivery Ready`.
+- A route with only a high-level screenshot comparison but no itemized audit blocks `Visual Delivery Ready`.
+- A route with generic components where the reference shows distinctive silhouettes, assets, or ornaments remains `blocked` until those items are drawn, coded, generated, or explicitly accepted as gaps.
+- The final readiness claim must follow the weakest required item status across every binding route and viewport.
+
 ## Fidelity Budget
 
 For each route, define what must match for the current milestone:
@@ -117,12 +159,13 @@ For each binding route/viewport, record:
 - accepted visual gaps
 - next fix action
 - fidelity status: `not-checked`, `blocked`, `close-enough`, or `matched`
+- link or path to the itemized fidelity audit for that route and viewport
 
 Use Side-by-side comparison even if there is no automated image diff. A simple image pair, browser screenshot beside the source, or documented comparison table is enough when it identifies concrete deviations.
 
 ## Fix Loop
 
-Fix in this order:
+Fix route-level and item-level mismatches in this order:
 
 1. route composition and section order
 2. canvas width, max width, grid, and gutters
@@ -134,7 +177,7 @@ Fix in this order:
 8. responsive/mobile ordering and crop behavior
 9. micro-interactions and polish
 
-After each meaningful fix, recapture the screenshot for the affected viewport. Do not keep editing from memory after the page has drifted from the reference.
+After each meaningful fix, recapture the screenshot for the affected viewport and update the affected audit rows. Do not keep editing from memory after the page has drifted from the reference.
 
 ## Final Acceptance
 
@@ -142,6 +185,8 @@ Before claiming `Visual Delivery Ready`, the final QA evidence must show:
 
 - every binding route has reference and implementation screenshots
 - each required viewport has a side-by-side comparison or equivalent comparison note
+- each binding route and required viewport has an itemized fidelity audit covering the required page items
+- no required page item remains `not-checked` or `blocked`
 - blocking visual deviations are fixed
 - remaining gaps are accepted and named
 - generated UI assets are recorded with prompt, path, authority, and replacement trigger

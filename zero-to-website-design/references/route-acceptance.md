@@ -9,9 +9,9 @@ Every touched core route needs a compact evidence row before final handoff.
 Use this format in the project QA report or equivalent delivery note:
 
 ```md
-| Route | Route Type | Source Owner | Viewports Checked | Evidence | Status | Blocking Failures | Accepted Gaps | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/posts` | listing | `binding-route`: output/design/posts.png | 1600x900, 390x844 | output/qa/posts-1600x900.png; output/qa/posts-390x844.png | framework-ready | none | final art remains temporary | Mobile menu and links verified |
+| Route | Route Type | Source Owner | Viewports Checked | Evidence | Item Audit | Status | Blocking Failures | Accepted Gaps | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `/posts` | listing | `binding-route`: output/design/posts.png | 1600x900, 390x844 | output/qa/posts-1600x900.png; output/qa/posts-390x844.png | output/qa/posts-item-audit.md | framework-ready | none | final art remains temporary | Mobile menu and links verified |
 ```
 
 Allowed route evidence statuses:
@@ -45,12 +45,13 @@ Failed layout, link, asset-loading, console-blocking, or page-level overflow che
 ## Level B: Visual Delivery Ready
 
 - Route satisfies all `Framework Ready` expectations.
+- Every binding design item for the route and required viewport is audited as `matched` or `accepted-gap`.
 - Visual hierarchy is tuned against the binding reference.
 - Asset quality is acceptable for delivery.
 - Metadata is correct.
 - Temporary-binding assets are either upgraded or explicitly acknowledged as remaining gaps with their remaining scope clearly stated.
 
-Unresolved fidelity gaps, incorrect metadata, weak asset quality, or unacknowledged `temporary-binding` ownership block `Visual Delivery Ready`.
+Unresolved fidelity gaps, unchecked design items, blocked item-level mismatches, incorrect metadata, weak asset quality, or unacknowledged `temporary-binding` ownership block `Visual Delivery Ready`.
 
 ## Failure Handling
 

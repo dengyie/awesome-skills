@@ -24,6 +24,14 @@
 | Route | Reference Screenshot | Implementation Screenshot | Side-by-side comparison | Fidelity Status | Blocking visual deviations | Accepted visual gaps | Next fix |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 
+## Page Item Fidelity Audit
+
+| Route | Viewport | Design Item | Reference Evidence | Implementation Evidence | Match Status | Deviation | Severity | Fix Action |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Required binding-route items must be `matched` or `accepted-gap` before `Visual Delivery Ready`.
+Unresolved `not-checked` or `blocked` items prevent visual delivery signoff.
+
 ## Interaction Checks
 
 - [ ] Navigation links

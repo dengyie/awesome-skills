@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - Binding Design Matches Require Page Item Fidelity Audits
+- Decision: Require page-by-page, item-by-item fidelity audits for every binding route and required viewport before `Visual Delivery Ready` or design-match claims.
+- Rationale: A selected design image can still be implemented loosely if the agent only performs a high-level screenshot comparison. Real failures show the workflow must force comparison of hero, navigation, sections, repeated components, typography, asset slots, decorative resources, spacing, and responsive states one by one.
+- Impact: `zero-to-website-design` now treats unchecked design items and blocked item-level mismatches as blockers. The QA report template and route evidence contract include an itemized audit path/table.
+- Related files: `zero-to-website-design/SKILL.md`, `zero-to-website-design/references/design-fidelity-loop.md`, `zero-to-website-design/references/visual-qa-checklist.md`, `zero-to-website-design/references/route-acceptance.md`, `zero-to-website-design/assets/templates/qa-report.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-19 - User-Selected Visual Direction Is A Hard Gate For From-Zero Sites
 - Decision: Treat user selection from visible visual directions, homepage mockups, or route mockups as a required pre-code gate for from-zero visually open website work unless the milestone is explicitly framework-only.
 - Rationale: A real usage failure showed that an agent can treat text mood direction and a working engineering scaffold as enough authority, then skip the user's visual choice. That produces a runnable site but not a final visual design.

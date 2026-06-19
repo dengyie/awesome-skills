@@ -137,12 +137,15 @@ When the final page must resemble a design screenshot, the skill should:
 3. Write asset prompt records for any UI images, illustrations, panels, textures, or component-like artwork that must be generated to match the design.
 4. Capture implementation screenshots at the same viewport as the design screenshot.
 5. Save or document side-by-side comparison evidence.
-6. Record the difference summary and deviation backlog.
-7. Iterate fixes until the final product is either matched or honestly marked with accepted gaps.
+6. Complete a page-by-page, item-by-item fidelity audit for every binding route and required viewport.
+7. Record the difference summary and deviation backlog.
+8. Iterate fixes until every required design item is matched or honestly marked with accepted gaps.
 
 The workflow must not claim design fidelity from memory or generic visual QA alone.
 
 Palette-only restyling is not a fidelity pass. If Codex only changes colors, rounded corners, or fonts while missing the design screenshot's layout, component silhouettes, decorative resources, and hierarchy, the route remains visually blocked. The skill should draw, code, or generate the missing UI assets and components before claiming the page follows the design.
+
+The itemized audit must compare each page's hero, navigation, section order, cards, typography blocks, asset slots, decorative resources, spacing relationships, and responsive states against the selected design image. Any unchecked or blocked required item prevents `Visual Delivery Ready`.
 
 ## Historical-Mock Path
 

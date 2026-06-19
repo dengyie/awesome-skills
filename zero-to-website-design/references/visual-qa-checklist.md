@@ -53,6 +53,7 @@ For every route evidence row, record:
 - reference screenshot path when a binding design controls the route
 - implementation screenshot path
 - side-by-side comparison path when a binding design controls the route
+- page item fidelity audit path when a binding design controls the route
 - desktop viewport checked
 - mobile viewport checked
 - screenshot path or QA note path
@@ -65,6 +66,8 @@ For every route evidence row, record:
 - fidelity status
 - blocking failures
 - blocking visual deviations
+- unchecked design items
+- blocked design items
 - accepted gaps
 
 Browser QA must cover both desktop and mobile for the route matrix unless an exception is recorded with a reason and risk.
@@ -121,9 +124,11 @@ The QA record must include:
 - reference screenshot path
 - implementation screenshot path
 - side-by-side comparison path or comparison note
+- page-by-page, item-by-item fidelity audit path
 - difference summary
 - blocking visual deviations
+- unchecked or blocked design items
 - accepted visual gaps
 - next fix action or final fidelity status
 
-Use this evidence during development, not only at the end. If the screenshot is still far from the design, fix the route and capture a new implementation screenshot before claiming readiness.
+Use this evidence during development, not only at the end. If the screenshot is still far from the design, or if any required audit item is `not-checked` or `blocked`, fix the route and capture a new implementation screenshot before claiming readiness.

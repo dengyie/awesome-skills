@@ -143,6 +143,8 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
 
         for expected in [
             "Reference Decomposition",
+            "Page Item Fidelity Audit",
+            "itemized comparison table",
             "Fidelity Budget",
             "UI Asset And Component Prompting",
             "Use image generation when a design needs bespoke UI imagery",
@@ -150,6 +152,8 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             "Implementation Screenshot Loop",
             "Side-by-side comparison",
             "difference summary",
+            "Any `not-checked` required item blocks `Visual Delivery Ready`",
+            "no required page item remains `not-checked` or `blocked`",
             "Fix Loop",
             "Final Acceptance",
             "Do not claim visual parity",
@@ -160,8 +164,11 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             "reference screenshot path",
             "implementation screenshot path",
             "side-by-side comparison path",
+            "page item fidelity audit path",
             "fidelity status",
             "blocking visual deviations",
+            "unchecked design items",
+            "blocked design items",
         ]:
             self.assertIn(expected, visual_qa)
 
@@ -175,9 +182,53 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
 
         self.assertIn("## Reference Fidelity", qa_report_template)
         self.assertIn("Side-by-side comparison", qa_report_template)
+        self.assertIn("## Page Item Fidelity Audit", qa_report_template)
+        self.assertIn("Design Item", qa_report_template)
+        self.assertIn("Match Status", qa_report_template)
+        self.assertIn("Unresolved `not-checked` or `blocked` items prevent visual delivery signoff", qa_report_template)
         self.assertIn("Blocking visual deviations", qa_report_template)
         self.assertIn("Reference Fidelity Plan", implementation_plan_template)
         self.assertIn("Generated UI asset prompts", implementation_plan_template)
+
+    def test_binding_routes_require_page_item_fidelity_audit(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(
+            encoding="utf-8"
+        )
+        route_acceptance = (ROOT / "references" / "route-acceptance.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "page-by-page, item-by-item fidelity audit",
+            "Compare each route's hero, navigation, sections, cards, typography blocks, asset slots, decorative resources, spacing, and responsive states",
+            "unchecked design items",
+            "unresolved blocking item mismatches",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for expected in [
+            "Required item categories",
+            "route canvas, viewport, background, and page bounds",
+            "header, navigation, logo, and primary actions",
+            "hero composition",
+            "every visible section in order",
+            "repeated components such as cards",
+            "typography blocks",
+            "illustrations, product shots, icons, ornaments, textures",
+            "responsive/mobile ordering",
+            "A route with only a high-level screenshot comparison but no itemized audit blocks `Visual Delivery Ready`",
+        ]:
+            self.assertIn(expected, fidelity)
+
+        self.assertIn("Item Audit", route_acceptance)
+        self.assertIn("Every binding design item for the route and required viewport is audited", route_acceptance)
+        self.assertIn("blocked item-level mismatches", route_acceptance)
+        self.assertIn("item-by-item fidelity audit", usage_text)
+        self.assertIn("Any unchecked or blocked required item prevents `Visual Delivery Ready`", usage_text)
 
     def test_palette_only_reference_copy_is_explicitly_forbidden(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
