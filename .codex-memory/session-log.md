@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-20 02:25
+- Task: Publish V28 and sync the local installed `zero-to-website-design` skill.
+- Actions: Committed `5e68b41 fix(phase-1): add visual asset pipeline`; pushed `main` to GitHub; copied the repository package into `C:\Users\mango\.codex\skills\zero-to-website-design`; validated the local skill package; compared repository and local package hashes.
+- Results: `origin/main` and local `HEAD` both point to `5e68b41`. The local installed skill validates and matches repository package hashes.
+- Next: None for V28; the milestone is closed.
+- Blockers: None.
 ## 2026-06-20 02:10
 - Task: Verify the V28 `zero-to-website-design` visual asset pipeline implementation.
 - Actions: Ran the zero-to-website package tests, skill quick validation, `git diff --check`, mojibake scan, repository docs tests, and production review context for the working tree; performed a phase-gate review of the changed contract surface.

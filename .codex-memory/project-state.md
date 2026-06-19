@@ -4,7 +4,7 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V28 zero-to-website visual asset pipeline implementation is complete and verified in the working tree; publication and local skill sync are in progress.
+- Current stage: V28 zero-to-website visual asset pipeline implementation is published to `origin/main` and synced to the local installed skill.
 
 ## Current Branch
 - `main`
@@ -13,9 +13,12 @@
 - 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
 - 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-20: `git diff --check`
-- 2026-06-20: `rg -n "鈫|鉁|鈮|宸|杩|锛|闃|涓|譁|�" zero-to-website-design docs\usage\zero-to-website-design.md` returned no matches.
+- 2026-06-20: Mojibake fragment scan for `zero-to-website-design` docs and usage returned no matches.
 - 2026-06-20: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover tests -v`
+- 2026-06-20: `git push origin main` published V28 commit `5e68b41`.
+- 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py C:\Users\mango\.codex\skills\zero-to-website-design`
+- 2026-06-20: Local `C:\Users\mango\.codex\skills\zero-to-website-design` package hashes matched the repository package files after V28 sync.
 - 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
 - 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-20: `git diff --check`
@@ -122,7 +125,7 @@
 - None for the V28 visual asset pipeline implementation.
 
 ## Current Focus
-- Run final V28 verification and production review, then commit, push, and sync the local installed `zero-to-website-design` skill.
+- No active V28 work remains; start a new documented phase only for a concrete new gap.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
