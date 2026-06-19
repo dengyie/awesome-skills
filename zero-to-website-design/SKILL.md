@@ -23,6 +23,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Execute only P0/P1 work for this milestone. Put polish, extra routes, future artwork, and long-term design-system improvements into backlog unless they block current acceptance.
    - Output and obey the milestone contract: milestone, goal, P0/P1 scope, out-of-scope P2/P3, manual-required, phase limit, phase split, acceptance criteria, and stop conditions.
    - Use at most 3 phases by default and at most 5 for genuinely complex sites. Do not start a new milestone automatically after the current one is accepted.
+   - Read `references/design-rounds.md` before design work. The design rounds are workflow gates inside the current milestone, distinct from delivery phases.
 
 2. Run intake.
    - If the brief is vague, read `references/intake-brief.md`.
@@ -61,6 +62,7 @@ Historical repo images are first-class inputs. When a project already has usable
 7. Write design docs before code.
    - Read `references/design-system-docs.md`.
    - Do not treat design docs as post-hoc cleanup. Broad implementation starts only after the intake output, route inventory, source-path choice, and milestone target are visible in project docs.
+   - Do not collapse the rounds into a single final checklist. Round 1 visual direction selection, Round 2 decomposition, and Round 3 implementation mapping must exit before broad implementation unless the milestone explicitly records a skipped-accepted reason.
    - Use the templates in `assets/templates/` when the project lacks equivalent docs.
 
 8. Run the design fidelity setup for binding references.
@@ -88,6 +90,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Prefer project-owned assets over hotlinked assets.
    - Keep content placeholder or curated when the user wants framework-first delivery.
    - Treat `Framework Ready` as a valid milestone when layout, interaction, and responsive structure are correct even if final bespoke art is not ready yet.
+   - Start with a Round 4 implementation slice and verify it before full buildout when the route or visual system is new.
    - Keep `temporary-binding` assets explicit in docs and delivery notes.
 
 11. Verify with build, browser QA, and screenshot fidelity checks.
@@ -122,6 +125,7 @@ Historical repo images are first-class inputs. When a project already has usable
 - `references/historical-mock-pass.md`: read when repo-owned historical visuals or archived mockups should drive the current pass.
 - `references/visual-provenance.md`: read before any image becomes authoritative.
 - `references/design-system-docs.md`: read before creating or updating design docs.
+- `references/design-rounds.md`: read before design or broad implementation to enforce round outputs, exit criteria, and no-skip rules.
 - `references/design-fidelity-loop.md`: read when a design screenshot, mockup, generated route image, Figma export, or historical image should be matched closely in the final page.
 - `references/implementation-map.md`: read before code changes.
 - `references/route-acceptance.md`: read before implementing or reviewing route types.
@@ -152,6 +156,7 @@ A zero-to-website pass is complete only when:
 
 - the project brief and assumptions are documented
 - the current website milestone contract is visible and scoped to P0/P1 work
+- required design rounds have exit evidence, or skipped rounds have explicit accepted reasons
 - from-zero or visually open work has either a user-selected visual direction recorded or is explicitly limited to `Framework Ready`
 - the pre-code document gate exists: intake output, design docs, and implementation map
 - the visual source map identifies image origins and authority

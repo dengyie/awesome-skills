@@ -15,6 +15,7 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
             ROOT / "references" / "concept-generation.md",
             ROOT / "references" / "visual-provenance.md",
             ROOT / "references" / "design-system-docs.md",
+            ROOT / "references" / "design-rounds.md",
             ROOT / "references" / "implementation-map.md",
             ROOT / "references" / "route-acceptance.md",
             ROOT / "references" / "visual-qa-checklist.md",
@@ -105,6 +106,57 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Milestone-Driven Delivery", usage_text)
         self.assertIn("finite milestone contract", usage_text)
         self.assertIn("workflow stops instead of automatically starting another milestone", usage_text)
+
+    def test_design_rounds_are_required_before_broad_implementation(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        design_rounds = (ROOT / "references" / "design-rounds.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_plan_template = (
+            ROOT / "assets" / "templates" / "implementation-plan.md"
+        ).read_text(encoding="utf-8")
+        qa_report_template = (ROOT / "assets" / "templates" / "qa-report.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "design-rounds.md",
+            "design rounds are workflow gates inside the current milestone",
+            "Do not collapse the rounds into a single final checklist",
+            "Round 1 visual direction selection",
+            "Round 4 implementation slice",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for expected in [
+            "Round 0: Context And Milestone",
+            "Round 1: Visual Direction Candidates",
+            "Round 2: Design System And Route Decomposition",
+            "Round 3: Implementation Map And Asset Plan",
+            "Round 4: Implementation Slice",
+            "Round 5: Page Item Fidelity Fix Loop",
+            "Round 6: Final Delivery Gate",
+            "Required Output",
+            "Entry Criteria",
+            "Exit Criteria",
+            "User Confirmation",
+            "No-Skip Rules",
+            "Do not start broad implementation before Round 3 exits",
+            "Do not claim `Visual Delivery Ready` when any required round is skipped",
+        ]:
+            self.assertIn(expected, design_rounds)
+
+        self.assertIn("Design Rounds", usage_text)
+        self.assertIn("do not collapse rounds into one pass", usage_text)
+        self.assertIn("Round 1 requires user selection", usage_text)
+        self.assertIn("## Design Round State", implementation_plan_template)
+        self.assertIn("Current round", implementation_plan_template)
+        self.assertIn("Round exit evidence", implementation_plan_template)
+        self.assertIn("## Design Round Evidence", qa_report_template)
+        self.assertIn("Skipped or collapsed required rounds block final delivery", qa_report_template)
 
     def test_design_reference_fidelity_loop_is_required(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")

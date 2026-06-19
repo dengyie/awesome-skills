@@ -7,6 +7,9 @@ Describe the implementation phase and target outcome.
 ## Delivery State
 
 - Milestone target:
+- Current round:
+- Round exit evidence:
+- Skipped or accepted rounds:
 - Weakest expected route status:
 - Related workstream:
 - Memory update plan:
@@ -24,6 +27,18 @@ Describe the implementation phase and target outcome.
 1. Route:
 2. Route:
 3. Route:
+
+## Design Round State
+
+| Round | Status | Required Output | Exit Evidence | Blockers Or Accepted Gaps |
+| --- | --- | --- | --- | --- |
+| Round 0: Context And Milestone |  |  |  |  |
+| Round 1: Visual Direction Candidates |  |  |  |  |
+| Round 2: Design System And Route Decomposition |  |  |  |  |
+| Round 3: Implementation Map And Asset Plan |  |  |  |  |
+| Round 4: Implementation Slice |  |  |  |  |
+| Round 5: Page Item Fidelity Fix Loop |  |  |  |  |
+| Round 6: Final Delivery Gate |  |  |  |  |
 
 ## Route Ownership And Risks
 

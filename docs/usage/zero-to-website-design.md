@@ -71,6 +71,20 @@ The skill guides Codex through 13 gates:
 12. Harden and deliver.
 13. Integrate project memory when the work is long-running.
 
+## Design Rounds
+
+Website work should move through explicit design rounds inside the current milestone. These rounds are not optional polish; do not collapse rounds into one pass:
+
+1. Round 0: context, route scope, and milestone.
+2. Round 1: visual direction candidates; Round 1 requires user selection unless the milestone is explicitly `Framework Ready` only.
+3. Round 2: design system and route decomposition.
+4. Round 3: implementation map and asset plan.
+5. Round 4: implementation slice.
+6. Round 5: page item fidelity fix loop.
+7. Round 6: final delivery gate.
+
+Broad implementation should not start until Round 3 has exit evidence. Final delivery should not be claimed when a required round is skipped, unrecorded, or backfilled after coding.
+
 ## Milestone-Driven Delivery
 
 Each website pass should start with a finite milestone contract:

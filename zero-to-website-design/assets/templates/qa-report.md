@@ -9,6 +9,9 @@
 ## Delivery State
 
 - Framework-ready or delivery-ready:
+- Current design round:
+- Required rounds complete:
+- Skipped or accepted rounds:
 - Temporary-binding assets still in use:
 - Handoff needed:
 - Next-session follow-up:
@@ -18,6 +21,13 @@
 
 | Route | Route Type | Source Owner | Viewports Checked | Evidence | Status | Blocking Failures | Accepted Gaps | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+## Design Round Evidence
+
+| Round | Status | Exit Evidence | Remaining Blockers | Accepted Gaps |
+| --- | --- | --- | --- | --- |
+
+Skipped or collapsed required rounds block final delivery unless the milestone records an explicit `skipped-accepted` reason.
 
 ## Reference Fidelity
 

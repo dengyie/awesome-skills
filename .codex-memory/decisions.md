@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-20 - Website Design Must Progress Through Explicit Rounds
+- Decision: Require `zero-to-website-design` to treat website design as explicit rounds inside the current milestone: context, visual direction selection, design-system decomposition, implementation map, implementation slice, fidelity fix loop, and final delivery gate.
+- Rationale: The 13-gate workflow was too easy to treat as a single checklist. Real usage showed agents can skip visual selection, start coding before design artifacts, or defer fidelity checks until the end.
+- Impact: `zero-to-website-design` now routes the round contract through `references/design-rounds.md`, blocks broad implementation before Round 3 exits, and blocks final delivery when required rounds are skipped, unrecorded, or collapsed.
+- Related files: `zero-to-website-design/SKILL.md`, `zero-to-website-design/references/design-rounds.md`, `zero-to-website-design/assets/templates/implementation-plan.md`, `zero-to-website-design/assets/templates/qa-report.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-19 - Binding References Must Be Rebuilt As Interactive UI
 - Decision: Forbid satisfying a binding design reference by shipping the whole reference screenshot as the page with transparent hotspots or invisible links.
 - Rationale: A full-page image can look visually identical while failing the real website requirements: accessible text, maintainable DOM, responsive behavior, stateful controls, real links, and component reuse.
