@@ -4,7 +4,7 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V26 zero-to-website design rounds gate is in progress.
+- Current stage: V26 zero-to-website design rounds gate is complete and published.
 
 ## Current Branch
 - `main`
@@ -112,7 +112,7 @@
 - None for the V26 design rounds hardening.
 
 ## Current Focus
-- Commit, push, and sync the V26 `zero-to-website-design` design rounds hardening.
+- No active implementation focus. V26 `zero-to-website-design` design rounds hardening is published and ready for local skill sync checks.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.

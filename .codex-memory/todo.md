@@ -1,8 +1,8 @@
 # TODO
 ## In Progress
-- [ ] Validate, sync, commit, and push the V26 `zero-to-website-design` design rounds hardening.
 ## Next
 ## Done
+- [x] Validate, sync, commit, and push the V26 `zero-to-website-design` design rounds hardening.
 - [x] Validate, sync, commit, and push the V25 `zero-to-website-design` interactive reference implementation hardening.
 - [x] Validate, sync, commit, and push the V24 `zero-to-website-design` verifiable fidelity evidence hardening.
 - [x] Validate, sync, commit, and push the V23 `zero-to-website-design` page/item fidelity audit hardening.
