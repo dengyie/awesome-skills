@@ -1,4 +1,4 @@
-﻿# TODO
+# TODO
 ## In Progress
 ## Next
 ## Done
