@@ -414,6 +414,14 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         ]:
             self.assertIn(expected, pipeline)
 
+        asset_slot_table = (
+            "| Route | Section | Reference Region | Resource Unit | Owner Component | "
+            "Target Size/Aspect | Crop/Safe Padding | Must Match | Must Avoid | "
+            "Text Policy | Perspective/Tilt Policy | Source Method | Output Path | "
+            "Evidence Screenshot | Replacement Trigger | Status |"
+        )
+        self.assertIn(asset_slot_table, pipeline)
+
         self.assertIn("Read `visual-asset-pipeline.md`", fidelity)
         self.assertIn("## Visual Asset Pipeline", implementation_plan_template)
         self.assertIn("Implementation Owner", implementation_plan_template)

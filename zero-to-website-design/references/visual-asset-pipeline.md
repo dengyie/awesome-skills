@@ -69,8 +69,8 @@ No visible reference region can be `unowned`. If a region is not owned, broad im
 Every generated, sourced, drawn, or local component-slot asset must record:
 
 ```md
-| Route | Section | Reference Region | Owner Component | Target Size/Aspect | Crop/Safe Padding | Must Match | Must Avoid | Text Policy | Perspective/Tilt Policy | Source Method | Output Path | Evidence Screenshot | Replacement Trigger | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Route | Section | Reference Region | Resource Unit | Owner Component | Target Size/Aspect | Crop/Safe Padding | Must Match | Must Avoid | Text Policy | Perspective/Tilt Policy | Source Method | Output Path | Evidence Screenshot | Replacement Trigger | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 ```
 
 Required fields:
