@@ -4,12 +4,14 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V21 zero-to-website palette-only reference-copy anti-example is implemented and verified on `main`.
+- Current stage: V21 zero-to-website palette-only reference-copy anti-example is complete, pushed to `origin/main`, and synced to the local `.codex` skill install.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-19: `git status --short --branch --untracked-files=all` showed `main...origin/main` with no dirty files after V21 push and local skill sync.
+- 2026-06-19: Local `C:\Users\mango\.codex\skills\zero-to-website-design` package hashes matched the repository package files after V21 sync.
 - 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest zero-to-website-design.tests.test_skill_package.ZeroToWebsiteDesignPackageTests.test_palette_only_reference_copy_is_explicitly_forbidden -v`
 - 2026-06-19: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
 - 2026-06-19: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
@@ -88,7 +90,7 @@
 - None for the V21 palette-only anti-example hardening.
 
 ## Current Focus
-- Commit, push, and sync the V21 palette-only anti-example hardening.
+- No active implementation focus. V21 is complete; wait for the next concrete repository or skill gap.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
