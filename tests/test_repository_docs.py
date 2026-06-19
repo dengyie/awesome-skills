@@ -22,6 +22,10 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertIn("Latest formal package release notes", readme)
         self.assertIn("production-code-quality-review v0.1.6", readme)
         self.assertIn("[Skill Matrix](docs/usage/skill-matrix.md)", readme)
+        self.assertIn("`evidence-driven-bugfix`", readme)
+        self.assertIn("Evidence-Driven Bugfix", readme)
+        self.assertIn("docs/usage/evidence-driven-bugfix.md", readme)
+        self.assertIn("cp -R evidence-driven-bugfix ~/.agents/skills/", readme)
         self.assertIn(
             "formal versioned release notes currently ship for `production-code-quality-review`",
             releases_readme,
@@ -36,6 +40,8 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertIn("# Skill Matrix", skill_matrix)
         self.assertIn("| Skill | Best when you need | Core outputs | Common pairings | Avoid when |", skill_matrix)
         self.assertIn("`best-project-memory`", skill_matrix)
+        self.assertIn("`evidence-driven-bugfix`", skill_matrix)
+        self.assertIn("docs/usage/evidence-driven-bugfix.md", skill_matrix)
         self.assertIn("`little-lighthouse-blog-publisher`", skill_matrix)
         self.assertIn("`production-code-quality-review`", skill_matrix)
         self.assertIn("`zero-to-website-design`", skill_matrix)

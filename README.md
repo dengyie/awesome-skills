@@ -8,9 +8,10 @@ Latest formal package release notes: `production-code-quality-review v0.1.6`
 
 This repository is a multi-skill collection, not a single-package checkout.
 
-It currently ships four Codex skills:
+It currently ships five Codex skills:
 
 - `best-project-memory`: repo-native project continuity and handoff memory
+- `evidence-driven-bugfix`: primary bugfix workflow that requires failing evidence before implementation, fresh verification before any success claim, and continued looping until fixed or legally blocked
 - `little-lighthouse-blog-publisher`: staged publisher workflow for the Little Lighthouse blog
 - `production-code-quality-review`: production-oriented review and merge-readiness workflow
 - `zero-to-website-design`: design-first website delivery workflow from brief to QA
@@ -42,6 +43,30 @@ Supporting package highlights:
 - `best-project-memory/scripts/` for memory initialization, linting, compaction, and repair helpers
 - `best-project-memory/references/` for schemas, examples, and operating guidance
 - `docs/usage/best-project-memory.md` for the user-facing guide
+
+### `evidence-driven-bugfix`
+
+Use this skill when you want Codex to run a disciplined bugfix workflow from symptom capture through root-cause investigation, minimal repair, fresh verification, and truthful completion reporting. It is built to prevent guess-fixes and to stop false "fixed" claims that are not backed by fresh evidence.
+
+Best fit:
+
+- production bug investigation
+- repeated bugfix sessions where "looks fixed" is not good enough
+- test failures that need evidence-first debugging
+- integration failures where a code diff is not proof of repair
+- bugfix work that should keep looping until fixed or legally blocked
+
+Skill entrypoint:
+
+```text
+evidence-driven-bugfix/SKILL.md
+```
+
+Supporting package highlights:
+
+- `evidence-driven-bugfix/references/` for gate-by-gate debugging, verification, and truthful-completion contracts
+- `evidence-driven-bugfix/tests/` for package-level workflow contract enforcement
+- `docs/usage/evidence-driven-bugfix.md` for the user-facing guide
 
 ### `little-lighthouse-blog-publisher`
 
@@ -125,6 +150,11 @@ best-project-memory/
   references/           # Memory schema, update policy, examples, handoff patterns
   scripts/              # Deterministic memory initialization and handoff helpers
   tests/                # Regression tests protecting package structure and scripts
+evidence-driven-bugfix/
+  SKILL.md              # Required Codex skill entrypoint
+  agents/               # Platform metadata
+  references/           # Workflow contract, gate rules, truthful completion, output contract
+  tests/                # Regression tests protecting package structure and workflow contract
 production-code-quality-review/
   SKILL.md              # Required Codex skill entrypoint
   README.md             # Skill package guide for users and maintainers
@@ -160,6 +190,7 @@ Install a skill package by copying its folder:
 ```bash
 mkdir -p ~/.agents/skills
 cp -R best-project-memory ~/.agents/skills/
+cp -R evidence-driven-bugfix ~/.agents/skills/
 cp -R little-lighthouse-blog-publisher ~/.agents/skills/
 cp -R production-code-quality-review ~/.agents/skills/
 cp -R zero-to-website-design ~/.agents/skills/
@@ -221,6 +252,7 @@ Repository overview and usage:
 
 - [Skill Matrix](docs/usage/skill-matrix.md)
 - [Best Project Memory](docs/usage/best-project-memory.md)
+- [Evidence-Driven Bugfix](docs/usage/evidence-driven-bugfix.md)
 - [Little Lighthouse Blog Publisher](docs/usage/little-lighthouse-blog-publisher.md)
 - [Zero-To-Website Design](docs/usage/zero-to-website-design.md)
 - [Golden Path](docs/usage/golden-path.md)
@@ -232,7 +264,7 @@ Repository overview and usage:
 - [Release Notes](docs/releases/README.md)
 
 Current formal versioned release notes are published for `production-code-quality-review`.
-For `best-project-memory`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
+For `best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
 
 Chinese documentation:
 
@@ -245,6 +277,7 @@ Chinese documentation:
 ```bash
 python3 -m unittest discover production-code-quality-review/tests -v
 python3 -m unittest discover best-project-memory/tests -v
+python3 -m unittest discover evidence-driven-bugfix/tests -v
 python3 -m unittest discover little-lighthouse-blog-publisher/tests -v
 python3 -m unittest discover zero-to-website-design/tests -v
 ```

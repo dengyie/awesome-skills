@@ -7,6 +7,7 @@ Use this page when you want the fastest repository-level answer to: "Which skill
 | Skill | Best when you need | Core outputs | Common pairings | Avoid when |
 | --- | --- | --- | --- | --- |
 | `best-project-memory` | Continue work across sessions, keep durable project state, record decisions, and leave a handoff trail | `.codex-memory/` state, session logs, TODO updates, decision records, handoff artifacts | pairs naturally with every long-running shipped skill | the task is a one-shot edit with no continuity value |
+| `evidence-driven-bugfix` | Run a disciplined bugfix workflow that requires failing evidence before implementation and fresh verification before any success claim | failing evidence, root cause, minimal fix, fresh verification result, truthful final status | pairs well with `best-project-memory` for long-running debugging and `production-code-quality-review` for checkpoint review after the fix | the user only wants a high-level review or a feature plan, not bugfix execution |
 | `little-lighthouse-blog-publisher` | Publish, draft, update, or validate Little Lighthouse blog post packages | staged publishing plan, Markdown package, `.meta.json`, asset fallback summary, build/verifier/review/commit flow | pairs with `best-project-memory` for traceability and `production-code-quality-review` before commits | the target is not the Little Lighthouse blog or the user wants a browser CMS |
 | `production-code-quality-review` | Review a working tree, PR, or risky diff with production-engineering rigor | structured review context, review brief, merge-readiness findings, verification guidance | often paired with `best-project-memory` for long-running review tracks | the user wants implementation rather than review |
 | `zero-to-website-design` | Turn a vague website brief or visual reference set into a documented, QA-checked delivery workflow | design docs, route plans, implementation map, visual provenance, browser QA artifacts | often paired with `best-project-memory`; may use `production-code-quality-review` before final signoff | the change is a small component tweak or backend-only task |
@@ -19,6 +20,13 @@ Use `best-project-memory` first when the main problem is continuity:
 - save progress cleanly
 - keep decisions and TODO state aligned with real work
 - prepare another session to continue
+
+Use `evidence-driven-bugfix` first when the main problem is a bug that must be fixed truthfully:
+
+- capture logs and failing evidence before coding
+- trace root cause instead of patching symptoms
+- verify the same failing signal turns green
+- prevent "should be fixed" completion claims
 
 Use `production-code-quality-review` first when the main problem is judgment about changed code:
 
@@ -50,6 +58,14 @@ Choose `best-project-memory` when you want:
 - updated `session-log.md`
 - recorded decisions and handoffs
 
+Choose `evidence-driven-bugfix` when you want:
+
+- a stable failing evidence chain
+- a root-cause statement backed by logs or code evidence
+- a minimal fix plan
+- a fresh verification result
+- a truthful fixed or blocked outcome
+
 Choose `production-code-quality-review` when you want:
 
 - a review brief
@@ -80,6 +96,18 @@ Choose `zero-to-website-design` when you want:
 - long-running review cycles
 - repeated follow-up fixes
 - review notes that should update project continuity
+
+`best-project-memory` + `evidence-driven-bugfix`:
+
+- long-running bug investigations
+- multi-session reproduction and repair loops
+- blocker tracking without false completion
+
+`production-code-quality-review` + `evidence-driven-bugfix`:
+
+- review after a fix lands
+- checkpoint validation for risky bug repairs
+- verifying that the fix diff did not introduce a new core regression
 
 `best-project-memory` + `zero-to-website-design`:
 
@@ -125,11 +153,25 @@ Use `little-lighthouse-blog-publisher`:
 Use $little-lighthouse-blog-publisher to publish this Little Lighthouse Markdown draft as a blog post.
 ```
 
+Use `evidence-driven-bugfix`:
+
+```text
+Use $evidence-driven-bugfix to fix this failure by first capturing logs, getting stable failing evidence, tracing the root cause, applying the minimal fix, and only reporting success after fresh verification.
+```
+
 ## When Not To Use This Page
 
 Skip the matrix and go straight to a package guide when you already know the skill you need:
 
 - continuity and handoff: [`best-project-memory.md`](best-project-memory.md)
+- primary bugfix workflow: [`evidence-driven-bugfix.md`](evidence-driven-bugfix.md)
 - Little Lighthouse blog publishing: [`little-lighthouse-blog-publisher.md`](little-lighthouse-blog-publisher.md)
 - production review: [`quickstart.md`](quickstart.md), [`review-workflows.md`](review-workflows.md)
 - website delivery: [`zero-to-website-design.md`](zero-to-website-design.md)
+
+Repository-relative guide paths:
+
+- `docs/usage/best-project-memory.md`
+- `docs/usage/evidence-driven-bugfix.md`
+- `docs/usage/little-lighthouse-blog-publisher.md`
+- `docs/usage/zero-to-website-design.md`
