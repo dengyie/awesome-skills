@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-20 03:15
+- Task: Harden `zero-to-website-design` after user feedback that visual resource splitting was too weak and agents over-combined unrelated resources into one asset.
+- Actions: Added a V29 resource atomicity design plan; added `references/resource-atomicity.md`; routed the main skill, design fidelity loop, visual asset pipeline, implementation map, templates, usage docs, metadata, and regression tests through Resource-To-File Maps, atomic resource units, justified composites, and `blocked-maintainability` QA status.
+- Results: The working tree now requires resources to be split by edit, reuse, responsive, interaction, text, licensing, and replacement boundaries before generation/sourcing/drawing. Full package tests, skill quick validation, `git diff --check`, repository docs tests, mojibake scan, and production review entrypoint passed.
+- Next: Sync the local installed skill, verify local validation and package hashes, commit, push, and close the V29 milestone.
+- Blockers: None.
 ## 2026-06-20 02:25
 - Task: Publish V28 and sync the local installed `zero-to-website-design` skill.
 - Actions: Committed `5e68b41 fix(phase-1): add visual asset pipeline`; committed `6c5d68a docs(phase-1): record visual asset pipeline sync`; pushed `main` to GitHub; copied the repository package into `C:\Users\mango\.codex\skills\zero-to-website-design`; validated the local skill package; compared repository and local package hashes.

@@ -4,7 +4,7 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V28 zero-to-website visual asset pipeline implementation is published to `origin/main` and synced to the local installed skill.
+- Current stage: V29 zero-to-website resource atomicity implementation is committed locally and synced to the local installed skill; push to `origin/main` remains.
 
 ## Current Branch
 - `main`
@@ -19,6 +19,14 @@
 - 2026-06-20: `git push origin main` published V28 commit `5e68b41`.
 - 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py C:\Users\mango\.codex\skills\zero-to-website-design`
 - 2026-06-20: Local `C:\Users\mango\.codex\skills\zero-to-website-design` package hashes matched the repository package files after V28 sync.
+- 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
+- 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-20: `git diff --check`
+- 2026-06-20: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
+- 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover tests -v`
+- 2026-06-20: Mojibake fragment scan for `zero-to-website-design` docs, usage docs, and V29 design plan returned no matches.
+- 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py C:\Users\mango\.codex\skills\zero-to-website-design`
+- 2026-06-20: Local `C:\Users\mango\.codex\skills\zero-to-website-design` package hashes matched the repository package files after V29 sync, with no extra local files.
 - 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
 - 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-20: `git diff --check`
@@ -119,18 +127,20 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- No active risks for the V28 visual asset pipeline implementation after the mojibake examples were repaired and regression coverage was added.
+- No active risks for the V29 resource atomicity implementation after package tests, skill validation, diff check, repository docs tests, mojibake scan, and production review entrypoint passed.
 
 ## Active Blockers
-- None for the V28 visual asset pipeline implementation.
+- None for the V29 resource atomicity implementation.
 
 ## Current Focus
-- No active V28 work remains; start a new documented phase only for a concrete new gap.
+- Push the committed V29 resource atomicity hardening and memory sync to `origin/main`, then stop the milestone.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
 
 ## Key Artifacts
+- `docs/dev/2026-06-20-zero-to-website-design-v29-resource-atomicity-plan.md`
+- `zero-to-website-design/references/resource-atomicity.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v28-visual-asset-repair-design.md`
 - `zero-to-website-design/references/visual-asset-pipeline.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v27-visual-delivery-closure-plan.md`

@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Implement, validate, sync, commit, and push the V29 `zero-to-website-design` resource atomicity hardening.
 - [x] Implement, validate, sync, commit, and push the V28 `zero-to-website-design` visual asset pipeline repair.
 - [x] Validate, sync, commit, and push the V27 `zero-to-website-design` visual delivery closure hardening.
 - [x] Validate, sync, commit, and push the V26 `zero-to-website-design` design rounds hardening.
