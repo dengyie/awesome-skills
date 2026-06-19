@@ -31,8 +31,22 @@ Skipped or collapsed required rounds block final delivery unless the milestone r
 
 ## Reference Fidelity
 
-| Route | Reference Screenshot | Implementation Screenshot | Side-by-side comparison | Fidelity Status | Blocking visual deviations | Accepted visual gaps | Next fix |
+| Route | Reference Screenshot | Implementation Screenshot | Side-by-side comparison | Top 3 Visible Differences | Fidelity Status | Blocking visual deviations | Accepted visual gaps | Next fix |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+## Reference-To-DOM Map Check
+
+| Route | Reference Region | DOM Component | Text Real DOM? | Asset Strategy | Interaction | Must Not Do | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+
+No visible binding-reference region may remain `visual memory only`.
+
+## Component-Slot Asset Records
+
+| Route/Section | Target Size Or Aspect Ratio | Reference Region | Must Match | Must Avoid | Text Policy | Perspective/Tilt Ownership | Output Path |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+
+Allowed component-slot raster assets do not carry full-route layout, readable text, navigation, or core controls.
 
 ## Page Item Fidelity Audit
 
@@ -60,8 +74,18 @@ Full-page screenshot implementation check:
 
 - [ ] No horizontal overflow
 - [ ] No text clipping
+- [ ] Text is readable and not mojibake
 - [ ] No incoherent overlap
 - [ ] Fixed controls do not resize unexpectedly
+
+## Visual Usability Gate
+
+- [ ] Brand/object immediately recognizable
+- [ ] Primary hierarchy matches binding reference
+- [ ] Key custom assets present, not generic placeholders
+- [ ] First viewport composition matches reference
+- [ ] Lower sections do not compete with hero unless the reference does so
+- [ ] Page is acceptable as a first review build
 
 ## Asset Checks
 
@@ -86,3 +110,18 @@ Full-page screenshot implementation check:
 - Deployment/PR:
 - Remaining work:
 - Final readiness claim follows weakest required route evidence status:
+
+## Final Visual Pass Report
+
+- URL:
+- Binding reference:
+- Latest screenshots:
+- What changed:
+- Runtime guards:
+  - no full reference image:
+  - real DOM links/text:
+  - no overflow:
+  - text encoding:
+- Verification:
+- Known remaining visual gaps:
+- Current status:

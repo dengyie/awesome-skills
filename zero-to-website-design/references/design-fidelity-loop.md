@@ -74,6 +74,50 @@ Before broad implementation, decompose every binding reference into implementabl
 
 Record unknowns instead of guessing silently. If a visual fact cannot be derived from the image, mark it as an assumption and validate it through the screenshot loop.
 
+## Reference-To-DOM Map
+
+Before implementation, create a Reference-To-DOM Map for every binding route. This is the bridge from image analysis to real webpage construction.
+
+Use this table shape in the implementation plan or equivalent artifact:
+
+```md
+| Reference Region | DOM Component | Text Real DOM? | Asset Strategy | Interaction | Must Not Do |
+| --- | --- | --- | --- | --- | --- |
+| Hero right blueprint panel | `HeroBlueprintPanel` | yes for labels and buttons | generated component-slot asset for non-text illustration; CSS applies tilt | real links and hover state | do not paste full hero screenshot or bake readable text into the image |
+```
+
+Each visible region in the binding screenshot must be classified as one of:
+
+- real DOM/layout
+- CSS-drawn primitive
+- generated/local component-slot asset
+- accepted gap
+
+No region may remain `visual memory only`. If a region is visible in the reference but has no mapped component, asset strategy, or accepted-gap rationale, broad implementation has not earned the right to start.
+
+## Component-Slot Raster Asset Rules
+
+Screenshots are not deliverables, but component-slot raster assets are allowed when they support a real webpage structure.
+
+Allowed component-slot raster assets:
+
+- decorative props
+- material textures
+- illustrations inside cards
+- product or diagram panels
+- non-text ornamental notes
+- bespoke art that sits inside a component with real surrounding layout and controls
+
+Disallowed runtime raster shortcuts:
+
+- full-route screenshots
+- full-viewport background mockups
+- sliced screenshots that carry layout, readable text, navigation, or core controls
+- transparent hotspots over static images
+- generated page images that replace DOM hierarchy
+
+When in doubt, ask whether the page would still have meaningful structure, readable text, links, state, and responsive behavior if the asset failed to load. If not, the asset is carrying too much of the route.
+
 ## Page Item Fidelity Audit
 
 For every binding route and required viewport, create an itemized comparison table before claiming visual readiness.
@@ -183,6 +227,8 @@ Write asset prompt records before generation:
 Asset prompt:
 - Route/section:
 - Source reference path:
+- Target component size/aspect ratio:
+- Reference region:
 - Purpose:
 - Must match:
 - Must avoid:
@@ -190,6 +236,7 @@ Asset prompt:
 - Transparent background needed:
 - Style keywords:
 - Text policy:
+- Perspective/tilt ownership: baked into image or applied in CSS
 - Output filename:
 - Replacement trigger:
 ```
@@ -209,6 +256,7 @@ For each binding route/viewport, record:
 - side-by-side comparison path or QA note path
 - viewport dimensions
 - difference summary
+- top 3 visible differences before the next edit pass
 - blocking visual deviations
 - accepted visual gaps
 - next fix action
@@ -216,6 +264,35 @@ For each binding route/viewport, record:
 - link or path to the itemized fidelity audit for that route and viewport
 
 Use Side-by-side comparison even if there is no automated image diff. A simple image pair, browser screenshot beside the source, or documented comparison table is enough when it identifies concrete deviations.
+
+After every visual pass, name the top 3 visible differences before editing again. Do not continue polishing from memory. The next edit pass must respond to the named differences or explicitly move them to accepted gaps.
+
+## User Feedback Status Updates
+
+Treat user visual feedback as route evidence, not as casual commentary.
+
+- "差距很大", "not matching", or equivalent feedback sets the route to `blocked-visual`.
+- "not a screenshot", "must be interactive", or equivalent feedback makes the screenshot-as-page guard a P0 blocker.
+- "this is deliverable", "这才有交付样子", or equivalent feedback may set the current pass to `close-enough`, after which further work should be scoped polish, not a new broad redesign.
+
+Do not report completion while the latest named user mismatch remains unresolved or unaccepted.
+
+## Visual Usability Gate
+
+A visually driven page is not ready merely because lint, build, export, or route smoke tests pass.
+
+Check:
+
+- brand, product, person, object, or site purpose is immediately recognizable
+- primary hierarchy matches the binding reference
+- key custom assets are present, not generic placeholders
+- text is readable and not mojibake
+- first-viewport composition follows the reference, including whether the next section is only hinted
+- lower sections do not compete with the hero unless the reference does so
+- primary content is not pushed down by decorative sections
+- the page would not be embarrassing to show as a first review build
+
+Any failure here is a `blocking-visual` issue for `Visual Delivery Ready`.
 
 ## Fix Loop
 
@@ -239,6 +316,8 @@ Before claiming `Visual Delivery Ready`, the final QA evidence must show:
 
 - every binding route has reference and implementation screenshots
 - each required viewport has a side-by-side comparison or equivalent comparison note
+- top 3 visible differences have been named after the latest visual pass and resolved or accepted
+- a Reference-To-DOM Map exists for every binding route
 - each binding route and required viewport has an itemized fidelity audit covering the required page items
 - no required page item remains `not-checked` or `blocked`
 - no required page item has `weak` evidence quality
@@ -246,6 +325,8 @@ Before claiming `Visual Delivery Ready`, the final QA evidence must show:
 - blocking visual deviations are fixed
 - remaining gaps are accepted and named
 - generated UI assets are recorded with prompt, path, authority, and replacement trigger
+- component-slot asset records explain size/aspect ratio, reference region, text policy, and perspective/tilt ownership
+- visual usability gate passes, including no mojibake and correct first-viewport composition
 - final readiness follows the weakest route fidelity status
 
 Do not claim visual parity, pixel match, or design fidelity if the final evidence only checked layout health, build status, or generic screenshot QA.

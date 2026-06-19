@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-20 - Visual Delivery Needs Concrete Closure Evidence
+- Decision: Require visually driven website work to capture user-selected concrete visual authority, Reference-To-DOM Maps, component-slot asset records, top 3 visible differences after each visual pass, visual usability gates, user-feedback status changes, and final visual pass reports before `Visual Delivery Ready`.
+- Rationale: Real usage showed that even strong design rounds and fidelity language can still let agents implement from memory, skip concrete image selection, use generic placeholders, ignore obvious screenshot differences, or overclaim delivery after build/QA passes.
+- Impact: `zero-to-website-design` now makes visual delivery closure evidence part of the main workflow, references, templates, usage docs, and regression tests.
+- Related files: `zero-to-website-design/SKILL.md`, `zero-to-website-design/references/design-fidelity-loop.md`, `zero-to-website-design/references/visual-qa-checklist.md`, `zero-to-website-design/references/production-delivery.md`, `zero-to-website-design/assets/templates/implementation-plan.md`, `zero-to-website-design/assets/templates/qa-report.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-20 - Website Design Must Progress Through Explicit Rounds
 - Decision: Require `zero-to-website-design` to treat website design as explicit rounds inside the current milestone: context, visual direction selection, design-system decomposition, implementation map, implementation slice, fidelity fix loop, and final delivery gate.
 - Rationale: The 13-gate workflow was too easy to treat as a single checklist. Real usage showed agents can skip visual selection, start coding before design artifacts, or defer fidelity checks until the end.

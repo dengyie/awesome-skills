@@ -1,4 +1,10 @@
 # Session Log
+## 2026-06-20 01:05
+- Task: Harden `zero-to-website-design` around visual delivery closure after user feedback about loose design matching and skipped image-selection workflow.
+- Actions: Added a V27 design note; updated the main skill workflow, design fidelity loop, visual QA checklist, production delivery report contract, implementation and QA templates, public usage docs, project decisions, and regression coverage.
+- Results: The skill now requires concrete user-selected visual authority for visually important final passes, Reference-To-DOM Maps, component-slot asset records, top 3 visible differences after visual passes, visual usability gates including mojibake and first-viewport checks, user-feedback status updates, and final visual pass reports. Package tests, skill validation, diff check, and production review entrypoint passed.
+- Next: Commit, push, and sync the local `.codex` installed skill.
+- Blockers: None.
 ## 2026-06-20 00:20
 - Task: Improve `zero-to-website-design` so website design proceeds in explicit rounds instead of a one-pass checklist.
 - Actions: Reviewed local `skill-creator` guidance and external skill-authoring sources; added a V26 design/research plan; wrote a failing regression test for required design rounds; added `references/design-rounds.md`; updated the main skill workflow, usage docs, implementation plan template, and QA report template.

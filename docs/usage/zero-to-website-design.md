@@ -131,6 +131,8 @@ When no strong reference exists, the skill should:
 
 User-selected visual direction is a hard gate for from-zero websites whose final look matters. If no direction image or route mockup has been selected, Codex may deliver only a clearly labeled `Framework Ready` scaffold and must not call the result final visual work.
 
+For visually important sites, a written style direction is not enough for `Visual Delivery Ready`. The selected authority must be a concrete image, screenshot, route mockup, Figma export, approved existing page capture, or equivalent visual reference that the user has seen and selected.
+
 ## Reference-Image Path
 
 When screenshots, mockups, or Figma exports already exist, the skill should:
@@ -147,13 +149,15 @@ When screenshots, mockups, or Figma exports already exist, the skill should:
 When the final page must resemble a design screenshot, the skill should:
 
 1. Produce a reference decomposition before broad implementation.
-2. Define a fidelity budget with blocking deviations, accepted gaps, and out-of-scope states.
-3. Write asset prompt records for any UI images, illustrations, panels, textures, or component-like artwork that must be generated to match the design.
-4. Capture implementation screenshots at the same viewport as the design screenshot.
-5. Save or document side-by-side comparison evidence.
-6. Complete a page-by-page, item-by-item fidelity audit for every binding route and required viewport.
-7. Record the difference summary and deviation backlog.
-8. Iterate fixes until every required design item is matched or honestly marked with accepted gaps.
+2. Create a Reference-To-DOM Map so every visible reference region is assigned to real DOM/layout, CSS-drawn primitive, generated/local component-slot asset, or accepted gap.
+3. Define a fidelity budget with blocking deviations, accepted gaps, and out-of-scope states.
+4. Write component-slot asset prompt records before any UI images, illustrations, panels, textures, or component-like artwork are generated.
+5. Capture implementation screenshots at the same viewport as the design screenshot.
+6. Save or document side-by-side comparison evidence.
+7. Name the top 3 visible differences after every visual pass before editing again.
+8. Complete a page-by-page, item-by-item fidelity audit for every binding route and required viewport.
+9. Record the difference summary and deviation backlog.
+10. Iterate fixes until every required design item is matched or honestly marked with accepted gaps.
 
 The workflow must not claim design fidelity from memory or generic visual QA alone.
 
@@ -161,9 +165,15 @@ Palette-only restyling is not a fidelity pass. If Codex only changes colors, rou
 
 Do not ship the selected design image as the webpage. A binding reference must be rebuilt as actual DOM, text, components, links, controls, charts or diagrams, local assets, and responsive behavior. Transparent hotspots over a screenshot do not count as implemented interactions, and a page that primarily displays the full reference screenshot cannot be `Visual Delivery Ready`.
 
+Component-slot raster assets are allowed when they support the webpage instead of replacing it. Decorative props, material textures, illustrations inside cards, product or diagram panels, and non-text ornamental notes can be generated or sourced. Full-route screenshots, full-viewport background mockups, sliced screenshots that carry layout/text/navigation, and transparent hotspots over static images are runtime shortcuts and block visual delivery.
+
 The itemized audit must compare each page's hero, navigation, section order, cards, typography blocks, asset slots, decorative resources, spacing relationships, and responsive states against the selected design image. Any unchecked or blocked required item prevents `Visual Delivery Ready`.
 
 Each audit row must be independently verifiable. Record the reference screenshot, implementation screenshot, viewport, and a concrete reference/implementation region, crop, coordinate range, or annotation for the item. Vague evidence such as "looks close" or "see screenshot" is treated as not checked. Any fixed item must get fresh recheck evidence before signoff.
+
+Visual usability is part of delivery. A visually driven page must make the brand or object immediately recognizable, match the primary hierarchy of the binding reference, include key custom assets instead of generic placeholders, keep text readable with no mojibake, and preserve first-viewport composition.
+
+User visual feedback updates route status: "not matching" makes the route `blocked-visual`, "not a screenshot / must be interactive" makes screenshot-as-page a P0 guard, and "this is deliverable" can mark the pass close enough for scoped polish only.
 
 ## Historical-Mock Path
 

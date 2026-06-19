@@ -50,13 +50,28 @@ Describe the implementation phase and target outcome.
 ## Reference Fidelity Plan
 
 - Reference decomposition:
+- Reference-To-DOM Map:
 - Fidelity budget:
 - Blocking visual deviations:
 - Accepted visual gaps:
 - Generated UI asset prompts:
+- Component-slot asset records:
 - Implementation screenshot destinations:
 - Side-by-side comparison destinations:
+- Top 3 visible differences record:
 - Fix loop owner:
+
+## Reference-To-DOM Map
+
+| Reference Region | DOM Component | Text Real DOM? | Asset Strategy | Interaction | Must Not Do |
+| --- | --- | --- | --- | --- | --- |
+
+Every visible binding-reference region must be mapped to real DOM/layout, CSS-drawn primitive, generated/local component-slot asset, or accepted gap before broad implementation.
+
+## Component-Slot Asset Records
+
+| Route/Section | Target Size Or Aspect Ratio | Reference Region | Must Match | Must Avoid | Text Policy | Perspective/Tilt Ownership | Output Path |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Key Changes
 
@@ -84,6 +99,8 @@ Describe the implementation phase and target outcome.
 - Framework-ready check:
 - Delivery-ready check:
 - Reference fidelity check:
+- Visual usability gate:
+- First-viewport composition check:
 - Blocking failure rule:
 
 ## Risks

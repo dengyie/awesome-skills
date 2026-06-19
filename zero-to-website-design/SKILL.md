@@ -36,6 +36,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - If the user says not to generate new images yet, treat the best available project-owned visuals as the default source path for the current pass.
    - If generation is still chosen, record why existing source paths were insufficient for this milestone.
    - If the user has no usable binding or temporary visual sources, read `references/concept-generation.md`, create 2-4 candidate visual directions or homepage mockups, show them to the user, and wait for the user to choose or combine a direction before visual implementation.
+   - For visually important websites, do not implement a final visual pass before the user has seen and selected a concrete image, screenshot, route mockup, Figma export, approved existing page capture, or equivalent visual reference.
    - Do not start a `Visual Delivery Ready` implementation from a text-only direction, internal taste, or unselected concept. Without user-selected visual authority, the milestone can only target `Framework Ready`, and the final report must say that visual direction selection remains open.
 
 4. Record visual provenance.
@@ -70,9 +71,11 @@ Historical repo images are first-class inputs. When a project already has usable
    - Do not treat binding references as mood boards or palettes. If the page only reuses colors, fonts, or rounded corners while missing the reference layout, component silhouettes, decorative assets, and hierarchy, the fidelity pass has failed.
    - Do not satisfy a binding route by placing the whole reference screenshot on the page, using it as a full-page background, or layering transparent hotspots over it. Rebuild the selected image as real DOM, components, local assets, and interactions.
    - Decompose each binding reference into layout, typography, color, spacing, component, asset, and responsive facts before implementation.
+   - Create a Reference-To-DOM Map before implementation so every visible reference region is assigned to real DOM/layout, CSS-drawn primitive, generated or local component-slot asset, or accepted gap. No visible region may remain `visual memory only`.
    - Create a page-by-page, item-by-item fidelity audit for every binding route before claiming visual readiness. Compare each route's hero, navigation, sections, cards, typography blocks, asset slots, decorative resources, spacing, and responsive states against the design image.
    - Define the fidelity budget: blocking deviations, accepted gaps, and out-of-scope viewports or states.
    - If existing assets cannot reproduce the reference, create UI asset or component prompt records before generation. Generate necessary UI images, illustrations, textures, icons, or panels only when they support the binding route.
+   - For every generated or sourced visual asset, define the component slot first: route/section, target size or aspect ratio, reference region, must-match details, must-avoid details, text policy, perspective or tilt ownership, and output path.
    - Plan implementation screenshot paths, side-by-side comparison evidence, deviation backlog, and the fix loop before coding.
 
 9. Produce an implementation map.
@@ -98,7 +101,9 @@ Historical repo images are first-class inputs. When a project already has usable
    - Read `references/route-acceptance.md` and `references/visual-qa-checklist.md`.
    - Use browser/Playwright QA for desktop and mobile screenshots, overflow checks, link checks, menu states, and asset loading.
    - For binding references, capture implementation screenshot evidence at matching viewports, compare side-by-side with the design screenshot, record the difference summary, and fix blocking visual deviations.
+   - After every visual pass, name the top 3 visible differences between the latest implementation screenshot and the binding reference before editing again. Do not keep polishing from memory.
    - For each binding route, complete the itemized fidelity audit row by row. A route with unchecked design items, missing implementation evidence, or unresolved blocking item mismatches cannot be `Visual Delivery Ready`.
+   - Run a visual usability gate: brand or object recognition, hierarchy match, key custom assets present, text readable and not mojibake, first-viewport composition, and no embarrassing first-review placeholders.
    - Record route evidence rows before claiming `Framework Ready` or `Visual Delivery Ready`.
 
 12. Harden and deliver.
@@ -110,6 +115,8 @@ Historical repo images are first-class inputs. When a project already has usable
    - Report routes touched, source references used, files changed, verification results, framework-ready versus delivery-ready status, and known visual gaps.
    - If the user did not choose from visual direction images or route mockups, explicitly state that the result is `Framework Ready` only and that final visual direction remains unapproved.
    - Do not claim visual parity unless the fidelity pass includes reference decomposition, implementation screenshot, comparison evidence, and no unresolved blocking visual deviations.
+   - Treat user visual feedback as status input: "not matching" makes the route `blocked-visual`; "not a screenshot / must be interactive" makes screenshot-as-page a P0 guard; "this is deliverable" allows close-enough status and scoped polish only.
+   - Use the final visual pass report shape from `references/production-delivery.md` for visually driven work.
 
 13. Integrate project memory when the work is long-running.
    - Read `references/project-memory-integration.md` when the repository uses `.codex-memory/`.
@@ -167,8 +174,9 @@ A zero-to-website pass is complete only when:
 - local or owned assets are used where possible
 - build/typecheck passes
 - desktop and mobile browser QA have been run
-- binding design references have reference decomposition, implementation screenshot, side-by-side comparison, deviation backlog, and a final fidelity status
+- binding design references have reference decomposition, Reference-To-DOM Map, implementation screenshot, side-by-side comparison, top 3 visible differences, deviation backlog, and a final fidelity status
 - every binding route has a page-by-page, item-by-item fidelity audit with no unchecked required items or unresolved blocking item mismatches
-- generated UI asset prompts and resulting assets are recorded when generation is needed to match the design
+- generated UI asset prompts, component-slot records, and resulting assets are recorded when generation is needed to match the design
+- visual usability gate passes, including text readable and not mojibake and first-viewport composition
 - production readiness has been reviewed
 - known gaps are explicitly reported

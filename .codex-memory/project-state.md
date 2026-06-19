@@ -4,12 +4,16 @@
 - Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
 
 ## Current Phase
-- Current stage: V26 zero-to-website design rounds gate is complete and published.
+- Current stage: V27 zero-to-website visual delivery closure hardening is complete and ready to publish.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
+- 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
+- 2026-06-20: `git diff --check`
+- 2026-06-20: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest zero-to-website-design.tests.test_skill_package.ZeroToWebsiteDesignPackageTests.test_design_rounds_are_required_before_broad_implementation -v`
 - 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
 - 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
@@ -106,18 +110,19 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- No active risks for the V26 design rounds hardening.
+- No active risks for the V27 visual delivery closure hardening.
 
 ## Active Blockers
-- None for the V26 design rounds hardening.
+- None for the V27 visual delivery closure hardening.
 
 ## Current Focus
-- No active implementation focus. V26 `zero-to-website-design` design rounds hardening is published and ready for local skill sync checks.
+- Commit, push, and sync the V27 `zero-to-website-design` visual delivery closure hardening.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
 
 ## Key Artifacts
+- `docs/dev/2026-06-20-zero-to-website-design-v27-visual-delivery-closure-plan.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v26-design-rounds-plan.md`
 - `zero-to-website-design/references/design-rounds.md`
 - `docs/dev/2026-06-19-zero-to-website-design-v25-interactive-reference-implementation-plan.md`

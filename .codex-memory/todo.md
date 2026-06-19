@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Validate, sync, commit, and push the V27 `zero-to-website-design` visual delivery closure hardening.
 - [x] Validate, sync, commit, and push the V26 `zero-to-website-design` design rounds hardening.
 - [x] Validate, sync, commit, and push the V25 `zero-to-website-design` interactive reference implementation hardening.
 - [x] Validate, sync, commit, and push the V24 `zero-to-website-design` verifiable fidelity evidence hardening.

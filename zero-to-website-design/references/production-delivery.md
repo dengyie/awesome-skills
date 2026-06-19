@@ -61,6 +61,30 @@ Report:
 - known gaps
 - deployment or PR link when applicable
 
+## Final Visual Pass Report
+
+For visually driven work, include this shape:
+
+```text
+Final visual pass report:
+- URL:
+- Binding reference:
+- Latest screenshots:
+- What changed:
+- Runtime guards:
+  - no full reference image:
+  - real DOM links/text:
+  - no overflow:
+  - text encoding:
+- Top 3 latest visual differences:
+- Visual usability gate:
+- Verification:
+- Known remaining visual gaps:
+- Current status:
+```
+
+Do not replace this with "done" or "QA passed." The report must let the user immediately open the page, inspect the current screenshot, and see what still differs.
+
 ## Readiness Claim Rules
 
 - The overall website status cannot be stronger than the weakest required route evidence status.
@@ -69,3 +93,5 @@ Report:
 - A site can be `Framework Ready` while still carrying visual gaps only when those gaps are recorded as accepted gaps.
 - A site can be `Visual Delivery Ready` only when every required route is `visual-delivery-ready` or explicitly out of scope.
 - Final reports must not summarize QA as "passed" when route evidence contains unresolved blocking failures.
+- Do not claim `Visual Delivery Ready` when the implementation only shares palette or mood with the reference, key custom assets remain generic placeholders, the user has not seen the latest screenshot, or the latest screenshot has obvious unresolved mismatches named by the user.
+- A final visual pass must not exceed the latest user feedback status. If user feedback says "not matching", the route remains `blocked-visual` until fixed or explicitly accepted.

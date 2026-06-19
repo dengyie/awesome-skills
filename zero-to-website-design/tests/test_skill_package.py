@@ -246,6 +246,112 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Reference Fidelity Plan", implementation_plan_template)
         self.assertIn("Generated UI asset prompts", implementation_plan_template)
 
+    def test_visual_delivery_closure_gates_are_required(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(
+            encoding="utf-8"
+        )
+        visual_qa = (ROOT / "references" / "visual-qa-checklist.md").read_text(
+            encoding="utf-8"
+        )
+        production_delivery = (ROOT / "references" / "production-delivery.md").read_text(
+            encoding="utf-8"
+        )
+        implementation_plan_template = (
+            ROOT / "assets" / "templates" / "implementation-plan.md"
+        ).read_text(encoding="utf-8")
+        qa_report_template = (ROOT / "assets" / "templates" / "qa-report.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "do not implement a final visual pass before the user has seen and selected a concrete image",
+            "Create a Reference-To-DOM Map before implementation",
+            "No visible region may remain `visual memory only`",
+            "component slot first",
+            "top 3 visible differences",
+            "visual usability gate",
+            "not mojibake",
+            "first-viewport composition",
+            "Treat user visual feedback as status input",
+            "final visual pass report",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for expected in [
+            "Reference-To-DOM Map",
+            "Reference Region | DOM Component | Text Real DOM? | Asset Strategy | Interaction | Must Not Do",
+            "No region may remain `visual memory only`",
+            "Component-Slot Raster Asset Rules",
+            "Allowed component-slot raster assets",
+            "Disallowed runtime raster shortcuts",
+            "full-viewport background mockups",
+            "sliced screenshots that carry layout, readable text, navigation, or core controls",
+            "Target component size/aspect ratio",
+            "Perspective/tilt ownership",
+            "top 3 visible differences before the next edit pass",
+            "User Feedback Status Updates",
+            "blocked-visual",
+            "Visual Usability Gate",
+            "text is readable and not mojibake",
+            "first-viewport composition follows the reference",
+        ]:
+            self.assertIn(expected, fidelity)
+
+        for expected in [
+            "top 3 visible differences after the latest visual pass",
+            "Reference-To-DOM Map path",
+            "Missing Reference-To-DOM mapping is a blocking visual deviation",
+            "Mojibake or unreadable text is a blocking visual and content failure",
+            "Visual Usability Gate",
+            "first viewport composition matches reference",
+        ]:
+            self.assertIn(expected, visual_qa)
+
+        for expected in [
+            "Final Visual Pass Report",
+            "Runtime guards",
+            "no full reference image",
+            "real DOM links/text",
+            "text encoding",
+            "Top 3 latest visual differences",
+            "Do not claim `Visual Delivery Ready` when the implementation only shares palette or mood",
+            "the user has not seen the latest screenshot",
+        ]:
+            self.assertIn(expected, production_delivery)
+
+        for expected in [
+            "Reference-To-DOM Map",
+            "Component-Slot Asset Records",
+            "Target Size Or Aspect Ratio",
+            "Perspective/Tilt Ownership",
+            "Top 3 visible differences record",
+        ]:
+            self.assertIn(expected, implementation_plan_template)
+
+        for expected in [
+            "Top 3 Visible Differences",
+            "Reference-To-DOM Map Check",
+            "Component-Slot Asset Records",
+            "Text is readable and not mojibake",
+            "Visual Usability Gate",
+            "Final Visual Pass Report",
+        ]:
+            self.assertIn(expected, qa_report_template)
+
+        for expected in [
+            "a written style direction is not enough for `Visual Delivery Ready`",
+            "Reference-To-DOM Map",
+            "top 3 visible differences after every visual pass",
+            "Component-slot raster assets are allowed",
+            "text readable with no mojibake",
+            "User visual feedback updates route status",
+        ]:
+            self.assertIn(expected, usage_text)
+
     def test_binding_routes_require_page_item_fidelity_audit(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         fidelity = (ROOT / "references" / "design-fidelity-loop.md").read_text(

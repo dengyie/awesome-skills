@@ -53,6 +53,8 @@ For every route evidence row, record:
 - reference screenshot path when a binding design controls the route
 - implementation screenshot path
 - side-by-side comparison path when a binding design controls the route
+- top 3 visible differences after the latest visual pass when a binding design controls the route
+- Reference-To-DOM Map path when a binding design controls the route
 - page item fidelity audit path when a binding design controls the route
 - desktop viewport checked
 - mobile viewport checked
@@ -101,6 +103,10 @@ Palette-only restyling is a blocking visual deviation when a binding design refe
 
 Full-page screenshot implementation is a blocking visual deviation when a binding design reference exists. If the page renders the whole selected design image as an `<img>`, background, canvas bitmap, or equivalent raster surface and adds transparent hotspots or invisible links, classify it as `blocking-visual` even when the screenshot looks identical. The route must be rebuilt as real text, DOM structure, controls, links, charts or diagrams, local assets, and responsive layout before `Visual Delivery Ready`.
 
+Missing Reference-To-DOM mapping is a blocking visual deviation for binding routes. If visible reference regions were implemented from memory instead of mapped to DOM components, CSS-drawn primitives, component-slot assets, or accepted gaps, classify the route as `blocking-visual`.
+
+Mojibake or unreadable text is a blocking visual and content failure. A visually driven route with broken character encoding cannot be `Visual Delivery Ready`.
+
 Fix `blocking-framework` before claiming `Framework Ready`.
 
 Fix or explicitly downgrade `blocking-visual` before claiming `Visual Delivery Ready`.
@@ -116,6 +122,21 @@ When working from reference images, report:
 
 Never claim pixel fidelity when only structural similarity was checked.
 
+## Visual Usability Gate
+
+For visually driven pages, record:
+
+- brand/object recognizable:
+- primary hierarchy matches binding reference:
+- key custom assets present:
+- no generic placeholders in binding regions:
+- text readable and not mojibake:
+- first viewport composition matches reference:
+- lower sections do not compete with hero unless shown in reference:
+- acceptable first-review build:
+
+Any failed item must be classified as `blocking-visual`, `accepted-gap`, or `out-of-scope`.
+
 ## Design Fidelity Evidence
 
 When a route has a binding reference image, also follow `design-fidelity-loop.md`.
@@ -126,6 +147,8 @@ The QA record must include:
 - reference screenshot path
 - implementation screenshot path
 - side-by-side comparison path or comparison note
+- top 3 visible differences after the latest pass
+- Reference-To-DOM Map path
 - page-by-page, item-by-item fidelity audit path
 - difference summary
 - blocking visual deviations
