@@ -56,6 +56,7 @@ Report:
 - desktop and mobile QA result
 - production review result
 - framework-ready versus visual-delivery-ready status
+- whether a user-selected visual direction exists for from-zero visual work
 - temporary-binding ownership and upgrade triggers
 - known gaps
 - deployment or PR link when applicable
@@ -64,6 +65,7 @@ Report:
 
 - The overall website status cannot be stronger than the weakest required route evidence status.
 - A route with `not-checked` or `blocked` evidence cannot support a final ready claim.
+- A from-zero site without a user-selected visual direction can only be reported as `Framework Ready`, never `Visual Delivery Ready`.
 - A site can be `Framework Ready` while still carrying visual gaps only when those gaps are recorded as accepted gaps.
 - A site can be `Visual Delivery Ready` only when every required route is `visual-delivery-ready` or explicitly out of scope.
 - Final reports must not summarize QA as "passed" when route evidence contains unresolved blocking failures.

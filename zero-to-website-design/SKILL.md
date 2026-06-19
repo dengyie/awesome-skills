@@ -27,17 +27,20 @@ Historical repo images are first-class inputs. When a project already has usable
 2. Run intake.
    - If the brief is vague, read `references/intake-brief.md`.
    - Ask only for decisions that materially change the result. Otherwise make reasonable assumptions and record them.
+   - Treat the user's visual direction choice as a material decision for from-zero websites, brand sites, portfolios, landing pages, product pages, and any task whose final look matters. Do not assume it from text mood words.
    - Preserve a compact intake output or equivalent assumptions before concept expansion or broad implementation begins.
 
 3. Collect visual sources.
    - Inspect repo-owned assets, historical mockups, screenshots, or user-provided references before deciding that new generation is needed.
    - If the user says not to generate new images yet, treat the best available project-owned visuals as the default source path for the current pass.
    - If generation is still chosen, record why existing source paths were insufficient for this milestone.
-   - If the user has no usable binding or temporary visual sources, read `references/concept-generation.md` and create concept directions before implementation.
+   - If the user has no usable binding or temporary visual sources, read `references/concept-generation.md`, create 2-4 candidate visual directions or homepage mockups, show them to the user, and wait for the user to choose or combine a direction before visual implementation.
+   - Do not start a `Visual Delivery Ready` implementation from a text-only direction, internal taste, or unselected concept. Without user-selected visual authority, the milestone can only target `Framework Ready`, and the final report must say that visual direction selection remains open.
 
 4. Record visual provenance.
    - Read `references/visual-provenance.md` before treating any image as a source of truth.
    - Classify each reference as `exploratory`, `candidate`, `approved-direction`, `binding-route`, `temporary-binding`, or `obsolete`.
+   - Do not promote any generated or collected direction above `candidate` until the user explicitly selects it. A text description alone is not `approved-direction`.
 
 5. Choose the right source path.
    - Prefer repo-owned final assets or approved user references first.
@@ -49,6 +52,7 @@ Historical repo images are first-class inputs. When a project already has usable
 
 6. Promote route owners into authoritative source material.
    - Map each `binding-route` or `temporary-binding` reference to routes, sections, and viewports.
+   - For from-zero sites, promote route owners only after the user-selected direction is recorded. If no user-selected visual direction exists, route owners may support framework structure but must not be used to claim final visual signoff.
    - Record whether each temporary asset controls whole-route composition, section composition, illustration slot shape, or only palette/texture.
    - For generated route owners, record milestone supported and replacement trigger before implementation begins.
    - Never mix exploratory concept images with final acceptance images without saying so.
@@ -97,6 +101,7 @@ Historical repo images are first-class inputs. When a project already has usable
    - Move non-blocking suggestions to backlog and external gaps to `Manual-required`.
    - Stop after the current milestone's P0/P1 acceptance criteria pass necessary verification; do not continue into additional design polish or the next milestone.
    - Report routes touched, source references used, files changed, verification results, framework-ready versus delivery-ready status, and known visual gaps.
+   - If the user did not choose from visual direction images or route mockups, explicitly state that the result is `Framework Ready` only and that final visual direction remains unapproved.
    - Do not claim visual parity unless the fidelity pass includes reference decomposition, implementation screenshot, comparison evidence, and no unresolved blocking visual deviations.
 
 13. Integrate project memory when the work is long-running.
@@ -143,6 +148,7 @@ A zero-to-website pass is complete only when:
 
 - the project brief and assumptions are documented
 - the current website milestone contract is visible and scoped to P0/P1 work
+- from-zero or visually open work has either a user-selected visual direction recorded or is explicitly limited to `Framework Ready`
 - the pre-code document gate exists: intake output, design docs, and implementation map
 - the visual source map identifies image origins and authority
 - design-system and route docs exist or have been updated

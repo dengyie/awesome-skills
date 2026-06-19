@@ -36,6 +36,8 @@ Record one:
 
 - A live site reference can inspire behavior, but it is not binding unless the user says to match it.
 - A generated concept image is not route-binding until selected and mapped to a route.
+- A from-zero website direction is not `approved-direction` until the user chooses from visible candidate images, homepage mockups, route mockups, or an explicitly named combination.
+- A text-only direction, agent preference, or assumed mood cannot become `binding-route`.
 - A route mockup overrides a broad concept image for that route.
 - A design-system doc overrides older chat descriptions when the user approved the doc.
 - A `temporary-binding` image can drive framework delivery, but it must be called out in final reports and upgrade notes.
@@ -72,6 +74,15 @@ For `temporary-binding` images, also record whether the asset is strong enough f
 - `Framework Ready`
 - `Visual Delivery Ready`
 - support only, not direct ownership
+
+## Unselected Direction Limits
+
+When no user-selected visual direction exists:
+
+- route assets may support information architecture, layout scaffolding, and `Framework Ready`
+- no route may be marked `Visual Delivery Ready`
+- final reports must say the visual direction is unapproved
+- later visual work must return to candidate direction selection before claiming final visual signoff
 
 ## Known Limitation Examples
 

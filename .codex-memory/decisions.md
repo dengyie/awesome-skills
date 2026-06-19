@@ -1,4 +1,9 @@
 # Decisions
+## 2026-06-19 - User-Selected Visual Direction Is A Hard Gate For From-Zero Sites
+- Decision: Treat user selection from visible visual directions, homepage mockups, or route mockups as a required pre-code gate for from-zero visually open website work unless the milestone is explicitly framework-only.
+- Rationale: A real usage failure showed that an agent can treat text mood direction and a working engineering scaffold as enough authority, then skip the user's visual choice. That produces a runnable site but not a final visual design.
+- Impact: `zero-to-website-design` now requires 2-4 candidate visual directions or mockups, user selection or explicit framework-only authorization, and clear `Framework Ready` labeling when final visual direction is still unapproved.
+- Related files: `zero-to-website-design/SKILL.md`, `zero-to-website-design/references/concept-generation.md`, `zero-to-website-design/references/visual-provenance.md`, `zero-to-website-design/references/framework-first-delivery.md`, `zero-to-website-design/references/production-delivery.md`, `docs/usage/zero-to-website-design.md`, `zero-to-website-design/tests/test_skill_package.py`
 ## 2026-06-19 - Palette-Only Restyling Is A Blocking Reference Fidelity Failure
 - Decision: Treat "just recolored the page" implementations as blocking visual failures when a binding design reference exists.
 - Rationale: A real usage failure showed that a page can reuse colors, rounded corners, or fonts while still missing the design image's actual layout geometry, component silhouettes, custom resources, hierarchy, and decorative systems. That behavior must not be accepted as a fidelity pass.

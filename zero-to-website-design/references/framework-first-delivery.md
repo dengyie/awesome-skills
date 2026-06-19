@@ -28,11 +28,13 @@ A route is `Framework Ready` when:
 - responsive behavior is stable
 - no overflow, clipping, or dead interactions remain
 - the route composition is accepted even if final bespoke artwork is not ready yet
+- from-zero visual direction selection is either recorded or explicitly listed as still open
 
 ## Visual Delivery Ready
 
 A route is `Visual Delivery Ready` when:
 
+- from-zero visual direction has been selected by the user when no stronger binding source existed
 - the route matches its `binding-route` or approved `temporary-binding` references closely
 - spacing, hierarchy, and emphasis are tuned
 - asset quality is acceptable for delivery

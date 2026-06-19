@@ -205,6 +205,49 @@ class ZeroToWebsiteDesignPackageTests(unittest.TestCase):
         self.assertIn("Palette-only restyling is a blocking visual deviation", visual_qa)
         self.assertIn("Palette-only restyling is not a fidelity pass", usage_text)
 
+    def test_from_zero_sites_require_user_selected_visual_direction_gate(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        concept_generation = (ROOT / "references" / "concept-generation.md").read_text(
+            encoding="utf-8"
+        )
+        provenance = (ROOT / "references" / "visual-provenance.md").read_text(
+            encoding="utf-8"
+        )
+        production_delivery = (ROOT / "references" / "production-delivery.md").read_text(
+            encoding="utf-8"
+        )
+        framework_delivery = (ROOT / "references" / "framework-first-delivery.md").read_text(
+            encoding="utf-8"
+        )
+        usage_text = (ROOT.parent / "docs" / "usage" / "zero-to-website-design.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "Treat the user's visual direction choice as a material decision",
+            "create 2-4 candidate visual directions or homepage mockups",
+            "wait for the user to choose or combine a direction before visual implementation",
+            "Without user-selected visual authority, the milestone can only target `Framework Ready`",
+            "A text description alone is not `approved-direction`",
+            "from-zero or visually open work has either a user-selected visual direction recorded",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for expected in [
+            "User-Selected Visual Direction Gate",
+            "2-4 candidate direction images, homepage mockups, or route mockups",
+            "Do not treat a text-only style phrase",
+            "do not skip user selection for from-zero visual direction work",
+            "do not claim `Visual Delivery Ready` from unselected concept images",
+        ]:
+            self.assertIn(expected, concept_generation)
+
+        self.assertIn("A text-only direction, agent preference, or assumed mood cannot become `binding-route`", provenance)
+        self.assertIn("no route may be marked `Visual Delivery Ready`", provenance)
+        self.assertIn("without a user-selected visual direction can only be reported as `Framework Ready`", production_delivery)
+        self.assertIn("from-zero visual direction has been selected by the user", framework_delivery)
+        self.assertIn("User-selected visual direction is a hard gate", usage_text)
+
     def test_visual_provenance_contract_names_statuses_and_sources(self):
         provenance = (ROOT / "references" / "visual-provenance.md").read_text(
             encoding="utf-8"

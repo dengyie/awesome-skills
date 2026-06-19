@@ -251,3 +251,9 @@
 - Results: Public repository navigation now treats the repo as a four-skill catalog and routes non-versioned package docs for `best-project-memory`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`.
 - Next: Run docs and package tests, fix any confirmed failures, then commit and push the documentation alignment pass.
 - Blockers: None.
+## 2026-06-19 09:10
+- Task: Harden `zero-to-website-design` after a real from-zero website workflow skipped user visual direction selection.
+- Actions: Added a V22 design note, updated the main skill workflow, concept generation, visual provenance, framework-first, production delivery, usage docs, and regression tests so from-zero visually open sites require user-selected candidate images or mockups before final visual implementation.
+- Results: The package now labels unselected visual work as `Framework Ready` only and forbids `Visual Delivery Ready` claims from text-only or unselected directions. The package tests and both repository/local skill validation passes succeeded, and the local installed `zero-to-website-design` package matches the repository package.
+- Next: Commit and push the V22 hardening pass.
+- Blockers: None.

@@ -17,13 +17,29 @@ Before generation, record why the stronger non-generated source paths were not s
 
 ## Concept Flow
 
-1. Generate or collect 3-4 distinct directions.
+1. Generate or collect 2-4 distinct visual directions or homepage mockups.
 2. Make each direction materially different in layout, visual language, density, and mood.
 3. Show or name the tradeoffs clearly.
-4. Ask the user to choose or combine directions.
+4. Show the candidate images or mockups to the user and ask the user to choose or combine directions.
 5. Extend the selected direction into route-specific mockups.
 6. Record selected images in the visual source map.
 7. Record whether the generated outputs are only for direction, `temporary-binding`, or intended to become `binding-route` later.
+
+## User-Selected Visual Direction Gate
+
+For from-zero websites, brand sites, portfolios, landing pages, product pages, and any task where final visual quality matters, user selection is a hard gate before visual implementation.
+
+Before broad visual implementation, all of these must be true:
+
+- 2-4 candidate direction images, homepage mockups, or route mockups have been generated or collected
+- the candidates are visible to the user or saved to paths the user can inspect
+- the user chooses one direction, combines named parts, or explicitly authorizes a framework-only pass
+- the chosen direction is recorded as `approved-direction` or stronger in the visual source map
+- route ownership and milestone target are recorded before any image becomes `temporary-binding` or `binding-route`
+
+If the user does not choose a visual direction, stop before final visual implementation. The agent may continue only with an explicitly labeled `Framework Ready` milestone, and the handoff/final report must say that visual direction selection is still required.
+
+Do not treat a text-only style phrase, internal design preference, or "reasonable assumption" as user-selected visual direction.
 
 ## Image Generation Guidance
 
@@ -125,5 +141,7 @@ Implementation should begin only after the route ownership is clear.
 
 - do not generate merely because generation is available
 - do not let a generated direction silently become route-binding
+- do not skip user selection for from-zero visual direction work
+- do not claim `Visual Delivery Ready` from unselected concept images or text-only direction
 - do not skip recording why generation beat repo-owned or historical sources
 - do not treat decorative image output as enough authority for route implementation

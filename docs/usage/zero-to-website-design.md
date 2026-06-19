@@ -108,12 +108,14 @@ When the repository uses `.codex-memory/`, the workflow should also:
 When no strong reference exists, the skill should:
 
 1. Ask only the minimum useful questions.
-2. Infer reasonable defaults.
-3. Generate or describe 3-4 distinct visual directions.
-4. Wait for a selected direction before making it route-authoritative.
+2. Infer reasonable defaults only for non-visual details.
+3. Generate or collect 2-4 distinct visual direction images or homepage mockups.
+4. Show the candidates to the user and wait for a selected or combined direction before making it route-authoritative.
 5. Expand the chosen direction into route specs.
 6. Record why generation was needed instead of stronger existing visuals.
 7. Implement only after the visual source map, design docs, and implementation map exist.
+
+User-selected visual direction is a hard gate for from-zero websites whose final look matters. If no direction image or route mockup has been selected, Codex may deliver only a clearly labeled `Framework Ready` scaffold and must not call the result final visual work.
 
 ## Reference-Image Path
 
@@ -222,6 +224,7 @@ Minimum verification:
 - local assets load
 - known visual gaps are reported
 - framework-ready versus visual-delivery-ready status is stated clearly
+- user-selected visual direction is named when the site started without stronger binding visuals
 - temporary-binding ownership and upgrade triggers are stated when provisional imagery remains
 - production review is run before final delivery
 
