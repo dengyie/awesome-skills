@@ -54,9 +54,11 @@ The skill prefers the strongest evidence available:
 1. automated failing test
 2. failing repro script
 3. stable reproduction steps
-4. deterministic failing log, error response, screenshot, or recording
+4. deterministic failing log or error response that can be checked again against the same scenario
 
 If no failing evidence exists yet, the workflow stays in investigation. It does not move into implementation.
+Screenshots and recordings can help explain the symptom, but they do not count as failing evidence by themselves.
+If you have a stable repro and can reasonably automate it, turn it into an automated regression test when feasible.
 
 ## Allowed Outcomes
 

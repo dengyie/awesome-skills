@@ -12,6 +12,7 @@ You must:
 - verify the original failure has turned green or disappeared as expected
 - run the minimum necessary regression checks
 - read the actual output
+- prefer the automated regression test as the long-term verification path when the repro can reasonably be automated
 
 ## Prohibited Shortcuts
 

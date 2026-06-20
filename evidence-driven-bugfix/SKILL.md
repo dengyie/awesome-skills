@@ -11,7 +11,7 @@ Fix bugs through evidence, not guesses.
 
 Do not implement fixes without failing evidence.
 Do not claim success without fresh verification evidence.
-continue the loop until the bug is fixed or an evidence-backed legal exit applies.
+Continue the loop until the bug is fixed or an evidence-backed legal exit applies.
 
 ## Iron Laws
 
@@ -85,11 +85,14 @@ Accepted failing evidence, in priority order:
 1. automated failing test
 2. failing repro script
 3. stable reproduction steps
-4. deterministic failing log, error response, screenshot, or recording
+4. deterministic failing log or error response that can be re-checked against the same failing scenario
+
+Screenshots and recordings may support symptom capture, but they cannot pass this gate by themselves.
 
 No failing evidence means no implementation.
 
 If evidence is incomplete, keep investigating. Do not move into a fix claim or a fix implementation state.
+When a stable repro can reasonably be automated, convert it into a failing regression test before or alongside the fix.
 
 ### Gate 3: Root Cause Investigation
 
@@ -128,6 +131,8 @@ You must:
 - confirm that the original failure has turned green or disappeared as expected
 - run the minimum necessary regression checks
 - read the actual output rather than inferring results
+
+When a stable repro was automatable, the fresh verification should prefer that automated regression test as the primary proof path.
 
 If fresh verification fails, return to investigation or root-cause analysis and continue the loop.
 

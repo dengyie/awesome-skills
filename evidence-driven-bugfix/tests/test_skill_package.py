@@ -68,7 +68,7 @@ class EvidenceDrivenBugfixPackageTests(unittest.TestCase):
         ]:
             self.assertIn(expected, skill_text)
 
-        self.assertIn("continue the loop until the bug is fixed", skill_text)
+        self.assertIn("continue the loop until the bug is fixed", skill_text.lower())
         self.assertIn("No failing evidence means no implementation", skill_text)
         self.assertIn("If fresh verification fails, return to investigation", skill_text)
 
@@ -85,6 +85,37 @@ class EvidenceDrivenBugfixPackageTests(unittest.TestCase):
         self.assertIn("Use only when evidence shows", blockers)
         self.assertIn("Current state", output)
         self.assertIn("Fresh verification", output)
+
+    def test_failing_evidence_contract_rejects_non_replayable_artifacts(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        failing_gate = (
+            ROOT / "references" / "failing-evidence-gate.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("Screenshots and recordings may support symptom capture", skill_text)
+        self.assertIn("cannot pass this gate by themselves", skill_text)
+        self.assertIn("replayable or re-checkable failure signal", failing_gate)
+        self.assertIn("Screenshots or recordings alone are supporting context", failing_gate)
+        self.assertIn("not failing evidence by themselves", failing_gate)
+
+    def test_skill_prefers_regression_test_when_repro_can_be_automated(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        fresh_gate = (
+            ROOT / "references" / "fresh-verification-gate.md"
+        ).read_text(encoding="utf-8")
+        usage = (ROOT.parent / "docs" / "usage" / "evidence-driven-bugfix.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn(
+            "When a stable repro can reasonably be automated, convert it into a failing regression test before or alongside the fix.",
+            skill_text,
+        )
+        self.assertIn(
+            "prefer the automated regression test as the long-term verification path",
+            fresh_gate,
+        )
+        self.assertIn("turn it into an automated regression test when feasible", usage)
 
 
 if __name__ == "__main__":

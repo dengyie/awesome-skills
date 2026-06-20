@@ -8,6 +8,7 @@ This workflow is responsible for:
 
 - capturing the symptom truthfully
 - securing failing evidence before implementation
+- promoting a stable automatable repro into a failing regression test when feasible
 - proving root cause before repair
 - applying a minimal fix
 - rerunning fresh verification
@@ -62,6 +63,7 @@ Anything else returns the workflow to investigation, evidence gathering, or root
 Do not:
 
 - implement without failing evidence
+- treat screenshots or recordings alone as gate-passing evidence
 - patch symptoms while the root cause remains unproven
 - treat a code diff as evidence of success
 - imply completion without fresh verification evidence

@@ -31,10 +31,11 @@ class RepositoryDocsTests(unittest.TestCase):
             releases_readme,
         )
         self.assertIn(
-            "`best-project-memory`, `little-lighthouse-blog-publisher`, and `zero-to-website-design` currently publish their ongoing delivery history",
+            "`best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, and `zero-to-website-design` currently publish their ongoing delivery history",
             releases_readme,
         )
         self.assertIn("docs/usage/best-project-memory.md", releases_readme)
+        self.assertIn("docs/usage/evidence-driven-bugfix.md", releases_readme)
         self.assertIn("docs/usage/little-lighthouse-blog-publisher.md", releases_readme)
         self.assertIn("docs/usage/zero-to-website-design.md", releases_readme)
         self.assertIn("# Skill Matrix", skill_matrix)
@@ -54,8 +55,10 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertIn(
             "当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`", zh_readme
         )
-        self.assertIn("当前包含 4 个已交付 skill", zh_readme)
+        self.assertIn("当前包含 5 个已交付 skill", zh_readme)
+        self.assertIn("`evidence-driven-bugfix`：证据驱动的问题修复工作流", zh_readme)
         self.assertIn("`little-lighthouse-blog-publisher`：Little Lighthouse 博客文章包发布", zh_readme)
+        self.assertIn("docs/usage/evidence-driven-bugfix.md", zh_readme)
         self.assertIn("docs/usage/little-lighthouse-blog-publisher.md", zh_readme)
         self.assertIn("Skill Matrix（英文技能总览）", zh_readme)
         self.assertIn("优先看 [`docs/usage/skill-matrix.md`](../usage/skill-matrix.md)", zh_readme)
@@ -67,7 +70,11 @@ class RepositoryDocsTests(unittest.TestCase):
             zh_releases_readme,
         )
         self.assertIn(
-            "`best-project-memory`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 当前主要通过 usage 文档与 `docs/dev/` 阶段文档记录演进",
+            "`best-project-memory`、`evidence-driven-bugfix`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 当前主要通过 usage 文档与 `docs/dev/` 阶段文档记录演进",
+            zh_releases_readme,
+        )
+        self.assertIn(
+            "docs/usage/evidence-driven-bugfix.md",
             zh_releases_readme,
         )
         self.assertIn(

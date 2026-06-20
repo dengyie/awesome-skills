@@ -4,9 +4,10 @@
 
 仓库当前不是单一 skill，而是一个多 skill 集合，重点提供面向真实项目交付的 Codex 工作流能力。
 
-当前包含 4 个已交付 skill：
+当前包含 5 个已交付 skill：
 
 - `best-project-memory`：项目记忆、进度恢复、决策记录、交接延续
+- `evidence-driven-bugfix`：证据驱动的问题修复工作流
 - `little-lighthouse-blog-publisher`：Little Lighthouse 博客文章包发布、草稿、校验与修复
 - `production-code-quality-review`：面向生产环境的代码审查与合并前把关
 - `zero-to-website-design`：从模糊需求到设计落地的网站工作流
@@ -36,6 +37,28 @@ best-project-memory/SKILL.md
 相关文档：
 
 - [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
+- [`README.md`](../../README.md)
+
+### `evidence-driven-bugfix`
+
+这个 skill 用于让 Codex 按“先证据、后修复”的方式处理 bug：先看日志和代码，先拿到可复查的失败证据，再追根因、做最小修复，并且只有在新鲜验证通过后才允许说修好了。
+
+适合场景：
+
+- 线上问题排查
+- 反复出现“看起来修好了”但实际上没修好的 bugfix 会话
+- 需要先拿失败证据、再动代码的测试失败或集成故障
+- 需要持续循环直到真正修好，或拿到证据支持的合法 blocker
+
+入口文件：
+
+```text
+evidence-driven-bugfix/SKILL.md
+```
+
+相关文档：
+
+- [`docs/usage/evidence-driven-bugfix.md`](../usage/evidence-driven-bugfix.md)
 - [`README.md`](../../README.md)
 
 ### `production-code-quality-review`
@@ -125,6 +148,7 @@ zero-to-website-design/SKILL.md
 
 - [`README.md`](../../README.md)
 - [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
+- [`docs/usage/evidence-driven-bugfix.md`](../usage/evidence-driven-bugfix.md)
 - [`docs/usage/little-lighthouse-blog-publisher.md`](../usage/little-lighthouse-blog-publisher.md)
 - [`docs/usage/zero-to-website-design.md`](../usage/zero-to-website-design.md)
 - [`docs/usage/quickstart.md`](../usage/quickstart.md)
@@ -133,7 +157,7 @@ zero-to-website-design/SKILL.md
 - [`docs/releases/README.md`](../releases/README.md)
 
 当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`。
-`best-project-memory`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 目前主要通过 usage 文档与 `docs/dev/` 阶段开发文档记录演进。
+`best-project-memory`、`evidence-driven-bugfix`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 目前主要通过 usage 文档与 `docs/dev/` 阶段开发文档记录演进。
 
 如果你现在的核心问题是“这几个 skill 到底该先用哪个”，优先看 [`docs/usage/skill-matrix.md`](../usage/skill-matrix.md)。
 

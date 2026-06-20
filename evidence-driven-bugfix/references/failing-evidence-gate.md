@@ -11,7 +11,10 @@ Use the strongest available evidence:
 1. automated failing test
 2. failing repro script
 3. stable reproduction steps
-4. deterministic failing log, error response, screenshot, or recording
+4. deterministic failing log or error response that can be checked again against the same scenario
+
+The gate requires a replayable or re-checkable failure signal.
+Screenshots or recordings alone are supporting context, not failing evidence by themselves.
 
 ## Required Inputs
 
@@ -31,3 +34,4 @@ Do not:
 ## Pass Condition
 
 A clear failing evidence chain exists and can later be re-run or re-checked to prove the fix.
+When that chain can reasonably become an automated test, prefer promoting it into a failing regression test before or alongside implementation.
