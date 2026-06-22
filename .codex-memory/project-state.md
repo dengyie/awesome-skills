@@ -11,6 +11,7 @@
 
 ## Last Verified
 - 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest split-image-assets.tests.test_skill_package.SplitImageAssetsPackageTests.test_validate_asset_package_rejects_empty_object_inventory -v`
 - 2026-06-23: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 - 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
 - 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover best-project-memory\tests -v`
@@ -138,6 +139,7 @@
 
 ## Active Risks
 - `split-image-assets` intentionally does not perform deterministic segmentation, matting, or background inpainting; those remain external AI/manual/tooling steps that must be recorded in metadata and QA.
+- Review follow-up fixed: `validate_asset_package.py` now rejects initialized packages with an empty object inventory instead of reporting them as valid.
 
 ## Active Blockers
 - None for the `split-image-assets` implementation.

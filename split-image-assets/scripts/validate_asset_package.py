@@ -89,6 +89,9 @@ def validate_objects(
     if not isinstance(objects, list):
         errors.append("metadata.objects must be a list")
         return
+    if not objects:
+        errors.append("object inventory must include at least one object asset entry")
+        return
 
     for item in objects:
         object_id = item.get("id", "<missing id>")
