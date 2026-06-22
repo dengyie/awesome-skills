@@ -1,0 +1,5 @@
+display_name: "Split Image Assets"
+description: "A production asset-splitting workflow for turning source images into reusable transparent PNG layers, masks, cleaned backgrounds, metadata, previews, and QA evidence."
+trigger_phrases:
+  - "$split-image-assets"
+

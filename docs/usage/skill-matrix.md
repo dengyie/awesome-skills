@@ -10,6 +10,7 @@ Use this page when you want the fastest repository-level answer to: "Which skill
 | `evidence-driven-bugfix` | Run a disciplined bugfix workflow that requires failing evidence before implementation and fresh verification before any success claim | failing evidence, root cause, minimal fix, fresh verification result, truthful final status | pairs well with `best-project-memory` for long-running debugging and `production-code-quality-review` for checkpoint review after the fix | the user only wants a high-level review or a feature plan, not bugfix execution |
 | `little-lighthouse-blog-publisher` | Publish, draft, update, or validate Little Lighthouse blog post packages | staged publishing plan, Markdown package, `.meta.json`, asset fallback summary, build/verifier/review/commit flow | pairs with `best-project-memory` for traceability and `production-code-quality-review` before commits | the target is not the Little Lighthouse blog or the user wants a browser CMS |
 | `production-code-quality-review` | Review a working tree, PR, or risky diff with production-engineering rigor | structured review context, review brief, merge-readiness findings, verification guidance | often paired with `best-project-memory` for long-running review tracks | the user wants implementation rather than review |
+| `split-image-assets` | Turn a source image into a reusable asset package with layers, masks, previews, metadata, and QA | transparent PNGs, masks, `background_clean.png`, `metadata.json`, `qa_report.md`, inspection previews | pairs with `zero-to-website-design` for website visuals and `production-code-quality-review` before publishing tooling changes | the user only wants a quick visual crop or expects deterministic scripts to perform segmentation |
 | `zero-to-website-design` | Turn a vague website brief or visual reference set into a documented, QA-checked delivery workflow | design docs, route plans, implementation map, visual provenance, browser QA artifacts | often paired with `best-project-memory`; may use `production-code-quality-review` before final signoff | the change is a small component tweak or backend-only task |
 
 ## Pick By Problem Type
@@ -34,6 +35,13 @@ Use `production-code-quality-review` first when the main problem is judgment abo
 - risky correctness check
 - production readiness check
 - diff triage with false-positive control
+
+Use `split-image-assets` first when the main problem is making an image reusable:
+
+- split source artwork into transparent object layers
+- keep masks and cleaned backgrounds for later editing
+- generate previews for edge and proportion inspection
+- mark AI-assisted or uncertain regions for manual review
 
 Use `little-lighthouse-blog-publisher` first when the main problem is publishing Little Lighthouse content:
 
@@ -81,6 +89,15 @@ Choose `little-lighthouse-blog-publisher` when you want:
 - build and `verify-blog-package` checks
 - atomic blog publication commits
 
+Choose `split-image-assets` when you want:
+
+- transparent PNG object assets
+- source-space masks
+- cleaned background files
+- `metadata.json`
+- `qa_report.md`
+- preview sprite sheets and checkerboard inspections
+
 Choose `zero-to-website-design` when you want:
 
 - design-system docs
@@ -127,6 +144,12 @@ Choose `zero-to-website-design` when you want:
 - production-oriented review after browser QA
 - catching source-of-truth or delivery drift before publish
 
+`split-image-assets` + `zero-to-website-design`:
+
+- turning generated or sourced website visuals into maintainable asset files
+- keeping asset provenance, object boundaries, and QA evidence clear
+- producing reusable UI, layout, animation, and compositing resources
+
 ## Fast Routing Prompts
 
 Use `best-project-memory`:
@@ -159,6 +182,12 @@ Use `evidence-driven-bugfix`:
 Use $evidence-driven-bugfix to fix this failure by first capturing logs, getting stable failing evidence, tracing the root cause, applying the minimal fix, and only reporting success after fresh verification.
 ```
 
+Use `split-image-assets`:
+
+```text
+Use $split-image-assets to turn this source image into a reusable asset package with transparent PNGs, masks, metadata, previews, QA, and manual-review flags.
+```
+
 ## When Not To Use This Page
 
 Skip the matrix and go straight to a package guide when you already know the skill you need:
@@ -166,6 +195,7 @@ Skip the matrix and go straight to a package guide when you already know the ski
 - continuity and handoff: [`best-project-memory.md`](best-project-memory.md)
 - primary bugfix workflow: [`evidence-driven-bugfix.md`](evidence-driven-bugfix.md)
 - Little Lighthouse blog publishing: [`little-lighthouse-blog-publisher.md`](little-lighthouse-blog-publisher.md)
+- image asset splitting: [`split-image-assets.md`](split-image-assets.md)
 - production review: [`quickstart.md`](quickstart.md), [`review-workflows.md`](review-workflows.md)
 - website delivery: [`zero-to-website-design.md`](zero-to-website-design.md)
 
@@ -174,4 +204,5 @@ Repository-relative guide paths:
 - `docs/usage/best-project-memory.md`
 - `docs/usage/evidence-driven-bugfix.md`
 - `docs/usage/little-lighthouse-blog-publisher.md`
+- `docs/usage/split-image-assets.md`
 - `docs/usage/zero-to-website-design.md`

@@ -8,12 +8,13 @@ Latest formal package release notes: `production-code-quality-review v0.1.6`
 
 This repository is a multi-skill collection, not a single-package checkout.
 
-It currently ships five Codex skills:
+It currently ships six Codex skills:
 
 - `best-project-memory`: repo-native project continuity and handoff memory
 - `evidence-driven-bugfix`: primary bugfix workflow that requires failing evidence before implementation, fresh verification before any success claim, and continued looping until fixed or legally blocked
 - `little-lighthouse-blog-publisher`: staged publisher workflow for the Little Lighthouse blog
 - `production-code-quality-review`: production-oriented review and merge-readiness workflow
+- `split-image-assets`: image asset decomposition workflow with reusable layers, masks, previews, metadata, and QA
 - `zero-to-website-design`: design-first website delivery workflow from brief to QA
 
 Each skill is packaged as its own folder with a `SKILL.md` entrypoint, supporting references, and package-level tests.
@@ -117,6 +118,30 @@ Supporting package highlights:
 - `production-code-quality-review/references/` for schemas, heuristics, and review contracts
 - `production-code-quality-review/README.md` for the package guide
 
+### `split-image-assets`
+
+Use this skill when you want Codex to turn a source image into a reusable asset package instead of a single preview image. It separates visual analysis, object inventory, transparent PNG layers, masks, cleaned background, previews, metadata, QA, and manual-review flags.
+
+Best fit:
+
+- decomposing one source image into reusable design assets
+- packaging transparent object PNGs and masks for later layout or animation
+- building white-background, checkerboard, overview, and 2x2 inspection previews
+- validating asset package structure and metadata
+- marking AI-assisted or uncertain edge/background regions for manual review
+
+Skill entrypoint:
+
+```text
+split-image-assets/SKILL.md
+```
+
+Supporting package highlights:
+
+- `split-image-assets/scripts/` for deterministic package initialization, preview generation, and validation helpers
+- `split-image-assets/references/` for workflow, package contract, QA, and manual-review rules
+- `docs/usage/split-image-assets.md` for the user-facing guide
+
 ### `zero-to-website-design`
 
 Use this skill when you want Codex to turn a blank or vague website brief into a documented, design-first delivery workflow. It pushes work through references, concept generation, route planning, implementation guidance, and browser QA before sign-off.
@@ -162,6 +187,12 @@ production-code-quality-review/
   references/           # Review framework, output contract, heuristics, schemas
   scripts/              # Deterministic context and install/update tooling
   tests/                # Regression tests protecting the skill package
+split-image-assets/
+  SKILL.md              # Required Codex skill entrypoint
+  agents/               # Platform metadata
+  references/           # Asset splitting workflow and package contracts
+  scripts/              # Deterministic package initialization, preview, and validation helpers
+  tests/                # Regression tests protecting package structure and scripts
 zero-to-website-design/
   SKILL.md              # Required Codex skill entrypoint
   agents/               # Platform metadata
@@ -193,6 +224,7 @@ cp -R best-project-memory ~/.agents/skills/
 cp -R evidence-driven-bugfix ~/.agents/skills/
 cp -R little-lighthouse-blog-publisher ~/.agents/skills/
 cp -R production-code-quality-review ~/.agents/skills/
+cp -R split-image-assets ~/.agents/skills/
 cp -R zero-to-website-design ~/.agents/skills/
 ```
 
@@ -254,6 +286,7 @@ Repository overview and usage:
 - [Best Project Memory](docs/usage/best-project-memory.md)
 - [Evidence-Driven Bugfix](docs/usage/evidence-driven-bugfix.md)
 - [Little Lighthouse Blog Publisher](docs/usage/little-lighthouse-blog-publisher.md)
+- [Split Image Assets](docs/usage/split-image-assets.md)
 - [Zero-To-Website Design](docs/usage/zero-to-website-design.md)
 - [Golden Path](docs/usage/golden-path.md)
 - [Quickstart](docs/usage/quickstart.md)
@@ -264,7 +297,7 @@ Repository overview and usage:
 - [Release Notes](docs/releases/README.md)
 
 Current formal versioned release notes are published for `production-code-quality-review`.
-For `best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
+For `best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, `split-image-assets`, and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
 
 Chinese documentation:
 
@@ -279,6 +312,7 @@ python3 -m unittest discover production-code-quality-review/tests -v
 python3 -m unittest discover best-project-memory/tests -v
 python3 -m unittest discover evidence-driven-bugfix/tests -v
 python3 -m unittest discover little-lighthouse-blog-publisher/tests -v
+python3 -m unittest discover split-image-assets/tests -v
 python3 -m unittest discover zero-to-website-design/tests -v
 ```
 

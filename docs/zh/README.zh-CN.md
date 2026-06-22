@@ -4,12 +4,13 @@
 
 仓库当前不是单一 skill，而是一个多 skill 集合，重点提供面向真实项目交付的 Codex 工作流能力。
 
-当前包含 5 个已交付 skill：
+当前包含 6 个已交付 skill：
 
 - `best-project-memory`：项目记忆、进度恢复、决策记录、交接延续
 - `evidence-driven-bugfix`：证据驱动的问题修复工作流
 - `little-lighthouse-blog-publisher`：Little Lighthouse 博客文章包发布、草稿、校验与修复
 - `production-code-quality-review`：面向生产环境的代码审查与合并前把关
+- `split-image-assets`：图片资产拆解、透明 PNG、mask、预览与 QA 工作流
 - `zero-to-website-design`：从模糊需求到设计落地的网站工作流
 
 英文版 `README.md` 仍然是默认入口；本页用于帮助中文使用者快速了解仓库结构、技能用途和后续阅读路径。
@@ -150,6 +151,7 @@ zero-to-website-design/SKILL.md
 - [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
 - [`docs/usage/evidence-driven-bugfix.md`](../usage/evidence-driven-bugfix.md)
 - [`docs/usage/little-lighthouse-blog-publisher.md`](../usage/little-lighthouse-blog-publisher.md)
+- [`docs/usage/split-image-assets.md`](../usage/split-image-assets.md) - `split-image-assets`
 - [`docs/usage/zero-to-website-design.md`](../usage/zero-to-website-design.md)
 - [`docs/usage/quickstart.md`](../usage/quickstart.md)
 - [`docs/usage/golden-path.md`](../usage/golden-path.md)

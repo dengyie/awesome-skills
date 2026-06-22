@@ -11,7 +11,7 @@ Use it to:
 Current scope:
 
 - formal versioned release notes currently ship for `production-code-quality-review`
-- `best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, and `zero-to-website-design` currently publish their ongoing delivery history through usage guides and `docs/dev/` staged development notes instead of versioned release-note files
+- `best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, `split-image-assets`, and `zero-to-website-design` currently publish their ongoing delivery history through usage guides and `docs/dev/` staged development notes instead of versioned release-note files
 
 ## Index
 
@@ -34,5 +34,6 @@ Current scope:
 - [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
 - [`docs/usage/evidence-driven-bugfix.md`](../usage/evidence-driven-bugfix.md)
 - [`docs/usage/little-lighthouse-blog-publisher.md`](../usage/little-lighthouse-blog-publisher.md)
+- [`docs/usage/split-image-assets.md`](../usage/split-image-assets.md)
 - [`docs/usage/zero-to-website-design.md`](../usage/zero-to-website-design.md)
 - [`production-code-quality-review/README.md`](../../production-code-quality-review/README.md)

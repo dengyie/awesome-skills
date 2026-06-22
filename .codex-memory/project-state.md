@@ -1,15 +1,24 @@
 # Project State
 
 ## Objective
-- Keep the shipped `awesome-skills` website-generation and repository-navigation workstreams complete, published, and traceable.
+- Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: V29 zero-to-website resource atomicity implementation is published to `origin/main` and synced to the local installed skill.
+- Current stage: `split-image-assets` has been implemented as the sixth public repository skill and is ready for commit.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover best-project-memory\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover evidence-driven-bugfix\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover little-lighthouse-blog-publisher\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover production-code-quality-review\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover zero-to-website-design\tests -v`
+- 2026-06-23: `git diff --check`
 - 2026-06-20: `$env:PYTHONUTF8='1'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B -m unittest discover zero-to-website-design\tests -v`
 - 2026-06-20: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\zero-to-website-design`
 - 2026-06-20: `git diff --check`
@@ -128,18 +137,30 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- No active risks for the V29 resource atomicity implementation after package tests, skill validation, diff check, repository docs tests, mojibake scan, and production review entrypoint passed.
+- `split-image-assets` intentionally does not perform deterministic segmentation, matting, or background inpainting; those remain external AI/manual/tooling steps that must be recorded in metadata and QA.
 
 ## Active Blockers
-- None for the V29 resource atomicity implementation.
+- None for the `split-image-assets` implementation.
 
 ## Current Focus
-- No active V29 work remains; start a new documented phase only for a concrete new gap.
+- Commit the `split-image-assets` implementation and repository navigation updates.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
 
 ## Key Artifacts
+- `split-image-assets/SKILL.md`
+- `split-image-assets/scripts/init_asset_package.py`
+- `split-image-assets/scripts/build_previews.py`
+- `split-image-assets/scripts/validate_asset_package.py`
+- `split-image-assets/references/workflow.md`
+- `split-image-assets/references/asset-package-contract.md`
+- `split-image-assets/references/qa-standards.md`
+- `split-image-assets/references/manual-review.md`
+- `split-image-assets/tests/test_skill_package.py`
+- `docs/usage/split-image-assets.md`
+- `docs/superpowers/specs/2026-06-23-split-image-assets-design.md`
+- `docs/superpowers/plans/2026-06-23-split-image-assets.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v29-resource-atomicity-plan.md`
 - `zero-to-website-design/references/resource-atomicity.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v28-visual-asset-repair-design.md`

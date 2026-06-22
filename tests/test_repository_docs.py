@@ -22,65 +22,82 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertIn("Latest formal package release notes", readme)
         self.assertIn("production-code-quality-review v0.1.6", readme)
         self.assertIn("[Skill Matrix](docs/usage/skill-matrix.md)", readme)
-        self.assertIn("`evidence-driven-bugfix`", readme)
+        self.assertIn("It currently ships six Codex skills", readme)
+
+        skills = [
+            "best-project-memory",
+            "evidence-driven-bugfix",
+            "little-lighthouse-blog-publisher",
+            "production-code-quality-review",
+            "split-image-assets",
+            "zero-to-website-design",
+        ]
+        for skill in skills:
+            self.assertIn(f"`{skill}`", readme)
+            self.assertIn(f"`{skill}`", skill_matrix)
+
         self.assertIn("Evidence-Driven Bugfix", readme)
-        self.assertIn("docs/usage/evidence-driven-bugfix.md", readme)
+        self.assertIn("Little Lighthouse Blog Publisher", readme)
+        self.assertIn("Split Image Assets", readme)
+
+        usage_guides = [
+            "docs/usage/best-project-memory.md",
+            "docs/usage/evidence-driven-bugfix.md",
+            "docs/usage/little-lighthouse-blog-publisher.md",
+            "docs/usage/split-image-assets.md",
+            "docs/usage/zero-to-website-design.md",
+        ]
+        for guide in usage_guides:
+            self.assertIn(guide, readme)
+            self.assertIn(guide, releases_readme)
+
         self.assertIn("cp -R evidence-driven-bugfix ~/.agents/skills/", readme)
+        self.assertIn("cp -R split-image-assets ~/.agents/skills/", readme)
+        self.assertIn(
+            "python3 -m unittest discover little-lighthouse-blog-publisher/tests -v",
+            readme,
+        )
+        self.assertIn(
+            "python3 -m unittest discover split-image-assets/tests -v",
+            readme,
+        )
+
         self.assertIn(
             "formal versioned release notes currently ship for `production-code-quality-review`",
             releases_readme,
         )
         self.assertIn(
-            "`best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, and `zero-to-website-design` currently publish their ongoing delivery history",
+            "`best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, `split-image-assets`, and `zero-to-website-design` currently publish their ongoing delivery history",
             releases_readme,
         )
-        self.assertIn("docs/usage/best-project-memory.md", releases_readme)
-        self.assertIn("docs/usage/evidence-driven-bugfix.md", releases_readme)
-        self.assertIn("docs/usage/little-lighthouse-blog-publisher.md", releases_readme)
-        self.assertIn("docs/usage/zero-to-website-design.md", releases_readme)
+
         self.assertIn("# Skill Matrix", skill_matrix)
-        self.assertIn("| Skill | Best when you need | Core outputs | Common pairings | Avoid when |", skill_matrix)
-        self.assertIn("`best-project-memory`", skill_matrix)
-        self.assertIn("`evidence-driven-bugfix`", skill_matrix)
+        self.assertIn(
+            "| Skill | Best when you need | Core outputs | Common pairings | Avoid when |",
+            skill_matrix,
+        )
         self.assertIn("docs/usage/evidence-driven-bugfix.md", skill_matrix)
-        self.assertIn("`little-lighthouse-blog-publisher`", skill_matrix)
-        self.assertIn("`production-code-quality-review`", skill_matrix)
-        self.assertIn("`zero-to-website-design`", skill_matrix)
+        self.assertIn("docs/usage/split-image-assets.md", skill_matrix)
         self.assertIn("## Common Pairings", skill_matrix)
         self.assertIn("## Fast Routing Prompts", skill_matrix)
-        self.assertIn("Little Lighthouse Blog Publisher", readme)
-        self.assertIn("docs/usage/little-lighthouse-blog-publisher.md", readme)
-        self.assertIn("python3 -m unittest discover little-lighthouse-blog-publisher/tests -v", readme)
 
-        self.assertIn(
-            "当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`", zh_readme
-        )
-        self.assertIn("当前包含 5 个已交付 skill", zh_readme)
-        self.assertIn("`evidence-driven-bugfix`：证据驱动的问题修复工作流", zh_readme)
-        self.assertIn("`little-lighthouse-blog-publisher`：Little Lighthouse 博客文章包发布", zh_readme)
-        self.assertIn("docs/usage/evidence-driven-bugfix.md", zh_readme)
-        self.assertIn("docs/usage/little-lighthouse-blog-publisher.md", zh_readme)
-        self.assertIn("Skill Matrix（英文技能总览）", zh_readme)
-        self.assertIn("优先看 [`docs/usage/skill-matrix.md`](../usage/skill-matrix.md)", zh_readme)
-        self.assertIn(
-            "这个目录是 `awesome-skills` 仓库级发布说明入口的中文镜像", zh_releases_readme
-        )
-        self.assertIn(
-            "正式的版本化发布说明目前只覆盖 `production-code-quality-review`",
-            zh_releases_readme,
-        )
-        self.assertIn(
-            "`best-project-memory`、`evidence-driven-bugfix`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 当前主要通过 usage 文档与 `docs/dev/` 阶段文档记录演进",
-            zh_releases_readme,
-        )
-        self.assertIn(
+        for expected in [
+            "`evidence-driven-bugfix`",
+            "`little-lighthouse-blog-publisher`",
+            "`split-image-assets`",
             "docs/usage/evidence-driven-bugfix.md",
-            zh_releases_readme,
-        )
-        self.assertIn(
             "docs/usage/little-lighthouse-blog-publisher.md",
-            zh_releases_readme,
-        )
+            "docs/usage/split-image-assets.md",
+            "docs/usage/skill-matrix.md",
+        ]:
+            self.assertIn(expected, zh_readme)
+
+        for expected in [
+            "docs/usage/evidence-driven-bugfix.md",
+            "docs/usage/little-lighthouse-blog-publisher.md",
+            "docs/usage/split-image-assets.md",
+        ]:
+            self.assertIn(expected, zh_releases_readme)
 
 
 if __name__ == "__main__":

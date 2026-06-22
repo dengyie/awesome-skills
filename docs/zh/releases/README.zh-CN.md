@@ -42,5 +42,6 @@
 - [`docs/usage/best-project-memory.md`](../../usage/best-project-memory.md)
 - [`docs/usage/evidence-driven-bugfix.md`](../../usage/evidence-driven-bugfix.md)
 - [`docs/usage/little-lighthouse-blog-publisher.md`](../../usage/little-lighthouse-blog-publisher.md)
+- [`docs/usage/split-image-assets.md`](../../usage/split-image-assets.md)
 - [`docs/usage/zero-to-website-design.md`](../../usage/zero-to-website-design.md)
 - [`production-code-quality-review/README.md`](../../../production-code-quality-review/README.md)
