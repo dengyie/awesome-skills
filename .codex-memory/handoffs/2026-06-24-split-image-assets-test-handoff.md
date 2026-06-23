@@ -25,6 +25,7 @@
 - `scripts/import_external_assets.py`: copies external transparent assets and masks into package-owned paths, updates object metadata, records extraction pipeline recipe/stages/tools, and defaults quality checks to `needs-review`.
 - `scripts/build_previews.py`: creates standard inspection previews and rejects package path escapes.
 - `scripts/build_quality_previews.py`: creates mask overlay and alpha inspection evidence, rejects package path escapes, and fails if no QA previews are produced.
+- `scripts/record_quality_review.py`: records semantic analysis, quality gates, per-object quality checks, package QA status, and `qa_report.md` notes after manual or agent inspection. It refuses `qa.status=pass` unless every required object quality check is `pass`.
 - `scripts/validate_asset_package.py`: enforces structure, semantic analysis, extraction pipeline provenance, non-empty object inventory, alpha/mask requirements, object quality evidence, safe paths, preview consistency, and `qa.status` consistency.
 - `scripts/export_asset_manifest.py`: writes downstream `asset_manifest.json` sorted by `composition_order` from `metadata.json`.
 
@@ -34,6 +35,7 @@ python split-image-assets\scripts\init_asset_package.py source.png output-packag
 python split-image-assets\scripts\import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from upstream mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets\scripts\build_previews.py output-package
 python split-image-assets\scripts\build_quality_previews.py output-package
+python split-image-assets\scripts\record_quality_review.py output-package --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
 python split-image-assets\scripts\validate_asset_package.py output-package
 python split-image-assets\scripts\export_asset_manifest.py output-package
 ```
@@ -41,6 +43,7 @@ python split-image-assets\scripts\export_asset_manifest.py output-package
 ## Expected Test Signals
 - Fresh initialized packages should fail validation until required analysis and evidence are added.
 - Imported layers should start as `needs-review`.
+- Quality checks and final QA status should be upgraded with `record_quality_review.py` after preview inspection, not by hand-editing disconnected files.
 - `qa.status=pass` should fail if any required object quality check is not `pass`.
 - Absolute paths and `..` path escapes should fail validation.
 - The final package should include reusable PNG assets, masks, previews, quality previews, `metadata.json`, `qa_report.md`, and `asset_manifest.json`.

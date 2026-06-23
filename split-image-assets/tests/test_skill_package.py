@@ -122,6 +122,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "scripts" / "import_external_assets.py",
             ROOT / "scripts" / "build_previews.py",
             ROOT / "scripts" / "build_quality_previews.py",
+            ROOT / "scripts" / "record_quality_review.py",
             ROOT / "scripts" / "export_asset_manifest.py",
             ROOT / "scripts" / "validate_asset_package.py",
             REPO / "docs" / "usage" / "split-image-assets.md",
@@ -175,6 +176,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "Grounded-SAM",
             "Qwen-Image-Layered",
             "rectangular crop",
+            "record_quality_review.py",
             "export_asset_manifest.py",
         ]:
             self.assertIn(expected, usage)
@@ -302,6 +304,134 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["objects"][0]["composition_order"], 10)
             self.assertEqual(metadata["objects"][0]["mask_source"], "sam2")
             self.assertEqual(metadata["objects"][0]["quality_checks"]["mask_alignment"], "needs-review")
+
+    def test_record_quality_review_closes_manual_review_gap_after_import(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            external_asset = tmp_path / "sam2_main.png"
+            external_mask = tmp_path / "sam2_mask.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(external_asset)
+            Image.new("L", (4, 3), 255).save(external_mask)
+
+            import_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--role",
+                    "main",
+                    "--layer-kind",
+                    "primary-subject",
+                    "--composition-order",
+                    "10",
+                    "--semantic-boundary",
+                    "Main subject mask produced by SAM2.",
+                    "--asset",
+                    str(external_asset),
+                    "--mask",
+                    str(external_mask),
+                    "--mask-source",
+                    "sam2",
+                    "--alpha-source",
+                    "rembg-refine",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(import_result.returncode, 0, import_result.stderr)
+
+            review_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--visual-hierarchy",
+                    "background",
+                    "--visual-hierarchy",
+                    "main object",
+                    "--recommended-split-plan",
+                    "Keep the main object separate from the background.",
+                    "--quality-gate",
+                    "mask overlay inspected",
+                    "--object-id",
+                    "main_object",
+                    "--mask-alignment",
+                    "pass",
+                    "--alpha-edges",
+                    "pass",
+                    "--background-residue",
+                    "pass",
+                    "--reuse-readiness",
+                    "pass",
+                    "--qa-status",
+                    "pass",
+                    "--review-note",
+                    "Manual inspection accepted the imported layer.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(review_result.returncode, 0, review_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["analysis"]["visual_hierarchy"], ["background", "main object"])
+            self.assertEqual(metadata["qa"]["status"], "pass")
+            self.assertEqual(metadata["objects"][0]["quality_checks"]["reuse_readiness"], "pass")
+            self.assertIn(
+                "Manual inspection accepted the imported layer.",
+                (output / "qa_report.md").read_text(encoding="utf-8"),
+            )
+
+    def test_record_quality_review_rejects_pass_when_target_checks_are_not_all_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["quality_checks"]["alpha_edges"] = "needs-review"
+            metadata["qa"]["status"] = "needs-review"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--qa-status",
+                    "pass",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("cannot set qa-status pass", result.stderr)
 
     def test_build_quality_previews_creates_mask_overlay_and_records_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:

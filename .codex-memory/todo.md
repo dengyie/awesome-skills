@@ -3,6 +3,7 @@
 ## Next
 - [ ] Re-authenticate GitHub for account `dengyie` and push local `main` to `origin/main`.
 ## Done
+- [x] Harden `split-image-assets` manual testing by adding a quality-review adapter that records analysis, quality gates, object checks, QA status, and `qa_report.md` notes.
 - [x] Record the `split-image-assets` current design, data flow, and manual-testing handoff before user testing.
 - [x] Commit the verified `split-image-assets` downstream asset manifest export optimization.
 - [x] Review/stage/commit the final-verified `split-image-assets` pipeline quality-gate refactor.

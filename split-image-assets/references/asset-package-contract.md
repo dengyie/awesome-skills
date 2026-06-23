@@ -110,3 +110,18 @@ Structural validation does not prove visual perfection. It proves the package ha
 Use `scripts/import_external_assets.py` when importing outputs from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files. The importer copies files into package-controlled `assets/` and `masks/` paths and records upstream tool provenance in `metadata.extraction_pipeline.tools`.
 
 Imported layers default to `needs-review` quality checks because external generation is not the same as inspected production readiness.
+
+## Manual Review Recording Contract
+
+Use `scripts/record_quality_review.py` after preview inspection to avoid hand-editing drift between `metadata.json` and `qa_report.md`.
+
+The script can record:
+
+- `analysis.visual_hierarchy`
+- `analysis.recommended_split_plan`
+- `extraction_pipeline.quality_gates`
+- object-level `quality_checks`
+- package `qa.status`
+- review notes in `qa_report.md`
+
+The script rejects `qa.status=pass` unless every required object quality check is already `pass` or is updated to `pass` in the same command.

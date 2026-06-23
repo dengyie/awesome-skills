@@ -48,12 +48,13 @@ NEVER HIDE UNCERTAINTY
    - optional shadows and grouped object layers
 9. When external tools produced assets, normalize them with `scripts/import_external_assets.py`.
 10. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
-11. Build inspection previews with `scripts/build_previews.py`.
-12. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
-13. Read `references/qa-standards.md` and inspect the package.
-14. Validate structure with `scripts/validate_asset_package.py`.
-15. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
-16. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
+11. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, and manual QA status after inspection instead of hand-editing JSON.
+12. Build inspection previews with `scripts/build_previews.py`.
+13. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
+14. Read `references/qa-standards.md` and inspect the package.
+15. Validate structure with `scripts/validate_asset_package.py`.
+16. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
+17. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
 
 ## Script Boundaries
 
@@ -64,6 +65,8 @@ Use external image tools, AI image editing, manual editing, or user-provided cut
 `scripts/import_external_assets.py` is the standard adapter for mature tool outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
+
+`scripts/record_quality_review.py` is the standard manual-review adapter. Use it to write `metadata.analysis`, append `metadata.extraction_pipeline.quality_gates`, update per-object `quality_checks`, set `metadata.qa.status`, and append `qa_report.md` notes after inspection. It refuses `qa.status=pass` unless every required object quality check is `pass`.
 
 `scripts/export_asset_manifest.py` creates `asset_manifest.json` for downstream renderers, animation pipelines, design tools, or manual review. It records package-relative asset paths sorted by `composition_order`; it does not validate visual quality or replace `metadata.json`.
 

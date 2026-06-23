@@ -277,6 +277,14 @@
 - Results: The repository now has an alignment document for the next `zero-to-website-design` phase: `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`. Project memory and the zero-to-website workstream now reflect that the current focus has moved from earlier shipped phases to the next hardening target.
 - Next: Align on the V6 plan, then implement the approved doc/template/usage changes and run validation plus production review.
 - Blockers: None.
+## 2026-06-24 03:25
+- Task: Improve `split-image-assets` based on manual-test failure paths.
+- Actions: Treated the likely failure as the missing bridge between external asset import and final validation, wrote failing tests for review recording and invalid pass promotion, implemented `scripts/record_quality_review.py`, updated SKILL workflow/docs/design handoff, and recorded the new decision in project memory.
+- Results: The skill now has a deterministic manual-review adapter that writes semantic analysis, quality gates, object quality checks, QA status, and `qa_report.md` notes together. It refuses `qa.status=pass` unless every required object quality check is `pass`.
+- Verification: 31 `split-image-assets` tests OK, repository docs test OK, `quick_validate.py` reported `Skill is valid!`, `git diff --check` passed with only CRLF warnings, and production review reported no risk flags.
+- Next: User can rerun manual image tests using the updated command sequence; concrete visual-quality failures can become the next bounded hardening pass.
+- Blockers: GitHub publish remains blocked until account `dengyie` is re-authenticated with `gh auth login -h github.com`.
+
 ## 2026-06-24 02:45
 - Task: Record `split-image-assets` design and current logic before user manual testing.
 - Actions: Reviewed the current working-tree documentation, confirmed the skill's mature-pipeline boundary, added a focused test handoff at `.codex-memory/handoffs/2026-06-24-split-image-assets-test-handoff.md`, updated project state/TODO, and kept the pipeline refactor design doc as the detailed data-flow record.

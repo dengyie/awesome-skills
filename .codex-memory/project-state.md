@@ -4,12 +4,17 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` mature-pipeline refactor is in test-handoff mode. The design document records current data flow and the repo memory now has a dedicated manual-testing handoff.
+- Current stage: `split-image-assets` manual-test usability hardening is implemented. The workflow now includes a deterministic quality-review adapter so testers can promote imported layers after inspection without hand-editing disconnected metadata.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (31 tests)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-24: `git diff --check` (passed with only CRLF warnings)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (medium-risk review brief; no risk flags)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (29 tests)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
@@ -179,7 +184,7 @@
 - Push to `origin/main` is blocked by invalid GitHub authentication for account `dengyie`; `gh auth status` reports "The token in default is invalid." Re-authenticate with `gh auth login -h github.com`, then rerun `git push origin main`.
 
 ## Current Focus
-- Support user manual testing of `split-image-assets` using the documented package flow, validation gates, and handoff notes.
+- Support user manual testing of `split-image-assets` using the documented package flow, validation gates, review adapter, and handoff notes.
 
 ## Next Milestone
 - Manual test the skill with representative images and record concrete quality/usability gaps as a new bounded follow-up only if testing exposes them.
@@ -190,6 +195,7 @@
 - `split-image-assets/scripts/import_external_assets.py`
 - `split-image-assets/scripts/build_previews.py`
 - `split-image-assets/scripts/build_quality_previews.py`
+- `split-image-assets/scripts/record_quality_review.py`
 - `split-image-assets/scripts/export_asset_manifest.py`
 - `split-image-assets/scripts/validate_asset_package.py`
 - `split-image-assets/references/workflow.md`

@@ -23,13 +23,13 @@ Use this workflow to turn a single source image into a reusable asset package. O
 6. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `extraction_pipeline`, and the object inventory into `metadata.json`.
 7. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files.
 8. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
-9. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer.
+9. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, and `qa_report.md` stay synchronized.
 10. Keep individual objects separate before creating grouped or preview outputs.
 11. Generate previews with `scripts/build_previews.py`.
 12. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
-13. Validate the package with `scripts/validate_asset_package.py`.
-14. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
-15. Inspect previews and write the final QA status into `qa_report.md` and `metadata.json`.
+13. Inspect previews and, when appropriate, update object quality checks and QA status with `scripts/record_quality_review.py`.
+14. Validate the package with `scripts/validate_asset_package.py`.
+15. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
 16. Report the package path, final status, manifest path, and any manual correction points.
 
 ## Status Meanings

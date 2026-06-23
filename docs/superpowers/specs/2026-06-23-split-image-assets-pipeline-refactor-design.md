@@ -25,6 +25,7 @@ source image
 -> import_external_assets.py
 -> build_previews.py
 -> build_quality_previews.py
+-> record_quality_review.py
 -> validate_asset_package.py
 -> export_asset_manifest.py
 -> qa_report.md and final user-facing summary
@@ -86,7 +87,19 @@ The importer validates input files and metadata before copying, rejects unsafe `
 
 Preview files are evidence for inspection. They are never production substitutes for reusable assets.
 
-### 6. Structural Validation
+### 6. Manual Quality Review Recording
+
+`scripts/record_quality_review.py` records the human or agent inspection result after previews are generated:
+
+- semantic hierarchy and recommended split plan
+- inspected pipeline quality gates
+- object-level mask, alpha, background residue, and reuse checks
+- package QA status
+- review notes appended to `qa_report.md`
+
+This script exists to avoid a common manual-test failure: imported layers stay `needs-review`, semantic analysis is missing, or `qa.status` is promoted by hand without matching object-level evidence. It rejects `qa.status=pass` unless every required object quality check is `pass`.
+
+### 7. Structural Validation
 
 `scripts/validate_asset_package.py` validates the package contract:
 
@@ -105,7 +118,7 @@ Preview files are evidence for inspection. They are never production substitutes
 
 Validation proves structural evidence is present. It does not prove visual perfection.
 
-### 7. Downstream Manifest Export
+### 8. Downstream Manifest Export
 
 `scripts/export_asset_manifest.py` creates `asset_manifest.json` for downstream consumers:
 
@@ -141,6 +154,7 @@ The validator remains structural and metadata-focused. It does not judge visual 
 - `split-image-assets/scripts/import_external_assets.py`
 - `split-image-assets/scripts/build_previews.py`
 - `split-image-assets/scripts/build_quality_previews.py`
+- `split-image-assets/scripts/record_quality_review.py`
 - `split-image-assets/scripts/validate_asset_package.py`
 - `split-image-assets/scripts/export_asset_manifest.py`
 - `split-image-assets/tests/test_skill_package.py`
@@ -164,6 +178,7 @@ python split-image-assets\scripts\init_asset_package.py source.png output-packag
 python split-image-assets\scripts\import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from upstream mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets\scripts\build_previews.py output-package
 python split-image-assets\scripts\build_quality_previews.py output-package
+python split-image-assets\scripts\record_quality_review.py output-package --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
 python split-image-assets\scripts\validate_asset_package.py output-package
 python split-image-assets\scripts\export_asset_manifest.py output-package
 ```
@@ -172,6 +187,7 @@ Expected failure modes during testing:
 
 - An initialized package fails validation until analysis, pipeline metadata, object inventory, quality evidence, and previews are added.
 - Imported layers default to `needs-review`; a user or reviewer must upgrade quality checks after inspection.
+- `record_quality_review.py` is the supported path for upgrading quality checks and QA status after inspection.
 - `qa.status=pass` is blocked unless all required object quality checks are `pass`.
 - Absolute paths or `..` path escapes in metadata are rejected.
 - The scripts do not run SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, inpainting, or generation directly.

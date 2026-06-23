@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-24 - Split Image Assets Uses A Review Adapter Instead Of Hand-Edited QA Metadata
+- Decision: Add `scripts/record_quality_review.py` as the supported path for recording semantic analysis, quality gates, object quality checks, package QA status, and `qa_report.md` notes after inspecting imported image layers.
+- Rationale: Manual testing exposed a usability gap: external assets could be imported, but testers then had to hand-edit `metadata.json` to clear `needs-review` states and align `qa_report.md`. That made validation failures easy to create and hard to interpret.
+- Impact: The skill now has a deterministic review step between quality previews and validation. The adapter refuses `qa.status=pass` unless every required object quality check is `pass`, preserving the existing quality gate while making the happy path testable.
+- Related files: `split-image-assets/scripts/record_quality_review.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `split-image-assets/references/asset-package-contract.md`, `docs/usage/split-image-assets.md`, `split-image-assets/tests/test_skill_package.py`
+
 ## 2026-06-23 - Split Image Assets Requires User Sync For Ambiguous Split Decisions
 - Decision: Add a Decision Sync Rule to `split-image-assets`: when layer grouping, text ownership, background repair, animation readiness, or low-confidence mask handling requires product judgment, ask the user one focused question at a time and include a recommended answer before continuing that branch.
 - Rationale: Mature segmentation tools can produce plausible pixels, but reusable assets depend on intent. Some split choices cannot be inferred safely from the image alone and should be resolved with the user instead of guessed.
