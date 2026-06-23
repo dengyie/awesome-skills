@@ -4,12 +4,16 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` has a verified downstream manifest export optimization ready to commit on top of the local pipeline quality-gate work.
+- Current stage: `split-image-assets` mature-pipeline refactor is in test-handoff mode. The design document records current data flow and the repo memory now has a dedicated manual-testing handoff.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (29 tests)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-24: `git diff --check` (passed with only CRLF warnings)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (29 tests)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
 - 2026-06-24: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
@@ -175,10 +179,10 @@
 - Push to `origin/main` is blocked by invalid GitHub authentication for account `dengyie`; `gh auth status` reports "The token in default is invalid." Re-authenticate with `gh auth login -h github.com`, then rerun `git push origin main`.
 
 ## Current Focus
-- Commit the verified `split-image-assets` downstream manifest export optimization, then publish once GitHub authentication is refreshed.
+- Support user manual testing of `split-image-assets` using the documented package flow, validation gates, and handoff notes.
 
 ## Next Milestone
-- No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
+- Manual test the skill with representative images and record concrete quality/usability gaps as a new bounded follow-up only if testing exposes them.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`
@@ -196,6 +200,7 @@
 - `split-image-assets/tests/test_skill_package.py`
 - `docs/usage/split-image-assets.md`
 - `docs/superpowers/specs/2026-06-23-split-image-assets-pipeline-refactor-design.md`
+- `.codex-memory/handoffs/2026-06-24-split-image-assets-test-handoff.md`
 - `docs/superpowers/specs/2026-06-23-split-image-assets-design.md`
 - `docs/superpowers/plans/2026-06-23-split-image-assets.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v29-resource-atomicity-plan.md`

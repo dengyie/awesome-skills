@@ -3,6 +3,7 @@
 ## Next
 - [ ] Re-authenticate GitHub for account `dengyie` and push local `main` to `origin/main`.
 ## Done
+- [x] Record the `split-image-assets` current design, data flow, and manual-testing handoff before user testing.
 - [x] Commit the verified `split-image-assets` downstream asset manifest export optimization.
 - [x] Review/stage/commit the final-verified `split-image-assets` pipeline quality-gate refactor.
 - [x] Final-verify the `split-image-assets` pipeline quality-gate refactor after duplicate-test cleanup.
