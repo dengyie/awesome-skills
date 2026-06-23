@@ -112,6 +112,7 @@ This script exists to avoid a common manual-test failure: imported layers stay `
 - object inventory is non-empty
 - production PNG layers include alpha
 - source-space masks match source dimensions
+- ordinary inspection previews and segmentation-quality previews exist for every reusable object layer
 - object records include composition order, semantic boundary, mask source, alpha source, and quality checks
 - package `qa.status` cannot be `pass` unless every required object quality check is `pass`
 - preview references, including nested quality preview paths, resolve inside the package

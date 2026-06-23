@@ -278,8 +278,96 @@ def iter_preview_paths(previews: object) -> list[str]:
     return paths
 
 
+def require_preview_path(
+    package_dir: Path,
+    previews: dict,
+    keys: list[str],
+    errors: list[str],
+    label: str,
+    action: str,
+) -> None:
+    value: object = previews
+    for key in keys:
+        if not isinstance(value, dict):
+            value = None
+            break
+        value = value.get(key)
+    if not isinstance(value, str) or not value.strip():
+        errors.append(f"{label} is required; run {action}")
+        return
+    path = rel_path(package_dir, value, errors, label)
+    if path is not None and not path.exists():
+        errors.append(f"{label} file is missing: {value}")
+
+
 def validate_previews(package_dir: Path, metadata: dict, errors: list[str]) -> None:
-    for preview_path in iter_preview_paths(metadata.get("previews", {})):
+    previews = metadata.get("previews", {})
+    if not isinstance(previews, dict):
+        errors.append("metadata.previews must be an object")
+        previews = {}
+
+    objects = metadata.get("objects", [])
+    object_layers = [
+        item
+        for item in objects
+        if isinstance(item, dict)
+        and item.get("role") in OBJECT_ASSET_ROLES
+        and isinstance(item.get("id"), str)
+        and item.get("id").strip()
+    ]
+    if object_layers:
+        require_preview_path(
+            package_dir,
+            previews,
+            ["overview_decomposition"],
+            errors,
+            "overview inspection preview",
+            "build_previews.py",
+        )
+        require_preview_path(
+            package_dir,
+            previews,
+            ["sprite_sheet_2x2"],
+            errors,
+            "sprite sheet inspection preview",
+            "build_previews.py",
+        )
+    for item in object_layers:
+        object_id = item["id"]
+        require_preview_path(
+            package_dir,
+            previews,
+            [object_id, "whitebg"],
+            errors,
+            f"{object_id}: white-background inspection preview",
+            "build_previews.py",
+        )
+        require_preview_path(
+            package_dir,
+            previews,
+            [object_id, "checkerboard"],
+            errors,
+            f"{object_id}: checkerboard inspection preview",
+            "build_previews.py",
+        )
+        require_preview_path(
+            package_dir,
+            previews,
+            ["quality", object_id, "mask_overlay"],
+            errors,
+            f"{object_id}: mask overlay quality preview",
+            "build_quality_previews.py",
+        )
+        require_preview_path(
+            package_dir,
+            previews,
+            ["quality", object_id, "alpha_inspection"],
+            errors,
+            f"{object_id}: alpha inspection quality preview",
+            "build_quality_previews.py",
+        )
+
+    for preview_path in iter_preview_paths(previews):
         path = rel_path(package_dir, preview_path, errors, "preview path")
         if path is None:
             continue

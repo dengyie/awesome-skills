@@ -10,6 +10,7 @@
 - Object PNGs that represent cutouts have an alpha channel.
 - Object metadata records `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`.
 - Source-space masks match source dimensions.
+- Inspection previews and segmentation-quality previews exist for every reusable object layer.
 - `qa_report.md` contains a final status.
 
 ## Semantic Layer Quality
@@ -63,6 +64,8 @@ Run `scripts/build_quality_previews.py` after assets and masks are present. Insp
 - layer stack order through `composition_order`
 
 Quality previews are evidence, not proof. They help reviewers identify edge and mask failures quickly.
+
+Structural validation requires these preview references to exist. Missing preview evidence means the package has not completed the QA loop, even when object files and masks are present.
 
 ## Background Repair
 

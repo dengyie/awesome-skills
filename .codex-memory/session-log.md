@@ -277,6 +277,14 @@
 - Results: The repository now has an alignment document for the next `zero-to-website-design` phase: `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`. Project memory and the zero-to-website workstream now reflect that the current focus has moved from earlier shipped phases to the next hardening target.
 - Next: Align on the V6 plan, then implement the approved doc/template/usage changes and run validation plus production review.
 - Blockers: None.
+## 2026-06-24 03:50
+- Task: Continue hardening `split-image-assets` manual-test failures around missing QA evidence.
+- Actions: Added failing tests for packages that had object assets but lacked ordinary inspection previews or segmentation-quality previews, tightened `validate_asset_package.py` to require both preview families for reusable object layers, and updated skill docs, package contract, QA standards, usage docs, design notes, and the testing handoff.
+- Results: Packages can no longer validate structurally when preview evidence is missing. Validation now points testers to `build_previews.py` or `build_quality_previews.py` for the missing evidence path.
+- Verification: 33 `split-image-assets` tests OK, repository docs test OK, `quick_validate.py` reported `Skill is valid!`, `git diff --check` passed with only CRLF warnings, and production review emitted no concrete code finding while routing high-risk due the existing GitHub auth blocker.
+- Next: Run production review on the working tree, then commit the QA evidence validation hardening.
+- Blockers: GitHub publish remains blocked until account `dengyie` is re-authenticated with `gh auth login -h github.com`.
+
 ## 2026-06-24 03:25
 - Task: Improve `split-image-assets` based on manual-test failure paths.
 - Actions: Treated the likely failure as the missing bridge between external asset import and final validation, wrote failing tests for review recording and invalid pass promotion, implemented `scripts/record_quality_review.py`, updated SKILL workflow/docs/design handoff, and recorded the new decision in project memory.

@@ -26,7 +26,7 @@
 - `scripts/build_previews.py`: creates standard inspection previews and rejects package path escapes.
 - `scripts/build_quality_previews.py`: creates mask overlay and alpha inspection evidence, rejects package path escapes, and fails if no QA previews are produced.
 - `scripts/record_quality_review.py`: records semantic analysis, quality gates, per-object quality checks, package QA status, and `qa_report.md` notes after manual or agent inspection. It refuses `qa.status=pass` unless every required object quality check is `pass`.
-- `scripts/validate_asset_package.py`: enforces structure, semantic analysis, extraction pipeline provenance, non-empty object inventory, alpha/mask requirements, object quality evidence, safe paths, preview consistency, and `qa.status` consistency.
+- `scripts/validate_asset_package.py`: enforces structure, semantic analysis, extraction pipeline provenance, non-empty object inventory, alpha/mask requirements, object quality evidence, required inspection and quality previews, safe paths, preview consistency, and `qa.status` consistency.
 - `scripts/export_asset_manifest.py`: writes downstream `asset_manifest.json` sorted by `composition_order` from `metadata.json`.
 
 ## Manual Test Sequence
@@ -43,6 +43,7 @@ python split-image-assets\scripts\export_asset_manifest.py output-package
 ## Expected Test Signals
 - Fresh initialized packages should fail validation until required analysis and evidence are added.
 - Imported layers should start as `needs-review`.
+- Packages with object layers should fail validation until `build_previews.py` and `build_quality_previews.py` have produced preview evidence.
 - Quality checks and final QA status should be upgraded with `record_quality_review.py` after preview inspection, not by hand-editing disconnected files.
 - `qa.status=pass` should fail if any required object quality check is not `pass`.
 - Absolute paths and `..` path escapes should fail validation.

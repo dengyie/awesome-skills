@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-24 - Split Image Assets Requires Preview Evidence For Validation
+- Decision: Make `validate_asset_package.py` require ordinary inspection previews and segmentation-quality previews for every reusable object layer before a package can validate structurally.
+- Rationale: Manual testing showed a package could contain object PNGs, masks, and metadata but still lack the preview evidence needed to inspect segmentation and alpha quality. A package without preview evidence should not look ready merely because metadata does not reference missing previews.
+- Impact: Validation now fails until `build_previews.py` creates white-background, checkerboard, overview, and sprite-sheet previews, and `build_quality_previews.py` creates mask overlay and alpha inspection previews. This keeps the mature-pipeline contract tied to visible QA evidence.
+- Related files: `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/tests/test_skill_package.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/asset-package-contract.md`, `split-image-assets/references/qa-standards.md`, `docs/usage/split-image-assets.md`
+
 ## 2026-06-24 - Split Image Assets Uses A Review Adapter Instead Of Hand-Edited QA Metadata
 - Decision: Add `scripts/record_quality_review.py` as the supported path for recording semantic analysis, quality gates, object quality checks, package QA status, and `qa_report.md` notes after inspecting imported image layers.
 - Rationale: Manual testing exposed a usability gap: external assets could be imported, but testers then had to hand-edit `metadata.json` to clear `needs-review` states and align `qa_report.md`. That made validation failures easy to create and hard to interpret.
