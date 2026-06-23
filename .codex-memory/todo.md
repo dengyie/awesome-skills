@@ -1,6 +1,7 @@
 # TODO
 ## In Progress
 ## Next
+- [ ] Re-authenticate GitHub for account `dengyie` and push local `main` to `origin/main`.
 ## Done
 - [x] Review/stage/commit the final-verified `split-image-assets` pipeline quality-gate refactor.
 - [x] Final-verify the `split-image-assets` pipeline quality-gate refactor after duplicate-test cleanup.

@@ -1,5 +1,13 @@
 # Session Log
 ## 2026-06-24
+- Task: Attempt to publish the committed `split-image-assets` refactor.
+- Actions: Checked local branch state and tried `git push origin main`; the command timed out twice. Verified with `git ls-remote` that `origin/main` still points at `512c4cc`, while local `HEAD` is `05c0a08`. Ran `gh auth status`, which reported the default `dengyie` token is invalid. Cleaned up stale Git/Git Credential Manager push processes left by the timed-out attempts.
+- Results: Local `main` remains clean and ahead of `origin/main` by four commits. The refactor is committed locally but not published.
+- Validation: `git status --short --branch --untracked-files=all` showed `main...origin/main [ahead 4]`; `git ls-remote origin refs/heads/main` still returned `512c4cc0bf893059e3bdb9d3cbbd67ce47cb46b6`.
+- Next: Re-authenticate with `gh auth login -h github.com`, then rerun `git push origin main`.
+- Blockers: Invalid GitHub token for account `dengyie`.
+
+## 2026-06-24
 - Task: Continue and close out the `split-image-assets` production hardening pass.
 - Actions: Reviewed the carried-over diff, found and removed a duplicated nested-quality-preview regression test method, reran the full split-image-assets package tests, repository docs test, skill quick validation, diff check, and production review entrypoint. Updated project memory with the final verification state.
 - Results: The refactor remains focused on mature-tool adapters, package-contained path safety, structured pipeline provenance, quality-preview evidence, recursive preview validation, importer object-id safety, and user decision sync for ambiguous split choices. The duplicate test method no longer masks coverage. The work was committed in the latest local `main` commit.

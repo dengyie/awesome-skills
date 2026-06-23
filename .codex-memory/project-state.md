@@ -167,10 +167,10 @@
 - Review follow-up fixed: `validate_asset_package.py` now rejects initialized packages with an empty object inventory instead of reporting them as valid.
 
 ## Active Blockers
-- None for the `split-image-assets` implementation.
+- Push to `origin/main` is blocked by invalid GitHub authentication for account `dengyie`; `gh auth status` reports "The token in default is invalid." Re-authenticate with `gh auth login -h github.com`, then rerun `git push origin main`.
 
 ## Current Focus
-- No active `split-image-assets` implementation work remains after the latest local `main` commit.
+- No active `split-image-assets` implementation work remains after the latest local `main` commit; publish once GitHub authentication is refreshed.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
