@@ -52,7 +52,8 @@ NEVER HIDE UNCERTAINTY
 12. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
 13. Read `references/qa-standards.md` and inspect the package.
 14. Validate structure with `scripts/validate_asset_package.py`.
-15. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
+15. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
+16. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
 
 ## Script Boundaries
 
@@ -63,6 +64,8 @@ Use external image tools, AI image editing, manual editing, or user-provided cut
 `scripts/import_external_assets.py` is the standard adapter for mature tool outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
+
+`scripts/export_asset_manifest.py` creates `asset_manifest.json` for downstream renderers, animation pipelines, design tools, or manual review. It records package-relative asset paths sorted by `composition_order`; it does not validate visual quality or replace `metadata.json`.
 
 ## Pipeline Quality Rule
 
@@ -114,6 +117,7 @@ At minimum report:
 - generated or collected assets
 - previews
 - quality preview evidence
+- downstream asset manifest
 - validation result
 - QA status: `pass`, `needs-review`, or `blocked`
 - manual-review flags and next correction points

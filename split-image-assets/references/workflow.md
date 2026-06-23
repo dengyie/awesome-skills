@@ -28,8 +28,9 @@ Use this workflow to turn a single source image into a reusable asset package. O
 11. Generate previews with `scripts/build_previews.py`.
 12. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
 13. Validate the package with `scripts/validate_asset_package.py`.
-14. Inspect previews and write the final QA status into `qa_report.md` and `metadata.json`.
-15. Report the package path, final status, and any manual correction points.
+14. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
+15. Inspect previews and write the final QA status into `qa_report.md` and `metadata.json`.
+16. Report the package path, final status, manifest path, and any manual correction points.
 
 ## Status Meanings
 
@@ -73,3 +74,9 @@ Before claiming reuse quality, record:
 - upstream tools and manual operations used for masks, alpha, background repair, and layer proposals
 - quality gates inspected for mask alignment, alpha edges, background residue, and reuse readiness
 - object-level `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`
+
+## Downstream Manifest
+
+Run `scripts/export_asset_manifest.py` after validation when another tool needs a stable layer list. The script writes `asset_manifest.json` by default, sorted by `composition_order`, with package-relative asset and mask paths plus quality status per layer.
+
+The manifest is a consumer-facing index. It does not replace `metadata.json`, `qa_report.md`, or manual inspection.

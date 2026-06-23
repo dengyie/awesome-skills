@@ -1,5 +1,13 @@
 # Session Log
 ## 2026-06-24
+- Task: Continue optimizing `split-image-assets` product usability after the quality-gate refactor.
+- Actions: Added TDD coverage for a downstream asset manifest handoff, implemented `scripts/export_asset_manifest.py`, and updated the skill workflow, package contract, and usage docs so validated packages can export `asset_manifest.json` sorted by `composition_order` with package-relative paths and per-layer quality status.
+- Results: Downstream renderers, animation tooling, design-tool importers, and manual review queues now have a stable consumer-facing layer list without treating previews or metadata internals as the delivery API.
+- Validation: Watched the new manifest tests fail before implementation, then passed the targeted tests, `python -m unittest discover split-image-assets\tests -v` with 29 tests, repository docs test, skill quick validation, `git diff --check` with only line-ending warnings, and production review brief collection with no risk flags.
+- Next: Commit the manifest export optimization, then push after GitHub authentication is refreshed.
+- Blockers: Remote push remains blocked by invalid GitHub token for account `dengyie`.
+
+## 2026-06-24
 - Task: Attempt to publish the committed `split-image-assets` refactor.
 - Actions: Checked local branch state and tried `git push origin main`; the command timed out twice. Verified with `git ls-remote` that `origin/main` still points at `512c4cc`, while local `HEAD` is `05c0a08`. Ran `gh auth status`, which reported the default `dengyie` token is invalid. Cleaned up stale Git/Git Credential Manager push processes left by the timed-out attempts.
 - Results: Local `main` remains clean and ahead of `origin/main` by four commits. The refactor is committed locally but not published.

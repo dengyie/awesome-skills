@@ -122,6 +122,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "scripts" / "import_external_assets.py",
             ROOT / "scripts" / "build_previews.py",
             ROOT / "scripts" / "build_quality_previews.py",
+            ROOT / "scripts" / "export_asset_manifest.py",
             ROOT / "scripts" / "validate_asset_package.py",
             REPO / "docs" / "usage" / "split-image-assets.md",
         ]
@@ -167,12 +168,14 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "metadata.json",
             "qa_report.md",
             "sprite_sheet_2x2.png",
+            "asset_manifest.json",
             "manual review",
             "does not perform segmentation",
             "semantic layer hierarchy",
             "Grounded-SAM",
             "Qwen-Image-Layered",
             "rectangular crop",
+            "export_asset_manifest.py",
         ]:
             self.assertIn(expected, usage)
 
@@ -628,6 +631,110 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("Package valid", result.stdout)
+
+    def test_export_asset_manifest_writes_sorted_downstream_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("RGBA", (4, 3), (0, 0, 255, 128)).save(
+                output / "assets" / "secondary_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            Image.new("L", (4, 3), 200).save(output / "masks" / "mask_secondary.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"].append(
+                {
+                    "id": "secondary_object",
+                    "role": "secondary",
+                    "layer_kind": "secondary-object",
+                    "composition_order": 5,
+                    "semantic_boundary": "Blue secondary fixture object.",
+                    "asset_path": "assets/secondary_transparent.png",
+                    "mask_path": "masks/mask_secondary.png",
+                    "mask_source": "manual",
+                    "alpha_source": "manual-rgba",
+                    "extraction_method": "manual",
+                    "confidence": "high",
+                    "edge_complexity": "hard",
+                    "manual_review_flags": [],
+                    "quality_checks": {
+                        "mask_alignment": "pass",
+                        "alpha_edges": "pass",
+                        "background_residue": "pass",
+                        "reuse_readiness": "pass",
+                    },
+                }
+            )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "export_asset_manifest.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest_path = output / "asset_manifest.json"
+            self.assertTrue(manifest_path.exists())
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["schema_version"], "1.0")
+            self.assertEqual(manifest["package_name"], "fixture")
+            self.assertEqual(manifest["qa_status"], "needs-review")
+            self.assertEqual(
+                [layer["id"] for layer in manifest["layers"]],
+                ["secondary_object", "main_object"],
+            )
+            self.assertEqual(manifest["layers"][0]["asset_path"], "assets/secondary_transparent.png")
+            self.assertEqual(manifest["layers"][0]["mask_path"], "masks/mask_secondary.png")
+            self.assertEqual(manifest["layers"][0]["quality_status"], "pass")
+
+    def test_export_asset_manifest_rejects_asset_paths_outside_package(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            outside_asset = tmp_path / "outside_asset.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(outside_asset)
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["asset_path"] = str(outside_asset)
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "export_asset_manifest.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must stay inside the package", result.stderr)
+            self.assertFalse((output / "asset_manifest.json").exists())
 
     def test_validate_asset_package_rejects_object_without_alpha(self):
         with tempfile.TemporaryDirectory() as tmp:

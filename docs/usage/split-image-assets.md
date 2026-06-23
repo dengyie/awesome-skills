@@ -19,6 +19,7 @@ asset-package/
   assets/background_clean.png
   masks/mask_main.png
   previews/sprite_sheet_2x2.png
+  asset_manifest.json
   metadata.json
   qa_report.md
 ```
@@ -33,7 +34,10 @@ python split-image-assets/scripts/import_external_assets.py output-package --obj
 python split-image-assets/scripts/build_previews.py output-package
 python split-image-assets/scripts/build_quality_previews.py output-package
 python split-image-assets/scripts/validate_asset_package.py output-package
+python split-image-assets/scripts/export_asset_manifest.py output-package
 ```
+
+`asset_manifest.json` is the downstream handoff file for renderers, animation tooling, design imports, or manual review queues. It is generated from `metadata.json`, sorted by `composition_order`, and uses package-relative paths.
 
 ## QA
 

@@ -4,12 +4,17 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` pipeline quality-gate refactor is implemented, final-verified, and committed in the latest local `main` commit.
+- Current stage: `split-image-assets` has a verified downstream manifest export optimization ready to commit on top of the local pipeline quality-gate work.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (29 tests)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
+- 2026-06-24: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+- 2026-06-24: `git diff --check` (passed with only line-ending warnings)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (medium-risk review brief; no risk flags)
 - 2026-06-24: `git commit -m "refactor: harden split image asset pipeline"` created the latest local `main` commit
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (27 tests)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
@@ -170,7 +175,7 @@
 - Push to `origin/main` is blocked by invalid GitHub authentication for account `dengyie`; `gh auth status` reports "The token in default is invalid." Re-authenticate with `gh auth login -h github.com`, then rerun `git push origin main`.
 
 ## Current Focus
-- No active `split-image-assets` implementation work remains after the latest local `main` commit; publish once GitHub authentication is refreshed.
+- Commit the verified `split-image-assets` downstream manifest export optimization, then publish once GitHub authentication is refreshed.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
@@ -181,6 +186,7 @@
 - `split-image-assets/scripts/import_external_assets.py`
 - `split-image-assets/scripts/build_previews.py`
 - `split-image-assets/scripts/build_quality_previews.py`
+- `split-image-assets/scripts/export_asset_manifest.py`
 - `split-image-assets/scripts/validate_asset_package.py`
 - `split-image-assets/references/workflow.md`
 - `split-image-assets/references/pipeline-recipes.md`

@@ -3,6 +3,7 @@
 ## Next
 - [ ] Re-authenticate GitHub for account `dengyie` and push local `main` to `origin/main`.
 ## Done
+- [x] Commit the verified `split-image-assets` downstream asset manifest export optimization.
 - [x] Review/stage/commit the final-verified `split-image-assets` pipeline quality-gate refactor.
 - [x] Final-verify the `split-image-assets` pipeline quality-gate refactor after duplicate-test cleanup.
 - [x] Fix `split-image-assets` review issues for package path safety, importer atomicity, quality-preview false success, and ambiguous split decision sync.
