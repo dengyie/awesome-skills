@@ -20,6 +20,8 @@ The package contract gains an `extraction_pipeline` block in `metadata.json`. It
 ```text
 source image
 -> init_asset_package.py
+-> check_extraction_environment.py
+-> granularity alignment gate
 -> semantic analysis in metadata.analysis
 -> external mature extraction pipeline
 -> import_external_assets.py
@@ -37,7 +39,22 @@ source image
 
 Initialized packages are intentionally not valid final packages. They still need semantic analysis, extraction pipeline metadata, object inventory, quality evidence, and inspection artifacts.
 
-### 2. Semantic Analysis
+### 2. Extraction Capability And Granularity Gates
+
+`scripts/check_extraction_environment.py` checks optional local extraction modules without installing anything:
+
+- Pillow
+- OpenCV
+- Torch
+- rembg
+- SAM2
+- segment-anything
+
+The report recommends whether to use a local mature pipeline, ask for external cutouts/masks, or continue draft-only. If a mature segmentation/matting path is unavailable and no external assets were supplied, the skill must not claim production extraction.
+
+Before cutting pixels, the agent must also align split granularity with the user: module-level, component-level, atomic-layer, or production-editable reconstruction; image text versus live downstream text; approximate versus exact background repair; and animation-ready versus static layers.
+
+### 3. Semantic Analysis
 
 The user or agent records:
 
@@ -46,7 +63,7 @@ The user or agent records:
 
 This is the anti-rectangle gate. A layer must represent a semantic object, background, frame, label, route, shadow, decoration, or control. A rectangle is only a storage bbox around a semantic mask.
 
-### 3. External Mature Pipeline
+### 4. External Mature Pipeline
 
 The skill treats mature image tools as upstream producers, not bundled dependencies. Supported upstream families include:
 
@@ -57,7 +74,7 @@ The skill treats mature image tools as upstream producers, not bundled dependenc
 
 The repository does not vendor model code, weights, or runtime environments. The stable boundary is the adapter layer and metadata contract.
 
-### 4. External Output Import
+### 5. External Output Import
 
 `scripts/import_external_assets.py` normalizes mature-tool outputs into the package:
 
@@ -71,7 +88,7 @@ The repository does not vendor model code, weights, or runtime environments. The
 
 The importer validates input files and metadata before copying, rejects unsafe `object-id` path segments, and keeps copied paths inside the package.
 
-### 5. Preview And QA Evidence
+### 6. Preview And QA Evidence
 
 `scripts/build_previews.py` creates ordinary inspection previews:
 
@@ -87,7 +104,7 @@ The importer validates input files and metadata before copying, rejects unsafe `
 
 Preview files are evidence for inspection. They are never production substitutes for reusable assets.
 
-### 6. Manual Quality Review Recording
+### 7. Manual Quality Review Recording
 
 `scripts/record_quality_review.py` records the human or agent inspection result after previews are generated:
 
@@ -99,7 +116,9 @@ Preview files are evidence for inspection. They are never production substitutes
 
 This script exists to avoid a common manual-test failure: imported layers stay `needs-review`, semantic analysis is missing, or `qa.status` is promoted by hand without matching object-level evidence. It rejects `qa.status=pass` unless every required object quality check is `pass`.
 
-### 7. Structural Validation
+Crop-only or estimated layers are draft evidence by default. `record_quality_review.py --confirm-crop-layer` records per-layer human confirmation when a bbox/manual-estimated crop is explicitly accepted for production reuse.
+
+### 8. Structural Validation
 
 `scripts/validate_asset_package.py` validates the package contract:
 
@@ -115,11 +134,12 @@ This script exists to avoid a common manual-test failure: imported layers stay `
 - ordinary inspection previews and segmentation-quality previews exist for every reusable object layer
 - object records include composition order, semantic boundary, mask source, alpha source, and quality checks
 - package `qa.status` cannot be `pass` unless every required object quality check is `pass`
+- crop-only or estimated layers cannot support `qa.status=pass` without `manual_review_confirmed=true`
 - preview references, including nested quality preview paths, resolve inside the package
 
 Validation proves structural evidence is present. It does not prove visual perfection.
 
-### 8. Downstream Manifest Export
+### 9. Downstream Manifest Export
 
 `scripts/export_asset_manifest.py` creates `asset_manifest.json` for downstream consumers:
 
@@ -152,6 +172,7 @@ The validator remains structural and metadata-focused. It does not judge visual 
 - `split-image-assets/references/manual-review.md`
 - `split-image-assets/references/pipeline-recipes.md`
 - `split-image-assets/scripts/init_asset_package.py`
+- `split-image-assets/scripts/check_extraction_environment.py`
 - `split-image-assets/scripts/import_external_assets.py`
 - `split-image-assets/scripts/build_previews.py`
 - `split-image-assets/scripts/build_quality_previews.py`
@@ -176,6 +197,7 @@ For a manual package trial, the expected command sequence is:
 
 ```powershell
 python split-image-assets\scripts\init_asset_package.py source.png output-package
+python split-image-assets\scripts\check_extraction_environment.py
 python split-image-assets\scripts\import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from upstream mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets\scripts\build_previews.py output-package
 python split-image-assets\scripts\build_quality_previews.py output-package
@@ -190,6 +212,7 @@ Expected failure modes during testing:
 - Imported layers default to `needs-review`; a user or reviewer must upgrade quality checks after inspection.
 - `record_quality_review.py` is the supported path for upgrading quality checks and QA status after inspection.
 - `qa.status=pass` is blocked unless all required object quality checks are `pass`.
+- bbox/manual-estimated crop layers remain draft-only unless per-layer manual confirmation is recorded.
 - Absolute paths or `..` path escapes in metadata are rejected.
 - The scripts do not run SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, inpainting, or generation directly.
 

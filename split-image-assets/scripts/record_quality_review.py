@@ -86,6 +86,12 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             value = getattr(args, arg_name)
             if value is not None:
                 quality_checks[check_name] = value
+        if args.confirm_crop_layer:
+            item["manual_review_confirmed"] = True
+            notes = item.setdefault("manual_review_notes", [])
+            for note in args.review_note or ["Manual review confirmed crop-only layer."]:
+                if note not in notes:
+                    notes.append(note)
 
 
 def all_required_checks_pass(metadata: dict) -> bool:
@@ -138,6 +144,11 @@ def main() -> int:
     parser.add_argument("--background-residue", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
     parser.add_argument("--reuse-readiness", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
     parser.add_argument("--qa-status", choices=sorted(ALLOWED_QA_STATUSES))
+    parser.add_argument(
+        "--confirm-crop-layer",
+        action="store_true",
+        help="Record human confirmation that an estimated crop/bbox layer is acceptable.",
+    )
     parser.add_argument("--review-note", action="append")
     args = parser.parse_args()
 
@@ -145,6 +156,8 @@ def main() -> int:
         parser.error("use either --all-objects or --object-id, not both")
     if has_quality_updates(args) and not args.all_objects and not args.object_id:
         parser.error("quality check updates require --object-id or --all-objects")
+    if args.confirm_crop_layer and not args.all_objects and not args.object_id:
+        parser.error("--confirm-crop-layer requires --object-id or --all-objects")
 
     package_dir = Path(args.package_dir).resolve()
     metadata = read_metadata(package_dir, parser)

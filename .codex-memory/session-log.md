@@ -277,6 +277,14 @@
 - Results: The repository now has an alignment document for the next `zero-to-website-design` phase: `docs/dev/2026-06-18-zero-to-website-design-v6-historical-mock-framework-hardening-plan.md`. Project memory and the zero-to-website workstream now reflect that the current focus has moved from earlier shipped phases to the next hardening target.
 - Next: Align on the V6 plan, then implement the approved doc/template/usage changes and run validation plus production review.
 - Blockers: None.
+## 2026-06-24 04:25
+- Task: Continue hardening `split-image-assets` around user-facing execution starts.
+- Actions: Added `check_extraction_environment.py`, enforced capability and granularity gates in the workflow, added `record_quality_review.py --confirm-crop-layer`, and updated validation so crop-only or estimated layers cannot support `qa.status=pass` without per-layer manual confirmation.
+- Results: The skill now has a standard pre-extraction capability check, explicit split-granularity alignment, and a hard rule that bbox/manual-estimated crops remain draft-only unless human-confirmed.
+- Verification: 36 `split-image-assets` tests OK, repository docs test OK, `quick_validate.py` reported `Skill is valid!`, `git diff --check` passed with only CRLF warnings, and production review emitted no concrete code finding while routing high-risk due the existing GitHub auth blocker.
+- Next: Commit the pre-extraction hardening.
+- Blockers: GitHub publish remains blocked until account `dengyie` is re-authenticated with `gh auth login -h github.com`.
+
 ## 2026-06-24 03:50
 - Task: Continue hardening `split-image-assets` manual-test failures around missing QA evidence.
 - Actions: Added failing tests for packages that had object assets but lacked ordinary inspection previews or segmentation-quality previews, tightened `validate_asset_package.py` to require both preview families for reusable object layers, and updated skill docs, package contract, QA standards, usage docs, design notes, and the testing handoff.

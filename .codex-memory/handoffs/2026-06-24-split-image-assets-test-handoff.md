@@ -22,6 +22,7 @@
 
 ## Current Logic Map
 - `scripts/init_asset_package.py`: creates package directories, copies the source image, writes starter metadata, and initializes `qa_report.md`.
+- `scripts/check_extraction_environment.py`: checks optional local extraction modules without installing anything and tells the agent whether to use a local mature pipeline, request external assets, or continue draft-only.
 - `scripts/import_external_assets.py`: copies external transparent assets and masks into package-owned paths, updates object metadata, records extraction pipeline recipe/stages/tools, and defaults quality checks to `needs-review`.
 - `scripts/build_previews.py`: creates standard inspection previews and rejects package path escapes.
 - `scripts/build_quality_previews.py`: creates mask overlay and alpha inspection evidence, rejects package path escapes, and fails if no QA previews are produced.
@@ -32,6 +33,7 @@
 ## Manual Test Sequence
 ```powershell
 python split-image-assets\scripts\init_asset_package.py source.png output-package
+python split-image-assets\scripts\check_extraction_environment.py
 python split-image-assets\scripts\import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from upstream mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets\scripts\build_previews.py output-package
 python split-image-assets\scripts\build_quality_previews.py output-package
@@ -45,6 +47,7 @@ python split-image-assets\scripts\export_asset_manifest.py output-package
 - Imported layers should start as `needs-review`.
 - Packages with object layers should fail validation until `build_previews.py` and `build_quality_previews.py` have produced preview evidence.
 - Quality checks and final QA status should be upgraded with `record_quality_review.py` after preview inspection, not by hand-editing disconnected files.
+- bbox/manual-estimated crop layers should remain `needs-review` or `blocked` unless `record_quality_review.py --confirm-crop-layer` records explicit per-layer human approval.
 - `qa.status=pass` should fail if any required object quality check is not `pass`.
 - Absolute paths and `..` path escapes should fail validation.
 - The final package should include reusable PNG assets, masks, previews, quality previews, `metadata.json`, `qa_report.md`, and `asset_manifest.json`.

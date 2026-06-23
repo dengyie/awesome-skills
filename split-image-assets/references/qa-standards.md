@@ -24,6 +24,8 @@ Check that assets follow the image's meaning:
 
 If a package mostly contains page rectangles, grid slices, or bounding boxes, mark it `blocked` or `needs-review` even if the files validate structurally.
 
+If a reusable layer uses a bbox, crop, or manual-estimated crop mask, keep the package `needs-review` or `blocked` until a human confirms that exact layer as production-acceptable. Record that confirmation with `record_quality_review.py --confirm-crop-layer`.
+
 ## Proportion
 
 - Individual assets preserve the object's aspect ratio.

@@ -4,6 +4,8 @@
 
 Use these recipes to choose an extraction path before creating production assets. The bundled scripts do not run these tools; they record and validate the evidence that the chosen pipeline produced.
 
+Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, keep the package draft-only or pause for the user to choose installation, external outputs, or manual editing.
+
 ## Recommended Default: Grounded Segmentation, Matting, And Repair
 
 Use this when segmentation quality matters more than speed.

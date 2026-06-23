@@ -1,4 +1,10 @@
 # Decisions
+## 2026-06-24 - Split Image Assets Requires Pre-Extraction Capability And Granularity Gates
+- Decision: Add a deterministic extraction environment check and make granularity alignment a required pre-extraction workflow gate. Also block `qa.status=pass` for bbox/manual-estimated crop layers unless `manual_review_confirmed=true` is recorded per layer.
+- Rationale: The package contract and validator were strong, but user testing showed agents could still start a run without knowing whether mature extraction tools were available or what split granularity the user needed. Crop-only outputs could also be mistaken for production assets without an explicit human acceptance record.
+- Impact: `scripts/check_extraction_environment.py` reports local optional tool availability without installing anything. `SKILL.md`, workflow, recipes, usage docs, and validation now require capability checks, granularity alignment, and explicit crop-only confirmation before production-pass claims.
+- Related files: `split-image-assets/scripts/check_extraction_environment.py`, `split-image-assets/scripts/record_quality_review.py`, `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `split-image-assets/references/pipeline-recipes.md`, `split-image-assets/tests/test_skill_package.py`
+
 ## 2026-06-24 - Split Image Assets Requires Preview Evidence For Validation
 - Decision: Make `validate_asset_package.py` require ordinary inspection previews and segmentation-quality previews for every reusable object layer before a package can validate structurally.
 - Rationale: Manual testing showed a package could contain object PNGs, masks, and metadata but still lack the preview evidence needed to inspect segmentation and alpha quality. A package without preview evidence should not look ready merely because metadata does not reference missing previews.

@@ -10,6 +10,18 @@ For quality-first extraction, use a Grounded-SAM/SAM2 style pipeline: semantic a
 
 Start by recording a semantic layer hierarchy in `metadata.analysis.visual_hierarchy`. Split by meaning: background/backplate, frame or UI chrome, main subjects, connection paths, labels, buttons, decorations, shadows, and overlays. A rectangular crop is only acceptable as a tight storage bbox around a semantic mask; rectangular crop packages are not complete asset packages.
 
+## Before extraction
+
+Run the capability gate before starting a high-quality split:
+
+```bash
+python split-image-assets/scripts/check_extraction_environment.py
+```
+
+If mature segmentation/matting tools are unavailable and no external masks or cutouts were provided, do not claim production extraction. Ask whether to install or activate tools, provide external split outputs, or continue as draft-only packaging.
+
+Also align split granularity before cutting pixels: module-level, component-level, atomic-layer, or production-editable reconstruction; text as image assets or live downstream text; exact background recovery or approximate `background_clean.png`; animation-ready layers or static reuse.
+
 ## Output Package
 
 ```text
@@ -29,6 +41,7 @@ asset-package/
 ## Basic Commands
 
 ```bash
+python split-image-assets/scripts/check_extraction_environment.py
 python split-image-assets/scripts/init_asset_package.py source.png output-package
 python split-image-assets/scripts/import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from SAM2 mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets/scripts/build_previews.py output-package
@@ -51,3 +64,5 @@ Per-object `quality_checks` should cover mask alignment, alpha edges, background
 Use `record_quality_review.py` after inspecting previews to update `metadata.json` and append `qa_report.md` together. This prevents the common failure where imported layers remain `needs-review`, semantic analysis is missing, or `qa.status` is promoted without matching object-level evidence.
 
 Validation now requires both ordinary inspection previews from `build_previews.py` and quality previews from `build_quality_previews.py` for each reusable object layer. A package without preview evidence is incomplete even if the transparent PNGs and masks exist.
+
+Bbox/manual-estimated crop layers are draft-only unless explicitly confirmed. Use `record_quality_review.py --confirm-crop-layer --object-id <id>` only after a human accepts that layer for production reuse.

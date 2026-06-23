@@ -8,8 +8,14 @@ Use this workflow to turn a single source image into a reusable asset package. O
 
 1. Intake the source image and identify the desired output package directory.
 2. Run `scripts/init_asset_package.py` if the package does not already exist.
-3. Read `pipeline-recipes.md` and choose a pipeline recipe.
-4. Analyze before extraction:
+3. Run `scripts/check_extraction_environment.py` or otherwise confirm whether a mature upstream pipeline is available. If SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and no external cutouts or masks were provided, ask whether to install/activate tools, provide external outputs, or continue as draft-only.
+4. Read `pipeline-recipes.md` and choose a pipeline recipe.
+5. Run the Granularity Alignment Gate before extraction:
+   - choose module-level, component-level, atomic-layer, or production-editable reconstruction
+   - decide whether text, labels, buttons, and UI chrome become image assets or live downstream elements
+   - decide whether approximate background repair is acceptable or exact recovery is required
+   - decide whether layers must be animation-ready or static-reuse ready
+6. Analyze before extraction:
    - source dimensions
    - semantic layer hierarchy from background to foreground
    - main object
@@ -19,18 +25,18 @@ Use this workflow to turn a single source image into a reusable asset package. O
    - shadows
    - complex edge regions
    - likely manual-review risks
-5. Pause for user decision sync when layer boundaries, grouping, text ownership, background repair, animation readiness, or low-confidence masks require product judgment.
-6. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `extraction_pipeline`, and the object inventory into `metadata.json`.
-7. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files.
-8. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
-9. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, and `qa_report.md` stay synchronized.
-10. Keep individual objects separate before creating grouped or preview outputs.
-11. Generate previews with `scripts/build_previews.py`.
-12. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
-13. Inspect previews and, when appropriate, update object quality checks and QA status with `scripts/record_quality_review.py`.
-14. Validate the package with `scripts/validate_asset_package.py`.
-15. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
-16. Report the package path, final status, manifest path, and any manual correction points.
+7. Pause for user decision sync when layer boundaries, grouping, text ownership, background repair, animation readiness, or low-confidence masks require product judgment.
+8. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `extraction_pipeline`, and the object inventory into `metadata.json`.
+9. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files.
+10. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
+11. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, and `qa_report.md` stay synchronized.
+12. Keep individual objects separate before creating grouped or preview outputs.
+13. Generate previews with `scripts/build_previews.py`.
+14. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
+15. Inspect previews and, when appropriate, update object quality checks and QA status with `scripts/record_quality_review.py`.
+16. Validate the package with `scripts/validate_asset_package.py`.
+17. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
+18. Report the package path, final status, manifest path, and any manual correction points.
 
 ## Status Meanings
 
@@ -42,6 +48,7 @@ Use this workflow to turn a single source image into a reusable asset package. O
 
 - Do not treat a 2x2 preview as the final asset.
 - Do not treat rectangular crops, grid slices, or page regions as assets unless each crop is only a tight bbox around a semantic mask.
+- Do not promote bbox/manual-estimated crop layers to `pass` without explicit per-layer human confirmation.
 - Do not merge separate objects into one layer unless the grouped layer is explicitly additional.
 - Do not hide AI-assisted fills or uncertain edges.
 - Do not claim the scripts extracted objects from the source image.

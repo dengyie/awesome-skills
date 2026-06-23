@@ -72,6 +72,7 @@ Each object should include:
 - `quality_checks.background_residue`
 - `quality_checks.reuse_readiness`
 - `manual_review_flags`
+- `manual_review_confirmed` when a crop-only or estimated layer is manually approved for production reuse
 
 ## Pipeline Contract
 
@@ -104,6 +105,8 @@ Use it for renderer integration, animation handoff, design-tool import, or manua
 An object's `bbox` records storage bounds. It is not the object's identity. A valid asset is tied to a semantic layer such as a background, object, label group, route network, shadow, frame, or decoration.
 
 If an asset exists only because it is a convenient rectangular crop, mark it as a preview or replace it with a semantic mask-backed asset before validation.
+
+If a layer uses `mask_source` such as `bbox`, `crop`, or `manual-estimated crop`, it is crop-only draft evidence by default. A package-level `qa.status=pass` is invalid until the object records `manual_review_confirmed: true` through an explicit manual review step.
 
 Structural validation does not prove visual perfection. It proves the package has enough pipeline and quality evidence for a human or downstream agent to inspect segmentation quality.
 

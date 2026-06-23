@@ -122,6 +122,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "scripts" / "import_external_assets.py",
             ROOT / "scripts" / "build_previews.py",
             ROOT / "scripts" / "build_quality_previews.py",
+            ROOT / "scripts" / "check_extraction_environment.py",
             ROOT / "scripts" / "record_quality_review.py",
             ROOT / "scripts" / "export_asset_manifest.py",
             ROOT / "scripts" / "validate_asset_package.py",
@@ -144,6 +145,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("NEVER HIDE UNCERTAINTY", skill_text)
         self.assertIn("QUALITY-GATED PIPELINE", skill_text)
         self.assertIn("DECISION SYNC BEFORE AMBIGUOUS SPLITS", skill_text)
+        self.assertIn("EXTRACTION CAPABILITY GATE", skill_text)
+        self.assertIn("GRANULARITY ALIGNMENT GATE", skill_text)
         self.assertIn("2x2 sprite sheet is only a preview", skill_text)
         self.assertIn("SEMANTIC LAYERS BEFORE RECTANGLES", skill_text)
         self.assertIn("rectangular crops", skill_text)
@@ -176,10 +179,34 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "Grounded-SAM",
             "Qwen-Image-Layered",
             "rectangular crop",
+            "check_extraction_environment.py",
+            "Before extraction",
             "record_quality_review.py",
             "export_asset_manifest.py",
         ]:
             self.assertIn(expected, usage)
+
+    def test_check_extraction_environment_reports_capability_gate_json(self):
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "check_extraction_environment.py"),
+                "--json",
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertIn("python", report)
+        self.assertIn("tools", report)
+        self.assertIn("recommended_recipe", report)
+        self.assertIn("recommended_next_step", report)
+        self.assertIn("Pillow", report["tools"])
+        self.assertIn(report["tools"]["Pillow"]["available"], [True, False])
+        self.assertIn("draft", report["recommended_next_step"].lower())
 
     def test_init_asset_package_creates_standard_layout(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -432,6 +459,51 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("cannot set qa-status pass", result.stderr)
+
+    def test_record_quality_review_can_confirm_crop_only_layer_after_manual_inspection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["mask_source"] = "bbox"
+            metadata["objects"][0]["extraction_method"] = "estimated"
+            metadata["objects"][0]["manual_review_confirmed"] = False
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--confirm-crop-layer",
+                    "--review-note",
+                    "Human confirmed this estimated crop is acceptable for production reuse.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertTrue(metadata["objects"][0]["manual_review_confirmed"])
+            self.assertIn(
+                "Human confirmed this estimated crop",
+                metadata["objects"][0]["manual_review_notes"][0],
+            )
 
     def test_build_quality_previews_creates_mask_overlay_and_records_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1273,6 +1345,64 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("qa.status cannot be pass", result.stderr)
+
+    def test_validate_asset_package_blocks_crop_only_pass_without_manual_confirmation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["objects"][0]["mask_source"] = "manual-estimated crop"
+            metadata["objects"][0]["extraction_method"] = "estimated"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("crop-only", result.stderr)
+            self.assertIn("manual_review_confirmed", result.stderr)
 
     def test_validate_asset_package_rejects_non_object_analysis_without_traceback(self):
         with tempfile.TemporaryDirectory() as tmp:

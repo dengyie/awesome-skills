@@ -22,6 +22,7 @@ REQUIRED_OBJECT_QUALITY_CHECKS = {
 }
 ALLOWED_QA_STATUSES = {"pass", "needs-review", "blocked"}
 ALLOWED_QUALITY_CHECK_STATUSES = {"pass", "needs-review", "blocked", "unknown"}
+CROP_ONLY_MARKERS = {"bbox", "crop", "manual-estimated crop", "manual-estimated-crop"}
 
 
 def rel_path(package_dir: Path, value: str, errors: list[str], label: str) -> Path | None:
@@ -162,6 +163,17 @@ def has_alpha(mode: str) -> bool:
     return mode in {"RGBA", "LA"} or mode == "PA"
 
 
+def is_crop_only_layer(item: dict) -> bool:
+    mask_source = str(item.get("mask_source", "")).strip().lower()
+    extraction_method = str(item.get("extraction_method", "")).strip().lower()
+    return (
+        mask_source in CROP_ONLY_MARKERS
+        or "bbox" in mask_source
+        or "crop" in mask_source
+        or extraction_method in {"estimated", "unknown"}
+    )
+
+
 def validate_source(package_dir: Path, metadata: dict, errors: list[str]) -> tuple[int, int] | None:
     source = metadata.get("source", {})
     if not isinstance(source, dict):
@@ -265,6 +277,13 @@ def validate_objects(
                         errors.append(
                             f"{object_id}: qa.status cannot be pass when quality_checks.{check_name} is {check_value}"
                         )
+            qa = metadata.get("qa", {})
+            qa_status = qa.get("status") if isinstance(qa, dict) else None
+            if qa_status == "pass" and is_crop_only_layer(item) and item.get("manual_review_confirmed") is not True:
+                errors.append(
+                    f"{object_id}: crop-only or estimated layers cannot support qa.status pass "
+                    "without manual_review_confirmed=true"
+                )
 
 
 def iter_preview_paths(previews: object) -> list[str]:
