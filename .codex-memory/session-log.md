@@ -1,4 +1,52 @@
 # Session Log
+## 2026-06-24
+- Task: Continue and close out the `split-image-assets` production hardening pass.
+- Actions: Reviewed the carried-over diff, found and removed a duplicated nested-quality-preview regression test method, reran the full split-image-assets package tests, repository docs test, skill quick validation, diff check, and production review entrypoint. Updated project memory with the final verification state.
+- Results: The refactor remains focused on mature-tool adapters, package-contained path safety, structured pipeline provenance, quality-preview evidence, recursive preview validation, importer object-id safety, and user decision sync for ambiguous split choices. The duplicate test method no longer masks coverage. The work was committed in the latest local `main` commit.
+- Validation: Passed `python -m unittest discover split-image-assets\tests -v` with 27 tests, `python -m unittest discover tests -v`, skill quick validation for `split-image-assets`, `git diff --check` with only line-ending warnings, and production review context/brief collection with no blocking finding emitted.
+- Next: Push `main` if publication is desired.
+- Blockers: None.
+
+## 2026-06-23
+- Task: Fix `split-image-assets` production review findings and add ambiguous split decision sync.
+- Actions: Added regressions for package path escape, importer invalid-metadata half-writes, quality preview false success, and missing decision-sync skill rule. Updated validator path resolution so metadata references must stay inside the package. Updated importer to validate metadata and input images before copying. Updated quality-preview generation to fail when no previews are generated. Added a Decision Sync Rule requiring one-question-at-a-time user synchronization, with a recommended answer, when split boundaries or quality decisions require product judgment.
+- Results: Review findings are fixed and protected by tests. The skill now also instructs agents to pause before ambiguous layer grouping, text ownership, background repair, animation readiness, or low-confidence mask decisions.
+- Validation: Passed targeted regressions, `python -m unittest discover split-image-assets\tests -v` with 22 tests, repository docs tests, skill quick validation, `git diff --check`, and production review context collection.
+- Next: Review/stage/commit the accumulated `split-image-assets` refactor.
+- Blockers: None.
+
+## 2026-06-23
+- Task: Add a practical mature-tool integration layer to `split-image-assets`.
+- Actions: Added failing tests and implemented `scripts/import_external_assets.py` to normalize outputs from SAM2/rembg/BiRefNet/RMBG/Qwen-Image-Layered/LayerDiffuse/manual tools into package-controlled assets, masks, object metadata, and upstream tool provenance. Added `scripts/build_quality_previews.py` to generate mask overlays and alpha inspection previews. Updated skill, workflow, package contract, QA standards, and usage docs to make the adapter and quality-preview steps first-class.
+- Results: The skill now has an operational bridge between mature image-splitting tools and the package validator: external tools can produce pixels, while the skill standardizes evidence, previews, and QA status.
+- Validation: Passed targeted adapter/quality-preview regressions, `python -m unittest discover split-image-assets\tests -v` with 19 tests, repository docs tests, skill quick validation, `git diff --check`, and production review context collection.
+- Next: Review/stage/commit the accumulated `split-image-assets` refactor.
+- Blockers: None.
+
+## 2026-06-23
+- Task: Continue deepening the `split-image-assets` pipeline quality-gate refactor.
+- Actions: Added failing regressions for missing `composition_order`, unstructured upstream tool provenance, and `qa.status=pass` while an object quality check remains `needs-review`; updated validator and docs to enforce layer stack order, structured tool records, allowed quality-check statuses, and package-level QA consistency.
+- Results: The skill now better protects segmentation quality by preventing layer stacks without order, vague tool provenance, and premature pass claims when object-level mask/alpha/background/reuse checks are not all `pass`.
+- Validation: Passed targeted red/green tests, `python -m unittest discover split-image-assets\tests -v` with 17 tests, repository docs tests, skill quick validation, and `git diff --check` with only line-ending warnings.
+- Next: Review/stage/commit the accumulated `split-image-assets` refactor.
+- Blockers: None.
+
+## 2026-06-23
+- Task: Refactor `split-image-assets` after external research into mature image extraction and layer decomposition workflows.
+- Actions: Added a pipeline refactor design note; added `pipeline-recipes.md`; updated the main skill, workflow, package contract, QA standards, manual-review guidance, and usage docs around Grounded-SAM/SAM2-style segmentation, matting/refinement, background repair, and Qwen-Image-Layered-style RGBA decomposition. Updated initializer metadata placeholders and validator requirements for `extraction_pipeline`, ordered stages, upstream tools, quality gates, and per-object mask/alpha/quality evidence. Added regression coverage for missing pipeline metadata, missing object quality checks, and malformed metadata sections without traceback.
+- Results: `split-image-assets` now treats segmentation quality as an evidence contract: structural validation requires pipeline provenance and layer-level quality checks instead of accepting alpha PNGs alone.
+- Validation: Passed targeted red/green tests for missing pipeline and object quality evidence, `python -m unittest discover split-image-assets\tests -v`, repository docs tests, and skill quick validation for `split-image-assets`.
+- Next: Run final diff checks, then review/stage/commit the refactor with the existing split-image-assets changes.
+- Blockers: None.
+
+## 2026-06-23
+- Task: Harden `split-image-assets` after a real Project Atlas extraction attempt produced rectangle-oriented assets instead of semantic layers.
+- Actions: Added a regression proving validation rejects packages without visual hierarchy analysis; required `analysis.visual_hierarchy` and `analysis.recommended_split_plan` in metadata validation; updated initialization placeholders, skill workflow, package contract, QA/manual-review references, and usage docs around semantic layers before rectangles and honest reconstructed backgrounds; fixed the review finding where non-object `analysis` metadata caused a Python traceback instead of a structured validation error.
+- Results: The skill now blocks structurally complete but analysis-free asset packages and gives future agents explicit guidance to split by background, chrome/frame, main subjects, route/network layers, labels/buttons, decorations, shadows, and overlays instead of page regions. Malformed `analysis` metadata now reports `metadata.analysis must be an object`.
+- Validation: Passed `python -m unittest split-image-assets.tests.test_skill_package.SplitImageAssetsPackageTests.test_validate_asset_package_rejects_non_object_analysis_without_traceback -v`, `python -m unittest discover split-image-assets\tests -v`, skill quick validation, repository docs tests, `git diff --check` with only line-ending warnings, and production review context collection.
+- Next: Review, stage, commit, and push the hardening with the earlier `split-image-assets` commits.
+- Blockers: None.
+
 ## 2026-06-23
 - Task: Address production-code-quality-review finding for `split-image-assets` validator behavior.
 - Actions: Verified the finding with a temp initialized package, added `test_validate_asset_package_rejects_empty_object_inventory`, updated `validate_asset_package.py` to reject empty object inventories, and reran targeted plus package-level verification.

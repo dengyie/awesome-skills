@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -33,22 +34,45 @@ def save_metadata(package_dir: Path, metadata: dict) -> None:
     )
 
 
+def package_path(package_dir: Path, value: str, label: str, errors: list[str]) -> Path | None:
+    if not isinstance(value, str) or not value.strip():
+        errors.append(f"{label} must be a package-relative path")
+        return None
+    raw_path = Path(value)
+    if raw_path.is_absolute():
+        errors.append(f"{label} must stay inside the package: {value}")
+        return None
+    resolved = (package_dir / raw_path).resolve()
+    package_root = package_dir.resolve()
+    if resolved != package_root and package_root not in resolved.parents:
+        errors.append(f"{label} must stay inside the package: {value}")
+        return None
+    return resolved
+
+
 def object_entries(metadata: dict) -> list[dict]:
     return [
         item
         for item in metadata.get("objects", [])
-        if item.get("asset_path") and item.get("role") in {"main", "secondary", "group", "shadow"}
+        if isinstance(item, dict)
+        and item.get("asset_path")
+        and item.get("role") in {"main", "secondary", "group", "shadow"}
     ]
 
 
-def build_individual_previews(package_dir: Path, metadata: dict) -> list[Image.Image]:
+def build_individual_previews(
+    package_dir: Path, metadata: dict, errors: list[str]
+) -> list[Image.Image]:
     previews_dir = package_dir / "previews"
     previews_dir.mkdir(parents=True, exist_ok=True)
     preview_records = metadata.setdefault("previews", {})
     rendered_assets: list[Image.Image] = []
 
     for item in object_entries(metadata):
-        asset_path = package_dir / item["asset_path"]
+        object_id = item.get("id", "<missing id>")
+        asset_path = package_path(package_dir, item["asset_path"], f"{object_id}: asset_path", errors)
+        if asset_path is None:
+            continue
         if not asset_path.exists():
             continue
         with Image.open(asset_path) as opened:
@@ -129,7 +153,12 @@ def main() -> int:
 
     package_dir = Path(args.package_dir).resolve()
     metadata = load_metadata(package_dir)
-    assets = build_individual_previews(package_dir, metadata)
+    errors: list[str] = []
+    assets = build_individual_previews(package_dir, metadata, errors)
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 1
     build_overview(package_dir, metadata, assets)
     build_sprite_sheet(package_dir, metadata, assets)
     save_metadata(package_dir, metadata)

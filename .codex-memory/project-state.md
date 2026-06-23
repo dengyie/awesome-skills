@@ -4,12 +4,32 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` has been implemented as the sixth public repository skill and is ready for commit.
+- Current stage: `split-image-assets` pipeline quality-gate refactor is implemented, final-verified, and committed in the latest local `main` commit.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-24: `git commit -m "refactor: harden split image asset pipeline"` created the latest local `main` commit
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (27 tests)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
+- 2026-06-24: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+- 2026-06-24: `git diff --check` (passed with only line-ending warnings)
+- 2026-06-24: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (review brief/context collected; no blocking finding emitted)
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (22 tests)
+- 2026-06-23: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (19 tests)
+- 2026-06-23: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (17 tests)
+- 2026-06-23: `git diff --check` (passed with only line-ending warnings)
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+- 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v`
+- 2026-06-23: `git diff --check` (passed with only line-ending warnings)
+- 2026-06-23: `$env:PYTHONUTF8='1'; python production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 - 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v`
 - 2026-06-23: `$env:PYTHONUTF8='1'; python -m unittest split-image-assets.tests.test_skill_package.SplitImageAssetsPackageTests.test_validate_asset_package_rejects_empty_object_inventory -v`
 - 2026-06-23: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
@@ -138,14 +158,19 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
-- `split-image-assets` intentionally does not perform deterministic segmentation, matting, or background inpainting; those remain external AI/manual/tooling steps that must be recorded in metadata and QA.
+- `split-image-assets` intentionally does not perform deterministic segmentation, matting, or exact hidden-background recovery; those remain external AI/manual/tooling steps that must be recorded in metadata and QA.
+- `split-image-assets` now requires `metadata.extraction_pipeline` and object-level segmentation quality evidence; initialized packages are expected to remain invalid until a real pipeline recipe and quality checks are recorded.
+- `split-image-assets` now requires composition order, structured tool provenance, allowed quality-check statuses, and forbids `qa.status=pass` when any object quality check is not `pass`.
+- `split-image-assets` now has deterministic adapters for importing mature tool outputs and generating mask/alpha QA previews, but those scripts still do not perform segmentation, matting, or inpainting themselves.
+- Review fixes landed: package path references must stay inside the package, importer validates metadata before copying files, quality preview generation fails when no previews are produced, and ambiguous split decisions require one-question-at-a-time user sync.
+- `split-image-assets` now requires `metadata.analysis.visual_hierarchy` and `metadata.analysis.recommended_split_plan`; initialized packages are expected to remain invalid until semantic analysis and object inventory are completed.
 - Review follow-up fixed: `validate_asset_package.py` now rejects initialized packages with an empty object inventory instead of reporting them as valid.
 
 ## Active Blockers
 - None for the `split-image-assets` implementation.
 
 ## Current Focus
-- Commit the `split-image-assets` implementation and repository navigation updates.
+- No active `split-image-assets` implementation work remains after the latest local `main` commit.
 
 ## Next Milestone
 - No next milestone is scheduled; start a new documented phase only when a concrete new gap appears.
@@ -153,14 +178,18 @@
 ## Key Artifacts
 - `split-image-assets/SKILL.md`
 - `split-image-assets/scripts/init_asset_package.py`
+- `split-image-assets/scripts/import_external_assets.py`
 - `split-image-assets/scripts/build_previews.py`
+- `split-image-assets/scripts/build_quality_previews.py`
 - `split-image-assets/scripts/validate_asset_package.py`
 - `split-image-assets/references/workflow.md`
+- `split-image-assets/references/pipeline-recipes.md`
 - `split-image-assets/references/asset-package-contract.md`
 - `split-image-assets/references/qa-standards.md`
 - `split-image-assets/references/manual-review.md`
 - `split-image-assets/tests/test_skill_package.py`
 - `docs/usage/split-image-assets.md`
+- `docs/superpowers/specs/2026-06-23-split-image-assets-pipeline-refactor-design.md`
 - `docs/superpowers/specs/2026-06-23-split-image-assets-design.md`
 - `docs/superpowers/plans/2026-06-23-split-image-assets.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v29-resource-atomicity-plan.md`

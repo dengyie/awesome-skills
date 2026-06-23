@@ -1,4 +1,28 @@
 # Decisions
+## 2026-06-23 - Split Image Assets Requires User Sync For Ambiguous Split Decisions
+- Decision: Add a Decision Sync Rule to `split-image-assets`: when layer grouping, text ownership, background repair, animation readiness, or low-confidence mask handling requires product judgment, ask the user one focused question at a time and include a recommended answer before continuing that branch.
+- Rationale: Mature segmentation tools can produce plausible pixels, but reusable assets depend on intent. Some split choices cannot be inferred safely from the image alone and should be resolved with the user instead of guessed.
+- Impact: Future use of the skill should pause before ambiguous extraction choices while still allowing the agent to decide directly when evidence from the image, metadata, or user requirements is sufficient.
+- Related files: `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `split-image-assets/tests/test_skill_package.py`
+
+## 2026-06-23 - Split Image Assets Uses Adapters Instead Of Vendored Models
+- Decision: Add deterministic adapter and QA preview scripts to `split-image-assets` instead of vendoring SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, or model weights.
+- Rationale: Mature image tools are heavy, fast-moving, and license/runtime-dependent. The stable product boundary is to normalize their outputs into a package contract, record provenance, generate review previews, and validate quality evidence.
+- Impact: `import_external_assets.py` copies external outputs into package-owned paths and records tool/object metadata. `build_quality_previews.py` creates mask overlay and alpha inspection evidence. The skill can now reuse professional upstream tools while keeping repository scripts deterministic and lightweight.
+- Related files: `split-image-assets/scripts/import_external_assets.py`, `split-image-assets/scripts/build_quality_previews.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `split-image-assets/references/asset-package-contract.md`, `split-image-assets/references/qa-standards.md`, `docs/usage/split-image-assets.md`
+
+## 2026-06-23 - Split Image Assets Uses Pipeline Quality Gates
+- Decision: Refactor `split-image-assets` around a quality-gated extraction pipeline contract inspired by Grounded-SAM/SAM2 segmentation, matting/refinement tools, background repair workflows, and Qwen-Image-Layered style RGBA layer decomposition.
+- Rationale: External research showed that the most reliable real-world path is not one deterministic script, but a staged pipeline that records detection, segmentation, alpha refinement, background repair, layer packaging, and QA evidence. The skill should therefore validate provenance and quality evidence instead of pretending to judge visual segmentation automatically.
+- Impact: Valid packages must now record `metadata.extraction_pipeline`, ordered stages, upstream tools, quality gates, and per-object `layer_kind`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`. A new `pipeline-recipes.md` reference documents recommended recipes while keeping external models optional.
+- Related files: `split-image-assets/SKILL.md`, `split-image-assets/references/pipeline-recipes.md`, `split-image-assets/references/workflow.md`, `split-image-assets/references/asset-package-contract.md`, `split-image-assets/references/qa-standards.md`, `split-image-assets/references/manual-review.md`, `split-image-assets/scripts/init_asset_package.py`, `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/tests/test_skill_package.py`, `docs/usage/split-image-assets.md`
+
+## 2026-06-23 - Split Image Assets Requires Semantic Hierarchy Evidence
+- Decision: Harden `split-image-assets` so valid packages must record `metadata.analysis.visual_hierarchy` and `metadata.analysis.recommended_split_plan`, and update the skill workflow to forbid rectangular crops or grid slices as substitutes for semantic layers.
+- Rationale: A real test on the Project Atlas concept image showed that structurally valid crops can still be unusable when the agent does not understand the image hierarchy, background/backplate, core objects, route layers, labels, and decorations.
+- Impact: Future packages must document the layer stack before validation can pass. The docs now emphasize semantic layers before rectangles, honest reconstructed backgrounds, manual-review flags for uncertain mattes, and `needs-review`/`blocked` when the result is mostly crops.
+- Related files: `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `split-image-assets/references/asset-package-contract.md`, `split-image-assets/references/qa-standards.md`, `split-image-assets/references/manual-review.md`, `split-image-assets/scripts/init_asset_package.py`, `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/tests/test_skill_package.py`, `docs/usage/split-image-assets.md`
+
 ## 2026-06-23 - Split Image Assets Separates Packaging From Segmentation
 - Decision: Add `split-image-assets` as the sixth public repository skill and keep deterministic scripts scoped to asset-package initialization, preview generation, and validation rather than claiming to perform segmentation, matting, inpainting, or object recognition.
 - Rationale: The user wanted a semi-automatic image-processing skill, but production-grade asset splitting depends on external AI/manual/image-editing steps for hard visual judgment. Keeping the script boundary explicit prevents false automation claims while still making the final asset package reusable, inspectable, and QA-backed.

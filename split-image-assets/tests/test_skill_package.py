@@ -29,25 +29,79 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             check=False,
         )
 
-    def _write_single_object_metadata(self, package_dir: pathlib.Path) -> dict:
+    def _write_single_object_metadata(
+        self,
+        package_dir: pathlib.Path,
+        include_analysis: bool = True,
+        include_pipeline: bool = True,
+        include_quality_evidence: bool = True,
+    ) -> dict:
         metadata_path = package_dir / "metadata.json"
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-        metadata["objects"] = [
-            {
-                "id": "main_object",
-                "role": "main",
-                "asset_path": "assets/main_object_transparent.png",
-                "mask_path": "masks/mask_main.png",
-                "bbox": {"x": 0, "y": 0, "width": 4, "height": 3},
-                "width": 4,
-                "height": 3,
-                "aspect_ratio": 4 / 3,
-                "area_ratio": 1.0,
-                "extraction_method": "manual",
-                "confidence": "high",
-                "edge_complexity": "hard",
-                "manual_review_flags": [],
+        if include_analysis:
+            metadata["analysis"] = {
+                "visual_hierarchy": [
+                    "background",
+                    "main object",
+                    "inspection layer",
+                ],
+                "recommended_split_plan": "Keep the main object separate from the background.",
             }
+        if include_pipeline:
+            metadata["extraction_pipeline"] = {
+                "recipe": "grounded-segmentation-matting-repair",
+                "stages": [
+                    "semantic-analysis",
+                    "detection",
+                    "segmentation",
+                    "alpha-refinement",
+                    "background-repair",
+                    "layer-packaging",
+                    "qa-review",
+                ],
+                "quality_gates": [
+                    "mask provenance recorded",
+                    "alpha provenance recorded",
+                    "edge quality inspected",
+                    "reuse preview inspected",
+                ],
+                "tools": [
+                    {
+                        "name": "manual-fixture",
+                        "role": "test asset creation",
+                        "version": "local",
+                    }
+                ],
+            }
+        object_record = {
+            "id": "main_object",
+            "role": "main",
+            "layer_kind": "primary-subject",
+            "composition_order": 10,
+            "semantic_boundary": "The whole red fixture object separated from the background.",
+            "asset_path": "assets/main_object_transparent.png",
+            "mask_path": "masks/mask_main.png",
+            "mask_source": "manual",
+            "alpha_source": "manual-rgba",
+            "bbox": {"x": 0, "y": 0, "width": 4, "height": 3},
+            "width": 4,
+            "height": 3,
+            "aspect_ratio": 4 / 3,
+            "area_ratio": 1.0,
+            "extraction_method": "manual",
+            "confidence": "high",
+            "edge_complexity": "hard",
+            "manual_review_flags": [],
+        }
+        if include_quality_evidence:
+            object_record["quality_checks"] = {
+                "mask_alignment": "pass",
+                "alpha_edges": "pass",
+                "background_residue": "pass",
+                "reuse_readiness": "pass",
+            }
+        metadata["objects"] = [
+            object_record
         ]
         metadata_path.write_text(
             json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
@@ -60,11 +114,14 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "SKILL.md",
             ROOT / "agents" / "openai.yaml",
             ROOT / "references" / "workflow.md",
+            ROOT / "references" / "pipeline-recipes.md",
             ROOT / "references" / "asset-package-contract.md",
             ROOT / "references" / "qa-standards.md",
             ROOT / "references" / "manual-review.md",
             ROOT / "scripts" / "init_asset_package.py",
+            ROOT / "scripts" / "import_external_assets.py",
             ROOT / "scripts" / "build_previews.py",
+            ROOT / "scripts" / "build_quality_previews.py",
             ROOT / "scripts" / "validate_asset_package.py",
             REPO / "docs" / "usage" / "split-image-assets.md",
         ]
@@ -83,7 +140,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("ANALYZE BEFORE EXTRACTING", skill_text)
         self.assertIn("REUSABLE ASSETS BEFORE PREVIEWS", skill_text)
         self.assertIn("NEVER HIDE UNCERTAINTY", skill_text)
+        self.assertIn("QUALITY-GATED PIPELINE", skill_text)
+        self.assertIn("DECISION SYNC BEFORE AMBIGUOUS SPLITS", skill_text)
         self.assertIn("2x2 sprite sheet is only a preview", skill_text)
+        self.assertIn("SEMANTIC LAYERS BEFORE RECTANGLES", skill_text)
+        self.assertIn("rectangular crops", skill_text)
 
     def test_references_named_by_skill_exist(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -108,6 +169,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "sprite_sheet_2x2.png",
             "manual review",
             "does not perform segmentation",
+            "semantic layer hierarchy",
+            "Grounded-SAM",
+            "Qwen-Image-Layered",
+            "rectangular crop",
         ]:
             self.assertIn(expected, usage)
 
@@ -174,6 +239,356 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 metadata["previews"]["sprite_sheet_2x2"],
                 "previews/sprite_sheet_2x2.png",
             )
+
+    def test_import_external_assets_records_tool_provenance_and_layer_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            external_asset = tmp_path / "sam2_main.png"
+            external_mask = tmp_path / "sam2_mask.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(external_asset)
+            Image.new("L", (4, 3), 255).save(external_mask)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--role",
+                    "main",
+                    "--layer-kind",
+                    "primary-subject",
+                    "--composition-order",
+                    "10",
+                    "--semantic-boundary",
+                    "Main subject mask produced by SAM2.",
+                    "--asset",
+                    str(external_asset),
+                    "--mask",
+                    str(external_mask),
+                    "--mask-source",
+                    "sam2",
+                    "--alpha-source",
+                    "rembg-refine",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--recipe",
+                    "grounded-segmentation-matting-repair",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((output / "assets" / "main_object_transparent.png").exists())
+            self.assertTrue((output / "masks" / "mask_main_object.png").exists())
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["extraction_pipeline"]["recipe"], "grounded-segmentation-matting-repair")
+            self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "SAM2")
+            self.assertEqual(metadata["objects"][0]["composition_order"], 10)
+            self.assertEqual(metadata["objects"][0]["mask_source"], "sam2")
+            self.assertEqual(metadata["objects"][0]["quality_checks"]["mask_alignment"], "needs-review")
+
+    def test_build_quality_previews_creates_mask_overlay_and_records_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((output / "previews" / "main_object_mask_overlay.png").exists())
+            self.assertTrue((output / "previews" / "main_object_alpha_inspection.png").exists())
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                metadata["previews"]["quality"]["main_object"]["mask_overlay"],
+                "previews/main_object_mask_overlay.png",
+            )
+
+    def test_import_external_assets_rejects_invalid_metadata_before_copying_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            external_asset = tmp_path / "sam2_main.png"
+            external_mask = tmp_path / "sam2_mask.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(external_asset)
+            Image.new("L", (4, 3), 255).save(external_mask)
+            (output / "metadata.json").write_text("{bad json", encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--role",
+                    "main",
+                    "--layer-kind",
+                    "primary-subject",
+                    "--composition-order",
+                    "10",
+                    "--semantic-boundary",
+                    "Main subject mask produced by SAM2.",
+                    "--asset",
+                    str(external_asset),
+                    "--mask",
+                    str(external_mask),
+                    "--mask-source",
+                    "sam2",
+                    "--alpha-source",
+                    "rembg-refine",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertFalse((output / "assets" / "main_object_transparent.png").exists())
+            self.assertFalse((output / "masks" / "mask_main_object.png").exists())
+
+    def test_import_external_assets_rejects_object_id_path_segments(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            external_asset = tmp_path / "sam2_main.png"
+            external_mask = tmp_path / "sam2_mask.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(external_asset)
+            Image.new("L", (4, 3), 255).save(external_mask)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "../outside",
+                    "--role",
+                    "main",
+                    "--layer-kind",
+                    "primary-subject",
+                    "--composition-order",
+                    "10",
+                    "--semantic-boundary",
+                    "Main subject mask produced by SAM2.",
+                    "--asset",
+                    str(external_asset),
+                    "--mask",
+                    str(external_mask),
+                    "--mask-source",
+                    "sam2",
+                    "--alpha-source",
+                    "rembg-refine",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("object-id", result.stderr)
+            self.assertFalse((output / "outside_transparent.png").exists())
+
+    def test_import_external_assets_rejects_unsafe_object_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            external_asset = tmp_path / "sam2_main.png"
+            external_mask = tmp_path / "sam2_mask.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(external_asset)
+            Image.new("L", (4, 3), 255).save(external_mask)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "../escape",
+                    "--role",
+                    "main",
+                    "--layer-kind",
+                    "primary-subject",
+                    "--composition-order",
+                    "10",
+                    "--semantic-boundary",
+                    "Main subject mask produced by SAM2.",
+                    "--asset",
+                    str(external_asset),
+                    "--mask",
+                    str(external_mask),
+                    "--mask-source",
+                    "sam2",
+                    "--alpha-source",
+                    "rembg-refine",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse((tmp_path / "escape_transparent.png").exists())
+            self.assertIn("object-id", result.stderr)
+
+    def test_build_quality_previews_fails_when_no_quality_previews_are_generated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            metadata["objects"] = [
+                {
+                    "id": "main_object",
+                    "asset_path": "assets/missing.png",
+                    "mask_path": "masks/missing.png",
+                }
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("No quality previews generated", result.stderr)
+
+    def test_build_quality_previews_rejects_paths_outside_package(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            outside_asset = tmp_path / "outside_asset.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(outside_asset)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["asset_path"] = str(outside_asset)
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must stay inside the package", result.stderr)
+
+    def test_build_previews_rejects_asset_paths_outside_package(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            outside_asset = tmp_path / "outside_asset.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(outside_asset)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["asset_path"] = str(outside_asset)
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must stay inside the package", result.stderr)
 
     def test_validate_asset_package_accepts_complete_fixture(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -264,6 +679,356 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("object inventory", result.stderr.lower())
+
+    def test_validate_asset_package_requires_visual_hierarchy_analysis(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output, include_analysis=False)
+            preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("visual hierarchy", result.stderr.lower())
+
+    def test_validate_asset_package_rejects_paths_outside_package(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            outside_asset = tmp_path / "outside_asset.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(outside_asset)
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["asset_path"] = str(outside_asset)
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must stay inside the package", result.stderr)
+
+    def test_validate_asset_package_checks_nested_quality_preview_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["previews"] = {
+                "quality": {
+                    "main_object": {
+                        "mask_overlay": "previews/missing_overlay.png",
+                    }
+                }
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("preview file is missing", result.stderr)
+
+    def test_validate_asset_package_requires_extraction_pipeline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output, include_pipeline=False)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("extraction_pipeline", result.stderr)
+
+    def test_validate_asset_package_requires_object_quality_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output, include_quality_evidence=False)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("quality_checks", result.stderr)
+
+    def test_validate_asset_package_requires_composition_order_for_layers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0].pop("composition_order")
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("composition_order", result.stderr)
+
+    def test_validate_asset_package_requires_structured_tool_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["extraction_pipeline"]["tools"] = ["sam2"]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("tools entries must include name, role, and version", result.stderr)
+
+    def test_validate_asset_package_blocks_pass_status_when_quality_checks_are_not_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["objects"][0]["quality_checks"]["alpha_edges"] = "needs-review"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("qa.status cannot be pass", result.stderr)
+
+    def test_validate_asset_package_rejects_non_object_analysis_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["analysis"] = "not a dict"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("metadata.analysis must be an object", result.stderr)
+
+    def test_validate_asset_package_rejects_malformed_metadata_sections_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            metadata["analysis"] = {
+                "visual_hierarchy": ["background", "main object"],
+                "recommended_split_plan": "Keep the main object separate from the background.",
+            }
+            metadata["extraction_pipeline"] = {
+                "recipe": "grounded-segmentation-matting-repair",
+                "stages": [
+                    "semantic-analysis",
+                    "segmentation",
+                    "alpha-refinement",
+                    "layer-packaging",
+                    "qa-review",
+                ],
+                "quality_gates": ["mask provenance recorded"],
+                "tools": [{"name": "manual-fixture", "role": "test", "version": "local"}],
+            }
+            metadata["source"] = None
+            metadata["objects"] = ["not an object"]
+            metadata["qa"] = None
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("metadata.source must be an object", result.stderr)
+            self.assertIn("metadata.qa must be an object", result.stderr)
+            self.assertIn("metadata.objects entries must be objects", result.stderr)
 
 
 if __name__ == "__main__":

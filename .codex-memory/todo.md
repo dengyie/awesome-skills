@@ -2,6 +2,13 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Review/stage/commit the final-verified `split-image-assets` pipeline quality-gate refactor.
+- [x] Final-verify the `split-image-assets` pipeline quality-gate refactor after duplicate-test cleanup.
+- [x] Fix `split-image-assets` review issues for package path safety, importer atomicity, quality-preview false success, and ambiguous split decision sync.
+- [x] Add `split-image-assets` adapter and QA preview scripts so mature segmentation/matting/layer tools can feed the package contract.
+- [x] Deepen `split-image-assets` pipeline quality gates with composition order, structured tool provenance, and QA pass-status consistency checks.
+- [x] Refactor `split-image-assets` around mature pipeline quality gates, including extraction pipeline metadata, object-level mask/alpha provenance, and segmentation quality checks.
+- [x] Harden `split-image-assets` after the Project Atlas extraction test so semantic hierarchy analysis is required and rectangular crop packages are explicitly rejected by workflow/QA guidance.
 - [x] Fix review finding: reject empty `split-image-assets` object inventories in package validation.
 - [x] Implement and validate the `split-image-assets` sixth public skill with package scripts, docs, tests, and repository navigation updates.
 - [x] Implement, validate, sync, commit, and push the V29 `zero-to-website-design` resource atomicity hardening.
