@@ -6,6 +6,8 @@ Use these recipes to choose an extraction path before creating production assets
 
 Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, keep the package draft-only or pause for the user to choose installation, external outputs, or manual editing.
 
+Do not use Pillow, OpenCV, or skimage as the primary production segmenter. They are suitable for alpha compositing, PNG persistence, source-space mask expansion, preview generation, simple repair helpers, and metadata packaging. If the mature segmenter path is unavailable, ask the user for installation, external outputs, or draft-only packaging instead of silently falling back to coordinate crops.
+
 ## Recommended Default: Grounded Segmentation, Matting, And Repair
 
 Use this when segmentation quality matters more than speed.
@@ -28,6 +30,10 @@ Typical tool families:
 - human inspection for edge contamination, hidden-pixel recovery, and reuse readiness
 
 Record this recipe as `grounded-segmentation-matting-repair`.
+
+For complex flat UI, run this recipe first on a high-signal subset rather than attempting a full 100-layer atomization pass. Good first-pass targets include logos, nav icons, status dots, pins, checkboxes, chart marks, row glyphs, badges, and small foreground controls.
+
+For icon-in-tile or glyph-on-plate structures, segment or reconstruct the carrier tile and foreground glyph separately when semantic reuse matters.
 
 ## Layer-First Candidate: Qwen-Image-Layered Style Decomposition
 
@@ -63,3 +69,5 @@ Every recipe must record:
 - per-layer `composition_order`, `mask_source`, `alpha_source`, `semantic_boundary`, and `quality_checks`
 
 If this evidence is missing, the package is only a preview or draft and must remain `needs-review` or `blocked`.
+
+Background clean plates and support plates produced by inpainting, manual paint, or reconstruction are valid supporting assets, but record them as approximate reconstructed layers with reconstruction provenance. They are not exact automatic segmentation results.

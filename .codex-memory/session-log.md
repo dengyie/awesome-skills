@@ -1,5 +1,13 @@
 # Session Log
 ## 2026-06-24
+- Task: Apply the `concept-c-workshop-console.png` field retrospective to `split-image-assets`.
+- Actions: Added tests for standard intermediate directories, source-space mask import enforcement, unarchived intermediate detection, and reconstruction provenance requirements. Updated `init_asset_package.py`, `import_external_assets.py`, and `validate_asset_package.py`; expanded SKILL, workflow, package contract, recipes, QA standards, usage docs, and the design note with professional segmenter primacy, high-signal subset strategy, UI tile/glyph decomposition, source-space mask semantics, and `_staging/` / `_archive_intermediate/` handling.
+- Results: The skill now blocks tight bbox masks from being imported as source-space masks, rejects loose external output folders or temporary manifests in the package root, and prevents approximate/reconstructed layers from supporting `qa.status=pass` without provenance and manual confirmation.
+- Validation: Targeted tests failed before implementation and passed afterward. Full validation passed with `python -m unittest discover split-image-assets\tests -v` (39 tests), `python -m unittest discover tests -v` (1 test), skill quick validation, and `git diff --check` with only CRLF warnings.
+- Next: Review the working-tree diff, commit the retrospective hardening, then push after GitHub authentication is refreshed.
+- Blockers: Remote push remains blocked by invalid GitHub token for account `dengyie`.
+
+## 2026-06-24
 - Task: Continue optimizing `split-image-assets` product usability after the quality-gate refactor.
 - Actions: Added TDD coverage for a downstream asset manifest handoff, implemented `scripts/export_asset_manifest.py`, and updated the skill workflow, package contract, and usage docs so validated packages can export `asset_manifest.json` sorted by `composition_order` with package-relative paths and per-layer quality status.
 - Results: Downstream renderers, animation tooling, design-tool importers, and manual review queues now have a stable consumer-facing layer list without treating previews or metadata internals as the delivery API.

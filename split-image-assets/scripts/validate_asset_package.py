@@ -23,6 +23,18 @@ REQUIRED_OBJECT_QUALITY_CHECKS = {
 ALLOWED_QA_STATUSES = {"pass", "needs-review", "blocked"}
 ALLOWED_QUALITY_CHECK_STATUSES = {"pass", "needs-review", "blocked", "unknown"}
 CROP_ONLY_MARKERS = {"bbox", "crop", "manual-estimated crop", "manual-estimated-crop"}
+ALLOWED_ROOT_DIRECTORIES = {
+    "source",
+    "assets",
+    "masks",
+    "previews",
+    "_staging",
+    "_archive_intermediate",
+}
+ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json"}
+RECONSTRUCTION_MARKERS = {"reconstruct", "reconstructed", "reconstruction", "inpaint", "clean plate"}
+HELPER_ONLY_MARKERS = {"pillow", "opencv", "skimage", "threshold"}
+ALLOWED_GRANULARITY_MODES = {"module", "component", "atomic-layer", "production-editable", "draft"}
 
 
 def rel_path(package_dir: Path, value: str, errors: list[str], label: str) -> Path | None:
@@ -60,6 +72,19 @@ def validate_required_layout(package_dir: Path, errors: list[str]) -> None:
     for filename in ["metadata.json", "qa_report.md"]:
         if not (package_dir / filename).exists():
             errors.append(f"required file is missing: {filename}")
+    root_children = package_dir.iterdir() if package_dir.exists() else []
+    for child in root_children:
+        if child.is_dir():
+            if child.name not in ALLOWED_ROOT_DIRECTORIES and not child.name.startswith("_"):
+                errors.append(
+                    f"unarchived intermediate directory in package root: {child.name}; "
+                    "move external model outputs into _staging/ or _archive_intermediate/"
+                )
+        elif child.is_file() and child.name not in ALLOWED_ROOT_FILES:
+            errors.append(
+                f"unexpected file in package root: {child.name}; "
+                "move temporary manifests into _staging/ or _archive_intermediate/"
+            )
 
 
 def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
@@ -91,6 +116,23 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
     split_plan = analysis.get("recommended_split_plan")
     if not isinstance(split_plan, str) or not split_plan.strip():
         errors.append("metadata.analysis.recommended_split_plan must describe semantic layer boundaries")
+    granularity = metadata.get("granularity", {})
+    if not isinstance(granularity, dict):
+        errors.append("metadata.granularity must be an object")
+        granularity = {}
+    mode = granularity.get("mode")
+    if mode not in ALLOWED_GRANULARITY_MODES:
+        errors.append("metadata.granularity.mode must record the agreed split granularity")
+    user_confirmed = granularity.get("user_confirmed")
+    if not isinstance(user_confirmed, bool):
+        errors.append("metadata.granularity.user_confirmed must be true or false")
+    elif user_confirmed is not True:
+        errors.append("metadata.granularity.user_confirmed must be true before validation")
+    notes = granularity.get("notes")
+    if not isinstance(notes, str):
+        errors.append("metadata.granularity.notes must be a string")
+    elif not notes.strip():
+        errors.append("metadata.granularity.notes must explain the aligned split scope")
     qa = metadata.get("qa", {})
     if not isinstance(qa, dict):
         errors.append("metadata.qa must be an object")
@@ -172,6 +214,25 @@ def is_crop_only_layer(item: dict) -> bool:
         or "crop" in mask_source
         or extraction_method in {"estimated", "unknown"}
     )
+
+
+def is_reconstructed_or_approximate_layer(item: dict) -> bool:
+    if item.get("approximate") is True:
+        return True
+    values = [
+        item.get("mask_source", ""),
+        item.get("alpha_source", ""),
+        item.get("extraction_method", ""),
+        item.get("layer_kind", ""),
+    ]
+    text = " ".join(str(value).lower() for value in values)
+    return any(marker in text for marker in RECONSTRUCTION_MARKERS)
+
+
+def is_helper_only_layer(item: dict) -> bool:
+    values = [item.get("mask_source", ""), item.get("alpha_source", "")]
+    text = " ".join(str(value).lower() for value in values)
+    return any(marker in text for marker in HELPER_ONLY_MARKERS)
 
 
 def validate_source(package_dir: Path, metadata: dict, errors: list[str]) -> tuple[int, int] | None:
@@ -284,6 +345,23 @@ def validate_objects(
                     f"{object_id}: crop-only or estimated layers cannot support qa.status pass "
                     "without manual_review_confirmed=true"
                 )
+            if qa_status == "pass" and is_helper_only_layer(item) and item.get("manual_review_confirmed") is not True:
+                errors.append(
+                    f"{object_id}: helper-only extraction sources cannot support qa.status pass "
+                    "without manual_review_confirmed=true"
+                )
+            if is_reconstructed_or_approximate_layer(item):
+                provenance = item.get("reconstruction_provenance")
+                if not isinstance(provenance, str) or not provenance.strip():
+                    errors.append(
+                        f"{object_id}: approximate or reconstructed layers must record "
+                        "reconstruction_provenance"
+                    )
+                if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
+                    errors.append(
+                        f"{object_id}: approximate reconstructed layers cannot support qa.status pass "
+                        "without manual_review_confirmed=true"
+                    )
 
 
 def iter_preview_paths(previews: object) -> list[str]:

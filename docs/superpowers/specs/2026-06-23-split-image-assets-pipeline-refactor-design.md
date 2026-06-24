@@ -24,18 +24,20 @@ source image
 -> granularity alignment gate
 -> semantic analysis in metadata.analysis
 -> external mature extraction pipeline
+-> _staging/ for active upstream outputs
 -> import_external_assets.py
 -> build_previews.py
 -> build_quality_previews.py
 -> record_quality_review.py
 -> validate_asset_package.py
+-> _archive_intermediate/ for retained intermediates
 -> export_asset_manifest.py
 -> qa_report.md and final user-facing summary
 ```
 
 ### 1. Package Initialization
 
-`scripts/init_asset_package.py` copies the source image into `source/source_original.png`, creates the default `assets/`, `masks/`, and `previews/` directories, writes `metadata.json`, and initializes `qa_report.md` with `Final status: needs-review`.
+`scripts/init_asset_package.py` copies the source image into `source/source_original.png`, creates the default `assets/`, `masks/`, `previews/`, `_staging/`, and `_archive_intermediate/` directories, writes `metadata.json`, and initializes `qa_report.md` with `Final status: needs-review`.
 
 Initialized packages are intentionally not valid final packages. They still need semantic analysis, extraction pipeline metadata, object inventory, quality evidence, and inspection artifacts.
 
@@ -52,7 +54,11 @@ Initialized packages are intentionally not valid final packages. They still need
 
 The report recommends whether to use a local mature pipeline, ask for external cutouts/masks, or continue draft-only. If a mature segmentation/matting path is unavailable and no external assets were supplied, the skill must not claim production extraction.
 
+The capability gate now reports `production_capable` plus `missing_for_production` so agents can distinguish "some tools exist" from "production-grade segmentation and refinement is locally available."
+
 Before cutting pixels, the agent must also align split granularity with the user: module-level, component-level, atomic-layer, or production-editable reconstruction; image text versus live downstream text; approximate versus exact background repair; and animation-ready versus static layers.
+
+Pillow, OpenCV, and skimage are helper tools for compositing, source-space mask expansion, preview generation, repair helpers, and packaging. They are not the primary segmenter for production assets.
 
 ### 3. Semantic Analysis
 
@@ -62,6 +68,8 @@ The user or agent records:
 - `metadata.analysis.recommended_split_plan`
 
 This is the anti-rectangle gate. A layer must represent a semantic object, background, frame, label, route, shadow, decoration, or control. A rectangle is only a storage bbox around a semantic mask.
+
+For complex UI, the workflow should start with a high-signal subset such as logos, nav icons, status dots, pins, checkboxes, chart marks, badges, or row glyphs before expanding to more atoms. For icon-in-tile or glyph-on-plate patterns, the carrier tile and foreground glyph should be separate layers when independent reuse or mask cleanup matters.
 
 ### 4. External Mature Pipeline
 
@@ -88,6 +96,8 @@ The repository does not vendor model code, weights, or runtime environments. The
 
 The importer validates input files and metadata before copying, rejects unsafe `object-id` path segments, and keeps copied paths inside the package.
 
+The importer requires masks to be source-space masks matching the source dimensions. Tight bbox masks must be expanded to source coordinates before import or retained as intermediates in `_staging/`.
+
 ### 6. Preview And QA Evidence
 
 `scripts/build_previews.py` creates ordinary inspection previews:
@@ -109,6 +119,7 @@ Preview files are evidence for inspection. They are never production substitutes
 `scripts/record_quality_review.py` records the human or agent inspection result after previews are generated:
 
 - semantic hierarchy and recommended split plan
+- granularity mode, confirmation, and notes
 - inspected pipeline quality gates
 - object-level mask, alpha, background residue, and reuse checks
 - package QA status
@@ -131,10 +142,14 @@ Crop-only or estimated layers are draft evidence by default. `record_quality_rev
 - object inventory is non-empty
 - production PNG layers include alpha
 - source-space masks match source dimensions
+- agreed granularity metadata is recorded
+- unarchived external model folders or temporary manifests are not loose in the package root
 - ordinary inspection previews and segmentation-quality previews exist for every reusable object layer
 - object records include composition order, semantic boundary, mask source, alpha source, and quality checks
 - package `qa.status` cannot be `pass` unless every required object quality check is `pass`
 - crop-only or estimated layers cannot support `qa.status=pass` without `manual_review_confirmed=true`
+- approximate or reconstructed layers must record `reconstruction_provenance` and cannot support `qa.status=pass` without manual confirmation
+- helper-only sources such as Pillow/OpenCV/skimage thresholds or crop alpha cannot support `qa.status=pass` without manual confirmation
 - preview references, including nested quality preview paths, resolve inside the package
 
 Validation proves structural evidence is present. It does not prove visual perfection.
@@ -201,7 +216,8 @@ python split-image-assets\scripts\check_extraction_environment.py
 python split-image-assets\scripts\import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from upstream mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets\scripts\build_previews.py output-package
 python split-image-assets\scripts\build_quality_previews.py output-package
-python split-image-assets\scripts\record_quality_review.py output-package --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
+python split-image-assets\scripts\record_quality_review.py output-package --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --granularity-mode atomic-layer --granularity-confirmed --granularity-note "Atomic foreground layers; text rebuilt downstream." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
+python split-image-assets\scripts\archive_intermediates.py output-package --run-id sam-pass-001
 python split-image-assets\scripts\validate_asset_package.py output-package
 python split-image-assets\scripts\export_asset_manifest.py output-package
 ```

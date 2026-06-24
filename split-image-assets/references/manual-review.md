@@ -14,6 +14,8 @@
 - mask source or alpha source is unclear for a reusable production layer
 - the background is reconstructed from a flattened image and hidden pixels cannot be verified
 - mask previews reveal edge contamination
+- icon-in-tile, badge-in-card, or glyph-on-plate edges look merged or contaminated
+- a source-space mask looks mostly black and someone is unsure whether that is a QA mask or a broken asset
 
 ## Manual Review Output
 
@@ -26,6 +28,11 @@ When manual review is needed, report:
 - recommended correction area
 - failed quality gate: mask alignment, alpha edges, background residue, or reuse readiness
 - whether the package is `needs-review` or `blocked`
+
+## Practical Checks
+
+- For icon-in-tile, badge-in-card, or glyph-on-plate structures, inspect whether the carrier layer and foreground glyph should be separated. If the mask mixes them and cleanup becomes awkward, split carrier + glyph before claiming reuse readiness.
+- A mostly black source-space mask is normal when the object is small. Do not judge the layer from `masks/*.png` alone; inspect `assets/*.png` for tight transparent reuse and inspect `*_mask_overlay.png` to verify source alignment.
 
 ## Honesty Rule
 

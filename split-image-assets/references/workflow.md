@@ -15,7 +15,8 @@ Use this workflow to turn a single source image into a reusable asset package. O
    - decide whether text, labels, buttons, and UI chrome become image assets or live downstream elements
    - decide whether approximate background repair is acceptable or exact recovery is required
    - decide whether layers must be animation-ready or static-reuse ready
-6. Analyze before extraction:
+6. Choose a high-signal first subset when the image is complex. For flat UI and dashboards, start with logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements that a professional segmenter can isolate and a reviewer can inspect clearly.
+7. Analyze before extraction:
    - source dimensions
    - semantic layer hierarchy from background to foreground
    - main object
@@ -25,18 +26,20 @@ Use this workflow to turn a single source image into a reusable asset package. O
    - shadows
    - complex edge regions
    - likely manual-review risks
-7. Pause for user decision sync when layer boundaries, grouping, text ownership, background repair, animation readiness, or low-confidence masks require product judgment.
-8. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `extraction_pipeline`, and the object inventory into `metadata.json`.
-9. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files.
-10. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
-11. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, and `qa_report.md` stay synchronized.
-12. Keep individual objects separate before creating grouped or preview outputs.
-13. Generate previews with `scripts/build_previews.py`.
-14. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
-15. Inspect previews and, when appropriate, update object quality checks and QA status with `scripts/record_quality_review.py`.
-16. Validate the package with `scripts/validate_asset_package.py`.
-17. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
-18. Report the package path, final status, manifest path, and any manual correction points.
+8. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
+9. Pause for user decision sync when layer boundaries, grouping, text ownership, background repair, animation readiness, or low-confidence masks require product judgment.
+10. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `extraction_pipeline`, and the object inventory into `metadata.json`.
+11. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
+12. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`.
+13. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
+14. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, and `qa_report.md` stay synchronized.
+15. Keep individual objects separate before creating grouped or preview outputs.
+16. Generate previews with `scripts/build_previews.py`.
+17. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
+18. Inspect previews and, when appropriate, update object quality checks and QA status with `scripts/record_quality_review.py`.
+19. Validate the package with `scripts/validate_asset_package.py`.
+20. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
+21. Report the package path, final status, manifest path, and any manual correction points.
 
 ## Status Meanings
 
@@ -53,6 +56,8 @@ Use this workflow to turn a single source image into a reusable asset package. O
 - Do not hide AI-assisted fills or uncertain edges.
 - Do not claim the scripts extracted objects from the source image.
 - Do not claim segmentation quality when `extraction_pipeline` or per-object quality evidence is missing.
+- Do not leave external model folders or temporary manifests in the package root; use `_staging/` or `_archive_intermediate/`.
+- Do not mark approximate background or structural reconstruction as exact extraction.
 
 ## Layer Decomposition Checklist
 
@@ -68,6 +73,8 @@ Before cutting pixels, name the reusable layers that a downstream renderer would
 
 If the plan only names rectangles such as "top left", "map area", or "2x2 tile", stop and redo the analysis.
 
+For UI assets, check whether a tile, badge, or panel background should be split from its foreground glyph or symbol. This is often cleaner than one mixed layer because SAM-style masks can merge the carrier shape and glyph.
+
 ## User Decision Sync
 
 When a split choice affects future reuse, editing, localization, animation, or visual truth, ask the user one focused question before continuing. Include your recommended answer. Do not batch multiple questions unless the user asks for a full grill-me style interrogation.
@@ -79,7 +86,9 @@ Before claiming reuse quality, record:
 - selected recipe such as `grounded-segmentation-matting-repair` or `layered-rgba-decomposition`
 - ordered stages from semantic analysis through QA review
 - upstream tools and manual operations used for masks, alpha, background repair, and layer proposals
+- primary segmenter, matting tool, and helper tools used in the run summary
 - quality gates inspected for mask alignment, alpha edges, background residue, and reuse readiness
+- recorded granularity mode and whether the user confirmed it
 - object-level `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`
 
 ## Downstream Manifest

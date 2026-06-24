@@ -12,6 +12,7 @@
 - Source-space masks match source dimensions.
 - Inspection previews and segmentation-quality previews exist for every reusable object layer.
 - `qa_report.md` contains a final status.
+- Intermediate external outputs are kept in `_staging/` or `_archive_intermediate/`, not loose in the package root.
 
 ## Semantic Layer Quality
 
@@ -21,6 +22,7 @@ Check that assets follow the image's meaning:
 - primary subjects are separate from labels, route lines, controls, or decorations when those layers need independent reuse
 - grouped layers are additional convenience assets, not replacements for individual layers
 - rectangular crops are only tight storage bounds around source-space masks
+- UI icon-in-tile, badge-in-card, and glyph-on-plate elements are split into carrier and glyph layers when independent reuse or edge cleanup requires it
 
 If a package mostly contains page rectangles, grid slices, or bounding boxes, mark it `blocked` or `needs-review` even if the files validate structurally.
 
@@ -69,6 +71,8 @@ Quality previews are evidence, not proof. They help reviewers identify edge and 
 
 Structural validation requires these preview references to exist. Missing preview evidence means the package has not completed the QA loop, even when object files and masks are present.
 
+Source-space masks are normal QA artifacts. A small UI component can produce a mostly black mask with a small white region because the mask is aligned to the original source image, not cropped to the asset bbox.
+
 ## Background Repair
 
 Check `background_clean.png` for:
@@ -85,3 +89,5 @@ Check `background_clean.png` for:
 Record which parts are exact extraction, AI-assisted generation, manual editing, estimated geometry, or unknown. Low-confidence or AI-assisted work should carry manual-review flags unless a human has inspected it.
 
 When a layer is reconstructed rather than extracted, record that explicitly. A reconstructed route, backplate, or missing background can be useful, but it is not an exact extraction.
+
+Approximate background clean plates and structural support layers must record `reconstruction_provenance`. Keep them `needs-review` unless a human explicitly confirms the approximation is acceptable for the requested downstream use.

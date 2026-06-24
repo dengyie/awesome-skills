@@ -8,9 +8,12 @@ TOOL_SPECS = {
     "Pillow": ["PIL"],
     "OpenCV": ["cv2"],
     "Torch": ["torch"],
+    "torchvision": ["torchvision"],
     "rembg": ["rembg"],
+    "onnxruntime": ["onnxruntime"],
     "SAM2": ["sam2"],
     "segment-anything": ["segment_anything"],
+    "GroundingDINO": ["groundingdino"],
 }
 
 
@@ -54,15 +57,36 @@ def choose_recipe(tools: dict) -> tuple[str, str]:
     )
 
 
+def production_readiness(tools: dict) -> tuple[bool, list[str]]:
+    missing: list[str] = []
+    has_runtime = tools["Torch"]["available"]
+    has_detector_or_modern_segmenter = tools["SAM2"]["available"] or tools["GroundingDINO"]["available"]
+    has_any_segmenter = has_detector_or_modern_segmenter or tools["segment-anything"]["available"]
+    has_matting = tools["rembg"]["available"]
+
+    if not has_runtime:
+        missing.append("torch runtime")
+    if not has_detector_or_modern_segmenter:
+        missing.append("SAM2 or grounded detector")
+    if not has_any_segmenter:
+        missing.append("segmentation model")
+    if not has_matting:
+        missing.append("matting/refinement")
+    return not missing, missing
+
+
 def build_report() -> dict:
     tools = detect_tools()
     recipe, next_step = choose_recipe(tools)
+    production_capable, missing_for_production = production_readiness(tools)
     return {
         "python": {
             "executable": sys.executable,
             "version": sys.version.split()[0],
         },
         "tools": tools,
+        "production_capable": production_capable,
+        "missing_for_production": missing_for_production,
         "recommended_recipe": recipe,
         "recommended_next_step": next_step,
         "capability_gate": {
@@ -83,6 +107,10 @@ def print_text_report(report: dict) -> None:
     for name, details in report["tools"].items():
         status = "available" if details["available"] else "missing"
         print(f"- {name}: {status} ({details['module']})")
+    status = "yes" if report["production_capable"] else "no"
+    print(f"Production capable: {status}")
+    if report["missing_for_production"]:
+        print("Missing for production: " + ", ".join(report["missing_for_production"]))
     print(f"Recommended recipe: {report['recommended_recipe']}")
     print(f"Recommended next step: {report['recommended_next_step']}")
     print("If required tools are missing, do not claim production extraction.")

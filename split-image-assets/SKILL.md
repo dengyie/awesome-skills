@@ -17,11 +17,14 @@ This skill is not a one-shot image prompt. Its main output is an asset package w
 ANALYZE BEFORE EXTRACTING
 EXTRACTION CAPABILITY GATE
 GRANULARITY ALIGNMENT GATE
+PROFESSIONAL SEGMENTER FIRST
 SEMANTIC LAYERS BEFORE RECTANGLES
 QUALITY-GATED PIPELINE
 DECISION SYNC BEFORE AMBIGUOUS SPLITS
 REUSABLE ASSETS BEFORE PREVIEWS
 TRANSPARENT PNGS ARE PRODUCTION ASSETS
+SOURCE-SPACE MASKS ARE NORMAL
+STAGE INTERMEDIATES
 PREVIEWS ARE INSPECTION ARTIFACTS
 NEVER HIDE UNCERTAINTY
 ```
@@ -38,7 +41,8 @@ NEVER HIDE UNCERTAINTY
    - text/labels/buttons extracted as images or rebuilt downstream as live text/UI
    - exact background recovery required or approximate `background_clean.png` accepted as `needs-review`
    - animation-ready independent layers required or static reuse enough
-7. Analyze the source image before extraction:
+7. For complex UI or graphic compositions, start with a high-signal subset instead of trying to atomize the entire image at once. Good first-pass targets are logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements whose masks can be inspected clearly.
+8. Analyze the source image before extraction:
    - visual hierarchy from background to foreground
    - main object
    - secondary objects
@@ -47,22 +51,26 @@ NEVER HIDE UNCERTAINTY
    - complex edges
    - transparent, reflective, fuzzy, smoky, or low-contrast regions
    - recommended split plan
-8. When the split plan has an ambiguous decision point, follow the Decision Sync Rule before extracting.
-9. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
-10. Produce or collect reusable assets:
+9. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
+10. When the split plan has an ambiguous decision point, follow the Decision Sync Rule before extracting.
+11. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
+   - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
+12. Produce or collect reusable assets:
    - transparent PNGs for individual objects
    - source-space masks
    - cleaned background
    - optional shadows and grouped object layers
-11. When external tools produced assets, normalize them with `scripts/import_external_assets.py`.
-12. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
-13. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, and manual QA status after inspection instead of hand-editing JSON.
-14. Build inspection previews with `scripts/build_previews.py`.
-15. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
-16. Read `references/qa-standards.md` and inspect the package.
-17. Validate structure with `scripts/validate_asset_package.py`.
-18. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
-19. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
+13. Put external model outputs, candidate masks, refinement files, and temporary manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
+   - use `scripts/archive_intermediates.py` when you want a deterministic archive step
+14. When external tools produced assets, normalize them with `scripts/import_external_assets.py`.
+15. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
+16. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, and manual QA status after inspection instead of hand-editing JSON.
+17. Build inspection previews with `scripts/build_previews.py`.
+18. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
+19. Read `references/qa-standards.md` and inspect the package.
+20. Validate structure with `scripts/validate_asset_package.py`.
+21. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
+22. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
 
 ## Script Boundaries
 
@@ -70,9 +78,13 @@ The bundled scripts are deterministic packaging helpers. They do not perform seg
 
 Use external image tools, AI image editing, manual editing, or user-provided cutouts for the actual extraction work. Good default pipelines are Grounded-SAM/SAM2 style detection and segmentation, matting refinement with rembg/BiRefNet/RMBG-style tools, inpainting or manual paint repair for hidden background, and Qwen-Image-Layered style RGBA layer proposals when the source is a designed composition. Then use this skill to keep the package structure, previews, metadata, and QA evidence consistent.
 
+Pillow, OpenCV, and skimage are not primary segmenters for production splitting. Use them for alpha compositing, PNG writing, source-space mask persistence, repair/refinement helpers, preview generation, metadata, and manifest packaging. Do not silently downgrade a production request to bbox or coordinate crops when the mature segmenter path is missing.
+
 `scripts/import_external_assets.py` is the standard adapter for mature tool outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance.
 
 `scripts/check_extraction_environment.py` is the capability gate. It only checks local optional modules such as Pillow, OpenCV, Torch, rembg, SAM2, and segment-anything; it does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-only.
+
+The capability report distinguishes `production_capable` from `draft-only` fallback conditions and lists `missing_for_production` so an agent does not confuse partial local tooling with production readiness.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
@@ -80,9 +92,13 @@ Use external image tools, AI image editing, manual editing, or user-provided cut
 
 `scripts/export_asset_manifest.py` creates `asset_manifest.json` for downstream renderers, animation pipelines, design tools, or manual review. It records package-relative asset paths sorted by `composition_order`; it does not validate visual quality or replace `metadata.json`.
 
+`scripts/archive_intermediates.py` moves active `_staging/` outputs into `_archive_intermediate/<run-id>/` and writes an `archive_manifest.json` for traceability.
+
 ## Pipeline Quality Rule
 
 Every reusable layer must have provenance. Record which tool or manual process created the mask, which process created or refined alpha, which stage repaired the background, the layer's `composition_order`, and which quality gates were inspected.
+
+Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
 
 The validator checks evidence, not aesthetics. A package can pass structural validation only when it records `metadata.extraction_pipeline`, ordered stages, structured upstream tools, quality gates, object-level `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`, plus generated inspection previews and segmentation-quality previews for every reusable object layer.
 
@@ -97,6 +113,12 @@ First identify the image's semantic layer hierarchy: background/backplate, frame
 If the hidden background cannot be recovered from one flattened image, create an honest `background_clean.png` approximation or leave the package `needs-review`/`blocked`; do not claim exact recovery.
 
 Pillow crops, bbox masks, manual-estimated crop masks, or coordinate-only cuts are draft evidence by default. They cannot support `qa.status=pass` unless a human has confirmed the crop-only layer through `record_quality_review.py --confirm-crop-layer` and the object records `manual_review_confirmed=true`.
+
+Likewise, helper-only extraction sources such as Pillow crop alpha, OpenCV threshold masks, or skimage thresholding cannot support `qa.status=pass` on their own unless a human explicitly confirms that layer.
+
+Background clean plates, support plates, grouped structural UI regions, and inpainted/reconstructed areas may be useful deliverables, but they must be marked approximate when they are approximate and must record `reconstruction_provenance`. Keep them `needs-review` unless a human explicitly accepts that layer.
+
+Source-space masks are expected: `masks/*.png` should normally match the original source dimensions for overlay QA and provenance tracing. A black mask with a small white component is valid when the object is small. Store the tight reusable visual result in `assets/*.png`; store the full-source QA mask in `masks/*.png`.
 
 ## Decision Sync Rule
 
@@ -128,6 +150,7 @@ At minimum report:
 - source image
 - visual hierarchy and recommended split plan
 - extraction pipeline recipe, stages, upstream tools, and quality gates
+- primary segmenter, matting tool, and helper tools
 - object inventory
 - generated or collected assets
 - previews

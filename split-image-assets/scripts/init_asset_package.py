@@ -20,6 +20,11 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "visual_hierarchy": [],
             "recommended_split_plan": "",
         },
+        "granularity": {
+            "mode": "unset",
+            "user_confirmed": False,
+            "notes": "",
+        },
         "extraction_pipeline": {
             "recipe": "",
             "stages": [],
@@ -85,7 +90,7 @@ def main() -> int:
     if metadata_path.exists() and not args.force:
         parser.error(f"metadata.json already exists; pass --force to overwrite: {metadata_path}")
 
-    for directory in ["source", "assets", "masks", "previews"]:
+    for directory in ["source", "assets", "masks", "previews", "_staging", "_archive_intermediate"]:
         (output_path / directory).mkdir(parents=True, exist_ok=True)
 
     target_source = output_path / "source" / "source_original.png"

@@ -22,6 +22,10 @@ If mature segmentation/matting tools are unavailable and no external masks or cu
 
 Also align split granularity before cutting pixels: module-level, component-level, atomic-layer, or production-editable reconstruction; text as image assets or live downstream text; exact background recovery or approximate `background_clean.png`; animation-ready layers or static reuse.
 
+Use a professional segmenter or matting pipeline as the primary source for production masks. Pillow, OpenCV, and skimage are helpers for alpha compositing, source-space mask persistence, preview generation, repair, and packaging; they are not a substitute for SAM2/SAM/Grounded-SAM/rembg/BiRefNet/RMBG-style extraction.
+
+For complex UI screenshots, start with a high-signal subset such as logo, nav icon, status dot, pin, checkbox, chart mark, badge, or row glyph. For icon-in-tile or glyph-on-plate elements, split the tile/badge/panel background from the foreground glyph when reuse or edge cleanup benefits from separate layers.
+
 ## Output Package
 
 ```text
@@ -34,9 +38,14 @@ asset-package/
   asset_manifest.json
   metadata.json
   qa_report.md
+  _staging/
+  _archive_intermediate/
 ```
 
 `metadata.json` must also include `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `extraction_pipeline`, and per-object quality evidence so reviewers can tell whether extraction followed the image structure instead of only cutting page regions.
+It should also record `granularity.mode`, `granularity.user_confirmed`, and `granularity.notes` so later agents can see what split scope was agreed.
+
+`assets/*.png` are reusable transparent layers. `masks/*.png` are source-space QA masks aligned to the original image, so a small object may appear as a small white region on a mostly black mask. Put active external model outputs, candidate masks, and temporary manifests in `_staging/`; move retained evidence to `_archive_intermediate/` before final validation.
 
 ## Basic Commands
 
@@ -46,7 +55,8 @@ python split-image-assets/scripts/init_asset_package.py source.png output-packag
 python split-image-assets/scripts/import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from SAM2 mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets/scripts/build_previews.py output-package
 python split-image-assets/scripts/build_quality_previews.py output-package
-python split-image-assets/scripts/record_quality_review.py output-package --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
+python split-image-assets/scripts/record_quality_review.py output-package --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --granularity-mode atomic-layer --granularity-confirmed --granularity-note "Atomic foreground layers; text rebuilt downstream." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
+python split-image-assets/scripts/archive_intermediates.py output-package --run-id sam-pass-001
 python split-image-assets/scripts/validate_asset_package.py output-package
 python split-image-assets/scripts/export_asset_manifest.py output-package
 ```
@@ -66,3 +76,7 @@ Use `record_quality_review.py` after inspecting previews to update `metadata.jso
 Validation now requires both ordinary inspection previews from `build_previews.py` and quality previews from `build_quality_previews.py` for each reusable object layer. A package without preview evidence is incomplete even if the transparent PNGs and masks exist.
 
 Bbox/manual-estimated crop layers are draft-only unless explicitly confirmed. Use `record_quality_review.py --confirm-crop-layer --object-id <id>` only after a human accepts that layer for production reuse.
+
+Approximate `background_clean.png` files and structural support plates should record `reconstruction_provenance` and remain `needs-review` unless the approximation has been explicitly accepted.
+
+When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.

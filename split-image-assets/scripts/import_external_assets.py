@@ -60,6 +60,17 @@ def checked_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict
         parser.error(f"metadata.json is not valid JSON: {exc}")
 
 
+def source_size(metadata: dict, parser: argparse.ArgumentParser) -> tuple[int, int]:
+    source = metadata.get("source")
+    if not isinstance(source, dict):
+        parser.error("metadata.source must exist before importing source-space masks")
+    width = source.get("width")
+    height = source.get("height")
+    if not isinstance(width, int) or not isinstance(height, int):
+        parser.error("metadata.source.width and metadata.source.height are required")
+    return width, height
+
+
 def checked_object_id(value: str, parser: argparse.ArgumentParser) -> str:
     if not SAFE_ID_RE.match(value):
         parser.error("object-id must contain only letters, numbers, underscores, or hyphens")
@@ -135,8 +146,14 @@ def main() -> int:
     mask_target = package_dir / "masks" / f"mask_{object_id}.png"
 
     metadata = checked_metadata(package_dir, parser)
+    expected_mask_size = source_size(metadata, parser)
     width, height = checked_image_size(asset_source, parser, "asset")
-    checked_image_size(mask_source, parser, "mask")
+    actual_mask_size = checked_image_size(mask_source, parser, "mask")
+    if actual_mask_size != expected_mask_size:
+        parser.error(
+            "source-space mask dimensions must match metadata.source dimensions: "
+            f"{actual_mask_size} != {expected_mask_size}"
+        )
 
     copy_into_package(asset_source, asset_target)
     copy_into_package(mask_source, mask_target)

@@ -12,6 +12,13 @@ QUALITY_CHECK_ARGS = {
     "background_residue": "background_residue",
     "reuse_readiness": "reuse_readiness",
 }
+ALLOWED_GRANULARITY_MODES = {
+    "module",
+    "component",
+    "atomic-layer",
+    "production-editable",
+    "draft",
+}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -79,6 +86,22 @@ def update_quality_gates(metadata: dict, gates: list[str] | None) -> None:
             quality_gates.append(gate)
 
 
+def update_granularity(metadata: dict, args: argparse.Namespace) -> None:
+    if not args.granularity_mode and not args.granularity_confirmed and not args.granularity_note:
+        return
+    granularity = metadata.setdefault("granularity", {})
+    if args.granularity_mode:
+        granularity["mode"] = args.granularity_mode
+    if args.granularity_confirmed:
+        granularity["user_confirmed"] = True
+    if args.granularity_note:
+        existing = granularity.get("notes", "")
+        if existing:
+            granularity["notes"] = existing.rstrip() + "\n" + args.granularity_note
+        else:
+            granularity["notes"] = args.granularity_note
+
+
 def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
     for item in objects:
         quality_checks = item.setdefault("quality_checks", {})
@@ -119,6 +142,12 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
     lines = ["", "## Quality Review Update", "", f"- Time: {timestamp}"]
     if args.qa_status:
         lines.append(f"- QA status: {args.qa_status}")
+    if args.granularity_mode:
+        lines.append(f"- Granularity mode: {args.granularity_mode}")
+    if args.granularity_confirmed:
+        lines.append("- Granularity confirmed: true")
+    if args.granularity_note:
+        lines.append(f"- Granularity note: {args.granularity_note}")
     if args.object_id:
         lines.append("- Objects: " + ", ".join(args.object_id))
     elif args.all_objects:
@@ -136,6 +165,9 @@ def main() -> int:
     parser.add_argument("package_dir", help="Asset package directory.")
     parser.add_argument("--visual-hierarchy", action="append", help="Semantic layer, repeatable.")
     parser.add_argument("--recommended-split-plan", help="Semantic split plan summary.")
+    parser.add_argument("--granularity-mode", choices=sorted(ALLOWED_GRANULARITY_MODES))
+    parser.add_argument("--granularity-confirmed", action="store_true")
+    parser.add_argument("--granularity-note")
     parser.add_argument("--quality-gate", action="append", help="Pipeline quality gate inspected.")
     parser.add_argument("--object-id", action="append", help="Object id whose quality checks are updated.")
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
@@ -164,6 +196,7 @@ def main() -> int:
     targets = selected_objects(metadata, args, parser)
 
     update_analysis(metadata, args)
+    update_granularity(metadata, args)
     update_quality_gates(metadata, args.quality_gate)
     update_object_checks(targets, args)
 
