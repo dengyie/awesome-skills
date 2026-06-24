@@ -10,6 +10,10 @@
 - `main`
 
 ## Last Verified
+- 2026-06-25: Review fix validation for `split-image-assets` tooling preflight pass gate: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (54 tests)
+- 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
+- 2026-06-25: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-25: `git diff --check` (passed with only CRLF warnings)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (52 tests)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)

@@ -187,14 +187,10 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
     qa_status_for_capability = (
         qa_for_capability.get("status") if isinstance(qa_for_capability, dict) else None
     )
-    if (
-        qa_status_for_capability == "pass"
-        and production_capable is False
-        and user_choice == "draft-packaging-only"
-    ):
+    if qa_status_for_capability == "pass" and production_capable is not True:
         errors.append(
-            "draft-packaging-only capability cannot support qa.status pass; "
-            "record production-capable upstream evidence or keep needs-review"
+            "qa.status pass requires metadata.capability.production_capable=true; "
+            "draft-packaging-only or unrecorded tooling preflight must remain needs-review"
         )
     qa = metadata.get("qa", {})
     if not isinstance(qa, dict):

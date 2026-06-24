@@ -94,4 +94,4 @@ Background clean plates and support plates produced by inpainting, manual paint,
 - `production-capable`: mature upstream segmentation and refinement are available, and the package can proceed through the normal import/QA/validation path
 - `draft-packaging-only`: mature upstream extraction is unavailable, so the skill may initialize, stage, archive, or package evidence, but it must not claim production extraction
 
-A `draft-packaging-only` run cannot support `qa.status=pass`.
+`qa.status=pass` requires `metadata.capability.production_capable=true`. Draft-only or unrecorded tooling preflight cannot support `pass`.

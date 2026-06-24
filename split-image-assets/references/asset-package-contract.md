@@ -65,7 +65,7 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 
 `capability` records the tooling preflight result before extraction. `production_capable` is true only when mature upstream extraction capability or equivalent professional external evidence is available. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
 
-A `draft-packaging-only` run cannot support `qa.status=pass`; keep it `needs-review` or `blocked` until production-capable upstream evidence or professional external outputs are recorded.
+`qa.status=pass` requires `capability.production_capable: true`. Draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked` until production-capable upstream evidence or professional external outputs are recorded.
 
 `decision_log` records confirmation-driven workflow decisions that materially affect reuse, editability, localization, reconstruction acceptance, or final delivery claims. Each entry must include:
 

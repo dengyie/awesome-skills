@@ -120,7 +120,7 @@ Every reusable layer must have provenance. Record which tool or manual process c
 
 Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
 
-Record the tooling preflight decision that governed the run. `metadata.capability` is required so future agents can see whether the run was production-capable, what upstream roles/tools were missing, which user choice was made, and why missing tools affect quality. A `draft-packaging-only` run cannot support `qa.status=pass`.
+Record the tooling preflight decision that governed the run. `metadata.capability` is required so future agents can see whether the run was production-capable, what upstream roles/tools were missing, which user choice was made, and why missing tools affect quality. `qa.status=pass` requires `metadata.capability.production_capable=true`; draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked`.
 
 The validator checks evidence, not aesthetics. A package can pass structural validation only when it records `metadata.extraction_pipeline`, ordered stages, structured upstream tools, quality gates, object-level `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`, plus generated inspection previews and segmentation-quality previews for every reusable object layer.
 

@@ -215,6 +215,11 @@ def all_required_checks_pass(metadata: dict) -> bool:
     return True
 
 
+def capability_allows_pass(metadata: dict) -> bool:
+    capability = metadata.get("capability")
+    return isinstance(capability, dict) and capability.get("production_capable") is True
+
+
 def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
     qa_path = package_dir / "qa_report.md"
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -309,6 +314,8 @@ def main() -> int:
 
     if args.qa_status == "pass" and not all_required_checks_pass(metadata):
         parser.error("cannot set qa-status pass until every required object quality check is pass")
+    if args.qa_status == "pass" and not capability_allows_pass(metadata):
+        parser.error("cannot set qa-status pass until metadata.capability.production_capable is true")
     if args.qa_status:
         metadata.setdefault("qa", {})["status"] = args.qa_status
 

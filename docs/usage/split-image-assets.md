@@ -79,7 +79,7 @@ python split-image-assets/scripts/export_asset_manifest.py output-package
 
 Use `pass` only when reusable assets, masks, metadata, previews, and background repair are acceptable. Use `needs-review` when edge quality, AI-assisted regions, object roles, or background repair need manual review. Use `blocked` when required files are missing or the package cannot be reused safely.
 
-A `draft-packaging-only` run cannot support `qa.status=pass`. Keep it `needs-review` or `blocked` unless production-capable upstream evidence or external professional outputs are recorded.
+`qa.status=pass` requires `metadata.capability.production_capable=true`. Keep draft-only or unrecorded tooling-preflight packages `needs-review` or `blocked` unless production-capable upstream evidence or external professional outputs are recorded.
 
 Use `needs-review` or `blocked` when the background is only a reconstructed approximation, when core layers are missing, or when the result is mostly rectangular crops.
 
