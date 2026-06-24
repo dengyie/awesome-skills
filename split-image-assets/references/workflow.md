@@ -10,9 +10,15 @@ The normal production path is professional upstream extraction -> package import
 
 1. Intake the source image and identify the desired output package directory.
 2. Run `scripts/init_asset_package.py` if the package does not already exist.
-3. Run `scripts/check_extraction_environment.py` or otherwise confirm whether a mature upstream pipeline is available. If SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and no external cutouts or masks were provided, ask whether to install/activate tools, provide external outputs, or continue as draft-only.
+3. Run the Preflight Tooling Recommendation Gate before extraction:
+   - run `scripts/check_extraction_environment.py`
    - explicitly classify the run as `production-capable` or `draft-packaging-only`
-   - report missing capabilities before any extraction claim
+   - report `production_capable` and `missing_for_production`
+   - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
+   - proactively recommend installing or activating missing professional upstream tools
+   - ask whether to install/activate tools, provide external professional outputs, or continue as `draft-packaging-only`
+   - record the decision in `metadata.capability` and `metadata.decision_log[]`
+   - do not continue into extraction until this decision is recorded
 4. Read `pipeline-recipes.md` and choose a pipeline recipe.
 5. Run the Granularity Confirmation Gate before extraction:
    - choose module-level, component-level, atomic-layer, or production-editable reconstruction
@@ -34,7 +40,7 @@ The normal production path is professional upstream extraction -> package import
 9. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
 10. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
 11. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
-12. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `decision_log`, `extraction_pipeline`, and the object inventory into `metadata.json`.
+12. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `capability`, `decision_log`, `extraction_pipeline`, and the object inventory into `metadata.json`.
 13. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
 14. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`.
 15. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
@@ -70,6 +76,7 @@ Use stable outcome language when the workflow cannot claim production extraction
 - Do not merge separate objects into one layer unless the grouped layer is explicitly additional.
 - Do not hide AI-assisted fills or uncertain edges.
 - Do not claim the scripts extracted objects from the source image.
+- Do not start extraction before reporting missing professional upstream capabilities and recording whether the user chose installation/activation, external professional outputs, or draft-packaging-only.
 - Do not claim segmentation quality when `extraction_pipeline` or per-object quality evidence is missing.
 - Do not leave external model folders or temporary manifests in the package root; use `_staging/` or `_archive_intermediate/`.
 - Do not mark approximate background or structural reconstruction as exact extraction.
@@ -98,6 +105,19 @@ When a split choice affects future reuse, editing, localization, animation, appr
 
 Record each confirmation in `metadata.decision_log[]`. If prior instructions or metadata already answer the question, record the decision instead of asking again.
 
+## Tooling Preflight
+
+Before extraction, tell the user what the environment can and cannot support. Missing SAM2 or a grounded detector means object boundaries may need manual prompts or may be less reliable. Missing rembg/BiRefNet/RMBG-style matting means transparent PNG alpha edges may keep halos, dark fringes, or background residue. Missing inpainting or a manual repair path means `background_clean.png` can only be approximate or `needs-review`.
+
+Record the outcome in `metadata.capability`:
+
+- `production_capable`
+- `missing_for_production`
+- `user_choice`: `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, or `production-capable`
+- `notes`
+
+When the user chooses `draft-packaging-only`, keep `qa.status=needs-review` or `blocked`.
+
 ## Quality-Gated Pipeline Checklist
 
 Before claiming reuse quality, record:
@@ -106,6 +126,7 @@ Before claiming reuse quality, record:
 - ordered stages from semantic analysis through QA review
 - upstream tools and manual operations used for masks, alpha, background repair, and layer proposals
 - primary segmenter, matting tool, and helper tools used in the run summary
+- tooling preflight result, missing upstream roles, user choice, and quality implications
 - quality gates inspected for mask alignment, alpha edges, background residue, and reuse readiness
 - recorded granularity mode and whether the user confirmed it
 - object-level `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`

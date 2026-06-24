@@ -35,6 +35,13 @@ ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json"}
 RECONSTRUCTION_MARKERS = {"reconstruct", "reconstructed", "reconstruction", "inpaint", "clean plate"}
 HELPER_ONLY_MARKERS = {"pillow", "opencv", "skimage", "threshold"}
 ALLOWED_GRANULARITY_MODES = {"module", "component", "atomic-layer", "production-editable", "draft"}
+ALLOWED_CAPABILITY_CHOICES = {
+    "install-or-activate-tools",
+    "external-professional-outputs",
+    "draft-packaging-only",
+    "production-capable",
+    "unset",
+}
 REQUIRED_DECISION_FIELDS = {
     "stage",
     "question",
@@ -158,6 +165,37 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 value = entry.get(field)
                 if value is not None and (not isinstance(value, str) or not value.strip()):
                     errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
+    capability = metadata.get("capability", {})
+    if not isinstance(capability, dict):
+        errors.append("metadata.capability must be an object")
+        capability = {}
+    production_capable = capability.get("production_capable")
+    if not isinstance(production_capable, bool):
+        errors.append("metadata.capability.production_capable must be true or false")
+    missing_for_production = capability.get("missing_for_production")
+    if not isinstance(missing_for_production, list) or not all(
+        isinstance(item, str) and item.strip() for item in missing_for_production
+    ):
+        errors.append("metadata.capability.missing_for_production must be a list of non-empty strings")
+    user_choice = capability.get("user_choice")
+    if user_choice not in ALLOWED_CAPABILITY_CHOICES:
+        errors.append("metadata.capability.user_choice must record the tooling preflight decision")
+    notes = capability.get("notes")
+    if not isinstance(notes, str):
+        errors.append("metadata.capability.notes must be a string")
+    qa_for_capability = metadata.get("qa", {})
+    qa_status_for_capability = (
+        qa_for_capability.get("status") if isinstance(qa_for_capability, dict) else None
+    )
+    if (
+        qa_status_for_capability == "pass"
+        and production_capable is False
+        and user_choice == "draft-packaging-only"
+    ):
+        errors.append(
+            "draft-packaging-only capability cannot support qa.status pass; "
+            "record production-capable upstream evidence or keep needs-review"
+        )
     qa = metadata.get("qa", {})
     if not isinstance(qa, dict):
         errors.append("metadata.qa must be an object")

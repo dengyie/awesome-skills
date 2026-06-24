@@ -46,6 +46,10 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `granularity.mode`
 - `granularity.user_confirmed`
 - `granularity.notes`
+- `capability.production_capable`
+- `capability.missing_for_production`
+- `capability.user_choice`
+- `capability.notes`
 - `decision_log`
 - `extraction_pipeline.recipe`
 - `extraction_pipeline.stages`
@@ -58,6 +62,10 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 `analysis.visual_hierarchy` must name the semantic layer stack from background to foreground. `analysis.recommended_split_plan` must describe the reusable layer boundaries. Rectangular crop plans do not satisfy this field unless each rectangle is only a tight bbox around a semantic mask.
 
 `granularity` records the agreed split scope for the run. Use values such as `module`, `component`, `atomic-layer`, `production-editable`, or `draft`. `user_confirmed` records whether the user explicitly aligned on that granularity, and `notes` captures any nuance such as live text rebuild or approximate background acceptance.
+
+`capability` records the tooling preflight result before extraction. `production_capable` is true only when mature upstream extraction capability or equivalent professional external evidence is available. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
+
+A `draft-packaging-only` run cannot support `qa.status=pass`; keep it `needs-review` or `blocked` until production-capable upstream evidence or professional external outputs are recorded.
 
 `decision_log` records confirmation-driven workflow decisions that materially affect reuse, editability, localization, reconstruction acceptance, or final delivery claims. Each entry must include:
 
@@ -154,6 +162,10 @@ The script can record:
 - `granularity.mode`
 - `granularity.user_confirmed`
 - `granularity.notes`
+- `capability.production_capable`
+- `capability.missing_for_production`
+- `capability.user_choice`
+- `capability.notes`
 - `decision_log` confirmation entries
 - `extraction_pipeline.quality_gates`
 - object-level `quality_checks`

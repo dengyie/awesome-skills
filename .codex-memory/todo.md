@@ -3,6 +3,7 @@
 ## Next
 - [ ] Re-authenticate GitHub for account `dengyie` and push local `main` to `origin/main`.
 ## Done
+- [x] Add the `split-image-assets` Preflight Tooling Recommendation Gate, including `metadata.capability`, role-impact reporting, capability review recording, and draft-only pass blocking.
 - [x] Add confirmation-driven checkpoints to `split-image-assets`, including `metadata.decision_log[]`, prompt templates, review adapter support, validator coverage, and safer batch upstream import.
 - [x] Apply the `concept-c-workshop-console.png` retrospective to `split-image-assets`: professional segmenter primacy, source-space mask import enforcement, staged intermediates, reconstruction provenance, high-signal subset guidance, and UI tile/glyph decomposition.
 - [x] Add `split-image-assets` pre-extraction gates for environment capability, split granularity, and crop-only manual confirmation.

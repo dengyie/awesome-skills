@@ -105,6 +105,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "background_residue": "pass",
                 "reuse_readiness": "pass",
             }
+        metadata["capability"] = {
+            "production_capable": True,
+            "missing_for_production": [],
+            "user_choice": "production-capable",
+            "notes": "Test fixture uses production-capable upstream evidence.",
+        }
         metadata["objects"] = [
             object_record
         ]
@@ -155,6 +161,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("QUALITY-GATED PIPELINE", skill_text)
         self.assertIn("DECISION SYNC BEFORE AMBIGUOUS SPLITS", skill_text)
         self.assertIn("EXTRACTION CAPABILITY GATE", skill_text)
+        self.assertIn("PREFLIGHT TOOLING RECOMMENDATION GATE", skill_text)
+        self.assertIn("DO NOT START EXTRACTION BEFORE TOOLING PREFLIGHT IS REPORTED AND RECORDED", skill_text)
         self.assertIn("GRANULARITY ALIGNMENT GATE", skill_text)
         self.assertIn("CONFIRMATION GATE", skill_text)
         self.assertIn("DO NOT DEFAULT TO ONE-PASS EXTRACTION", skill_text)
@@ -194,6 +202,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "professional upstream",
             "production-capable",
             "draft-packaging-only",
+            "Preflight Tooling Recommendation Gate",
+            "metadata.capability",
             "grill-me style",
             "confirmation",
             "semantic layer hierarchy",
@@ -210,6 +220,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "record_quality_review.py",
             "archive_intermediates.py",
             "export_asset_manifest.py",
+            "A `draft-packaging-only` run cannot support `qa.status=pass`",
         ]:
             self.assertIn(expected, usage)
 
@@ -233,7 +244,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("recommended_next_step", report)
         self.assertIn("production_capable", report)
         self.assertIn("missing_for_production", report)
+        self.assertIn("upstream_roles", report)
+        self.assertIn("preflight_tooling_recommendation_gate", report)
         self.assertIn("Pillow", report["tools"])
+        self.assertIn("segmentation", report["upstream_roles"])
+        self.assertIn("quality_impact", report["upstream_roles"]["alpha_refinement"])
+        self.assertIn("user_choices", report["preflight_tooling_recommendation_gate"])
         self.assertIn(report["tools"]["Pillow"]["available"], [True, False])
         self.assertIn(report["production_capable"], [True, False])
         self.assertIsInstance(report["missing_for_production"], list)
@@ -261,6 +277,15 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["source"]["height"], 3)
             self.assertEqual(metadata["granularity"]["mode"], "unset")
             self.assertFalse(metadata["granularity"]["user_confirmed"])
+            self.assertEqual(
+                metadata["capability"],
+                {
+                    "production_capable": False,
+                    "missing_for_production": [],
+                    "user_choice": "unset",
+                    "notes": "",
+                },
+            )
             self.assertEqual(metadata["decision_log"], [])
             self.assertEqual(metadata["qa"]["status"], "needs-review")
             self.assertIn(
@@ -863,6 +888,53 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(entry["stage"], "semantic-split-plan")
             self.assertEqual(entry["recommended_answer"], "yes")
             self.assertEqual(entry["user_answer"], "yes")
+
+    def test_record_quality_review_records_tooling_preflight_capability(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--production-capable",
+                    "false",
+                    "--missing-for-production",
+                    "SAM2 or grounded detector",
+                    "--missing-for-production",
+                    "matting/refinement",
+                    "--capability-user-choice",
+                    "draft-packaging-only",
+                    "--capability-note",
+                    "User chose draft package after tooling preflight.",
+                    "--decision-stage",
+                    "tooling-preflight",
+                    "--decision-question",
+                    "Install tools, provide external outputs, or continue draft-only?",
+                    "--decision-recommended",
+                    "Install or provide SAM2/Grounded-SAM plus rembg/BiRefNet/RMBG.",
+                    "--decision-answer",
+                    "continue draft-packaging-only",
+                    "--decision-effect",
+                    "Package must remain needs-review and cannot claim production extraction.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertFalse(metadata["capability"]["production_capable"])
+            self.assertEqual(metadata["capability"]["user_choice"], "draft-packaging-only")
+            self.assertIn("matting/refinement", metadata["capability"]["missing_for_production"])
+            self.assertEqual(metadata["decision_log"][0]["stage"], "tooling-preflight")
 
     def test_record_quality_review_can_confirm_crop_only_layer_after_manual_inspection(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1781,6 +1853,68 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("decision_log", result.stderr)
+
+    def test_validate_asset_package_blocks_draft_packaging_only_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["capability"] = {
+                "production_capable": False,
+                "missing_for_production": ["SAM2 or grounded detector", "matting/refinement"],
+                "user_choice": "draft-packaging-only",
+                "notes": "User chose draft packaging after tooling preflight.",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("draft-packaging-only", result.stderr)
+            self.assertIn("qa.status pass", result.stderr)
 
     def test_validate_asset_package_rejects_unconfirmed_granularity_alignment(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,5 +1,13 @@
 # Session Log
 ## 2026-06-25
+- Task: Apply the preflight tooling recommendation guidance to `split-image-assets`.
+- Actions: Added a hard `PREFLIGHT TOOLING RECOMMENDATION GATE`, standardized `metadata.capability`, expanded `check_extraction_environment.py` with upstream role impact and user-choice recommendations, extended `record_quality_review.py` to record capability choices, and made `validate_asset_package.py` block `draft-packaging-only` packages from using `qa.status=pass`. Updated workflow, recipes, contract, confirmation prompts, usage docs, and regression tests.
+- Results: The skill now pushes installation/activation or external professional outputs before extraction instead of explaining missing tools after weak results. Missing SAM2/grounded detection, matting/refinement, and background reconstruction paths are reported as quality impacts and recorded with the user's choice.
+- Validation: New tests failed before implementation and passed after. Full validation passed with `python -m unittest discover split-image-assets\tests -v` (52 tests), `python -m unittest discover tests -v` (1 test), skill quick validation for `split-image-assets`, and `git diff --check` with only CRLF warnings.
+- Next: Commit the preflight tooling recommendation hardening, then push after GitHub authentication is refreshed.
+- Blockers: Remote push remains blocked by invalid GitHub token for account `dengyie`.
+
+## 2026-06-25
 - Task: Continue optimizing `split-image-assets` with grill-me style confirmation checkpoints.
 - Actions: Added a formal Confirmation Gate to `SKILL.md` and workflow docs, introduced `references/confirmation-prompts.md`, documented `metadata.decision_log[]`, initialized the field in new packages, extended `record_quality_review.py` to append confirmation decisions, and made `validate_asset_package.py` reject malformed decision logs. Also strengthened `import_external_assets.py` manifest batch import with required upstream tool provenance, object field validation, and preflight-all-before-copy behavior to avoid partial package writes.
 - Results: The skill is now explicitly a professional-upstream packaging/QA workflow rather than a segmenter substitute. Subjective choices such as granularity, carrier/glyph splits, text ownership, approximate reconstruction, low-confidence masks, and final pass acceptance have templates, metadata storage, script support, and validation coverage.

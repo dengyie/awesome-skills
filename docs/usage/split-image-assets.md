@@ -14,15 +14,21 @@ Start by recording a semantic layer hierarchy in `metadata.analysis.visual_hiera
 
 ## Before extraction
 
-Run the capability gate before starting a high-quality split:
+Run the Preflight Tooling Recommendation Gate before starting a high-quality split:
 
 ```bash
 python split-image-assets/scripts/check_extraction_environment.py
 ```
 
-If mature segmentation/matting tools are unavailable and no external masks or cutouts were provided, do not claim production extraction. Ask whether to install or activate tools, provide external split outputs, or continue as draft-only packaging.
+If mature segmentation/matting tools are unavailable and no external masks or cutouts were provided, do not claim production extraction. Explain which upstream role is missing, what quality it affects, and ask whether to install or activate tools, provide external professional split outputs, or continue as draft-packaging-only.
 
-Always report whether the run is `production-capable` or `draft-packaging-only`. If it is not production-capable, explicitly list what is missing and keep the package honest.
+Always report whether the run is `production-capable` or `draft-packaging-only`. If it is not production-capable, explicitly list what is missing, record the user choice in `metadata.capability`, and keep the package honest.
+
+Missing upstream role examples:
+
+- missing SAM2 or grounded detector: object boundaries may need manual prompts or may be less reliable
+- missing rembg/BiRefNet/RMBG: alpha edges may keep halos, dark fringes, or background residue
+- missing inpainting/manual repair path: `background_clean.png` can only be approximate or `needs-review`
 
 Also align split granularity before cutting pixels: module-level, component-level, atomic-layer, or production-editable reconstruction; text as image assets or live downstream text; exact background recovery or approximate `background_clean.png`; animation-ready layers or static reuse.
 
@@ -49,7 +55,7 @@ asset-package/
 ```
 
 `metadata.json` must also include `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `extraction_pipeline`, and per-object quality evidence so reviewers can tell whether extraction followed the image structure instead of only cutting page regions.
-It should also record `granularity.mode`, `granularity.user_confirmed`, `granularity.notes`, and `decision_log[]` so later agents can see what split scope and subjective decisions were agreed.
+It should also record `granularity.mode`, `granularity.user_confirmed`, `granularity.notes`, `capability.production_capable`, `capability.missing_for_production`, `capability.user_choice`, `capability.notes`, and `decision_log[]` so later agents can see what split scope, tooling capability, and subjective decisions were agreed.
 
 `assets/*.png` are reusable transparent layers. `masks/*.png` are source-space QA masks aligned to the original image, so a small object may appear as a small white region on a mostly black mask. Put active external model outputs, candidate masks, and temporary manifests in `_staging/`; move retained evidence to `_archive_intermediate/` before final validation.
 
@@ -61,7 +67,7 @@ python split-image-assets/scripts/init_asset_package.py source.png output-packag
 python split-image-assets/scripts/import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from SAM2 mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets/scripts/build_previews.py output-package
 python split-image-assets/scripts/build_quality_previews.py output-package
-python split-image-assets/scripts/record_quality_review.py output-package --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --granularity-mode atomic-layer --granularity-confirmed --granularity-note "Atomic foreground layers; text rebuilt downstream." --decision-stage granularity --decision-question "Use atomic-layer split with live downstream text?" --decision-recommended yes --decision-answer yes --decision-effect "Record atomic layer scope and exclude live text from image assets." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
+python split-image-assets/scripts/record_quality_review.py output-package --production-capable true --capability-user-choice production-capable --capability-note "SAM2 and rembg-style external outputs were provided." --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --granularity-mode atomic-layer --granularity-confirmed --granularity-note "Atomic foreground layers; text rebuilt downstream." --decision-stage tooling-preflight --decision-question "Install tools, provide external outputs, or continue draft-only?" --decision-recommended "Install/provide SAM2 or Grounded-SAM plus rembg/BiRefNet/RMBG for production-quality extraction." --decision-answer "external professional outputs provided" --decision-effect "Use imported professional outputs and allow pass only after QA evidence passes." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
 python split-image-assets/scripts/archive_intermediates.py output-package --run-id sam-pass-001
 python split-image-assets/scripts/validate_asset_package.py output-package
 python split-image-assets/scripts/export_asset_manifest.py output-package
@@ -72,6 +78,8 @@ python split-image-assets/scripts/export_asset_manifest.py output-package
 ## QA
 
 Use `pass` only when reusable assets, masks, metadata, previews, and background repair are acceptable. Use `needs-review` when edge quality, AI-assisted regions, object roles, or background repair need manual review. Use `blocked` when required files are missing or the package cannot be reused safely.
+
+A `draft-packaging-only` run cannot support `qa.status=pass`. Keep it `needs-review` or `blocked` unless production-capable upstream evidence or external professional outputs are recorded.
 
 Use `needs-review` or `blocked` when the background is only a reconstructed approximation, when core layers are missing, or when the result is mostly rectangular crops.
 

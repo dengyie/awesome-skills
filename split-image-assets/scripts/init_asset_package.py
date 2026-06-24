@@ -25,6 +25,12 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "user_confirmed": False,
             "notes": "",
         },
+        "capability": {
+            "production_capable": False,
+            "missing_for_production": [],
+            "user_choice": "unset",
+            "notes": "",
+        },
         "extraction_pipeline": {
             "recipe": "",
             "stages": [],

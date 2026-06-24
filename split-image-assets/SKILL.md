@@ -18,6 +18,8 @@ This skill is not a professional segmenter. It does not promise production-grade
 ```text
 ANALYZE BEFORE EXTRACTING
 EXTRACTION CAPABILITY GATE
+PREFLIGHT TOOLING RECOMMENDATION GATE
+DO NOT START EXTRACTION BEFORE TOOLING PREFLIGHT IS REPORTED AND RECORDED
 GRANULARITY ALIGNMENT GATE
 CONFIRMATION GATE
 PROFESSIONAL SEGMENTER FIRST
@@ -38,7 +40,14 @@ NEVER HIDE UNCERTAINTY
 1. Read `references/workflow.md`.
 2. Create or inspect the package directory.
 3. Initialize the package with `scripts/init_asset_package.py` when a package does not already exist.
-4. Run `scripts/check_extraction_environment.py` or otherwise confirm the upstream extraction capability before selecting a recipe. If mature segmentation/matting tools are unavailable and the user has not provided external cutouts/masks, ask whether to install/activate tools, provide external outputs, or continue as draft-only packaging.
+4. Run the Preflight Tooling Recommendation Gate before selecting a recipe or starting extraction:
+   - run `scripts/check_extraction_environment.py`
+   - report `production_capable` and `missing_for_production`
+   - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
+   - proactively recommend installing or activating missing professional upstream tools
+   - ask whether to install/activate tools, provide external professional outputs, or continue as `draft-packaging-only`
+   - record the decision in `metadata.capability` and `metadata.decision_log[]`
+   - do not continue into extraction until this decision is recorded
 5. Read `references/pipeline-recipes.md` and select an extraction recipe before extraction.
 6. Run the Granularity Alignment Gate before cutting pixels:
    - module-level, component-level, atomic-layer, or production-editable reconstruction
@@ -93,9 +102,9 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 
 `scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
 
-`scripts/check_extraction_environment.py` is the capability gate. It only checks local optional modules such as Pillow, OpenCV, Torch, rembg, SAM2, and segment-anything; it does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
+`scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It only checks local optional modules such as Pillow, OpenCV, Torch, rembg, SAM2, and segment-anything; it does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
 
-The capability report distinguishes `production_capable` from `draft-packaging-only` fallback conditions and lists `missing_for_production` so an agent does not confuse partial local tooling with production readiness.
+The capability report distinguishes `production_capable` from `draft-packaging-only` fallback conditions, lists `missing_for_production`, and explains missing upstream role impact so an agent does not confuse partial local tooling with production readiness.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
@@ -110,6 +119,8 @@ The capability report distinguishes `production_capable` from `draft-packaging-o
 Every reusable layer must have provenance. Record which tool or manual process created the mask, which process created or refined alpha, which stage repaired the background, the layer's `composition_order`, and which quality gates were inspected.
 
 Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
+
+Record the tooling preflight decision that governed the run. `metadata.capability` is required so future agents can see whether the run was production-capable, what upstream roles/tools were missing, which user choice was made, and why missing tools affect quality. A `draft-packaging-only` run cannot support `qa.status=pass`.
 
 The validator checks evidence, not aesthetics. A package can pass structural validation only when it records `metadata.extraction_pipeline`, ordered stages, structured upstream tools, quality gates, object-level `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`, plus generated inspection previews and segmentation-quality previews for every reusable object layer.
 
@@ -165,8 +176,11 @@ At minimum report:
 
 - package path
 - source image
-- production extraction capability: `production-capable` or `draft-packaging-only`
-- missing capabilities when not production-capable
+- tooling preflight result
+- production_capable: true/false
+- missing upstream roles/tools
+- user choice: install/activate tools, external professional outputs, or draft-packaging-only
+- quality implication of missing tools
 - granularity mode, whether it was user-confirmed or inferred, split scope notes, and whether text/UI chrome is extracted or rebuilt downstream
 - confirmation decisions recorded in `metadata.decision_log`
 - visual hierarchy and recommended split plan

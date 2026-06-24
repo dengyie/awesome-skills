@@ -4,6 +4,14 @@ Use these prompts when a split decision affects reuse boundaries, editability, a
 
 Ask one question at a time. Include the recommended answer. Resolve that branch before moving on. If the source image, metadata, or prior user instructions already answer the question, record the decision instead of asking again.
 
+## Tooling Preflight Confirmation
+
+Question: Production-quality asset splitting needs professional upstream tools. This environment is missing [missing capabilities/tools]. Should I pause so you can install/activate them, use external segmented assets/masks, or continue as draft-packaging-only?
+
+Recommended answer: For production-quality extraction, install or provide SAM2/Grounded-SAM plus rembg/BiRefNet/RMBG-style matting. Continue draft-packaging-only only when a reviewable package is enough and `qa.status` can remain `needs-review`.
+
+Decision effect: Record the choice in `metadata.capability` and `metadata.decision_log[]`, set capability status to `production-capable` or `draft-packaging-only`, and do not claim production extraction when the user chooses draft-only.
+
 ## Granularity Confirmation
 
 Question: Should this package target module, component, atomic-layer, or production-editable reconstruction granularity?

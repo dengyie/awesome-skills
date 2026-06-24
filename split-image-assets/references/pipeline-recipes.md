@@ -6,7 +6,7 @@ Use these recipes to choose an extraction path before creating production assets
 
 Treat professional upstream extraction as the normal production path. This skill is the packaging, QA, and delivery tail of the pipeline, not a replacement for detection, segmentation, matting, or reconstruction.
 
-Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, keep the package draft-only or pause for the user to choose installation, external outputs, or manual editing.
+Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, run the Preflight Tooling Recommendation Gate: recommend installation/activation, ask for external professional outputs, or record that the user chose `draft-packaging-only`.
 
 Do not use Pillow, OpenCV, or skimage as the primary production segmenter. They are suitable for alpha compositing, PNG persistence, source-space mask expansion, preview generation, simple repair helpers, and metadata packaging. If the mature segmenter path is unavailable, ask the user for installation, external outputs, or draft-only packaging instead of silently falling back to coordinate crops.
 
@@ -31,6 +31,20 @@ Typical tool roles:
 - alpha refinement / matting: rembg, BiRefNet, RMBG, or equivalent alpha cleanup tools
 - reconstruction / inpaint: IOPaint, LaMa, Stable Diffusion inpainting, or manual paint work for `background_clean.png`
 - packaging / QA: `import_external_assets.py`, `build_previews.py`, `build_quality_previews.py`, `record_quality_review.py`, `validate_asset_package.py`, and `export_asset_manifest.py`
+
+Recommended upstream roles:
+
+- detection / grounding: GroundingDINO, Grounded-SAM, or equivalent prompt-to-region tooling
+- segmentation: SAM2, SAM, Grounded-SAM, or equivalent source-space mask generator
+- alpha refinement / matting: rembg, BiRefNet, RMBG, or equivalent matte refinement tool
+- background reconstruction: IOPaint, LaMa, inpainting tools, or manual paint repair
+- packaging / QA: this skill's scripts
+
+Missing capability impact:
+
+- Missing SAM2 or grounded detector: object boundaries may need manual prompts or may be less reliable.
+- Missing rembg/BiRefNet/RMBG: transparent PNG alpha edges may keep halos, dark fringes, or background residue.
+- Missing inpainting/manual repair path: `background_clean.png` can only be approximate or `needs-review`.
 
 Record this recipe as `grounded-segmentation-matting-repair`.
 
@@ -79,3 +93,5 @@ Background clean plates and support plates produced by inpainting, manual paint,
 
 - `production-capable`: mature upstream segmentation and refinement are available, and the package can proceed through the normal import/QA/validation path
 - `draft-packaging-only`: mature upstream extraction is unavailable, so the skill may initialize, stage, archive, or package evidence, but it must not claim production extraction
+
+A `draft-packaging-only` run cannot support `qa.status=pass`.

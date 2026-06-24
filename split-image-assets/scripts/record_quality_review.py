@@ -19,6 +19,13 @@ ALLOWED_GRANULARITY_MODES = {
     "production-editable",
     "draft",
 }
+ALLOWED_CAPABILITY_CHOICES = {
+    "install-or-activate-tools",
+    "external-professional-outputs",
+    "draft-packaging-only",
+    "production-capable",
+    "unset",
+}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -139,6 +146,41 @@ def update_decision_log(metadata: dict, args: argparse.Namespace) -> None:
     )
 
 
+def parse_bool(value: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"true", "yes", "1"}:
+        return True
+    if normalized in {"false", "no", "0"}:
+        return False
+    raise ValueError("--production-capable must be true or false")
+
+
+def update_capability(metadata: dict, args: argparse.Namespace) -> None:
+    if (
+        args.production_capable is None
+        and not args.missing_for_production
+        and args.capability_user_choice is None
+        and args.capability_note is None
+    ):
+        return
+    capability = metadata.setdefault("capability", {})
+    if args.production_capable is not None:
+        capability["production_capable"] = parse_bool(args.production_capable)
+    if args.missing_for_production is not None:
+        capability["missing_for_production"] = args.missing_for_production
+    elif "missing_for_production" not in capability:
+        capability["missing_for_production"] = []
+    if args.capability_user_choice is not None:
+        if args.capability_user_choice not in ALLOWED_CAPABILITY_CHOICES:
+            raise ValueError(
+                "--capability-user-choice must be one of: "
+                + ", ".join(sorted(ALLOWED_CAPABILITY_CHOICES))
+            )
+        capability["user_choice"] = args.capability_user_choice
+    if args.capability_note is not None:
+        capability["notes"] = args.capability_note
+
+
 def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
     for item in objects:
         quality_checks = item.setdefault("quality_checks", {})
@@ -191,6 +233,14 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append(f"- Recommended answer: {args.decision_recommended}")
         lines.append(f"- User answer: {args.decision_answer}")
         lines.append(f"- Decision effect: {args.decision_effect}")
+    if args.production_capable is not None:
+        lines.append(f"- Production capable: {args.production_capable}")
+    if args.missing_for_production:
+        lines.append("- Missing for production: " + ", ".join(args.missing_for_production))
+    if args.capability_user_choice:
+        lines.append(f"- Capability user choice: {args.capability_user_choice}")
+    if args.capability_note:
+        lines.append(f"- Capability note: {args.capability_note}")
     if args.object_id:
         lines.append("- Objects: " + ", ".join(args.object_id))
     elif args.all_objects:
@@ -216,6 +266,10 @@ def main() -> int:
     parser.add_argument("--decision-recommended")
     parser.add_argument("--decision-answer")
     parser.add_argument("--decision-effect")
+    parser.add_argument("--production-capable", choices=["true", "false"])
+    parser.add_argument("--missing-for-production", action="append")
+    parser.add_argument("--capability-user-choice")
+    parser.add_argument("--capability-note")
     parser.add_argument("--quality-gate", action="append", help="Pipeline quality gate inspected.")
     parser.add_argument("--object-id", action="append", help="Object id whose quality checks are updated.")
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
@@ -247,6 +301,7 @@ def main() -> int:
     update_granularity(metadata, args)
     try:
         update_decision_log(metadata, args)
+        update_capability(metadata, args)
     except ValueError as exc:
         parser.error(str(exc))
     update_quality_gates(metadata, args.quality_gate)
