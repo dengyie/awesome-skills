@@ -102,6 +102,43 @@ def update_granularity(metadata: dict, args: argparse.Namespace) -> None:
             granularity["notes"] = args.granularity_note
 
 
+def update_decision_log(metadata: dict, args: argparse.Namespace) -> None:
+    decision_values = [
+        args.decision_stage,
+        args.decision_question,
+        args.decision_recommended,
+        args.decision_answer,
+        args.decision_effect,
+    ]
+    if not any(decision_values):
+        return
+    if not all(decision_values):
+        missing = [
+            name
+            for name, value in [
+                ("--decision-stage", args.decision_stage),
+                ("--decision-question", args.decision_question),
+                ("--decision-recommended", args.decision_recommended),
+                ("--decision-answer", args.decision_answer),
+                ("--decision-effect", args.decision_effect),
+            ]
+            if not value
+        ]
+        raise ValueError("decision log updates require: " + ", ".join(missing))
+    decision_log = metadata.setdefault("decision_log", [])
+    if not isinstance(decision_log, list):
+        raise ValueError("metadata.decision_log must be a list before recording decisions")
+    decision_log.append(
+        {
+            "stage": args.decision_stage,
+            "question": args.decision_question,
+            "recommended_answer": args.decision_recommended,
+            "user_answer": args.decision_answer,
+            "decision_effect": args.decision_effect,
+        }
+    )
+
+
 def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
     for item in objects:
         quality_checks = item.setdefault("quality_checks", {})
@@ -148,6 +185,12 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append("- Granularity confirmed: true")
     if args.granularity_note:
         lines.append(f"- Granularity note: {args.granularity_note}")
+    if args.decision_stage:
+        lines.append(f"- Decision stage: {args.decision_stage}")
+        lines.append(f"- Decision question: {args.decision_question}")
+        lines.append(f"- Recommended answer: {args.decision_recommended}")
+        lines.append(f"- User answer: {args.decision_answer}")
+        lines.append(f"- Decision effect: {args.decision_effect}")
     if args.object_id:
         lines.append("- Objects: " + ", ".join(args.object_id))
     elif args.all_objects:
@@ -168,6 +211,11 @@ def main() -> int:
     parser.add_argument("--granularity-mode", choices=sorted(ALLOWED_GRANULARITY_MODES))
     parser.add_argument("--granularity-confirmed", action="store_true")
     parser.add_argument("--granularity-note")
+    parser.add_argument("--decision-stage")
+    parser.add_argument("--decision-question")
+    parser.add_argument("--decision-recommended")
+    parser.add_argument("--decision-answer")
+    parser.add_argument("--decision-effect")
     parser.add_argument("--quality-gate", action="append", help="Pipeline quality gate inspected.")
     parser.add_argument("--object-id", action="append", help="Object id whose quality checks are updated.")
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
@@ -197,6 +245,10 @@ def main() -> int:
 
     update_analysis(metadata, args)
     update_granularity(metadata, args)
+    try:
+        update_decision_log(metadata, args)
+    except ValueError as exc:
+        parser.error(str(exc))
     update_quality_gates(metadata, args.quality_gate)
     update_object_checks(targets, args)
 

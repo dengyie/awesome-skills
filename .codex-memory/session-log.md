@@ -1,4 +1,12 @@
 # Session Log
+## 2026-06-25
+- Task: Continue optimizing `split-image-assets` with grill-me style confirmation checkpoints.
+- Actions: Added a formal Confirmation Gate to `SKILL.md` and workflow docs, introduced `references/confirmation-prompts.md`, documented `metadata.decision_log[]`, initialized the field in new packages, extended `record_quality_review.py` to append confirmation decisions, and made `validate_asset_package.py` reject malformed decision logs. Also strengthened `import_external_assets.py` manifest batch import with required upstream tool provenance, object field validation, and preflight-all-before-copy behavior to avoid partial package writes.
+- Results: The skill is now explicitly a professional-upstream packaging/QA workflow rather than a segmenter substitute. Subjective choices such as granularity, carrier/glyph splits, text ownership, approximate reconstruction, low-confidence masks, and final pass acceptance have templates, metadata storage, script support, and validation coverage.
+- Validation: Passed targeted confirmation/import tests, `python -m unittest discover split-image-assets\tests -v` (50 tests), `python -m unittest discover tests -v` (1 test), skill quick validation for `split-image-assets`, and `git diff --check` with only CRLF warnings.
+- Next: Commit the confirmation-driven workflow hardening, then push after GitHub authentication is refreshed.
+- Blockers: Remote push remains blocked by invalid GitHub token for account `dengyie`.
+
 ## 2026-06-24
 - Task: Apply the `concept-c-workshop-console.png` field retrospective to `split-image-assets`.
 - Actions: Added tests for standard intermediate directories, source-space mask import enforcement, unarchived intermediate detection, and reconstruction provenance requirements. Updated `init_asset_package.py`, `import_external_assets.py`, and `validate_asset_package.py`; expanded SKILL, workflow, package contract, recipes, QA standards, usage docs, and the design note with professional segmenter primacy, high-signal subset strategy, UI tile/glyph decomposition, source-space mask semantics, and `_staging/` / `_archive_intermediate/` handling.

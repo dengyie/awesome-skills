@@ -4,19 +4,24 @@
 
 Use this workflow to turn a single source image into a reusable asset package. Optimize for reusable files, clear provenance, inspectable previews, and honest QA status.
 
+The normal production path is professional upstream extraction -> package import -> preview evidence -> QA review -> validation -> manifest export. This workflow should make professional results auditable and deliverable; it should not pretend to replace the upstream segmenter.
+
 ## Stages
 
 1. Intake the source image and identify the desired output package directory.
 2. Run `scripts/init_asset_package.py` if the package does not already exist.
 3. Run `scripts/check_extraction_environment.py` or otherwise confirm whether a mature upstream pipeline is available. If SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and no external cutouts or masks were provided, ask whether to install/activate tools, provide external outputs, or continue as draft-only.
+   - explicitly classify the run as `production-capable` or `draft-packaging-only`
+   - report missing capabilities before any extraction claim
 4. Read `pipeline-recipes.md` and choose a pipeline recipe.
-5. Run the Granularity Alignment Gate before extraction:
+5. Run the Granularity Confirmation Gate before extraction:
    - choose module-level, component-level, atomic-layer, or production-editable reconstruction
    - decide whether text, labels, buttons, and UI chrome become image assets or live downstream elements
    - decide whether approximate background repair is acceptable or exact recovery is required
    - decide whether layers must be animation-ready or static-reuse ready
-6. Choose a high-signal first subset when the image is complex. For flat UI and dashboards, start with logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements that a professional segmenter can isolate and a reviewer can inspect clearly.
-7. Analyze before extraction:
+6. Run the Semantic Split Plan Confirmation Gate when layer boundaries, grouping, carrier/glyph separation, or text ownership are subjective.
+7. Choose a high-signal first subset when the image is complex. For flat UI and dashboards, start with logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements that a professional segmenter can isolate and a reviewer can inspect clearly.
+8. Analyze before extraction:
    - source dimensions
    - semantic layer hierarchy from background to foreground
    - main object
@@ -26,20 +31,30 @@ Use this workflow to turn a single source image into a reusable asset package. O
    - shadows
    - complex edge regions
    - likely manual-review risks
-8. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
-9. Pause for user decision sync when layer boundaries, grouping, text ownership, background repair, animation readiness, or low-confidence masks require product judgment.
-10. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `extraction_pipeline`, and the object inventory into `metadata.json`.
-11. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
-12. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`.
-13. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
-14. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, and `qa_report.md` stay synchronized.
-15. Keep individual objects separate before creating grouped or preview outputs.
-16. Generate previews with `scripts/build_previews.py`.
-17. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
-18. Inspect previews and, when appropriate, update object quality checks and QA status with `scripts/record_quality_review.py`.
-19. Validate the package with `scripts/validate_asset_package.py`.
-20. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
-21. Report the package path, final status, manifest path, and any manual correction points.
+9. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
+10. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
+11. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
+12. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `decision_log`, `extraction_pipeline`, and the object inventory into `metadata.json`.
+13. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
+14. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`.
+15. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files.
+16. Record composition order, mask source, alpha source, semantic boundary, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, `decision_log`, and `qa_report.md` stay synchronized.
+17. Keep individual objects separate before creating grouped or preview outputs.
+18. Generate previews with `scripts/build_previews.py`.
+19. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
+20. Inspect previews and, when appropriate, update object quality checks and QA status with `scripts/record_quality_review.py`.
+21. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`. If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
+22. Validate the package with `scripts/validate_asset_package.py`.
+23. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
+24. Report the package path, final status, manifest path, and any manual correction points.
+
+## Standard Failure Outputs
+
+Use stable outcome language when the workflow cannot claim production extraction:
+
+- `blocked: missing professional segmentation capability`
+- `needs-review: imported upstream assets require QA`
+- `draft-only: package initialized without production extraction claim`
 
 ## Status Meanings
 
@@ -58,6 +73,8 @@ Use this workflow to turn a single source image into a reusable asset package. O
 - Do not claim segmentation quality when `extraction_pipeline` or per-object quality evidence is missing.
 - Do not leave external model folders or temporary manifests in the package root; use `_staging/` or `_archive_intermediate/`.
 - Do not mark approximate background or structural reconstruction as exact extraction.
+- Do not silently choose split granularity, grouping boundaries, approximate reconstruction acceptance, or final QA acceptance when those decisions materially affect downstream reuse.
+- Do not default to one-pass extraction when reuse boundaries are subjective.
 
 ## Layer Decomposition Checklist
 
@@ -77,7 +94,9 @@ For UI assets, check whether a tile, badge, or panel background should be split 
 
 ## User Decision Sync
 
-When a split choice affects future reuse, editing, localization, animation, or visual truth, ask the user one focused question before continuing. Include your recommended answer. Do not batch multiple questions unless the user asks for a full grill-me style interrogation.
+When a split choice affects future reuse, editing, localization, animation, approximate reconstruction acceptance, final delivery claims, or visual truth, ask the user one focused question before continuing. Include your recommended answer. Do not batch multiple questions unless the user asks for a full grill-me style interrogation.
+
+Record each confirmation in `metadata.decision_log[]`. If prior instructions or metadata already answer the question, record the decision instead of asking again.
 
 ## Quality-Gated Pipeline Checklist
 

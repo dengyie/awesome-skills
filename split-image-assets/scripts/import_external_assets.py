@@ -21,6 +21,10 @@ DEFAULT_QUALITY_GATES = [
     "reuse readiness needs review",
 ]
 SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+ALLOWED_ROLES = {"main", "secondary", "group", "shadow"}
+ALLOWED_CONFIDENCE = {"high", "medium", "low"}
+ALLOWED_EDGE_COMPLEXITY = {"hard", "soft", "transparent-reflective"}
+ALLOWED_EXTRACTION_METHOD = {"exact", "ai-assisted", "manual", "estimated", "unknown"}
 
 
 def read_metadata(package_dir: Path) -> dict:
@@ -77,6 +81,26 @@ def checked_object_id(value: str, parser: argparse.ArgumentParser) -> str:
     return value
 
 
+def required_string(record: dict, field: str, parser: argparse.ArgumentParser) -> str:
+    value = record.get(field)
+    if not isinstance(value, str) or not value.strip():
+        parser.error(f"manifest object field is required and must be non-empty: {field}")
+    return value
+
+
+def required_int(record: dict, field: str, parser: argparse.ArgumentParser) -> int:
+    value = record.get(field)
+    if isinstance(value, bool) or not isinstance(value, int):
+        parser.error(f"manifest object field is required and must be an integer: {field}")
+    return value
+
+
+def checked_choice(value: str, allowed: set[str], label: str, parser: argparse.ArgumentParser) -> str:
+    if value not in allowed:
+        parser.error(f"{label} must be one of: {', '.join(sorted(allowed))}")
+    return value
+
+
 def upsert_tool(metadata: dict, name: str, role: str, version: str) -> None:
     pipeline = metadata.setdefault("extraction_pipeline", {})
     tools = pipeline.setdefault("tools", [])
@@ -107,23 +131,167 @@ def upsert_object(metadata: dict, record: dict) -> None:
     objects.append(record)
 
 
+def build_import_plan(
+    package_dir: Path,
+    metadata: dict,
+    parser: argparse.ArgumentParser,
+    record: dict,
+    recipe: str,
+    tool_name: str,
+    tool_role: str,
+    tool_version: str,
+    confidence: str,
+    edge_complexity: str,
+    extraction_method: str,
+) -> None:
+    object_id = checked_object_id(required_string(record, "object_id", parser), parser)
+    role = checked_choice(required_string(record, "role", parser), ALLOWED_ROLES, "role", parser)
+    layer_kind = required_string(record, "layer_kind", parser)
+    composition_order = required_int(record, "composition_order", parser)
+    semantic_boundary = required_string(record, "semantic_boundary", parser)
+    asset_source = Path(required_string(record, "asset", parser)).resolve()
+    mask_source = Path(required_string(record, "mask", parser)).resolve()
+    mask_source_name = required_string(record, "mask_source", parser)
+    alpha_source_name = required_string(record, "alpha_source", parser)
+    extraction_method_value = checked_choice(
+        str(record.get("extraction_method", extraction_method)),
+        ALLOWED_EXTRACTION_METHOD,
+        "extraction_method",
+        parser,
+    )
+    confidence_value = checked_choice(
+        str(record.get("confidence", confidence)),
+        ALLOWED_CONFIDENCE,
+        "confidence",
+        parser,
+    )
+    edge_complexity_value = checked_choice(
+        str(record.get("edge_complexity", edge_complexity)),
+        ALLOWED_EDGE_COMPLEXITY,
+        "edge_complexity",
+        parser,
+    )
+    asset_target = package_dir / "assets" / f"{object_id}_transparent.png"
+    mask_target = package_dir / "masks" / f"mask_{object_id}.png"
+
+    expected_mask_size = source_size(metadata, parser)
+    width, height = checked_image_size(asset_source, parser, "asset")
+    actual_mask_size = checked_image_size(mask_source, parser, "mask")
+    if actual_mask_size != expected_mask_size:
+        parser.error(
+            "source-space mask dimensions must match metadata.source dimensions: "
+            f"{actual_mask_size} != {expected_mask_size}"
+        )
+
+    return {
+        "asset_source": asset_source,
+        "asset_target": asset_target,
+        "mask_source": mask_source,
+        "mask_target": mask_target,
+        "recipe": recipe,
+        "tool_name": tool_name,
+        "tool_role": tool_role,
+        "tool_version": tool_version,
+        "object": {
+            "id": object_id,
+            "role": role,
+            "layer_kind": layer_kind,
+            "composition_order": composition_order,
+            "semantic_boundary": semantic_boundary,
+            "asset_path": str(asset_target.relative_to(package_dir)).replace("\\", "/"),
+            "mask_path": str(mask_target.relative_to(package_dir)).replace("\\", "/"),
+            "mask_source": mask_source_name,
+            "alpha_source": alpha_source_name,
+            "mask_coordinate_space": "source",
+            "width": width,
+            "height": height,
+            "aspect_ratio": width / height if height else 0,
+            "extraction_method": extraction_method_value,
+            "confidence": confidence_value,
+            "edge_complexity": edge_complexity_value,
+            "manual_review_flags": [
+                "external asset imported; inspect mask alignment and alpha edges"
+            ],
+            "quality_checks": {
+                "mask_alignment": "needs-review",
+                "alpha_edges": "needs-review",
+                "background_residue": "needs-review",
+                "reuse_readiness": "needs-review",
+            },
+        },
+    }
+
+
+def apply_import_plan(package_dir: Path, metadata: dict, plan: dict) -> None:
+    copy_into_package(plan["asset_source"], plan["asset_target"])
+    copy_into_package(plan["mask_source"], plan["mask_target"])
+    configure_pipeline(metadata, plan["recipe"])
+    upsert_tool(metadata, plan["tool_name"], plan["tool_role"], plan["tool_version"])
+    upsert_object(metadata, plan["object"])
+
+
+def import_record(
+    package_dir: Path,
+    metadata: dict,
+    parser: argparse.ArgumentParser,
+    record: dict,
+    recipe: str,
+    tool_name: str,
+    tool_role: str,
+    tool_version: str,
+    confidence: str,
+    edge_complexity: str,
+    extraction_method: str,
+) -> None:
+    apply_import_plan(
+        package_dir,
+        metadata,
+        build_import_plan(
+            package_dir,
+            metadata,
+            parser,
+            record,
+            recipe,
+            tool_name,
+            tool_role,
+            tool_version,
+            confidence,
+            edge_complexity,
+            extraction_method,
+        ),
+    )
+
+
+def load_manifest(path: Path, parser: argparse.ArgumentParser) -> dict:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        parser.error(f"manifest file does not exist: {path}")
+    except json.JSONDecodeError as exc:
+        parser.error(f"manifest file is not valid JSON: {exc}")
+    if not isinstance(data, dict):
+        parser.error("manifest file must contain an object")
+    return data
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Import outputs from mature segmentation, matting, or layered-image tools."
     )
     parser.add_argument("package_dir", help="Asset package directory.")
-    parser.add_argument("--object-id", required=True)
-    parser.add_argument("--role", required=True, choices=["main", "secondary", "group", "shadow"])
-    parser.add_argument("--layer-kind", required=True)
-    parser.add_argument("--composition-order", required=True, type=int)
-    parser.add_argument("--semantic-boundary", required=True)
-    parser.add_argument("--asset", required=True, help="Transparent PNG asset produced externally.")
-    parser.add_argument("--mask", required=True, help="Source-space mask produced externally.")
-    parser.add_argument("--mask-source", required=True)
-    parser.add_argument("--alpha-source", required=True)
-    parser.add_argument("--tool-name", required=True)
-    parser.add_argument("--tool-role", required=True)
-    parser.add_argument("--tool-version", required=True)
+    parser.add_argument("--manifest", help="JSON manifest for batch upstream import.")
+    parser.add_argument("--object-id")
+    parser.add_argument("--role", choices=["main", "secondary", "group", "shadow"])
+    parser.add_argument("--layer-kind")
+    parser.add_argument("--composition-order", type=int)
+    parser.add_argument("--semantic-boundary")
+    parser.add_argument("--asset", help="Transparent PNG asset produced externally.")
+    parser.add_argument("--mask", help="Source-space mask produced externally.")
+    parser.add_argument("--mask-source")
+    parser.add_argument("--alpha-source")
+    parser.add_argument("--tool-name")
+    parser.add_argument("--tool-role")
+    parser.add_argument("--tool-version")
     parser.add_argument("--recipe", default="grounded-segmentation-matting-repair")
     parser.add_argument("--confidence", default="medium", choices=["high", "medium", "low"])
     parser.add_argument(
@@ -139,60 +307,87 @@ def main() -> int:
     args = parser.parse_args()
 
     package_dir = Path(args.package_dir).resolve()
-    object_id = checked_object_id(args.object_id, parser)
-    asset_source = Path(args.asset).resolve()
-    mask_source = Path(args.mask).resolve()
-    asset_target = package_dir / "assets" / f"{object_id}_transparent.png"
-    mask_target = package_dir / "masks" / f"mask_{object_id}.png"
-
     metadata = checked_metadata(package_dir, parser)
-    expected_mask_size = source_size(metadata, parser)
-    width, height = checked_image_size(asset_source, parser, "asset")
-    actual_mask_size = checked_image_size(mask_source, parser, "mask")
-    if actual_mask_size != expected_mask_size:
-        parser.error(
-            "source-space mask dimensions must match metadata.source dimensions: "
-            f"{actual_mask_size} != {expected_mask_size}"
+
+    if args.manifest:
+        manifest = load_manifest(Path(args.manifest).resolve(), parser)
+        tool = manifest.get("tool", {})
+        if not isinstance(tool, dict):
+            parser.error("manifest.tool must be an object")
+        for field in ["name", "role", "version"]:
+            value = tool.get(field)
+            if not isinstance(value, str) or not value.strip():
+                parser.error(f"manifest.tool.{field} is required and must be non-empty")
+        objects = manifest.get("objects", [])
+        if not isinstance(objects, list) or not objects:
+            parser.error("manifest.objects must be a non-empty list")
+        plans = []
+        for record in objects:
+            if not isinstance(record, dict):
+                parser.error("manifest.objects entries must be objects")
+            plans.append(
+                build_import_plan(
+                    package_dir,
+                    metadata,
+                    parser,
+                    record,
+                    str(manifest.get("recipe", args.recipe)),
+                    str(tool.get("name", "")),
+                    str(tool.get("role", "")),
+                    str(tool.get("version", "")),
+                    args.confidence,
+                    args.edge_complexity,
+                    args.extraction_method,
+                )
+            )
+        for plan in plans:
+            apply_import_plan(package_dir, metadata, plan)
+    else:
+        required_args = [
+            "object_id",
+            "role",
+            "layer_kind",
+            "composition_order",
+            "semantic_boundary",
+            "asset",
+            "mask",
+            "mask_source",
+            "alpha_source",
+            "tool_name",
+            "tool_role",
+            "tool_version",
+        ]
+        missing = [name for name in required_args if getattr(args, name) in (None, "")]
+        if missing:
+            parser.error("missing required arguments for single-object import: " + ", ".join(missing))
+        import_record(
+            package_dir,
+            metadata,
+            parser,
+            {
+                "object_id": args.object_id,
+                "role": args.role,
+                "layer_kind": args.layer_kind,
+                "composition_order": args.composition_order,
+                "semantic_boundary": args.semantic_boundary,
+                "asset": args.asset,
+                "mask": args.mask,
+                "mask_source": args.mask_source,
+                "alpha_source": args.alpha_source,
+            },
+            args.recipe,
+            args.tool_name,
+            args.tool_role,
+            args.tool_version,
+            args.confidence,
+            args.edge_complexity,
+            args.extraction_method,
         )
 
-    copy_into_package(asset_source, asset_target)
-    copy_into_package(mask_source, mask_target)
-    configure_pipeline(metadata, args.recipe)
-    upsert_tool(metadata, args.tool_name, args.tool_role, args.tool_version)
-    upsert_object(
-        metadata,
-        {
-            "id": object_id,
-            "role": args.role,
-            "layer_kind": args.layer_kind,
-            "composition_order": args.composition_order,
-            "semantic_boundary": args.semantic_boundary,
-            "asset_path": str(asset_target.relative_to(package_dir)).replace("\\", "/"),
-            "mask_path": str(mask_target.relative_to(package_dir)).replace("\\", "/"),
-            "mask_source": args.mask_source,
-            "alpha_source": args.alpha_source,
-            "mask_coordinate_space": "source",
-            "width": width,
-            "height": height,
-            "aspect_ratio": width / height if height else 0,
-            "extraction_method": args.extraction_method,
-            "confidence": args.confidence,
-            "edge_complexity": args.edge_complexity,
-            "manual_review_flags": [
-                "external asset imported; inspect mask alignment and alpha edges"
-            ],
-            "quality_checks": {
-                "mask_alignment": "needs-review",
-                "alpha_edges": "needs-review",
-                "background_residue": "needs-review",
-                "reuse_readiness": "needs-review",
-            },
-        },
-    )
     metadata.setdefault("qa", {})["status"] = "needs-review"
     write_metadata(package_dir, metadata)
 
-    print(f"Imported external asset layer: {object_id}")
+    print(f"Imported external asset layer(s) into: {package_dir}")
     return 0
 
 

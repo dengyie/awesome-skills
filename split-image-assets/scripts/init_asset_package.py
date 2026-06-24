@@ -32,6 +32,7 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "tools": [],
         },
         "objects": [],
+        "decision_log": [],
         "previews": {},
         "qa": {
             "status": "needs-review",

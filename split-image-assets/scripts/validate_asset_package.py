@@ -35,6 +35,13 @@ ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json"}
 RECONSTRUCTION_MARKERS = {"reconstruct", "reconstructed", "reconstruction", "inpaint", "clean plate"}
 HELPER_ONLY_MARKERS = {"pillow", "opencv", "skimage", "threshold"}
 ALLOWED_GRANULARITY_MODES = {"module", "component", "atomic-layer", "production-editable", "draft"}
+REQUIRED_DECISION_FIELDS = {
+    "stage",
+    "question",
+    "recommended_answer",
+    "user_answer",
+    "decision_effect",
+}
 
 
 def rel_path(package_dir: Path, value: str, errors: list[str], label: str) -> Path | None:
@@ -133,6 +140,24 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         errors.append("metadata.granularity.notes must be a string")
     elif not notes.strip():
         errors.append("metadata.granularity.notes must explain the aligned split scope")
+    decision_log = metadata.get("decision_log", [])
+    if not isinstance(decision_log, list):
+        errors.append("metadata.decision_log must be a list")
+    else:
+        for index, entry in enumerate(decision_log):
+            if not isinstance(entry, dict):
+                errors.append(f"metadata.decision_log[{index}] must be an object")
+                continue
+            missing = sorted(REQUIRED_DECISION_FIELDS - set(entry))
+            if missing:
+                errors.append(
+                    f"metadata.decision_log[{index}] missing required fields: "
+                    + ", ".join(missing)
+                )
+            for field in REQUIRED_DECISION_FIELDS:
+                value = entry.get(field)
+                if value is not None and (not isinstance(value, str) or not value.strip()):
+                    errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
     qa = metadata.get("qa", {})
     if not isinstance(qa, dict):
         errors.append("metadata.qa must be an object")

@@ -123,6 +123,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "references" / "asset-package-contract.md",
             ROOT / "references" / "qa-standards.md",
             ROOT / "references" / "manual-review.md",
+            ROOT / "references" / "confirmation-prompts.md",
             ROOT / "scripts" / "init_asset_package.py",
             ROOT / "scripts" / "import_external_assets.py",
             ROOT / "scripts" / "build_previews.py",
@@ -146,6 +147,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
         self.assertIn("name: split-image-assets", frontmatter)
         self.assertIn("asset package", frontmatter)
+        self.assertIn("not a professional segmenter", skill_text)
+        self.assertIn("draft-only packaging", skill_text)
         self.assertIn("ANALYZE BEFORE EXTRACTING", skill_text)
         self.assertIn("REUSABLE ASSETS BEFORE PREVIEWS", skill_text)
         self.assertIn("NEVER HIDE UNCERTAINTY", skill_text)
@@ -153,6 +156,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("DECISION SYNC BEFORE AMBIGUOUS SPLITS", skill_text)
         self.assertIn("EXTRACTION CAPABILITY GATE", skill_text)
         self.assertIn("GRANULARITY ALIGNMENT GATE", skill_text)
+        self.assertIn("CONFIRMATION GATE", skill_text)
+        self.assertIn("DO NOT DEFAULT TO ONE-PASS EXTRACTION", skill_text)
         self.assertIn("PROFESSIONAL SEGMENTER FIRST", skill_text)
         self.assertIn("SOURCE-SPACE MASKS ARE NORMAL", skill_text)
         self.assertIn("STAGE INTERMEDIATES", skill_text)
@@ -186,6 +191,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "asset_manifest.json",
             "manual review",
             "does not perform segmentation",
+            "professional upstream",
+            "production-capable",
+            "draft-packaging-only",
+            "grill-me style",
+            "confirmation",
             "semantic layer hierarchy",
             "Grounded-SAM",
             "Qwen-Image-Layered",
@@ -251,6 +261,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["source"]["height"], 3)
             self.assertEqual(metadata["granularity"]["mode"], "unset")
             self.assertFalse(metadata["granularity"]["user_confirmed"])
+            self.assertEqual(metadata["decision_log"], [])
             self.assertEqual(metadata["qa"]["status"], "needs-review")
             self.assertIn(
                 "Final status: needs-review",
@@ -296,6 +307,219 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 metadata["previews"]["sprite_sheet_2x2"],
                 "previews/sprite_sheet_2x2.png",
             )
+
+    def test_import_external_assets_supports_manifest_batch_import(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            asset_a = tmp_path / "tile.png"
+            asset_b = tmp_path / "glyph.png"
+            mask_a = tmp_path / "tile_mask.png"
+            mask_b = tmp_path / "glyph_mask.png"
+            Image.new("RGBA", (2, 2), (80, 100, 120, 255)).save(asset_a)
+            Image.new("RGBA", (2, 2), (255, 255, 255, 220)).save(asset_b)
+            Image.new("L", (6, 6), 255).save(mask_a)
+            Image.new("L", (6, 6), 255).save(mask_b)
+
+            manifest_path = tmp_path / "import_manifest.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "recipe": "grounded-segmentation-matting-repair",
+                        "tool": {
+                            "name": "SAM2",
+                            "role": "segmentation",
+                            "version": "external",
+                        },
+                        "objects": [
+                            {
+                                "object_id": "status_tile",
+                                "role": "secondary",
+                                "layer_kind": "icon-tile",
+                                "composition_order": 10,
+                                "semantic_boundary": "Carrier tile for UI status icon.",
+                                "asset": str(asset_a),
+                                "mask": str(mask_a),
+                                "mask_source": "sam2",
+                                "alpha_source": "rembg-refine",
+                            },
+                            {
+                                "object_id": "status_glyph",
+                                "role": "secondary",
+                                "layer_kind": "glyph",
+                                "composition_order": 20,
+                                "semantic_boundary": "Foreground glyph for UI status icon.",
+                                "asset": str(asset_b),
+                                "mask": str(mask_b),
+                                "mask_source": "sam2",
+                                "alpha_source": "rembg-refine",
+                            },
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--manifest",
+                    str(manifest_path),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(metadata["objects"]), 2)
+            self.assertEqual(metadata["objects"][0]["id"], "status_tile")
+            self.assertEqual(metadata["objects"][1]["id"], "status_glyph")
+            self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "SAM2")
+
+    def test_import_external_assets_rejects_manifest_without_tool_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            asset = tmp_path / "tile.png"
+            mask = tmp_path / "tile_mask.png"
+            Image.new("RGBA", (2, 2), (80, 100, 120, 255)).save(asset)
+            Image.new("L", (6, 6), 255).save(mask)
+
+            manifest_path = tmp_path / "import_manifest.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "recipe": "grounded-segmentation-matting-repair",
+                        "tool": {"name": "", "role": "segmentation", "version": "external"},
+                        "objects": [
+                            {
+                                "object_id": "status_tile",
+                                "role": "secondary",
+                                "layer_kind": "icon-tile",
+                                "composition_order": 10,
+                                "semantic_boundary": "Carrier tile.",
+                                "asset": str(asset),
+                                "mask": str(mask),
+                                "mask_source": "sam2",
+                                "alpha_source": "rembg-refine",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--manifest",
+                    str(manifest_path),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("manifest.tool.name", result.stderr)
+            self.assertFalse((output / "assets" / "status_tile_transparent.png").exists())
+
+    def test_import_external_assets_batch_import_fails_before_partial_copy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            asset_a = tmp_path / "tile.png"
+            asset_b = tmp_path / "glyph.png"
+            mask_a = tmp_path / "tile_mask.png"
+            mask_b = tmp_path / "glyph_mask.png"
+            Image.new("RGBA", (2, 2), (80, 100, 120, 255)).save(asset_a)
+            Image.new("RGBA", (2, 2), (255, 255, 255, 220)).save(asset_b)
+            Image.new("L", (6, 6), 255).save(mask_a)
+            Image.new("L", (2, 2), 255).save(mask_b)
+
+            manifest_path = tmp_path / "import_manifest.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "recipe": "grounded-segmentation-matting-repair",
+                        "tool": {
+                            "name": "SAM2",
+                            "role": "segmentation",
+                            "version": "external",
+                        },
+                        "objects": [
+                            {
+                                "object_id": "status_tile",
+                                "role": "secondary",
+                                "layer_kind": "icon-tile",
+                                "composition_order": 10,
+                                "semantic_boundary": "Carrier tile.",
+                                "asset": str(asset_a),
+                                "mask": str(mask_a),
+                                "mask_source": "sam2",
+                                "alpha_source": "rembg-refine",
+                            },
+                            {
+                                "object_id": "status_glyph",
+                                "role": "secondary",
+                                "layer_kind": "glyph",
+                                "composition_order": 20,
+                                "semantic_boundary": "Foreground glyph.",
+                                "asset": str(asset_b),
+                                "mask": str(mask_b),
+                                "mask_source": "sam2",
+                                "alpha_source": "rembg-refine",
+                            },
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "import_external_assets.py"),
+                    str(output),
+                    "--manifest",
+                    str(manifest_path),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("source-space mask dimensions", result.stderr)
+            self.assertFalse((output / "assets" / "status_tile_transparent.png").exists())
+            self.assertFalse((output / "assets" / "status_glyph_transparent.png").exists())
 
     def test_archive_intermediates_moves_staging_files_and_writes_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -601,6 +825,44 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["granularity"]["mode"], "atomic-layer")
             self.assertTrue(metadata["granularity"]["user_confirmed"])
             self.assertIn("atomic UI assets", metadata["granularity"]["notes"])
+
+    def test_record_quality_review_records_confirmation_decision_log(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--decision-stage",
+                    "semantic-split-plan",
+                    "--decision-question",
+                    "Split icon into tile and glyph?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "yes",
+                    "--decision-effect",
+                    "Create separate carrier and glyph layers.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(metadata["decision_log"]), 1)
+            entry = metadata["decision_log"][0]
+            self.assertEqual(entry["stage"], "semantic-split-plan")
+            self.assertEqual(entry["recommended_answer"], "yes")
+            self.assertEqual(entry["user_answer"], "yes")
 
     def test_record_quality_review_can_confirm_crop_only_layer_after_manual_inspection(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1464,6 +1726,61 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("metadata.granularity", result.stderr)
+
+    def test_validate_asset_package_rejects_malformed_decision_log(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["decision_log"] = [{"stage": "granularity"}]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("decision_log", result.stderr)
 
     def test_validate_asset_package_rejects_unconfirmed_granularity_alignment(self):
         with tempfile.TemporaryDirectory() as tmp:

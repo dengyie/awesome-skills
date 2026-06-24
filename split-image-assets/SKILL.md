@@ -11,16 +11,20 @@ Turn a source image into a reusable, inspectable asset package.
 
 This skill is not a one-shot image prompt. Its main output is an asset package with transparent PNGs, masks, cleaned background, metadata, previews, and QA evidence. A 2x2 sprite sheet is only a preview artifact.
 
+This skill is not a professional segmenter. It does not promise production-grade automatic segmentation by itself. Its job is to receive, normalize, inspect, package, and validate results from professional upstream tools or manual workflows. If mature upstream extraction is unavailable, the run must stay in draft-only packaging rather than claiming production extraction.
+
 ## Iron Rules
 
 ```text
 ANALYZE BEFORE EXTRACTING
 EXTRACTION CAPABILITY GATE
 GRANULARITY ALIGNMENT GATE
+CONFIRMATION GATE
 PROFESSIONAL SEGMENTER FIRST
 SEMANTIC LAYERS BEFORE RECTANGLES
 QUALITY-GATED PIPELINE
 DECISION SYNC BEFORE AMBIGUOUS SPLITS
+DO NOT DEFAULT TO ONE-PASS EXTRACTION
 REUSABLE ASSETS BEFORE PREVIEWS
 TRANSPARENT PNGS ARE PRODUCTION ASSETS
 SOURCE-SPACE MASKS ARE NORMAL
@@ -52,7 +56,7 @@ NEVER HIDE UNCERTAINTY
    - transparent, reflective, fuzzy, smoky, or low-contrast regions
    - recommended split plan
 9. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
-10. When the split plan has an ambiguous decision point, follow the Decision Sync Rule before extracting.
+10. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the Confirmation Gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
 11. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
 12. Produce or collect reusable assets:
@@ -62,7 +66,14 @@ NEVER HIDE UNCERTAINTY
    - optional shadows and grouped object layers
 13. Put external model outputs, candidate masks, refinement files, and temporary manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
    - use `scripts/archive_intermediates.py` when you want a deterministic archive step
-14. When external tools produced assets, normalize them with `scripts/import_external_assets.py`.
+14. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
+   - professional upstream
+   - `scripts/import_external_assets.py`
+   - `scripts/build_previews.py`
+   - `scripts/build_quality_previews.py`
+   - `scripts/record_quality_review.py`
+   - `scripts/validate_asset_package.py`
+   - `scripts/export_asset_manifest.py`
 15. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
 16. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, and manual QA status after inspection instead of hand-editing JSON.
 17. Build inspection previews with `scripts/build_previews.py`.
@@ -80,11 +91,11 @@ Use external image tools, AI image editing, manual editing, or user-provided cut
 
 Pillow, OpenCV, and skimage are not primary segmenters for production splitting. Use them for alpha compositing, PNG writing, source-space mask persistence, repair/refinement helpers, preview generation, metadata, and manifest packaging. Do not silently downgrade a production request to bbox or coordinate crops when the mature segmenter path is missing.
 
-`scripts/import_external_assets.py` is the standard adapter for mature tool outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance.
+`scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
 
-`scripts/check_extraction_environment.py` is the capability gate. It only checks local optional modules such as Pillow, OpenCV, Torch, rembg, SAM2, and segment-anything; it does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-only.
+`scripts/check_extraction_environment.py` is the capability gate. It only checks local optional modules such as Pillow, OpenCV, Torch, rembg, SAM2, and segment-anything; it does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
 
-The capability report distinguishes `production_capable` from `draft-only` fallback conditions and lists `missing_for_production` so an agent does not confuse partial local tooling with production readiness.
+The capability report distinguishes `production_capable` from `draft-packaging-only` fallback conditions and lists `missing_for_production` so an agent does not confuse partial local tooling with production readiness.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
@@ -122,7 +133,9 @@ Source-space masks are expected: `masks/*.png` should normally match the origina
 
 ## Decision Sync Rule
 
-When an image split requires a product or design decision, pause and ask the user one question at a time before extracting or overwriting assets. Provide your recommended answer with each question.
+When a split decision affects reuse boundaries, editability, animation readiness, localization, approximate reconstruction acceptance, or final delivery claims, pause and run a one-question confirmation step before continuing that branch.
+
+This is a confirmation-driven workflow, not passive ambiguity handling. Ask one question at a time, include the recommended answer, resolve one branch before moving on, and inspect the source image, metadata, and prior user instructions before asking. Do not batch unrelated questions unless the user explicitly asks for a full alignment round.
 
 Ask when deciding:
 
@@ -131,8 +144,11 @@ Ask when deciding:
 - whether uncertain edges, hidden background, or reconstructed pixels can be accepted as `needs-review`
 - whether to prefer exact source preservation, editable layers, animation-ready layers, or quick draft assets
 - whether a low-confidence automated mask should be retried with another upstream tool or sent to manual review
+- whether structurally valid output should remain `needs-review` until the user accepts its cleanliness and granularity
 
 If the answer can be determined from the source image, existing metadata, or user-provided requirements, inspect that evidence first. If ambiguity remains, ask exactly one focused question and wait for the answer before continuing that branch.
+
+Record confirmation outcomes in `metadata.decision_log[]` with `stage`, `question`, `recommended_answer`, `user_answer`, and `decision_effect`. Do not silently choose split granularity, grouping boundaries, approximate reconstruction acceptance, or final QA acceptance when those decisions materially affect downstream reuse.
 
 ## Reference Routing
 
@@ -141,6 +157,7 @@ If the answer can be determined from the source image, existing metadata, or use
 - Read `references/asset-package-contract.md` before creating, renaming, or validating files.
 - Read `references/qa-standards.md` before claiming an asset is reusable.
 - Read `references/manual-review.md` when confidence is low, edges are complex, objects overlap, or background repair is uncertain.
+- Read `references/confirmation-prompts.md` when a decision needs user confirmation or should be recorded from prior instructions.
 
 ## Output Expectations
 
@@ -148,6 +165,10 @@ At minimum report:
 
 - package path
 - source image
+- production extraction capability: `production-capable` or `draft-packaging-only`
+- missing capabilities when not production-capable
+- granularity mode, whether it was user-confirmed or inferred, split scope notes, and whether text/UI chrome is extracted or rebuilt downstream
+- confirmation decisions recorded in `metadata.decision_log`
 - visual hierarchy and recommended split plan
 - extraction pipeline recipe, stages, upstream tools, and quality gates
 - primary segmenter, matting tool, and helper tools

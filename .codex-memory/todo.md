@@ -3,6 +3,7 @@
 ## Next
 - [ ] Re-authenticate GitHub for account `dengyie` and push local `main` to `origin/main`.
 ## Done
+- [x] Add confirmation-driven checkpoints to `split-image-assets`, including `metadata.decision_log[]`, prompt templates, review adapter support, validator coverage, and safer batch upstream import.
 - [x] Apply the `concept-c-workshop-console.png` retrospective to `split-image-assets`: professional segmenter primacy, source-space mask import enforcement, staged intermediates, reconstruction provenance, high-signal subset guidance, and UI tile/glyph decomposition.
 - [x] Add `split-image-assets` pre-extraction gates for environment capability, split granularity, and crop-only manual confirmation.
 - [x] Harden `split-image-assets` validation so object layers require ordinary inspection previews and segmentation-quality previews before a package can validate.

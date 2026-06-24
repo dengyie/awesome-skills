@@ -46,6 +46,7 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `granularity.mode`
 - `granularity.user_confirmed`
 - `granularity.notes`
+- `decision_log`
 - `extraction_pipeline.recipe`
 - `extraction_pipeline.stages`
 - `extraction_pipeline.quality_gates`
@@ -57,6 +58,16 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 `analysis.visual_hierarchy` must name the semantic layer stack from background to foreground. `analysis.recommended_split_plan` must describe the reusable layer boundaries. Rectangular crop plans do not satisfy this field unless each rectangle is only a tight bbox around a semantic mask.
 
 `granularity` records the agreed split scope for the run. Use values such as `module`, `component`, `atomic-layer`, `production-editable`, or `draft`. `user_confirmed` records whether the user explicitly aligned on that granularity, and `notes` captures any nuance such as live text rebuild or approximate background acceptance.
+
+`decision_log` records confirmation-driven workflow decisions that materially affect reuse, editability, localization, reconstruction acceptance, or final delivery claims. Each entry must include:
+
+- `stage`
+- `question`
+- `recommended_answer`
+- `user_answer`
+- `decision_effect`
+
+If prior user instructions or existing metadata already answer the question, record that inferred decision instead of asking again. Do not leave subjective split choices only in chat.
 
 Each object should include:
 
@@ -143,6 +154,7 @@ The script can record:
 - `granularity.mode`
 - `granularity.user_confirmed`
 - `granularity.notes`
+- `decision_log` confirmation entries
 - `extraction_pipeline.quality_gates`
 - object-level `quality_checks`
 - package `qa.status`

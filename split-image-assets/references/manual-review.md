@@ -16,6 +16,10 @@
 - mask previews reveal edge contamination
 - icon-in-tile, badge-in-card, or glyph-on-plate edges look merged or contaminated
 - a source-space mask looks mostly black and someone is unsure whether that is a QA mask or a broken asset
+- source-space mask overlay reveals contamination even though the preview asset looks clean
+- transparent asset preview looks acceptable, but the real RGBA layer still carries dark fringe or base-color residue
+- approximate background or support layers are present without reconstruction provenance
+- the user asked for atomic split, but the delivered package is still component-level grouped layers
 
 ## Manual Review Output
 

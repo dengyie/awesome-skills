@@ -6,6 +6,7 @@
 - `metadata.json` is parseable and references existing files.
 - `metadata.analysis.visual_hierarchy` names semantic layers, not just crop regions.
 - `metadata.analysis.recommended_split_plan` explains reusable layer boundaries.
+- `metadata.decision_log[]` records subjective confirmation decisions when they affect reuse, editability, approximate reconstruction, or final delivery claims.
 - `metadata.extraction_pipeline` names the recipe, ordered stages, upstream tools, and quality gates.
 - Object PNGs that represent cutouts have an alpha channel.
 - Object metadata records `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`.
@@ -58,6 +59,8 @@ Mark any unknown, weak, or tool-only inspection as `needs-review`. Use `blocked`
 
 Allowed object check values are `pass`, `needs-review`, `blocked`, and `unknown`. The package-level `qa.status` cannot be `pass` unless every required object quality check is `pass`.
 
+For subjective visual decomposition, do not promote `qa.status` to `pass` just because structural validation succeeds. Final `pass` also needs an explicit or recorded user acceptance decision for the requested granularity, cleanliness, and approximate reconstructed regions.
+
 ## Quality Preview Evidence
 
 Run `scripts/build_quality_previews.py` after assets and masks are present. Inspect:
@@ -70,6 +73,8 @@ Run `scripts/build_quality_previews.py` after assets and masks are present. Insp
 Quality previews are evidence, not proof. They help reviewers identify edge and mask failures quickly.
 
 Structural validation requires these preview references to exist. Missing preview evidence means the package has not completed the QA loop, even when object files and masks are present.
+
+The validator checks evidence and honesty, not visual beauty. Use preview evidence plus human or user confirmation to resolve subjective quality and granularity decisions.
 
 Source-space masks are normal QA artifacts. A small UI component can produce a mostly black mask with a small white region because the mask is aligned to the original source image, not cropped to the asset bbox.
 

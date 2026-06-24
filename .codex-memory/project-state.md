@@ -4,12 +4,16 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` practical extraction hardening is implemented from the `concept-c-workshop-console.png` field retrospective. The workflow now requires capability checking, granularity alignment, professional segmenter primacy, source-space masks, staged intermediates, reconstruction provenance, preview evidence, and crop-only/manual confirmation before production-pass claims.
+- Current stage: `split-image-assets` confirmation-driven workflow hardening is implemented and awaiting local commit. The workflow now requires capability checking, granularity alignment, professional upstream primacy, source-space masks, staged intermediates, reconstruction provenance, preview evidence, machine-readable confirmation decisions, and crop/helper/manual confirmation before production-pass claims.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (50 tests)
+- 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
+- 2026-06-25: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-25: `git diff --check` (passed with only CRLF warnings)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (39 tests)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
 - 2026-06-24: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
