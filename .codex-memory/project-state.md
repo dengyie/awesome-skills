@@ -4,12 +4,16 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` preflight tooling recommendation hardening is implemented and awaiting local commit. The workflow now requires reporting and recording professional upstream capability before extraction, including missing detection/segmentation/matting/background-repair roles, user choice, quality impact, and draft-only pass blocking.
+- Current stage: `split-image-assets` three-layer workflow hardening is implemented, verified, and ready for local commit. The skill now separates capability preparation, segmentation execution adapter, and quality adjudication; draft-only runs are downgraded through asset class/reuse status, professional upstream handoff has a formal adapter contract, UI atomic split planning is documented, and warning-only visual quality audit evidence is available.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (57 tests)
+- 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
+- 2026-06-25: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-25: `git diff --check` (passed with only CRLF warnings)
 - 2026-06-25: Review fix validation for `split-image-assets` tooling preflight pass gate: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (54 tests)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
@@ -198,6 +202,8 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- `split-image-assets` visual quality audit is warning-only by design; it highlights hard alpha, edge-touching assets, oversized masks, and support-layer misclassification, but final visual acceptance still requires preview inspection and user/manual review.
+- `split-image-assets` now distinguishes production-ready assets, draft candidates, support-only layers, and blocked layers; old or hand-authored packages without `asset_class`, `reuse_status`, and `asset_summary` must be migrated before validation passes.
 - `split-image-assets` intentionally does not perform deterministic segmentation, matting, or exact hidden-background recovery; those remain external AI/manual/tooling steps that must be recorded in metadata and QA.
 - `split-image-assets` now requires `metadata.extraction_pipeline` and object-level segmentation quality evidence; initialized packages are expected to remain invalid until a real pipeline recipe and quality checks are recorded.
 - `split-image-assets` now requires composition order, structured tool provenance, allowed quality-check statuses, and forbids `qa.status=pass` when any object quality check is not `pass`.
@@ -210,10 +216,10 @@
 - Push to `origin/main` is blocked by invalid GitHub authentication for account `dengyie`; `gh auth status` reports "The token in default is invalid." Re-authenticate with `gh auth login -h github.com`, then rerun `git push origin main`.
 
 ## Current Focus
-- Support user manual testing of `split-image-assets` using the documented capability gate, granularity gate, package flow, required preview evidence, validation gates, review adapter, and handoff notes.
+- Support user manual testing of `split-image-assets` using the three-layer workflow, capability gate, UI atomic split planner, professional upstream import adapter, required preview/audit evidence, validation gates, review adapter, and honest final report counts.
 
 ## Next Milestone
-- Manual test the skill with representative images and record concrete quality/usability gaps as a new bounded follow-up only if testing exposes them.
+- Commit the verified `split-image-assets` three-layer workflow hardening locally; push remains manual-blocked until GitHub auth is refreshed. Afterward, manual test representative UI/images and record concrete quality/usability gaps as bounded follow-ups.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`
@@ -222,15 +228,19 @@
 - `split-image-assets/scripts/import_external_assets.py`
 - `split-image-assets/scripts/build_previews.py`
 - `split-image-assets/scripts/build_quality_previews.py`
+- `split-image-assets/scripts/audit_visual_quality.py`
 - `split-image-assets/scripts/record_quality_review.py`
 - `split-image-assets/scripts/export_asset_manifest.py`
 - `split-image-assets/scripts/validate_asset_package.py`
 - `split-image-assets/references/workflow.md`
 - `split-image-assets/references/pipeline-recipes.md`
+- `split-image-assets/references/grounded-sam-pipeline.md`
+- `split-image-assets/references/ui-atomic-split.md`
 - `split-image-assets/references/asset-package-contract.md`
 - `split-image-assets/references/qa-standards.md`
 - `split-image-assets/references/manual-review.md`
 - `split-image-assets/tests/test_skill_package.py`
+- `split-image-assets/external_manifest_examples/sam2_rembg_manifest.json`
 - `docs/usage/split-image-assets.md`
 - `docs/superpowers/specs/2026-06-23-split-image-assets-pipeline-refactor-design.md`
 - `.codex-memory/handoffs/2026-06-24-split-image-assets-test-handoff.md`

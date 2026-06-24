@@ -6,6 +6,12 @@ Use these recipes to choose an extraction path before creating production assets
 
 Treat professional upstream extraction as the normal production path. This skill is the packaging, QA, and delivery tail of the pipeline, not a replacement for detection, segmentation, matting, or reconstruction.
 
+Think in three layers:
+
+- capability preparation: check local tools or external evidence before extraction
+- segmentation execution adapter: run or receive professional upstream outputs and normalize them with the import contract
+- quality adjudication: previews, warning-only visual audit, manual/user acceptance, structural validation, and manifest export
+
 Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, run the Preflight Tooling Recommendation Gate: recommend installation/activation, ask for external professional outputs, or record that the user chose `draft-packaging-only`.
 
 Do not use Pillow, OpenCV, or skimage as the primary production segmenter. They are suitable for alpha compositing, PNG persistence, source-space mask expansion, preview generation, simple repair helpers, and metadata packaging. If the mature segmenter path is unavailable, ask the user for installation, external outputs, or draft-only packaging instead of silently falling back to coordinate crops.
@@ -32,6 +38,8 @@ Typical tool roles:
 - reconstruction / inpaint: IOPaint, LaMa, Stable Diffusion inpainting, or manual paint work for `background_clean.png`
 - packaging / QA: `import_external_assets.py`, `build_previews.py`, `build_quality_previews.py`, `record_quality_review.py`, `validate_asset_package.py`, and `export_asset_manifest.py`
 
+See `grounded-sam-pipeline.md` for the standard adapter input/output contract. Upstream input should be source image plus boxes, points, masks, or grounded prompts. Upstream output should be source-space masks, tight RGBA assets, and a provenance manifest.
+
 Recommended upstream roles:
 
 - detection / grounding: GroundingDINO, Grounded-SAM, or equivalent prompt-to-region tooling
@@ -51,6 +59,8 @@ Record this recipe as `grounded-segmentation-matting-repair`.
 For complex flat UI, run this recipe first on a high-signal subset rather than attempting a full 100-layer atomization pass. Good first-pass targets include logos, nav icons, status dots, pins, checkboxes, chart marks, row glyphs, badges, and small foreground controls.
 
 For icon-in-tile or glyph-on-plate structures, segment or reconstruct the carrier tile and foreground glyph separately when semantic reuse matters.
+
+Imported objects from this recipe should start as `asset_class: candidate` and `reuse_status: draft-candidate`. Promote only after mask overlay, alpha inspection, warning audit, and manual/user acceptance pass.
 
 ## Layer-First Candidate: Qwen-Image-Layered Style Decomposition
 
@@ -84,6 +94,8 @@ Every recipe must record:
 - upstream `tools` with `name`, `role`, and `version`
 - `quality_gates` inspected before final status
 - per-layer `composition_order`, `mask_source`, `alpha_source`, `semantic_boundary`, and `quality_checks`
+- per-layer `asset_class` and `reuse_status`
+- package-level `asset_summary` counts
 
 If this evidence is missing, the package is only a preview or draft and must remain `needs-review` or `blocked`.
 

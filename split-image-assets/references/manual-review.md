@@ -20,6 +20,8 @@
 - transparent asset preview looks acceptable, but the real RGBA layer still carries dark fringe or base-color residue
 - approximate background or support layers are present without reconstruction provenance
 - the user asked for atomic split, but the delivered package is still component-level grouped layers
+- `quality_audit.json` reports hard alpha edges, asset canvas edge contact, large mask area, or support layers marked atomic
+- `asset_class` or `reuse_status` makes draft candidates, support-only layers, or blocked layers look production-ready
 
 ## Manual Review Output
 
@@ -32,10 +34,13 @@ When manual review is needed, report:
 - recommended correction area
 - failed quality gate: mask alignment, alpha edges, background residue, or reuse readiness
 - whether the package is `needs-review` or `blocked`
+- production-ready asset count, draft candidate count, support-only layer count, and blocked count
 
 ## Practical Checks
 
 - For icon-in-tile, badge-in-card, or glyph-on-plate structures, inspect whether the carrier layer and foreground glyph should be separated. If the mask mixes them and cleanup becomes awkward, split carrier + glyph before claiming reuse readiness.
+- After carrier/glyph separation, inspect whether the glyph still carries carrier/background color. If yes, set `quality_checks.background_residue=blocked` or keep `reuse_status=draft-candidate`.
+- Large plates, `background_clean`, grouped UI chrome, and screenshot-level support layers should be `support-only` unless explicitly accepted as production reusable atomic assets.
 - A mostly black source-space mask is normal when the object is small. Do not judge the layer from `masks/*.png` alone; inspect `assets/*.png` for tight transparent reuse and inspect `*_mask_overlay.png` to verify source alignment.
 
 ## Honesty Rule
@@ -43,3 +48,5 @@ When manual review is needed, report:
 Do not upgrade a package to `pass` because it looks acceptable in a small preview. Use `needs-review` when uncertainty remains in production assets, masks, or repaired background.
 
 Do not upgrade a package to `pass` when the asset set lacks the image's core semantic layers. Structural validity is not the same thing as reusable decomposition.
+
+Do not call a draft-only package production reusable because it contains many candidate assets. Report `not production reusable` and keep production-ready counts separate from draft candidate and support-only counts.

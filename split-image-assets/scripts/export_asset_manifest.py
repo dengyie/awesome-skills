@@ -79,9 +79,36 @@ def layer_record(package_dir: Path, item: dict, errors: list[str]) -> dict | Non
         "semantic_boundary": item.get("semantic_boundary"),
         "mask_source": item.get("mask_source"),
         "alpha_source": item.get("alpha_source"),
+        "asset_class": item.get("asset_class"),
+        "reuse_status": item.get("reuse_status"),
         "quality_status": quality_status(item.get("quality_checks")),
         "manual_review_flags": item.get("manual_review_flags", []),
     }
+
+
+def summarize_layers(layers: list[dict]) -> dict:
+    summary = {
+        "production_ready_assets": 0,
+        "draft_candidate_assets": 0,
+        "support_only_layers": 0,
+        "blocked_assets": 0,
+    }
+    for layer in layers:
+        asset_class = layer.get("asset_class")
+        reuse_status = layer.get("reuse_status")
+        if reuse_status == "production-ready" and asset_class == "atomic":
+            summary["production_ready_assets"] += 1
+        elif reuse_status == "draft-candidate":
+            summary["draft_candidate_assets"] += 1
+        elif reuse_status == "support-only" or asset_class in {
+            "grouped-support",
+            "background-support",
+            "preview-reference",
+        }:
+            summary["support_only_layers"] += 1
+        elif reuse_status == "blocked":
+            summary["blocked_assets"] += 1
+    return summary
 
 
 def build_manifest(package_dir: Path, metadata: dict, errors: list[str]) -> dict:
@@ -127,6 +154,7 @@ def build_manifest(package_dir: Path, metadata: dict, errors: list[str]) -> dict
         },
         "qa_status": qa.get("status"),
         "extraction_recipe": pipeline.get("recipe"),
+        "asset_summary": summarize_layers(layers),
         "layers": layers,
     }
 

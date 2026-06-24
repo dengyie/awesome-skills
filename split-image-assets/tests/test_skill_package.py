@@ -97,6 +97,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "confidence": "high",
             "edge_complexity": "hard",
             "manual_review_flags": [],
+            "asset_class": "atomic",
+            "reuse_status": "production-ready",
         }
         if include_quality_evidence:
             object_record["quality_checks"] = {
@@ -130,10 +132,14 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "references" / "qa-standards.md",
             ROOT / "references" / "manual-review.md",
             ROOT / "references" / "confirmation-prompts.md",
+            ROOT / "references" / "ui-atomic-split.md",
+            ROOT / "references" / "grounded-sam-pipeline.md",
+            ROOT / "external_manifest_examples" / "sam2_rembg_manifest.json",
             ROOT / "scripts" / "init_asset_package.py",
             ROOT / "scripts" / "import_external_assets.py",
             ROOT / "scripts" / "build_previews.py",
             ROOT / "scripts" / "build_quality_previews.py",
+            ROOT / "scripts" / "audit_visual_quality.py",
             ROOT / "scripts" / "check_extraction_environment.py",
             ROOT / "scripts" / "archive_intermediates.py",
             ROOT / "scripts" / "record_quality_review.py",
@@ -221,6 +227,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "archive_intermediates.py",
             "export_asset_manifest.py",
             "`qa.status=pass` requires `metadata.capability.production_capable=true`",
+            "asset_class",
+            "reuse_status",
+            "production-ready assets",
+            "draft candidate assets",
+            "support-only layers",
         ]:
             self.assertIn(expected, usage)
 
@@ -288,6 +299,9 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             )
             self.assertEqual(metadata["decision_log"], [])
             self.assertEqual(metadata["qa"]["status"], "needs-review")
+            self.assertEqual(metadata["asset_summary"]["production_ready_assets"], 0)
+            self.assertEqual(metadata["asset_summary"]["draft_candidate_assets"], 0)
+            self.assertEqual(metadata["asset_summary"]["support_only_layers"], 0)
             self.assertIn(
                 "Final status: needs-review",
                 (output / "qa_report.md").read_text(encoding="utf-8"),
@@ -411,6 +425,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["objects"][0]["id"], "status_tile")
             self.assertEqual(metadata["objects"][1]["id"], "status_glyph")
             self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "SAM2")
+            self.assertEqual(metadata["objects"][0]["asset_class"], "candidate")
+            self.assertEqual(metadata["objects"][0]["reuse_status"], "draft-candidate")
 
     def test_import_external_assets_rejects_manifest_without_tool_provenance(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -762,6 +778,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "mask overlay inspected",
                     "--object-id",
                     "main_object",
+                    "--asset-class",
+                    "atomic",
+                    "--reuse-status",
+                    "production-ready",
                     "--mask-alignment",
                     "pass",
                     "--alpha-edges",
@@ -785,6 +805,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["analysis"]["visual_hierarchy"], ["background", "main object"])
             self.assertEqual(metadata["qa"]["status"], "pass")
             self.assertEqual(metadata["objects"][0]["quality_checks"]["reuse_readiness"], "pass")
+            self.assertEqual(metadata["objects"][0]["asset_class"], "atomic")
+            self.assertEqual(metadata["objects"][0]["reuse_status"], "production-ready")
             self.assertIn(
                 "Manual inspection accepted the imported layer.",
                 (output / "qa_report.md").read_text(encoding="utf-8"),
@@ -1447,6 +1469,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "extraction_method": "manual",
                     "confidence": "high",
                     "edge_complexity": "hard",
+                    "asset_class": "grouped-support",
+                    "reuse_status": "support-only",
                     "approximate": True,
                     "reconstruction_provenance": "Manual fixture clean plate reconstructed from surrounding UI.",
                     "manual_review_confirmed": True,
@@ -1475,6 +1499,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "extraction_method": "ai-assisted",
                     "confidence": "high",
                     "edge_complexity": "hard",
+                    "asset_class": "atomic",
+                    "reuse_status": "production-ready",
                     "manual_review_flags": ["ai-assisted mask reviewed"],
                     "quality_checks": {
                         "mask_alignment": "pass",
@@ -1500,6 +1526,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "extraction_method": "ai-assisted",
                     "confidence": "high",
                     "edge_complexity": "hard",
+                    "asset_class": "atomic",
+                    "reuse_status": "production-ready",
                     "manual_review_flags": ["ai-assisted mask reviewed"],
                     "quality_checks": {
                         "mask_alignment": "pass",
@@ -1514,6 +1542,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "missing_for_production": [],
                 "user_choice": "production-capable",
                 "notes": "UI atomic fixture uses production-capable upstream evidence.",
+            }
+            metadata["asset_summary"] = {
+                "production_ready_assets": 2,
+                "draft_candidate_assets": 0,
+                "support_only_layers": 1,
+                "blocked_assets": 0,
             }
             metadata["qa"]["status"] = "pass"
             (output / "metadata.json").write_text(
@@ -1660,6 +1694,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "extraction_method": "manual",
                     "confidence": "high",
                     "edge_complexity": "hard",
+                    "asset_class": "atomic",
+                    "reuse_status": "production-ready",
                     "manual_review_flags": [],
                     "quality_checks": {
                         "mask_alignment": "pass",
@@ -1699,6 +1735,55 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(manifest["layers"][0]["asset_path"], "assets/secondary_transparent.png")
             self.assertEqual(manifest["layers"][0]["mask_path"], "masks/mask_secondary.png")
             self.assertEqual(manifest["layers"][0]["quality_status"], "pass")
+            self.assertEqual(manifest["layers"][0]["asset_class"], "atomic")
+            self.assertEqual(manifest["layers"][0]["reuse_status"], "production-ready")
+            self.assertEqual(manifest["asset_summary"]["production_ready_assets"], 2)
+            self.assertEqual(manifest["asset_summary"]["draft_candidate_assets"], 0)
+            self.assertEqual(manifest["asset_summary"]["support_only_layers"], 0)
+
+    def test_audit_visual_quality_writes_warning_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["asset_class"] = "candidate"
+            metadata["objects"][0]["reuse_status"] = "draft-candidate"
+            metadata["qa"]["status"] = "needs-review"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "audit_visual_quality.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            audit_path = output / "quality_audit.json"
+            contact_sheet_path = output / "previews" / "qa_audit_contact_sheet.png"
+            self.assertTrue(audit_path.exists())
+            self.assertTrue(contact_sheet_path.exists())
+            audit = json.loads(audit_path.read_text(encoding="utf-8"))
+            self.assertEqual(audit["status"], "warning")
+            warning_codes = {warning["code"] for warning in audit["warnings"]}
+            self.assertIn("hard_alpha_edges", warning_codes)
+            self.assertIn("asset_touches_canvas_edge", warning_codes)
+            self.assertIn("mask_area_large", warning_codes)
 
     def test_export_asset_manifest_rejects_asset_paths_outside_package(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -2033,6 +2118,83 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("production_capable=true", result.stderr)
+
+    def test_validate_asset_package_requires_asset_class_and_reuse_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0].pop("asset_class")
+            metadata["objects"][0].pop("reuse_status")
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("asset_class", result.stderr)
+            self.assertIn("reuse_status", result.stderr)
+
+    def test_validate_asset_package_blocks_draft_only_production_ready_asset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["capability"] = {
+                "production_capable": False,
+                "missing_for_production": ["matting/refinement"],
+                "user_choice": "draft-packaging-only",
+                "notes": "Draft-only package.",
+            }
+            metadata["qa"]["status"] = "needs-review"
+            metadata["objects"][0]["asset_class"] = "atomic"
+            metadata["objects"][0]["reuse_status"] = "production-ready"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("draft-packaging-only", result.stderr)
+            self.assertIn("production-ready", result.stderr)
 
     def test_validate_asset_package_rejects_unconfirmed_granularity_alignment(self):
         with tempfile.TemporaryDirectory() as tmp:

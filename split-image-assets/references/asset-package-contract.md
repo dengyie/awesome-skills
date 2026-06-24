@@ -56,6 +56,10 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `extraction_pipeline.quality_gates`
 - `extraction_pipeline.tools`
 - `objects`
+- `asset_summary.production_ready_assets`
+- `asset_summary.draft_candidate_assets`
+- `asset_summary.support_only_layers`
+- `asset_summary.blocked_assets`
 - `previews`
 - `qa.status`
 
@@ -93,6 +97,8 @@ Each object should include:
 - `extraction_method`: `exact`, `ai-assisted`, `manual`, `estimated`, or `unknown`
 - `confidence`: `high`, `medium`, or `low`
 - `edge_complexity`: `hard`, `soft`, or `transparent-reflective`
+- `asset_class`: `atomic`, `grouped-support`, `background-support`, `preview-reference`, or `candidate`
+- `reuse_status`: `production-ready`, `draft-candidate`, `support-only`, or `blocked`
 - `quality_checks.mask_alignment`
 - `quality_checks.alpha_edges`
 - `quality_checks.background_residue`
@@ -100,6 +106,8 @@ Each object should include:
 - `manual_review_flags`
 - `manual_review_confirmed` when a crop-only or estimated layer is manually approved for production reuse
 - `approximate` and `reconstruction_provenance` when a layer was reconstructed, inpainted, or approximated rather than extracted exactly
+
+Use `asset_summary` to keep final counts honest. Production asset counts should only include `asset_class: atomic` plus `reuse_status: production-ready`. Draft-only runs should normally report `production_ready_assets: 0` even when many candidate PNGs exist.
 
 ## Pipeline Contract
 
@@ -111,9 +119,13 @@ The ordered `stages` list must include `semantic-analysis`, `segmentation`, `alp
 
 `qa.status` can be `pass`, `needs-review`, or `blocked`. Do not use `pass` when any required object `quality_checks` value is `needs-review`, `blocked`, or `unknown`.
 
+Do not use `reuse_status: production-ready` when `capability.production_capable` is false or `capability.user_choice` is `draft-packaging-only`. Draft-only imported results should remain `candidate` plus `draft-candidate`, and support plates should remain `support-only`.
+
 ## Production Assets Versus Previews
 
 Transparent object PNGs, masks, and cleaned backgrounds are production assets.
+
+Only inspected atomic transparent object PNGs with `reuse_status: production-ready` should be counted as production reusable assets. Support plates, grouped UI chrome, preview references, and approximate backgrounds may be useful package files but should be counted separately.
 
 White-background previews, checkerboard previews, overview layouts, and 2x2 sprite sheets are inspection artifacts. They help review the package but do not replace the reusable assets.
 
@@ -141,6 +153,8 @@ If a layer represents an approximate clean plate, support plate, or reconstructe
 
 For UI icon-in-tile, badge-in-card, or glyph-on-plate structures, prefer separate semantic layers such as `status_row_02_icon_tile` and `status_row_02_icon_glyph` when downstream reuse or edge cleanup benefits from that separation.
 
+Carrier/glyph splits should each have their own source-space mask overlay. If a glyph still contains carrier or background color, keep `reuse_status: draft-candidate` or set `quality_checks.background_residue: blocked`.
+
 Structural validation does not prove visual perfection. It proves the package has enough pipeline and quality evidence for a human or downstream agent to inspect segmentation quality.
 
 ## External Tool Import Contract
@@ -148,6 +162,8 @@ Structural validation does not prove visual perfection. It proves the package ha
 Use `scripts/import_external_assets.py` when importing outputs from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files. The importer copies files into package-controlled `assets/` and `masks/` paths and records upstream tool provenance in `metadata.extraction_pipeline.tools`.
 
 Imported layers default to `needs-review` quality checks because external generation is not the same as inspected production readiness.
+
+Imported layers should also default to `asset_class: candidate` and `reuse_status: draft-candidate`. Promote them only after preview inspection, warning audit review, and user/manual acceptance when subjective boundaries are involved.
 
 The importer expects masks to be source-space masks. If an upstream tool only produced a tight bbox mask, expand it back into source coordinates before importing or keep it in `_staging/` as an intermediate.
 
@@ -167,12 +183,16 @@ The script can record:
 - `capability.user_choice`
 - `capability.notes`
 - `decision_log` confirmation entries
+- object `asset_class`
+- object `reuse_status`
 - `extraction_pipeline.quality_gates`
 - object-level `quality_checks`
 - package `qa.status`
 - review notes in `qa_report.md`
 
 The script rejects `qa.status=pass` unless every required object quality check is already `pass` or is updated to `pass` in the same command.
+
+It also rejects `qa.status=pass` unless reusable layers have been promoted to `reuse_status: production-ready`.
 
 ## Intermediate Archive Contract
 

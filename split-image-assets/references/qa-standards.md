@@ -10,6 +10,8 @@
 - `metadata.extraction_pipeline` names the recipe, ordered stages, upstream tools, and quality gates.
 - Object PNGs that represent cutouts have an alpha channel.
 - Object metadata records `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`.
+- Object metadata records `asset_class` and `reuse_status` so candidate, support, blocked, and production-ready layers cannot be confused.
+- `metadata.asset_summary` separates production-ready assets, draft candidate assets, support-only layers, and blocked assets.
 - Source-space masks match source dimensions.
 - Inspection previews and segmentation-quality previews exist for every reusable object layer.
 - `qa_report.md` contains a final status.
@@ -28,6 +30,8 @@ Check that assets follow the image's meaning:
 If a package mostly contains page rectangles, grid slices, or bounding boxes, mark it `blocked` or `needs-review` even if the files validate structurally.
 
 If a reusable layer uses a bbox, crop, or manual-estimated crop mask, keep the package `needs-review` or `blocked` until a human confirms that exact layer as production-acceptable. Record that confirmation with `record_quality_review.py --confirm-crop-layer`.
+
+For draft-only packages, candidate PNG count is not production asset count. Report `not production reusable`, keep `production-ready assets: 0` unless real production-capable evidence exists, and count unreviewed cutouts as draft candidate assets.
 
 ## Proportion
 
@@ -78,6 +82,13 @@ The validator checks evidence and honesty, not visual beauty. Use preview eviden
 
 Source-space masks are normal QA artifacts. A small UI component can produce a mostly black mask with a small white region because the mask is aligned to the original source image, not cropped to the asset bbox.
 
+Run `scripts/audit_visual_quality.py` before final review when possible. Treat its findings as warnings that focus manual attention, not automatic pass/fail decisions. Typical warning codes include:
+
+- `hard_alpha_edges`: alpha has no partial transparency and may have hard cut edges
+- `asset_touches_canvas_edge`: nontransparent pixels touch the asset canvas edge
+- `mask_area_large`: source-space mask covers most of the source and may be a whole-image or plate mask
+- `support_layer_marked_atomic`: a plate/background/support layer may have been counted as atomic
+
 ## Background Repair
 
 Check `background_clean.png` for:
@@ -96,3 +107,18 @@ Record which parts are exact extraction, AI-assisted generation, manual editing,
 When a layer is reconstructed rather than extracted, record that explicitly. A reconstructed route, backplate, or missing background can be useful, but it is not an exact extraction.
 
 Approximate background clean plates and structural support layers must record `reconstruction_provenance`. Keep them `needs-review` unless a human explicitly confirms the approximation is acceptable for the requested downstream use.
+
+## Final Quality Report
+
+Separate structural validity from visual readiness:
+
+```text
+Validation result: structural package valid / structurally invalid
+Visual quality result: pass / needs-review / blocked
+Production reusable assets: N
+Draft candidate assets: N
+Support-only layers: N
+Blocked assets: N
+```
+
+Also report expected semantic layers, extracted layers, missing layers, grouped-but-not-atomic layers, downstream rebuild layers, and approximate layers.

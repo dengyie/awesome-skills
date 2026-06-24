@@ -56,7 +56,7 @@ def object_entries(metadata: dict) -> list[dict]:
         for item in metadata.get("objects", [])
         if isinstance(item, dict)
         and item.get("asset_path")
-        and item.get("role") in {"main", "secondary", "group", "shadow"}
+        and item.get("role") in {"main", "secondary", "group", "background", "shadow"}
     ]
 
 

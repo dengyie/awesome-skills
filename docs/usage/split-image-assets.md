@@ -67,13 +67,25 @@ python split-image-assets/scripts/init_asset_package.py source.png output-packag
 python split-image-assets/scripts/import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from SAM2 mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets/scripts/build_previews.py output-package
 python split-image-assets/scripts/build_quality_previews.py output-package
-python split-image-assets/scripts/record_quality_review.py output-package --production-capable true --capability-user-choice production-capable --capability-note "SAM2 and rembg-style external outputs were provided." --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --granularity-mode atomic-layer --granularity-confirmed --granularity-note "Atomic foreground layers; text rebuilt downstream." --decision-stage tooling-preflight --decision-question "Install tools, provide external outputs, or continue draft-only?" --decision-recommended "Install/provide SAM2 or Grounded-SAM plus rembg/BiRefNet/RMBG for production-quality extraction." --decision-answer "external professional outputs provided" --decision-effect "Use imported professional outputs and allow pass only after QA evidence passes." --quality-gate "mask overlay inspected" --object-id main_object --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
+python split-image-assets/scripts/audit_visual_quality.py output-package
+python split-image-assets/scripts/record_quality_review.py output-package --production-capable true --capability-user-choice production-capable --capability-note "SAM2 and rembg-style external outputs were provided." --visual-hierarchy background --visual-hierarchy "main object" --recommended-split-plan "Keep the main object separate from the background." --granularity-mode atomic-layer --granularity-confirmed --granularity-note "Atomic foreground layers; text rebuilt downstream." --decision-stage tooling-preflight --decision-question "Install tools, provide external outputs, or continue draft-only?" --decision-recommended "Install/provide SAM2 or Grounded-SAM plus rembg/BiRefNet/RMBG for production-quality extraction." --decision-answer "external professional outputs provided" --decision-effect "Use imported professional outputs and allow pass only after QA evidence passes." --quality-gate "mask overlay inspected" --object-id main_object --asset-class atomic --reuse-status production-ready --mask-alignment pass --alpha-edges pass --background-residue pass --reuse-readiness pass --qa-status pass --review-note "Manual inspection accepted the imported layer."
 python split-image-assets/scripts/archive_intermediates.py output-package --run-id sam-pass-001
 python split-image-assets/scripts/validate_asset_package.py output-package
 python split-image-assets/scripts/export_asset_manifest.py output-package
 ```
 
 `asset_manifest.json` is the downstream handoff file for renderers, animation tooling, design imports, or manual review queues. It is generated from `metadata.json`, sorted by `composition_order`, and uses package-relative paths.
+
+Each object should declare `asset_class` and `reuse_status`. Use `atomic` + `production-ready` only after review promotion, `candidate` + `draft-candidate` for imported or unreviewed cutouts, and support classes/statuses for grouped plates, background clean plates, preview references, and UI chrome. Draft-only packages must report `not production reusable`.
+
+Final summaries should separate:
+
+- production-ready assets
+- draft candidate assets
+- support-only layers
+- blocked assets
+
+Large plates, approximate `background_clean`, screenshot-level support layers, and grouped UI chrome should not be counted as atomic production-ready assets.
 
 ## QA
 
@@ -89,8 +101,20 @@ Use `record_quality_review.py` after inspecting previews to update `metadata.jso
 
 Validation now requires both ordinary inspection previews from `build_previews.py` and quality previews from `build_quality_previews.py` for each reusable object layer. A package without preview evidence is incomplete even if the transparent PNGs and masks exist.
 
+Run `audit_visual_quality.py` before final review to write `quality_audit.json` and `previews/qa_audit_contact_sheet.png`. This audit only raises warnings such as hard alpha edges, edge-touching assets, large source-space masks, or support plates marked atomic. It does not replace manual review and does not set `qa.status=pass`.
+
 Bbox/manual-estimated crop layers are draft-only unless explicitly confirmed. Use `record_quality_review.py --confirm-crop-layer --object-id <id>` only after a human accepts that layer for production reuse.
 
 Approximate `background_clean.png` files and structural support plates should record `reconstruction_provenance` and remain `needs-review` unless the approximation has been explicitly accepted.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.
+
+Use separate final-report lines for:
+
+```text
+Validation result: structural package valid
+Visual quality result: needs-review / blocked
+Production reusable assets: N
+Draft candidate assets: N
+Support-only layers: N
+```

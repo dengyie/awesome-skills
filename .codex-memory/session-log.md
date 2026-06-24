@@ -1,5 +1,13 @@
 # Session Log
 ## 2026-06-25
+- Task: Continue optimizing `split-image-assets` into a clearer three-layer workflow for capability preparation, upstream execution adapter, and quality adjudication.
+- Actions: Added asset classification and reuse status metadata, defaulted imported upstream layers to draft candidates, blocked draft-only packages from containing production-ready assets, extended `record_quality_review.py` to promote reviewed layers, added `audit_visual_quality.py`, added UI atomic split and Grounded-SAM/SAM2 adapter references, added a SAM2/rembg manifest example, and updated workflow/contract/QA/usage docs plus regression tests.
+- Results: Draft-only outputs now report candidate/support status instead of looking production-complete; professional upstream outputs have a standard manifest/adapter path; UI carrier/glyph/support planning is explicit; visual quality warnings are generated separately from structural validation; final manifest summaries split production-ready, draft-candidate, support-only, and blocked counts.
+- Validation: Passed targeted new regressions, `python -m unittest discover split-image-assets\tests -v` (57 tests), `python -m unittest discover tests -v` (1 test), skill quick validation for `split-image-assets`, and `git diff --check` with only CRLF warnings.
+- Next: Commit the verified hardening locally. Remote push remains blocked until GitHub auth for `dengyie` is refreshed.
+- Blockers: Remote push remains blocked by invalid GitHub token for account `dengyie`.
+
+## 2026-06-25
 - Task: Review and fix the `split-image-assets` tooling preflight gate.
 - Actions: Reviewed the latest preflight tooling change and found that `qa.status=pass` could still be set when `metadata.capability.production_capable` was false but `user_choice` was unset. Added regressions for record adapter and validator pass-claim bypasses, tightened `record_quality_review.py` and `validate_asset_package.py`, and synced docs/tests/fixtures to require production-capable capability before pass.
 - Results: `qa.status=pass` now requires `metadata.capability.production_capable=true`; draft-only or unrecorded tooling preflight packages must remain `needs-review` or `blocked`.

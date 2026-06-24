@@ -21,10 +21,23 @@ DEFAULT_QUALITY_GATES = [
     "reuse readiness needs review",
 ]
 SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
-ALLOWED_ROLES = {"main", "secondary", "group", "shadow"}
+ALLOWED_ROLES = {"main", "secondary", "group", "background", "shadow"}
 ALLOWED_CONFIDENCE = {"high", "medium", "low"}
 ALLOWED_EDGE_COMPLEXITY = {"hard", "soft", "transparent-reflective"}
 ALLOWED_EXTRACTION_METHOD = {"exact", "ai-assisted", "manual", "estimated", "unknown"}
+ALLOWED_ASSET_CLASSES = {
+    "atomic",
+    "grouped-support",
+    "background-support",
+    "preview-reference",
+    "candidate",
+}
+ALLOWED_REUSE_STATUSES = {
+    "production-ready",
+    "draft-candidate",
+    "support-only",
+    "blocked",
+}
 
 
 def read_metadata(package_dir: Path) -> dict:
@@ -131,6 +144,35 @@ def upsert_object(metadata: dict, record: dict) -> None:
     objects.append(record)
 
 
+def summarize_assets(metadata: dict) -> None:
+    summary = {
+        "production_ready_assets": 0,
+        "draft_candidate_assets": 0,
+        "support_only_layers": 0,
+        "blocked_assets": 0,
+    }
+    objects = metadata.get("objects", [])
+    if isinstance(objects, list):
+        for item in objects:
+            if not isinstance(item, dict):
+                continue
+            reuse_status = item.get("reuse_status")
+            asset_class = item.get("asset_class")
+            if reuse_status == "production-ready" and asset_class == "atomic":
+                summary["production_ready_assets"] += 1
+            elif reuse_status == "draft-candidate":
+                summary["draft_candidate_assets"] += 1
+            elif reuse_status == "support-only" or asset_class in {
+                "grouped-support",
+                "background-support",
+                "preview-reference",
+            }:
+                summary["support_only_layers"] += 1
+            elif reuse_status == "blocked":
+                summary["blocked_assets"] += 1
+    metadata["asset_summary"] = summary
+
+
 def build_import_plan(
     package_dir: Path,
     metadata: dict,
@@ -157,6 +199,18 @@ def build_import_plan(
         str(record.get("extraction_method", extraction_method)),
         ALLOWED_EXTRACTION_METHOD,
         "extraction_method",
+        parser,
+    )
+    asset_class = checked_choice(
+        str(record.get("asset_class", "candidate")),
+        ALLOWED_ASSET_CLASSES,
+        "asset_class",
+        parser,
+    )
+    reuse_status = checked_choice(
+        str(record.get("reuse_status", "draft-candidate")),
+        ALLOWED_REUSE_STATUSES,
+        "reuse_status",
         parser,
     )
     confidence_value = checked_choice(
@@ -209,6 +263,8 @@ def build_import_plan(
             "extraction_method": extraction_method_value,
             "confidence": confidence_value,
             "edge_complexity": edge_complexity_value,
+            "asset_class": asset_class,
+            "reuse_status": reuse_status,
             "manual_review_flags": [
                 "external asset imported; inspect mask alignment and alpha edges"
             ],
@@ -228,6 +284,7 @@ def apply_import_plan(package_dir: Path, metadata: dict, plan: dict) -> None:
     configure_pipeline(metadata, plan["recipe"])
     upsert_tool(metadata, plan["tool_name"], plan["tool_role"], plan["tool_version"])
     upsert_object(metadata, plan["object"])
+    summarize_assets(metadata)
 
 
 def import_record(
@@ -281,7 +338,7 @@ def main() -> int:
     parser.add_argument("package_dir", help="Asset package directory.")
     parser.add_argument("--manifest", help="JSON manifest for batch upstream import.")
     parser.add_argument("--object-id")
-    parser.add_argument("--role", choices=["main", "secondary", "group", "shadow"])
+    parser.add_argument("--role", choices=sorted(ALLOWED_ROLES))
     parser.add_argument("--layer-kind")
     parser.add_argument("--composition-order", type=int)
     parser.add_argument("--semantic-boundary")
@@ -292,6 +349,12 @@ def main() -> int:
     parser.add_argument("--tool-name")
     parser.add_argument("--tool-role")
     parser.add_argument("--tool-version")
+    parser.add_argument("--asset-class", choices=sorted(ALLOWED_ASSET_CLASSES), default="candidate")
+    parser.add_argument(
+        "--reuse-status",
+        choices=sorted(ALLOWED_REUSE_STATUSES),
+        default="draft-candidate",
+    )
     parser.add_argument("--recipe", default="grounded-segmentation-matting-repair")
     parser.add_argument("--confidence", default="medium", choices=["high", "medium", "low"])
     parser.add_argument(
@@ -374,6 +437,8 @@ def main() -> int:
                 "mask": args.mask,
                 "mask_source": args.mask_source,
                 "alpha_source": args.alpha_source,
+                "asset_class": args.asset_class,
+                "reuse_status": args.reuse_status,
             },
             args.recipe,
             args.tool_name,

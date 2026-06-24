@@ -13,6 +13,8 @@ This skill is not a one-shot image prompt. Its main output is an asset package w
 
 This skill is not a professional segmenter. It does not promise production-grade automatic segmentation by itself. Its job is to receive, normalize, inspect, package, and validate results from professional upstream tools or manual workflows. If mature upstream extraction is unavailable, the run must stay in draft-only packaging rather than claiming production extraction.
 
+Structure the work as three layers: capability preparation, segmentation execution adapter, and quality adjudication. Capability preparation decides whether the run can be production-capable. The execution adapter normalizes professional upstream outputs into package-owned assets, masks, and provenance. Quality adjudication separates structural validation from visual quality warnings, user/manual acceptance, and production reuse claims.
+
 ## Iron Rules
 
 ```text
@@ -48,14 +50,15 @@ NEVER HIDE UNCERTAINTY
    - ask whether to install/activate tools, provide external professional outputs, or continue as `draft-packaging-only`
    - record the decision in `metadata.capability` and `metadata.decision_log[]`
    - do not continue into extraction until this decision is recorded
-5. Read `references/pipeline-recipes.md` and select an extraction recipe before extraction.
+5. Read `references/pipeline-recipes.md` and `references/grounded-sam-pipeline.md` and select an extraction recipe before extraction.
 6. Run the Granularity Alignment Gate before cutting pixels:
    - module-level, component-level, atomic-layer, or production-editable reconstruction
    - text/labels/buttons extracted as images or rebuilt downstream as live text/UI
    - exact background recovery required or approximate `background_clean.png` accepted as `needs-review`
    - animation-ready independent layers required or static reuse enough
 7. For complex UI or graphic compositions, start with a high-signal subset instead of trying to atomize the entire image at once. Good first-pass targets are logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements whose masks can be inspected clearly.
-8. Analyze the source image before extraction:
+8. For UI, dashboard, badge, tile/glyph, or dense interface images, read `references/ui-atomic-split.md` and create a semantic split plan before extraction.
+9. Analyze the source image before extraction:
    - visual hierarchy from background to foreground
    - main object
    - secondary objects
@@ -64,18 +67,19 @@ NEVER HIDE UNCERTAINTY
    - complex edges
    - transparent, reflective, fuzzy, smoky, or low-contrast regions
    - recommended split plan
-9. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
-10. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the Confirmation Gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
-11. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
+10. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
+11. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the Confirmation Gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
+12. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
-12. Produce or collect reusable assets:
+   - record object `asset_class` and `reuse_status` so draft candidates, support layers, and production-ready atomic assets cannot be confused
+13. Produce or collect reusable assets:
    - transparent PNGs for individual objects
    - source-space masks
    - cleaned background
    - optional shadows and grouped object layers
-13. Put external model outputs, candidate masks, refinement files, and temporary manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
+14. Put external model outputs, candidate masks, refinement files, and temporary manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
    - use `scripts/archive_intermediates.py` when you want a deterministic archive step
-14. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
+15. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
    - professional upstream
    - `scripts/import_external_assets.py`
    - `scripts/build_previews.py`
@@ -83,14 +87,15 @@ NEVER HIDE UNCERTAINTY
    - `scripts/record_quality_review.py`
    - `scripts/validate_asset_package.py`
    - `scripts/export_asset_manifest.py`
-15. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
-16. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, and manual QA status after inspection instead of hand-editing JSON.
-17. Build inspection previews with `scripts/build_previews.py`.
-18. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
-19. Read `references/qa-standards.md` and inspect the package.
-20. Validate structure with `scripts/validate_asset_package.py`.
-21. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
-22. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
+16. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
+17. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, and manual QA status after inspection instead of hand-editing JSON.
+18. Build inspection previews with `scripts/build_previews.py`.
+19. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
+20. Run `scripts/audit_visual_quality.py` for warning-only checks such as hard alpha edges, loose crops, large masks, and support plates miscounted as atomic assets.
+21. Read `references/qa-standards.md` and inspect the package.
+22. Validate structure with `scripts/validate_asset_package.py`.
+23. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
+24. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
 
 ## Script Boundaries
 
@@ -108,6 +113,8 @@ The capability report distinguishes `production_capable` from `draft-packaging-o
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
+`scripts/audit_visual_quality.py` creates `quality_audit.json` and `previews/qa_audit_contact_sheet.png`. It is a warning-only visual audit for risks such as all-hard alpha, nontransparent pixels touching the asset canvas edge, unusually large masks, or support plates misclassified as atomic assets. It does not replace manual review and does not set `qa.status=pass`.
+
 `scripts/record_quality_review.py` is the standard manual-review adapter. Use it to write `metadata.analysis`, append `metadata.extraction_pipeline.quality_gates`, update per-object `quality_checks`, set `metadata.qa.status`, and append `qa_report.md` notes after inspection. It refuses `qa.status=pass` unless every required object quality check is `pass`.
 
 `scripts/export_asset_manifest.py` creates `asset_manifest.json` for downstream renderers, animation pipelines, design tools, or manual review. It records package-relative asset paths sorted by `composition_order`; it does not validate visual quality or replace `metadata.json`.
@@ -118,9 +125,13 @@ The capability report distinguishes `production_capable` from `draft-packaging-o
 
 Every reusable layer must have provenance. Record which tool or manual process created the mask, which process created or refined alpha, which stage repaired the background, the layer's `composition_order`, and which quality gates were inspected.
 
+Every object layer must also declare `asset_class` and `reuse_status`. Use `asset_class=atomic` plus `reuse_status=production-ready` only for inspected reusable assets. Use `candidate` plus `draft-candidate` for imported or unreviewed upstream results. Use `grouped-support`, `background-support`, or `preview-reference` plus `support-only` for plates, grouped UI chrome, backgrounds, contact sheets, and other support/reference layers.
+
 Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
 
 Record the tooling preflight decision that governed the run. `metadata.capability` is required so future agents can see whether the run was production-capable, what upstream roles/tools were missing, which user choice was made, and why missing tools affect quality. `qa.status=pass` requires `metadata.capability.production_capable=true`; draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked`.
+
+Draft-only packages must not look production-complete. Mark unreviewed cutouts as draft candidates, mark plates and `background_clean` as support-only when appropriate, and report production-ready assets separately from draft candidate assets and support-only layers.
 
 The validator checks evidence, not aesthetics. A package can pass structural validation only when it records `metadata.extraction_pipeline`, ordered stages, structured upstream tools, quality gates, object-level `layer_kind`, `composition_order`, `semantic_boundary`, `mask_source`, `alpha_source`, and `quality_checks`, plus generated inspection previews and segmentation-quality previews for every reusable object layer.
 
@@ -165,6 +176,8 @@ Record confirmation outcomes in `metadata.decision_log[]` with `stage`, `questio
 
 - Read `references/workflow.md` for the full staged workflow.
 - Read `references/pipeline-recipes.md` before choosing or documenting the extraction path.
+- Read `references/grounded-sam-pipeline.md` before accepting or running professional upstream outputs.
+- Read `references/ui-atomic-split.md` before planning complex UI, dashboard, badge, tile/glyph, or control-heavy images.
 - Read `references/asset-package-contract.md` before creating, renaming, or validating files.
 - Read `references/qa-standards.md` before claiming an asset is reusable.
 - Read `references/manual-review.md` when confidence is low, edges are complex, objects overlap, or background repair is uncertain.
@@ -186,11 +199,17 @@ At minimum report:
 - visual hierarchy and recommended split plan
 - extraction pipeline recipe, stages, upstream tools, and quality gates
 - primary segmenter, matting tool, and helper tools
+- asset_class/reuse_status policy used for this run
 - object inventory
 - generated or collected assets
 - previews
 - quality preview evidence
+- visual quality audit result and warning count
 - downstream asset manifest
-- validation result
+- validation result: structural package valid or structurally invalid
+- visual quality result: pass, needs-review, or blocked
+- production-ready assets
+- draft candidate assets
+- support-only layers
 - QA status: `pass`, `needs-review`, or `blocked`
 - manual-review flags and next correction points

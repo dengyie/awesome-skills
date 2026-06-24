@@ -26,6 +26,19 @@ ALLOWED_CAPABILITY_CHOICES = {
     "production-capable",
     "unset",
 }
+ALLOWED_ASSET_CLASSES = {
+    "atomic",
+    "grouped-support",
+    "background-support",
+    "preview-reference",
+    "candidate",
+}
+ALLOWED_REUSE_STATUSES = {
+    "production-ready",
+    "draft-candidate",
+    "support-only",
+    "blocked",
+}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -73,6 +86,10 @@ def selected_objects(metadata: dict, args: argparse.Namespace, parser: argparse.
 
 def has_quality_updates(args: argparse.Namespace) -> bool:
     return any(getattr(args, name) is not None for name in QUALITY_CHECK_ARGS)
+
+
+def has_classification_updates(args: argparse.Namespace) -> bool:
+    return args.asset_class is not None or args.reuse_status is not None
 
 
 def update_analysis(metadata: dict, args: argparse.Namespace) -> None:
@@ -183,6 +200,10 @@ def update_capability(metadata: dict, args: argparse.Namespace) -> None:
 
 def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
     for item in objects:
+        if args.asset_class is not None:
+            item["asset_class"] = args.asset_class
+        if args.reuse_status is not None:
+            item["reuse_status"] = args.reuse_status
         quality_checks = item.setdefault("quality_checks", {})
         for arg_name, check_name in QUALITY_CHECK_ARGS.items():
             value = getattr(args, arg_name)
@@ -215,9 +236,52 @@ def all_required_checks_pass(metadata: dict) -> bool:
     return True
 
 
+def reusable_layers_ready_for_pass(metadata: dict) -> bool:
+    objects = metadata.get("objects", [])
+    if not isinstance(objects, list) or not objects:
+        return False
+    for item in objects:
+        if not isinstance(item, dict):
+            return False
+        asset_class = item.get("asset_class")
+        reuse_status = item.get("reuse_status")
+        if asset_class in {"atomic", "candidate"} and reuse_status != "production-ready":
+            return False
+    return True
+
+
 def capability_allows_pass(metadata: dict) -> bool:
     capability = metadata.get("capability")
     return isinstance(capability, dict) and capability.get("production_capable") is True
+
+
+def update_asset_summary(metadata: dict) -> None:
+    summary = {
+        "production_ready_assets": 0,
+        "draft_candidate_assets": 0,
+        "support_only_layers": 0,
+        "blocked_assets": 0,
+    }
+    objects = metadata.get("objects", [])
+    if isinstance(objects, list):
+        for item in objects:
+            if not isinstance(item, dict):
+                continue
+            asset_class = item.get("asset_class")
+            reuse_status = item.get("reuse_status")
+            if asset_class == "atomic" and reuse_status == "production-ready":
+                summary["production_ready_assets"] += 1
+            elif reuse_status == "draft-candidate":
+                summary["draft_candidate_assets"] += 1
+            elif reuse_status == "support-only" or asset_class in {
+                "grouped-support",
+                "background-support",
+                "preview-reference",
+            }:
+                summary["support_only_layers"] += 1
+            elif reuse_status == "blocked":
+                summary["blocked_assets"] += 1
+    metadata["asset_summary"] = summary
 
 
 def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
@@ -250,6 +314,10 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append("- Objects: " + ", ".join(args.object_id))
     elif args.all_objects:
         lines.append("- Objects: all")
+    if args.asset_class:
+        lines.append(f"- Asset class: {args.asset_class}")
+    if args.reuse_status:
+        lines.append(f"- Reuse status: {args.reuse_status}")
     for note in args.review_note or []:
         lines.append(f"- Note: {note}")
     existing = qa_path.read_text(encoding="utf-8") if qa_path.exists() else ""
@@ -278,6 +346,8 @@ def main() -> int:
     parser.add_argument("--quality-gate", action="append", help="Pipeline quality gate inspected.")
     parser.add_argument("--object-id", action="append", help="Object id whose quality checks are updated.")
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
+    parser.add_argument("--asset-class", choices=sorted(ALLOWED_ASSET_CLASSES))
+    parser.add_argument("--reuse-status", choices=sorted(ALLOWED_REUSE_STATUSES))
     parser.add_argument("--mask-alignment", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
     parser.add_argument("--alpha-edges", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
     parser.add_argument("--background-residue", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
@@ -295,6 +365,8 @@ def main() -> int:
         parser.error("use either --all-objects or --object-id, not both")
     if has_quality_updates(args) and not args.all_objects and not args.object_id:
         parser.error("quality check updates require --object-id or --all-objects")
+    if has_classification_updates(args) and not args.all_objects and not args.object_id:
+        parser.error("asset classification updates require --object-id or --all-objects")
     if args.confirm_crop_layer and not args.all_objects and not args.object_id:
         parser.error("--confirm-crop-layer requires --object-id or --all-objects")
 
@@ -311,11 +383,14 @@ def main() -> int:
         parser.error(str(exc))
     update_quality_gates(metadata, args.quality_gate)
     update_object_checks(targets, args)
+    update_asset_summary(metadata)
 
     if args.qa_status == "pass" and not all_required_checks_pass(metadata):
         parser.error("cannot set qa-status pass until every required object quality check is pass")
     if args.qa_status == "pass" and not capability_allows_pass(metadata):
         parser.error("cannot set qa-status pass until metadata.capability.production_capable is true")
+    if args.qa_status == "pass" and not reusable_layers_ready_for_pass(metadata):
+        parser.error("cannot set qa-status pass until reusable layers are reuse_status=production-ready")
     if args.qa_status:
         metadata.setdefault("qa", {})["status"] = args.qa_status
 

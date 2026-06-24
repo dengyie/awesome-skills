@@ -6,7 +6,7 @@ from pathlib import Path
 from PIL import Image
 
 
-OBJECT_ASSET_ROLES = {"main", "secondary", "group", "shadow"}
+OBJECT_ASSET_ROLES = {"main", "secondary", "group", "background", "shadow"}
 REQUIRED_PIPELINE_STAGES = {
     "semantic-analysis",
     "segmentation",
@@ -22,6 +22,19 @@ REQUIRED_OBJECT_QUALITY_CHECKS = {
 }
 ALLOWED_QA_STATUSES = {"pass", "needs-review", "blocked"}
 ALLOWED_QUALITY_CHECK_STATUSES = {"pass", "needs-review", "blocked", "unknown"}
+ALLOWED_ASSET_CLASSES = {
+    "atomic",
+    "grouped-support",
+    "background-support",
+    "preview-reference",
+    "candidate",
+}
+ALLOWED_REUSE_STATUSES = {
+    "production-ready",
+    "draft-candidate",
+    "support-only",
+    "blocked",
+}
 CROP_ONLY_MARKERS = {"bbox", "crop", "manual-estimated crop", "manual-estimated-crop"}
 ALLOWED_ROOT_DIRECTORIES = {
     "source",
@@ -48,6 +61,12 @@ REQUIRED_DECISION_FIELDS = {
     "recommended_answer",
     "user_answer",
     "decision_effect",
+}
+REQUIRED_ASSET_SUMMARY_FIELDS = {
+    "production_ready_assets",
+    "draft_candidate_assets",
+    "support_only_layers",
+    "blocked_assets",
 }
 
 
@@ -109,6 +128,7 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         "analysis",
         "extraction_pipeline",
         "objects",
+        "asset_summary",
         "qa",
     ]:
         if field not in metadata:
@@ -165,6 +185,19 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 value = entry.get(field)
                 if value is not None and (not isinstance(value, str) or not value.strip()):
                     errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
+    asset_summary = metadata.get("asset_summary")
+    if not isinstance(asset_summary, dict):
+        errors.append("metadata.asset_summary must be an object")
+        asset_summary = {}
+    missing_summary = sorted(REQUIRED_ASSET_SUMMARY_FIELDS - set(asset_summary))
+    if missing_summary:
+        errors.append(
+            "metadata.asset_summary missing required fields: " + ", ".join(missing_summary)
+        )
+    for field in REQUIRED_ASSET_SUMMARY_FIELDS & set(asset_summary):
+        value = asset_summary.get(field)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            errors.append(f"metadata.asset_summary.{field} must be a non-negative integer")
     capability = metadata.get("capability", {})
     if not isinstance(capability, dict):
         errors.append("metadata.capability must be an object")
@@ -369,6 +402,45 @@ def validate_objects(
                 f"{object_id}: low-confidence or AI-assisted work needs manual_review_flags"
             )
         if role in OBJECT_ASSET_ROLES:
+            asset_class = item.get("asset_class")
+            reuse_status = item.get("reuse_status")
+            if asset_class not in ALLOWED_ASSET_CLASSES:
+                errors.append(
+                    f"{object_id}: asset_class is required and must be one of: "
+                    + ", ".join(sorted(ALLOWED_ASSET_CLASSES))
+                )
+            if reuse_status not in ALLOWED_REUSE_STATUSES:
+                errors.append(
+                    f"{object_id}: reuse_status is required and must be one of: "
+                    + ", ".join(sorted(ALLOWED_REUSE_STATUSES))
+                )
+            capability = metadata.get("capability", {})
+            production_capable = (
+                capability.get("production_capable") if isinstance(capability, dict) else None
+            )
+            user_choice = capability.get("user_choice") if isinstance(capability, dict) else None
+            if reuse_status == "production-ready" and production_capable is not True:
+                if user_choice == "draft-packaging-only":
+                    errors.append(
+                        f"{object_id}: draft-packaging-only packages cannot contain "
+                        "production-ready reusable assets"
+                    )
+                else:
+                    errors.append(
+                        f"{object_id}: production-ready reuse_status requires "
+                        "metadata.capability.production_capable=true"
+                    )
+            qa = metadata.get("qa", {})
+            qa_status = qa.get("status") if isinstance(qa, dict) else None
+            if (
+                qa_status == "pass"
+                and asset_class in {"atomic", "candidate"}
+                and reuse_status != "production-ready"
+            ):
+                errors.append(
+                    f"{object_id}: qa.status pass requires atomic reusable layers to be "
+                    "reuse_status=production-ready"
+                )
             composition_order = item.get("composition_order")
             if not isinstance(composition_order, int):
                 errors.append(f"{object_id}: composition_order is required for layer stacking")

@@ -1,0 +1,47 @@
+{
+  "recipe": "grounded-segmentation-matting-repair",
+  "tool": {
+    "name": "SAM2 + rembg",
+    "role": "segmentation-and-alpha-refinement",
+    "version": "external"
+  },
+  "objects": [
+    {
+      "object_id": "status_tile",
+      "role": "secondary",
+      "layer_kind": "icon-tile-carrier",
+      "composition_order": 20,
+      "semantic_boundary": "Carrier tile behind a UI status glyph.",
+      "asset": "E:/path/to/upstream/status_tile_rgba.png",
+      "mask": "E:/path/to/upstream/status_tile_source_mask.png",
+      "mask_source": "SAM2 source-space mask",
+      "alpha_source": "rembg refine",
+      "asset_class": "candidate",
+      "reuse_status": "draft-candidate",
+      "extraction_method": "ai-assisted",
+      "confidence": "medium",
+      "edge_complexity": "soft"
+    },
+    {
+      "object_id": "status_glyph",
+      "role": "secondary",
+      "layer_kind": "icon-glyph",
+      "composition_order": 30,
+      "semantic_boundary": "Foreground glyph separated from the carrier tile.",
+      "asset": "E:/path/to/upstream/status_glyph_rgba.png",
+      "mask": "E:/path/to/upstream/status_glyph_source_mask.png",
+      "mask_source": "SAM2 source-space mask",
+      "alpha_source": "BiRefNet or rembg refine",
+      "asset_class": "candidate",
+      "reuse_status": "draft-candidate",
+      "extraction_method": "ai-assisted",
+      "confidence": "medium",
+      "edge_complexity": "hard"
+    }
+  ],
+  "upstream_artifacts": {
+    "source_image": "E:/path/to/source.png",
+    "prompt_manifest": "E:/path/to/upstream/prompts.json",
+    "archive_after_import": "_archive_intermediate/sam2-rembg-run"
+  }
+}
