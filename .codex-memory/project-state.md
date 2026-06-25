@@ -4,12 +4,13 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` three-layer workflow hardening is implemented, verified, and ready for local commit. The skill now separates capability preparation, segmentation execution adapter, and quality adjudication; draft-only runs are downgraded through asset class/reuse status, professional upstream handoff has a formal adapter contract, UI atomic split planning is documented, and warning-only visual quality audit evidence is available.
+- Current stage: `split-image-assets` three-layer workflow hardening is implemented, verified, committed, and published to `origin/main`. The skill now separates capability preparation, segmentation execution adapter, and quality adjudication; draft-only runs are downgraded through asset class/reuse status, professional upstream handoff has a formal adapter contract, UI atomic split planning is documented, and warning-only visual quality audit evidence is available.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-26: `git push origin main` published local `main` through `61e54cb`.
 - 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (57 tests)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
@@ -213,13 +214,13 @@
 - Review follow-up fixed: `validate_asset_package.py` now rejects initialized packages with an empty object inventory instead of reporting them as valid.
 
 ## Active Blockers
-- Push to `origin/main` is blocked by invalid GitHub authentication for account `dengyie`; `gh auth status` reports "The token in default is invalid." Re-authenticate with `gh auth login -h github.com`, then rerun `git push origin main`.
+- None.
 
 ## Current Focus
 - Support user manual testing of `split-image-assets` using the three-layer workflow, capability gate, UI atomic split planner, professional upstream import adapter, required preview/audit evidence, validation gates, review adapter, and honest final report counts.
 
 ## Next Milestone
-- Commit the verified `split-image-assets` three-layer workflow hardening locally; push remains manual-blocked until GitHub auth is refreshed. Afterward, manual test representative UI/images and record concrete quality/usability gaps as bounded follow-ups.
+- Manual test representative UI/images with `split-image-assets` and record concrete quality/usability gaps as bounded follow-ups.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`

@@ -1,8 +1,8 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Re-authenticate GitHub for account `dengyie` and push local `main` to `origin/main`.
 ## Done
+- [x] Push local `main` through `61e54cb` to `origin/main`.
 - [x] Harden `split-image-assets` into a three-layer workflow with asset_class/reuse_status, draft-only count separation, upstream adapter references, UI atomic split planning, warning-only visual audit, and manifest summary counts.
 - [x] Add the `split-image-assets` Preflight Tooling Recommendation Gate, including `metadata.capability`, role-impact reporting, capability review recording, and draft-only pass blocking.
 - [x] Add confirmation-driven checkpoints to `split-image-assets`, including `metadata.decision_log[]`, prompt templates, review adapter support, validator coverage, and safer batch upstream import.

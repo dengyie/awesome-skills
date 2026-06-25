@@ -1,4 +1,11 @@
 # Session Log
+## 2026-06-26 00:00
+- Task: Publish the verified `split-image-assets` three-layer workflow hardening.
+- Actions: Restored repository state from project memory, confirmed local `main` was ahead of `origin/main` by 15 commits, checked GitHub CLI auth status, and ran `git push origin main`.
+- Results: Push succeeded despite `gh auth status` still reporting an invalid `dengyie` token; `origin/main` advanced from `512c4cc` to `61e54cb`, and `git status --short --branch` reports `main...origin/main`.
+- Next: Begin manual testing of representative UI/images with `split-image-assets`.
+- Blockers: None.
+
 ## 2026-06-25
 - Task: Continue optimizing `split-image-assets` into a clearer three-layer workflow for capability preparation, upstream execution adapter, and quality adjudication.
 - Actions: Added asset classification and reuse status metadata, defaulted imported upstream layers to draft candidates, blocked draft-only packages from containing production-ready assets, extended `record_quality_review.py` to promote reviewed layers, added `audit_visual_quality.py`, added UI atomic split and Grounded-SAM/SAM2 adapter references, added a SAM2/rembg manifest example, and updated workflow/contract/QA/usage docs plus regression tests.
