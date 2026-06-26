@@ -19,6 +19,11 @@ ALLOWED_GRANULARITY_MODES = {
     "production-editable",
     "draft",
 }
+ALLOWED_SCOPE_STRATEGIES = {"high-signal-subset", "full-image-batch", "unset"}
+ALLOWED_TEXT_HANDLING = {"extract-as-image", "rebuild-downstream", "unset"}
+ALLOWED_CARRIER_GLYPH_POLICIES = {"split", "grouped", "conditional", "unset"}
+ALLOWED_BACKGROUND_EXPECTATIONS = {"exact-recovery", "approximate-accepted", "unset"}
+ALLOWED_LAYER_INDEPENDENCE = {"static-reuse", "animation-ready", "unset"}
 ALLOWED_CAPABILITY_CHOICES = {
     "install-or-activate-tools",
     "external-professional-outputs",
@@ -118,7 +123,16 @@ def update_quality_gates(metadata: dict, gates: list[str] | None) -> None:
 
 
 def update_granularity(metadata: dict, args: argparse.Namespace) -> None:
-    if not args.granularity_mode and not args.granularity_confirmed and not args.granularity_note:
+    if (
+        not args.granularity_mode
+        and not args.granularity_confirmed
+        and not args.granularity_note
+        and args.scope_strategy is None
+        and args.text_handling is None
+        and args.carrier_glyph_policy is None
+        and args.background_expectation is None
+        and args.layer_independence is None
+    ):
         return
     granularity = metadata.setdefault("granularity", {})
     if args.granularity_mode:
@@ -131,6 +145,16 @@ def update_granularity(metadata: dict, args: argparse.Namespace) -> None:
             granularity["notes"] = existing.rstrip() + "\n" + args.granularity_note
         else:
             granularity["notes"] = args.granularity_note
+    if args.scope_strategy is not None:
+        granularity["scope_strategy"] = args.scope_strategy
+    if args.text_handling is not None:
+        granularity["text_handling"] = args.text_handling
+    if args.carrier_glyph_policy is not None:
+        granularity["carrier_glyph_policy"] = args.carrier_glyph_policy
+    if args.background_expectation is not None:
+        granularity["background_expectation"] = args.background_expectation
+    if args.layer_independence is not None:
+        granularity["layer_independence"] = args.layer_independence
 
 
 def update_decision_log(metadata: dict, args: argparse.Namespace) -> None:
@@ -292,7 +316,7 @@ def update_asset_summary(metadata: dict) -> None:
                 summary["production_ready_assets"] += 1
             elif reuse_status == "draft-candidate":
                 summary["draft_candidate_assets"] += 1
-            elif reuse_status == "support-only" or asset_class in {
+            elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {
                 "grouped-support",
                 "background-support",
                 "preview-reference",
@@ -315,6 +339,16 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append("- Granularity confirmed: true")
     if args.granularity_note:
         lines.append(f"- Granularity note: {args.granularity_note}")
+    if args.scope_strategy:
+        lines.append(f"- Scope strategy: {args.scope_strategy}")
+    if args.text_handling:
+        lines.append(f"- Text handling: {args.text_handling}")
+    if args.carrier_glyph_policy:
+        lines.append(f"- Carrier/glyph policy: {args.carrier_glyph_policy}")
+    if args.background_expectation:
+        lines.append(f"- Background expectation: {args.background_expectation}")
+    if args.layer_independence:
+        lines.append(f"- Layer independence: {args.layer_independence}")
     if args.decision_stage:
         lines.append(f"- Decision stage: {args.decision_stage}")
         lines.append(f"- Decision question: {args.decision_question}")
@@ -353,6 +387,11 @@ def main() -> int:
     parser.add_argument("--granularity-mode", choices=sorted(ALLOWED_GRANULARITY_MODES))
     parser.add_argument("--granularity-confirmed", action="store_true")
     parser.add_argument("--granularity-note")
+    parser.add_argument("--scope-strategy", choices=sorted(ALLOWED_SCOPE_STRATEGIES))
+    parser.add_argument("--text-handling", choices=sorted(ALLOWED_TEXT_HANDLING))
+    parser.add_argument("--carrier-glyph-policy", choices=sorted(ALLOWED_CARRIER_GLYPH_POLICIES))
+    parser.add_argument("--background-expectation", choices=sorted(ALLOWED_BACKGROUND_EXPECTATIONS))
+    parser.add_argument("--layer-independence", choices=sorted(ALLOWED_LAYER_INDEPENDENCE))
     parser.add_argument("--decision-stage")
     parser.add_argument("--decision-question")
     parser.add_argument("--decision-recommended")

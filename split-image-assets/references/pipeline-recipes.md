@@ -12,7 +12,7 @@ Think in three layers:
 - segmentation execution adapter: run or receive professional upstream outputs and normalize them with the import contract
 - quality adjudication: previews, warning-only visual audit, manual/user acceptance, structural validation, and manifest export
 
-Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, run the Preflight Tooling Recommendation Gate: recommend installation/activation, ask for external professional outputs, or record that the user chose `draft-packaging-only`.
+Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. The preflight report must distinguish installed tooling from runtime-ready and production-ready capability across `segmentation`, `matting`, `reconstruction`, and `environment`. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, run the Preflight Tooling Recommendation Gate: recommend `install-or-activate-tools`, ask for `external-professional-outputs`, or record that the user chose `draft-packaging-only`.
 
 Do not use Pillow, OpenCV, or skimage as the primary production segmenter. They are suitable for alpha compositing, PNG persistence, source-space mask expansion, preview generation, simple repair helpers, and metadata packaging. If the mature segmenter path is unavailable, ask the user for installation, external outputs, or draft-only packaging instead of silently falling back to coordinate crops.
 

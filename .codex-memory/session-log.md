@@ -475,3 +475,9 @@
 - Results: The package now labels unselected visual work as `Framework Ready` only and forbids `Visual Delivery Ready` claims from text-only or unselected directions. The package tests and both repository/local skill validation passes succeeded, and the local installed `zero-to-website-design` package matches the repository package.
 - Next: Commit and push the V22 hardening pass.
 - Blockers: None.
+## 2026-06-26 16:20
+- Task: Execute staged Round 1-4 hardening for `split-image-assets`.
+- Actions: Upgraded `check_extraction_environment.py` to runtime-aware capability reporting; synchronized preflight docs and pass-gate validation; added structured UI granularity axes and validator enforcement; fixed approximate-reconstruction honesty and summary counting; implemented archive-time audit metadata rewrites; restricted candidate promotion to `_staging/repair_candidates/`; added `edge-halo` audit emission; expanded regression coverage; ran targeted test slices, full `split-image-assets` package tests, `quick_validate.py`, and `git diff --check`.
+- Results: `split-image-assets` now behaves more like a constrained workflow shell around professional upstream extraction than a loose packaging helper. Full package validation passed with 70 tests, and the current remaining limitation is that the original `concept-c-workshop-console.png` file was not available locally for a literal source-image replay, so the Round 4 replay used the field-retrospective document plus the existing UI atomic fixture.
+- Next: Stage and commit the Round 1-4 hardening pass, then optionally push or run user-facing manual trials.
+- Blockers: Original `concept-c-workshop-console.png` source image not present in the accessible workspace or attachment paths.

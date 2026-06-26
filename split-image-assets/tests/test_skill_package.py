@@ -77,6 +77,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "mode": "atomic-layer",
             "user_confirmed": True,
             "notes": "Test fixture confirmed atomic split granularity.",
+            "scope_strategy": "unset",
+            "text_handling": "unset",
+            "carrier_glyph_policy": "unset",
+            "background_expectation": "unset",
+            "layer_independence": "unset",
         }
         object_record = {
             "id": "main_object",
@@ -258,8 +263,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertIn("python", report)
         self.assertIn("tools", report)
+        self.assertIn("segmentation", report)
+        self.assertIn("matting", report)
+        self.assertIn("reconstruction", report)
+        self.assertIn("environment", report)
         self.assertIn("recommended_recipe", report)
-        self.assertIn("recommended_next_step", report)
+        self.assertIn("recommended_next_action", report)
         self.assertIn("production_capable", report)
         self.assertIn("missing_for_production", report)
         self.assertIn("upstream_roles", report)
@@ -271,7 +280,17 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn(report["tools"]["Pillow"]["available"], [True, False])
         self.assertIn(report["production_capable"], [True, False])
         self.assertIsInstance(report["missing_for_production"], list)
-        self.assertIn("draft", report["recommended_next_step"].lower())
+        self.assertIn(
+            report["recommended_next_action"],
+            ["install-or-activate-tools", "external-professional-outputs", "production-capable"],
+        )
+        for capability_key in ["segmentation", "matting", "reconstruction"]:
+            self.assertIn("installed", report[capability_key])
+            self.assertIn("runtime_ready", report[capability_key])
+            self.assertIn("production_ready", report[capability_key])
+        self.assertIn("torch", report["environment"])
+        self.assertIn("cuda", report["environment"])
+        self.assertIn("onnxruntime", report["environment"])
 
     def test_init_asset_package_creates_standard_layout(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -295,6 +314,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["source"]["height"], 3)
             self.assertEqual(metadata["granularity"]["mode"], "unset")
             self.assertFalse(metadata["granularity"]["user_confirmed"])
+            self.assertEqual(metadata["granularity"]["scope_strategy"], "unset")
+            self.assertEqual(metadata["granularity"]["text_handling"], "unset")
+            self.assertEqual(metadata["granularity"]["carrier_glyph_policy"], "unset")
+            self.assertEqual(metadata["granularity"]["background_expectation"], "unset")
+            self.assertEqual(metadata["granularity"]["layer_independence"], "unset")
             self.assertEqual(
                 metadata["capability"],
                 {
@@ -605,6 +629,57 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(manifest["run_id"], "sam-subset-001")
             self.assertIn("sam-run/candidate_mask.png", manifest["archived_paths"])
 
+    def test_archive_intermediates_updates_audit_metadata_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["asset_class"] = "candidate"
+            metadata["objects"][0]["reuse_status"] = "draft-candidate"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            audit_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "audit_visual_quality.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(audit_result.returncode, 0, audit_result.stderr)
+
+            archive_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "archive_intermediates.py"),
+                    str(output),
+                    "--run-id",
+                    "audit-001",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(archive_result.returncode, 0, archive_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                metadata["audit"]["quality_audit_path"],
+                "_archive_intermediate/audit-001/quality/quality_audit.json",
+            )
+            self.assertEqual(
+                metadata["previews"]["qa_audit_contact_sheet"],
+                "_archive_intermediate/audit-001/quality/qa_audit_contact_sheet.png",
+            )
+
     def test_import_external_assets_records_tool_provenance_and_layer_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -885,6 +960,16 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "--granularity-confirmed",
                     "--granularity-note",
                     "User asked for atomic UI assets with live text deferred.",
+                    "--scope-strategy",
+                    "high-signal-subset",
+                    "--text-handling",
+                    "rebuild-downstream",
+                    "--carrier-glyph-policy",
+                    "split",
+                    "--background-expectation",
+                    "approximate-accepted",
+                    "--layer-independence",
+                    "animation-ready",
                 ],
                 text=True,
                 capture_output=True,
@@ -896,6 +981,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["granularity"]["mode"], "atomic-layer")
             self.assertTrue(metadata["granularity"]["user_confirmed"])
             self.assertIn("atomic UI assets", metadata["granularity"]["notes"])
+            self.assertEqual(metadata["granularity"]["scope_strategy"], "high-signal-subset")
+            self.assertEqual(metadata["granularity"]["text_handling"], "rebuild-downstream")
+            self.assertEqual(metadata["granularity"]["carrier_glyph_policy"], "split")
+            self.assertEqual(metadata["granularity"]["background_expectation"], "approximate-accepted")
+            self.assertEqual(metadata["granularity"]["layer_independence"], "animation-ready")
 
     def test_record_quality_review_records_confirmation_decision_log(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1491,6 +1581,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "mode": "atomic-layer",
                 "user_confirmed": True,
                 "notes": "Atomic UI fixture splits carrier tile and foreground glyph.",
+                "scope_strategy": "high-signal-subset",
+                "text_handling": "rebuild-downstream",
+                "carrier_glyph_policy": "split",
+                "background_expectation": "approximate-accepted",
+                "layer_independence": "animation-ready",
             }
             metadata["extraction_pipeline"] = {
                 "recipe": "grounded-segmentation-matting-repair",
@@ -1663,6 +1758,246 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validate_asset_package_requires_ui_granularity_axes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            Image.new("RGBA", (2, 2), (0, 120, 255, 255)).save(
+                output / "assets" / "status_tile_transparent.png"
+            )
+            Image.new("RGBA", (2, 2), (255, 255, 255, 200)).save(
+                output / "assets" / "status_glyph_transparent.png"
+            )
+            Image.new("L", (8, 8), 255).save(output / "masks" / "mask_status_tile.png")
+            Image.new("L", (8, 8), 255).save(output / "masks" / "mask_status_glyph.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["analysis"] = {
+                "visual_hierarchy": ["ui panel", "status tile", "status glyph"],
+                "recommended_split_plan": "Split the carrier tile and glyph; rebuild text downstream.",
+            }
+            metadata["granularity"].update(
+                {
+                    "scope_strategy": "unset",
+                    "text_handling": "unset",
+                    "carrier_glyph_policy": "unset",
+                    "background_expectation": "unset",
+                    "layer_independence": "unset",
+                }
+            )
+            metadata["objects"] = [
+                {
+                    "id": "status_tile",
+                    "role": "secondary",
+                    "layer_kind": "icon-tile",
+                    "composition_order": 10,
+                    "semantic_boundary": "Carrier tile for UI status icon.",
+                    "asset_path": "assets/status_tile_transparent.png",
+                    "mask_path": "masks/mask_status_tile.png",
+                    "mask_source": "sam2",
+                    "alpha_source": "manual-rgba",
+                    "mask_coordinate_space": "source",
+                    "width": 2,
+                    "height": 2,
+                    "aspect_ratio": 1.0,
+                    "area_ratio": 0.0625,
+                    "extraction_method": "manual",
+                    "confidence": "high",
+                    "edge_complexity": "hard",
+                    "manual_review_flags": [],
+                    "asset_class": "atomic",
+                    "reuse_status": "production-ready",
+                    "delivery_class": "clean-extraction",
+                    "current_asset_revision": "tile-v1",
+                    "selected_candidate_id": "",
+                    "repair_history": [],
+                    "active_reconstruction_method": "",
+                    "quality_checks": {
+                        "mask_alignment": "pass",
+                        "alpha_edges": "pass",
+                        "background_residue": "pass",
+                        "reuse_readiness": "pass",
+                    },
+                },
+                {
+                    "id": "status_glyph",
+                    "role": "secondary",
+                    "layer_kind": "glyph",
+                    "composition_order": 20,
+                    "semantic_boundary": "Foreground glyph for UI status icon.",
+                    "asset_path": "assets/status_glyph_transparent.png",
+                    "mask_path": "masks/mask_status_glyph.png",
+                    "mask_source": "sam2",
+                    "alpha_source": "manual-rgba",
+                    "mask_coordinate_space": "source",
+                    "width": 2,
+                    "height": 2,
+                    "aspect_ratio": 1.0,
+                    "area_ratio": 0.0625,
+                    "extraction_method": "manual",
+                    "confidence": "high",
+                    "edge_complexity": "hard",
+                    "manual_review_flags": [],
+                    "asset_class": "atomic",
+                    "reuse_status": "production-ready",
+                    "delivery_class": "clean-extraction",
+                    "current_asset_revision": "glyph-v1",
+                    "selected_candidate_id": "",
+                    "repair_history": [],
+                    "active_reconstruction_method": "",
+                    "quality_checks": {
+                        "mask_alignment": "pass",
+                        "alpha_edges": "pass",
+                        "background_residue": "pass",
+                        "reuse_readiness": "pass",
+                    },
+                },
+            ]
+            metadata["decision_log"] = [
+                {
+                    "stage": "granularity-alignment",
+                    "question": "Split carrier and glyph with downstream text rebuild?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Allow atomic UI decomposition.",
+                }
+            ]
+            metadata["qa"]["status"] = "pass"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("metadata.granularity.scope_strategy", result.stderr)
+            self.assertIn("metadata.granularity.text_handling", result.stderr)
+
+    def test_validate_asset_package_requires_glyph_when_carrier_glyph_policy_is_split(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            Image.new("RGBA", (2, 2), (0, 120, 255, 255)).save(
+                output / "assets" / "status_tile_transparent.png"
+            )
+            Image.new("L", (8, 8), 255).save(output / "masks" / "mask_status_tile.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["analysis"] = {
+                "visual_hierarchy": ["ui panel", "status tile"],
+                "recommended_split_plan": "Carrier and glyph must split when present.",
+            }
+            metadata["granularity"].update(
+                {
+                    "scope_strategy": "high-signal-subset",
+                    "text_handling": "rebuild-downstream",
+                    "carrier_glyph_policy": "split",
+                    "background_expectation": "approximate-accepted",
+                    "layer_independence": "animation-ready",
+                }
+            )
+            metadata["objects"] = [
+                {
+                    "id": "status_tile",
+                    "role": "secondary",
+                    "layer_kind": "icon-tile",
+                    "composition_order": 10,
+                    "semantic_boundary": "Carrier tile for UI status icon.",
+                    "asset_path": "assets/status_tile_transparent.png",
+                    "mask_path": "masks/mask_status_tile.png",
+                    "mask_source": "sam2",
+                    "alpha_source": "manual-rgba",
+                    "mask_coordinate_space": "source",
+                    "width": 2,
+                    "height": 2,
+                    "aspect_ratio": 1.0,
+                    "area_ratio": 0.0625,
+                    "extraction_method": "manual",
+                    "confidence": "high",
+                    "edge_complexity": "hard",
+                    "manual_review_flags": [],
+                    "asset_class": "atomic",
+                    "reuse_status": "production-ready",
+                    "delivery_class": "clean-extraction",
+                    "current_asset_revision": "tile-v1",
+                    "selected_candidate_id": "",
+                    "repair_history": [],
+                    "active_reconstruction_method": "",
+                    "quality_checks": {
+                        "mask_alignment": "pass",
+                        "alpha_edges": "pass",
+                        "background_residue": "pass",
+                        "reuse_readiness": "pass",
+                    },
+                }
+            ]
+            metadata["decision_log"] = [
+                {
+                    "stage": "semantic-split-plan",
+                    "question": "Split carrier and glyph?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Require separate layers.",
+                }
+            ]
+            metadata["qa"]["status"] = "pass"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("carrier_glyph_policy=split", result.stderr)
 
     def test_validate_asset_package_requires_inspection_previews(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1905,6 +2240,42 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "_staging/quality/quality_audit.json",
             )
 
+    def test_audit_visual_quality_emits_edge_halo_warning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            halo_asset = Image.new("RGBA", (4, 4), (0, 0, 0, 0))
+            for x in range(4):
+                for y in range(4):
+                    halo_asset.putpixel((x, y), (10, 10, 10, 120 if x in {0, 3} or y in {0, 3} else 255))
+            halo_asset.save(output / "assets" / "main_object_transparent.png")
+            Image.new("L", (6, 6), 200).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["asset_class"] = "candidate"
+            metadata["objects"][0]["reuse_status"] = "draft-candidate"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "audit_visual_quality.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            audit = json.loads(
+                (output / "_staging" / "quality" / "quality_audit.json").read_text(encoding="utf-8")
+            )
+            warning_codes = {warning["code"] for warning in audit["warnings"]}
+            self.assertIn("edge-halo", warning_codes)
+
     def test_promote_candidate_asset_updates_revision_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1958,6 +2329,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertTrue(obj["approximate"])
             self.assertEqual(obj["reuse_status"], "approximate-reconstruction")
             self.assertEqual(obj["repair_history"][0]["candidate_id"], "candidate-v2")
+            self.assertEqual(metadata["asset_summary"]["production_ready_assets"], 0)
+            self.assertEqual(metadata["asset_summary"]["support_only_layers"], 1)
 
     def test_promote_candidate_asset_rejects_target_asset_path_outside_package(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -2050,6 +2423,47 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("candidate mask must stay inside the package", result.stderr)
+
+    def test_promote_candidate_asset_requires_repair_candidate_staging_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            non_candidate_dir = output / "_staging" / "misc"
+            non_candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(non_candidate_dir / "candidate_v2.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate-asset",
+                    "_staging/misc/candidate_v2.png",
+                    "--candidate-id",
+                    "candidate-v2",
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Reject non-standard candidate staging path.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("_staging/repair_candidates/", result.stderr)
 
     def test_export_asset_manifest_rejects_asset_paths_outside_package(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -2417,6 +2831,63 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("production_capable=true", result.stderr)
+
+    def test_validate_asset_package_blocks_pass_when_capability_choice_is_unset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["capability"]["user_choice"] = "unset"
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-acceptance",
+                    "question": "Accept this production-ready layer?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Allow qa.status=pass.",
+                }
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("metadata.capability.user_choice", result.stderr)
 
     def test_validate_asset_package_requires_asset_class_and_reuse_status(self):
         with tempfile.TemporaryDirectory() as tmp:

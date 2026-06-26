@@ -46,6 +46,11 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `granularity.mode`
 - `granularity.user_confirmed`
 - `granularity.notes`
+- `granularity.scope_strategy`
+- `granularity.text_handling`
+- `granularity.carrier_glyph_policy`
+- `granularity.background_expectation`
+- `granularity.layer_independence`
 - `capability.production_capable`
 - `capability.missing_for_production`
 - `capability.user_choice`
@@ -67,6 +72,14 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 `analysis.visual_hierarchy` must name the semantic layer stack from background to foreground. `analysis.recommended_split_plan` must describe the reusable layer boundaries. Rectangular crop plans do not satisfy this field unless each rectangle is only a tight bbox around a semantic mask.
 
 `granularity` records the agreed split scope for the run. Use values such as `module`, `component`, `atomic-layer`, `production-editable`, or `draft`. `user_confirmed` records whether the user explicitly aligned on that granularity, and `notes` captures any nuance such as live text rebuild or approximate background acceptance.
+
+For UI or dense compositions, `granularity` must also record:
+
+- `scope_strategy`: `high-signal-subset`, `full-image-batch`, or `unset`
+- `text_handling`: `extract-as-image`, `rebuild-downstream`, or `unset`
+- `carrier_glyph_policy`: `split`, `grouped`, `conditional`, or `unset`
+- `background_expectation`: `exact-recovery`, `approximate-accepted`, or `unset`
+- `layer_independence`: `static-reuse`, `animation-ready`, or `unset`
 
 `capability` records the tooling preflight result before extraction. `production_capable` is true only when mature upstream extraction capability or equivalent professional external evidence is available. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
 
@@ -156,6 +169,8 @@ If an asset exists only because it is a convenient rectangular crop, mark it as 
 If a layer uses `mask_source` such as `bbox`, `crop`, or `manual-estimated crop`, it is crop-only draft evidence by default. A package-level `qa.status=pass` is invalid until the object records `manual_review_confirmed: true` through an explicit manual review step.
 
 If a layer represents an approximate clean plate, support plate, or reconstructed UI structure, record `approximate: true` and `reconstruction_provenance`. It must remain `needs-review` unless a human explicitly confirms the layer as acceptable.
+
+Approximate or reconstructed layers must not use `reuse_status: production-ready`. Use `delivery_class=approximate-reconstruction` and keep them separate from clean extraction counts.
 
 `audit.quality_audit_path` must point into `_staging/` or `_archive_intermediate/`, never the package root. Use it for warning-only quality audit evidence, not final deliverables.
 

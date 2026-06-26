@@ -44,16 +44,19 @@ NEVER HIDE UNCERTAINTY
 3. Initialize the package with `scripts/init_asset_package.py` when a package does not already exist.
 4. Run the Preflight Tooling Recommendation Gate before selecting a recipe or starting extraction:
    - run `scripts/check_extraction_environment.py`
-   - report `production_capable` and `missing_for_production`
+   - report `segmentation`, `matting`, `reconstruction`, `environment`, `production_capable`, and `missing_for_production`
+   - distinguish installed tooling, runtime-ready tooling, and production-ready capability
    - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
    - proactively recommend installing or activating missing professional upstream tools
-   - ask whether to install/activate tools, provide external professional outputs, or continue as `draft-packaging-only`
+   - ask whether to continue with `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only`
    - record the decision in `metadata.capability` and `metadata.decision_log[]`
    - do not continue into extraction until this decision is recorded
 5. Read `references/pipeline-recipes.md` and `references/grounded-sam-pipeline.md` and select an extraction recipe before extraction.
 6. Run the Granularity Alignment Gate before cutting pixels:
    - module-level, component-level, atomic-layer, or production-editable reconstruction
+   - high-signal subset or full-image batch strategy
    - text/labels/buttons extracted as images or rebuilt downstream as live text/UI
+   - carrier/glyph split, grouping, or conditional policy
    - exact background recovery required or approximate `background_clean.png` accepted as `needs-review`
    - animation-ready independent layers required or static reuse enough
 7. For complex UI or graphic compositions, start with a high-signal subset instead of trying to atomize the entire image at once. Good first-pass targets are logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements whose masks can be inspected clearly.
@@ -71,6 +74,7 @@ NEVER HIDE UNCERTAINTY
 11. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the Confirmation Gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
 12. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
+   - for UI or dense compositions, also record `metadata.granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
    - record object `asset_class` and `reuse_status` so draft candidates, support layers, and production-ready atomic assets cannot be confused
 13. Produce or collect reusable assets:
    - transparent PNGs for individual objects
@@ -107,9 +111,9 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 
 `scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
 
-`scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It only checks local optional modules such as Pillow, OpenCV, Torch, rembg, SAM2, and segment-anything; it does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
+`scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It checks optional module presence, runtime readiness, and production-ready capability for segmentation, matting, reconstruction, and environment support. It does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
 
-The capability report distinguishes `production_capable` from `draft-packaging-only` fallback conditions, lists `missing_for_production`, and explains missing upstream role impact so an agent does not confuse partial local tooling with production readiness.
+The capability report distinguishes module-installed from runtime-ready from production-ready states, lists `missing_for_production`, and explains missing upstream role impact so an agent does not confuse partial local tooling with production readiness.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
@@ -119,9 +123,9 @@ The capability report distinguishes `production_capable` from `draft-packaging-o
 
 `scripts/export_asset_manifest.py` creates `asset_manifest.json` for downstream renderers, animation pipelines, design tools, or manual review. It records package-relative asset paths sorted by `composition_order`; it does not validate visual quality or replace `metadata.json`.
 
-`scripts/archive_intermediates.py` moves active `_staging/` outputs into `_archive_intermediate/<run-id>/` and writes an `archive_manifest.json` for traceability.
+`scripts/archive_intermediates.py` moves active `_staging/` outputs into `_archive_intermediate/<run-id>/`, writes an `archive_manifest.json` for traceability, and rewrites `metadata.audit.quality_audit_path` / `previews.qa_audit_contact_sheet` when those audit artifacts are archived.
 
-`scripts/promote_candidate_asset.py` is the deterministic promotion helper for high-risk repairs. Use it when `_staging/repair_candidates/` contains multiple staged candidate assets and one should become the current package-owned asset without hand-editing `metadata.json`.
+`scripts/promote_candidate_asset.py` is the deterministic promotion helper for high-risk repairs. Use it when `_staging/repair_candidates/` contains multiple staged candidate assets and one should become the current package-owned asset without hand-editing `metadata.json`. Candidate promotion should come from `_staging/repair_candidates/`, not an arbitrary package path.
 
 ## Pipeline Quality Rule
 
@@ -132,6 +136,8 @@ Every object layer must also declare `asset_class` and `reuse_status`. Use `asse
 Every object layer must also declare `delivery_class`, `current_asset_revision`, and when relevant `selected_candidate_id`, `repair_history[]`, and `active_reconstruction_method`. This keeps the current promoted asset distinct from rejected or archived repair candidates.
 
 Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
+
+For UI and dense compositions, do not batch-extract the full image before granularity scope is explicitly confirmed or clearly derivable from prior user instructions. Record the high-signal subset strategy, text handling, carrier/glyph policy, background expectation, and layer independence inside `metadata.granularity`.
 
 Record the tooling preflight decision that governed the run. `metadata.capability` is required so future agents can see whether the run was production-capable, what upstream roles/tools were missing, which user choice was made, and why missing tools affect quality. `qa.status=pass` requires `metadata.capability.production_capable=true`; draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked`.
 

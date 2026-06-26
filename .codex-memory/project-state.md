@@ -4,12 +4,15 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` three-layer workflow hardening is implemented, verified, committed, and published to `origin/main`. The skill now separates capability preparation, segmentation execution adapter, and quality adjudication; draft-only runs are downgraded through asset class/reuse status, professional upstream handoff has a formal adapter contract, UI atomic split planning is documented, and warning-only visual quality audit evidence is available.
+- Current stage: `split-image-assets` staged contract hardening is implemented and locally verified through Round 1-4. The skill now distinguishes installed/runtime-ready/production-ready preflight capability, records structured UI granularity axes, enforces carrier/glyph split policy and approximate-reconstruction honesty, restricts candidate promotion to `_staging/repair_candidates/`, and keeps archived audit metadata paths synchronized.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-26: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (70 tests)
+- 2026-06-26: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-26: `git diff --check` (passed with only CRLF warnings)
 - 2026-06-26: `git push origin main` published local `main` through `61e54cb`.
 - 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (57 tests)
 - 2026-06-25: `$env:PYTHONUTF8='1'; python -m unittest discover tests -v` (1 test)

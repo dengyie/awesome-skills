@@ -55,6 +55,11 @@ ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json"}
 RECONSTRUCTION_MARKERS = {"reconstruct", "reconstructed", "reconstruction", "inpaint", "clean plate"}
 HELPER_ONLY_MARKERS = {"pillow", "opencv", "skimage", "threshold"}
 ALLOWED_GRANULARITY_MODES = {"module", "component", "atomic-layer", "production-editable", "draft"}
+ALLOWED_SCOPE_STRATEGIES = {"high-signal-subset", "full-image-batch", "unset"}
+ALLOWED_TEXT_HANDLING = {"extract-as-image", "rebuild-downstream", "unset"}
+ALLOWED_CARRIER_GLYPH_POLICIES = {"split", "grouped", "conditional", "unset"}
+ALLOWED_BACKGROUND_EXPECTATIONS = {"exact-recovery", "approximate-accepted", "unset"}
+ALLOWED_LAYER_INDEPENDENCE = {"static-reuse", "animation-ready", "unset"}
 ALLOWED_CAPABILITY_CHOICES = {
     "install-or-activate-tools",
     "external-professional-outputs",
@@ -186,6 +191,16 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         errors.append("metadata.granularity.notes must be a string")
     elif not notes.strip():
         errors.append("metadata.granularity.notes must explain the aligned split scope")
+    for field_name, allowed in [
+        ("scope_strategy", ALLOWED_SCOPE_STRATEGIES),
+        ("text_handling", ALLOWED_TEXT_HANDLING),
+        ("carrier_glyph_policy", ALLOWED_CARRIER_GLYPH_POLICIES),
+        ("background_expectation", ALLOWED_BACKGROUND_EXPECTATIONS),
+        ("layer_independence", ALLOWED_LAYER_INDEPENDENCE),
+    ]:
+        value = granularity.get(field_name, "unset")
+        if value not in allowed:
+            errors.append(f"metadata.granularity.{field_name} must be one of: {', '.join(sorted(allowed))}")
     decision_log = metadata.get("decision_log", [])
     if not isinstance(decision_log, list):
         errors.append("metadata.decision_log must be a list")
@@ -265,6 +280,10 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
     qa_status_for_capability = (
         qa_for_capability.get("status") if isinstance(qa_for_capability, dict) else None
     )
+    if qa_status_for_capability == "pass" and user_choice == "unset":
+        errors.append(
+            "metadata.capability.user_choice must not stay unset when qa.status=pass"
+        )
     if qa_status_for_capability == "pass" and production_capable is not True:
         errors.append(
             "qa.status pass requires metadata.capability.production_capable=true; "
@@ -372,6 +391,55 @@ def is_helper_only_layer(item: dict) -> bool:
     return any(marker in text for marker in HELPER_ONLY_MARKERS)
 
 
+def is_ui_like_package(metadata: dict) -> bool:
+    markers = {
+        "ui",
+        "panel",
+        "badge",
+        "tile",
+        "glyph",
+        "control",
+        "label",
+        "frame",
+        "menu",
+        "tab",
+        "checkbox",
+        "toggle",
+        "chart",
+        "chrome",
+        "support-plate",
+    }
+    analysis = metadata.get("analysis", {})
+    if isinstance(analysis, dict):
+        hierarchy = analysis.get("visual_hierarchy", [])
+        if isinstance(hierarchy, list):
+            for entry in hierarchy:
+                text = str(entry).lower()
+                if any(marker in text for marker in markers):
+                    return True
+    objects = metadata.get("objects", [])
+    if isinstance(objects, list):
+        for item in objects:
+            if not isinstance(item, dict):
+                continue
+            text = " ".join(
+                str(item.get(field, "")).lower() for field in ["layer_kind", "semantic_boundary", "id"]
+            )
+            if any(marker in text for marker in markers):
+                return True
+    return False
+
+
+def has_carrier_layer(item: dict) -> bool:
+    text = " ".join(str(item.get(field, "")).lower() for field in ["layer_kind", "semantic_boundary", "id"])
+    return any(marker in text for marker in {"carrier", "tile", "badge", "capsule", "icon-tile"})
+
+
+def has_glyph_layer(item: dict) -> bool:
+    text = " ".join(str(item.get(field, "")).lower() for field in ["layer_kind", "semantic_boundary", "id"])
+    return "glyph" in text
+
+
 def validate_source(package_dir: Path, metadata: dict, errors: list[str]) -> tuple[int, int] | None:
     source = metadata.get("source", {})
     if not isinstance(source, dict):
@@ -402,7 +470,23 @@ def validate_objects(
         return
     qa = metadata.get("qa", {})
     qa_status = qa.get("status") if isinstance(qa, dict) else None
+    granularity = metadata.get("granularity", {}) if isinstance(metadata.get("granularity"), dict) else {}
+    ui_like_package = is_ui_like_package(metadata)
+    if ui_like_package:
+        for field_name in [
+            "scope_strategy",
+            "text_handling",
+            "carrier_glyph_policy",
+            "background_expectation",
+            "layer_independence",
+        ]:
+            if granularity.get(field_name, "unset") == "unset":
+                errors.append(
+                    f"metadata.granularity.{field_name} must be recorded for UI or dense-composition packages"
+                )
 
+    has_carrier = False
+    has_glyph = False
     for item in objects:
         if not isinstance(item, dict):
             errors.append("metadata.objects entries must be objects")
@@ -414,6 +498,8 @@ def validate_objects(
                 f"{object_id}: role must be one of: " + ", ".join(sorted(OBJECT_ASSET_ROLES))
             )
             continue
+        has_carrier = has_carrier or has_carrier_layer(item)
+        has_glyph = has_glyph or has_glyph_layer(item)
         asset_path = item.get("asset_path")
         if not asset_path:
             errors.append(f"{object_id}: asset_path is required for role {role}")
@@ -549,11 +635,23 @@ def validate_objects(
                     f"{object_id}: approximate or reconstructed layers must use "
                     "delivery_class=approximate-reconstruction"
                 )
+            if reuse_status == "production-ready":
+                errors.append(
+                    f"{object_id}: approximate or reconstructed layers must not use reuse_status=production-ready"
+                )
             if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
                 errors.append(
                     f"{object_id}: approximate reconstructed layers cannot support qa.status pass "
                     "without manual_review_confirmed=true"
                 )
+        if delivery_class == "approximate-reconstruction" and reuse_status == "production-ready":
+            errors.append(
+                f"{object_id}: delivery_class=approximate-reconstruction cannot be reported as reuse_status=production-ready"
+            )
+        if reuse_status == "approximate-reconstruction" and delivery_class != "approximate-reconstruction":
+            errors.append(
+                f"{object_id}: reuse_status=approximate-reconstruction requires delivery_class=approximate-reconstruction"
+            )
         current_revision = item.get("current_asset_revision")
         if not isinstance(current_revision, str) or not current_revision.strip():
             errors.append(f"{object_id}: current_asset_revision is required")
@@ -563,6 +661,11 @@ def validate_objects(
         repair_history = item.get("repair_history")
         if repair_history is not None and not isinstance(repair_history, list):
             errors.append(f"{object_id}: repair_history must be a list when present")
+
+    if ui_like_package and granularity.get("carrier_glyph_policy") == "split" and has_carrier and not has_glyph:
+        errors.append(
+            "metadata.granularity.carrier_glyph_policy=split requires at least one glyph layer when carrier layers are present"
+        )
 
 
 def iter_preview_paths(previews: object) -> list[str]:

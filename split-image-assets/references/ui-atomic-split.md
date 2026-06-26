@@ -31,6 +31,14 @@ For each planned layer, record:
 
 Use `requires_user_confirmation` when a decision affects editability, localization, animation readiness, approximate reconstruction acceptance, or final production claims.
 
+For UI or dense compositions, the package-level `granularity` block should also record:
+
+- `scope_strategy`: `high-signal-subset` or `full-image-batch`
+- `text_handling`: `extract-as-image` or `rebuild-downstream`
+- `carrier_glyph_policy`: `split`, `grouped`, or `conditional`
+- `background_expectation`: `exact-recovery` or `approximate-accepted`
+- `layer_independence`: `static-reuse` or `animation-ready`
+
 ## Carrier/Glyph Rule
 
 For icon-in-tile, badge-in-card, glyph-on-plate, or symbol-on-button patterns, prefer separate carrier and glyph layers when either layer may be reused independently or when edge cleanup is easier separately.

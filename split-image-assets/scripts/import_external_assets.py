@@ -169,7 +169,7 @@ def summarize_assets(metadata: dict) -> None:
                 summary["production_ready_assets"] += 1
             elif reuse_status == "draft-candidate":
                 summary["draft_candidate_assets"] += 1
-            elif reuse_status == "support-only" or asset_class in {
+            elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {
                 "grouped-support",
                 "background-support",
                 "preview-reference",

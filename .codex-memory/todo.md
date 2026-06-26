@@ -2,6 +2,8 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Commit the staged Round 1-4 `split-image-assets` contract hardening pass.
+- [x] Validate `split-image-assets` staged Round 1-4 hardening with targeted checks plus full package tests and quick validation.
 - [x] Push local `main` through `61e54cb` to `origin/main`.
 - [x] Harden `split-image-assets` into a three-layer workflow with asset_class/reuse_status, draft-only count separation, upstream adapter references, UI atomic split planning, warning-only visual audit, and manifest summary counts.
 - [x] Add the `split-image-assets` Preflight Tooling Recommendation Gate, including `metadata.capability`, role-impact reporting, capability review recording, and draft-only pass blocking.

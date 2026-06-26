@@ -182,6 +182,18 @@ def audit_layer(package_dir: Path, item: dict, warnings: list[dict], errors: lis
                     {"dark_pixel_ratio": round(dark_opaque_ratio, 4)},
                 )
             )
+        if partial_ratio > 0.02 and dark_opaque_ratio > 0.02:
+            warnings.append(
+                warning(
+                    "edge-halo",
+                    object_id,
+                    "Partial alpha plus dark edge-adjacent color suggests halo contamination.",
+                    {
+                        "partial_alpha_ratio": round(partial_ratio, 4),
+                        "dark_pixel_ratio": round(dark_opaque_ratio, 4),
+                    },
+                )
+            )
 
     mask_path = item.get("mask_path")
     if mask_path:

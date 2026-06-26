@@ -14,6 +14,37 @@ def move_entry(source: Path, destination: Path) -> None:
     shutil.move(str(source), str(destination))
 
 
+def read_metadata(package_dir: Path) -> dict | None:
+    metadata_path = package_dir / "metadata.json"
+    if not metadata_path.exists():
+        return None
+    return json.loads(metadata_path.read_text(encoding="utf-8"))
+
+
+def write_metadata(package_dir: Path, metadata: dict) -> None:
+    (package_dir / "metadata.json").write_text(
+        json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def update_archived_metadata(package_dir: Path, moved_paths: dict[str, str]) -> None:
+    metadata = read_metadata(package_dir)
+    if not isinstance(metadata, dict):
+        return
+    audit = metadata.get("audit")
+    if isinstance(audit, dict):
+        quality_path = audit.get("quality_audit_path")
+        if isinstance(quality_path, str) and quality_path in moved_paths:
+            audit["quality_audit_path"] = moved_paths[quality_path]
+    previews = metadata.get("previews")
+    if isinstance(previews, dict):
+        audit_preview = previews.get("qa_audit_contact_sheet")
+        if isinstance(audit_preview, str) and audit_preview in moved_paths:
+            previews["qa_audit_contact_sheet"] = moved_paths[audit_preview]
+    write_metadata(package_dir, metadata)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Archive active intermediate extraction outputs from _staging into _archive_intermediate."
@@ -30,15 +61,23 @@ def main() -> int:
     archive_dir.mkdir(parents=True, exist_ok=True)
 
     archived_paths: list[str] = []
+    moved_paths: dict[str, str] = {}
     for entry in collect_staging_entries(staging_dir):
+        old_root_rel = str(entry.relative_to(package_dir)).replace("\\", "/")
         destination = archive_dir / entry.name
         move_entry(entry, destination)
         if destination.is_dir():
             for child in sorted(destination.rglob("*")):
                 if child.is_file():
                     archived_paths.append(str(child.relative_to(archive_dir)).replace("\\", "/"))
+                    new_rel = str(child.relative_to(package_dir)).replace("\\", "/")
+                    old_rel = str(Path(old_root_rel) / child.relative_to(destination)).replace("\\", "/")
+                    moved_paths[old_rel] = new_rel
         else:
             archived_paths.append(destination.name)
+            moved_paths[old_root_rel] = str(destination.relative_to(package_dir)).replace("\\", "/")
+
+    update_archived_metadata(package_dir, moved_paths)
 
     manifest = {
         "run_id": args.run_id,

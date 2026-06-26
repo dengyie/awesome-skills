@@ -18,17 +18,20 @@ Keep the workflow split into three layers:
 2. Run `scripts/init_asset_package.py` if the package does not already exist.
 3. Run the Preflight Tooling Recommendation Gate before extraction:
    - run `scripts/check_extraction_environment.py`
+   - require a report that includes `segmentation`, `matting`, `reconstruction`, `environment`, `production_capable`, and `missing_for_production`
+   - distinguish installed tooling from runtime-ready and production-ready capability
    - explicitly classify the run as `production-capable` or `draft-packaging-only`
-   - report `production_capable` and `missing_for_production`
    - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
    - proactively recommend installing or activating missing professional upstream tools
-   - ask whether to install/activate tools, provide external professional outputs, or continue as `draft-packaging-only`
+   - ask whether to continue with `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only`
    - record the decision in `metadata.capability` and `metadata.decision_log[]`
    - do not continue into extraction until this decision is recorded
 4. Read `pipeline-recipes.md` and `grounded-sam-pipeline.md` and choose a pipeline recipe.
 5. Run the Granularity Confirmation Gate before extraction:
    - choose module-level, component-level, atomic-layer, or production-editable reconstruction
+   - choose `high-signal-subset` or `full-image-batch` scope strategy
    - decide whether text, labels, buttons, and UI chrome become image assets or live downstream elements
+   - decide whether carrier/glyph structures should split, stay grouped, or remain conditional pending review
    - decide whether approximate background repair is acceptable or exact recovery is required
    - decide whether layers must be animation-ready or static-reuse ready
 6. Run the Semantic Split Plan Confirmation Gate when layer boundaries, grouping, carrier/glyph separation, or text ownership are subjective.
@@ -48,8 +51,9 @@ Keep the workflow split into three layers:
 11. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
 12. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
 13. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `capability`, `decision_log`, `extraction_pipeline`, object `asset_class`, object `reuse_status`, and the object inventory into `metadata.json`.
+   - for UI or dense compositions, record `granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
 14. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
-15. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`.
+15. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`, which should also keep audit metadata paths synchronized when `_staging/quality/` is archived.
 16. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files. Imported objects default to `asset_class=candidate` and `reuse_status=draft-candidate`.
 17. Record composition order, mask source, alpha source, semantic boundary, asset class, reuse status, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, `decision_log`, and `qa_report.md` stay synchronized.
 18. Keep individual objects separate before creating grouped or preview outputs. Grouped convenience layers should be marked `grouped-support` or `support-only`.
@@ -57,7 +61,7 @@ Keep the workflow split into three layers:
 20. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
 21. Run `scripts/audit_visual_quality.py` to create warning-only `_staging/quality/quality_audit.json` and `_staging/quality/qa_audit_contact_sheet.png` evidence before final review.
 22. Inspect previews and audit warnings, then update object quality checks and QA status with `scripts/record_quality_review.py` when appropriate.
-23. For high-risk repairs, write candidate outputs into `_staging/repair_candidates/`, compare at least two candidates when available, and promote the selected candidate with `scripts/promote_candidate_asset.py` instead of overwriting `assets/` by hand.
+23. For high-risk repairs, write candidate outputs into `_staging/repair_candidates/`, compare at least two candidates when available, and promote the selected candidate with `scripts/promote_candidate_asset.py` instead of overwriting `assets/` by hand. Do not promote from an arbitrary package path.
 24. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`. If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
 25. Validate the package with `scripts/validate_asset_package.py`.
 26. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
@@ -93,6 +97,7 @@ Use stable outcome language when the workflow cannot claim production extraction
 - Do not mark approximate background or structural reconstruction as exact extraction.
 - Do not silently choose split granularity, grouping boundaries, approximate reconstruction acceptance, or final QA acceptance when those decisions materially affect downstream reuse.
 - Do not default to one-pass extraction when reuse boundaries are subjective.
+- Do not batch-extract dense UI before granularity scope and carrier/glyph policy are explicitly confirmed or clearly derivable from prior instructions.
 
 ## Layer Decomposition Checklist
 

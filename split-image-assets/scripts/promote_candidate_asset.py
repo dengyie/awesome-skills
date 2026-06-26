@@ -28,6 +28,12 @@ def package_path(package_dir: Path, value: object, label: str, parser: argparse.
     return resolved
 
 
+def require_repair_candidate_path(path: Path, package_dir: Path, label: str, parser: argparse.ArgumentParser) -> None:
+    expected_root = (package_dir / "_staging" / "repair_candidates").resolve()
+    if path != expected_root and expected_root not in path.parents:
+        parser.error(f"{label} must be staged under _staging/repair_candidates/: {path}")
+
+
 def update_asset_summary(metadata: dict) -> None:
     summary = {
         "production_ready_assets": 0,
@@ -91,6 +97,7 @@ def main() -> int:
     candidate_asset = package_path(
         package_dir, args.candidate_asset, "candidate asset", parser
     )
+    require_repair_candidate_path(candidate_asset, package_dir, "candidate asset", parser)
     if not candidate_asset.exists():
         parser.error(f"candidate asset is missing: {candidate_asset}")
 
@@ -107,6 +114,7 @@ def main() -> int:
         candidate_mask = package_path(
             package_dir, args.candidate_mask, "candidate mask", parser
         )
+        require_repair_candidate_path(candidate_mask, package_dir, "candidate mask", parser)
         if not candidate_mask.exists():
             parser.error(f"candidate mask is missing: {candidate_mask}")
         current_mask_path = target.get("mask_path")

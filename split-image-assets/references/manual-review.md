@@ -20,6 +20,7 @@
 - transparent asset preview looks acceptable, but the real RGBA layer still carries dark fringe or base-color residue
 - approximate background or support layers are present without reconstruction provenance
 - the user asked for atomic split, but the delivered package is still component-level grouped layers
+- `granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, or `layer_independence` are missing on a UI-like package
 - `_staging/quality/quality_audit.json` reports `edge-halo`, `color-residue`, `detached-fragments`, `smear-artifact`, `over-flat-reconstruction`, `style-mismatch-reconstruction`, `hard-alpha-risk`, `support-layer-misclassified`, or `carrier-glyph-cross-contamination`
 - `asset_class` or `reuse_status` makes draft candidates, support-only layers, or blocked layers look production-ready
 

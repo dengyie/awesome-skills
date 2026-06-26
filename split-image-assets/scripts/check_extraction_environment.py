@@ -4,6 +4,64 @@ import json
 import sys
 
 
+def _probe_torch_runtime() -> dict:
+    if importlib.util.find_spec("torch") is None:
+        return {
+            "installed": False,
+            "runtime_ready": False,
+            "version": None,
+            "cuda_available": False,
+            "cuda_device_count": 0,
+        }
+    try:
+        import torch  # type: ignore
+    except Exception as exc:  # pragma: no cover - defensive runtime probe
+        return {
+            "installed": True,
+            "runtime_ready": False,
+            "version": None,
+            "cuda_available": False,
+            "cuda_device_count": 0,
+            "error": str(exc),
+        }
+    cuda_available = False
+    cuda_device_count = 0
+    try:
+        cuda_available = bool(torch.cuda.is_available())
+        cuda_device_count = int(torch.cuda.device_count()) if cuda_available else 0
+    except Exception as exc:  # pragma: no cover - defensive runtime probe
+        return {
+            "installed": True,
+            "runtime_ready": True,
+            "version": getattr(torch, "__version__", "unknown"),
+            "cuda_available": False,
+            "cuda_device_count": 0,
+            "error": str(exc),
+        }
+    return {
+        "installed": True,
+        "runtime_ready": True,
+        "version": getattr(torch, "__version__", "unknown"),
+        "cuda_available": cuda_available,
+        "cuda_device_count": cuda_device_count,
+    }
+
+
+def _probe_runtime(module_name: str) -> dict:
+    installed = importlib.util.find_spec(module_name) is not None
+    if not installed:
+        return {"installed": False, "runtime_ready": False}
+    try:
+        module = __import__(module_name)
+    except Exception as exc:  # pragma: no cover - defensive runtime probe
+        return {"installed": True, "runtime_ready": False, "error": str(exc)}
+    return {
+        "installed": True,
+        "runtime_ready": True,
+        "version": getattr(module, "__version__", "unknown"),
+    }
+
+
 TOOL_SPECS = {
     "Pillow": ["PIL"],
     "OpenCV": ["cv2"],
@@ -32,54 +90,142 @@ def detect_tools() -> dict:
     return tools
 
 
-def choose_recipe(tools: dict) -> tuple[str, str]:
-    has_segmentation = tools["SAM2"]["available"] or tools["segment-anything"]["available"]
-    has_matting = tools["rembg"]["available"]
-    has_runtime = tools["Torch"]["available"]
-    if has_segmentation and has_matting and has_runtime:
+def choose_recipe(capabilities: dict) -> tuple[str, str]:
+    has_segmentation = capabilities["segmentation"]["production_ready"]
+    has_matting = capabilities["matting"]["production_ready"]
+    has_reconstruction = capabilities["reconstruction"]["production_ready"]
+    has_runtime = capabilities["environment"]["python"]["runtime_ready"] and capabilities["environment"][
+        "torch"
+    ]["runtime_ready"]
+    if has_segmentation and has_matting and has_reconstruction and has_runtime:
         return (
             "grounded-segmentation-matting-repair",
-            "Run the quality pipeline locally, but keep draft-only status until previews and manual review pass.",
+            "production-capable",
         )
     if has_segmentation and has_runtime:
         return (
             "grounded-segmentation-matting-repair",
-            "Local segmentation may be possible; provide alpha refinement externally or keep draft-only status.",
+            "external-professional-outputs",
         )
     if has_matting:
         return (
             "external-mask-plus-matting",
-            "Provide external masks before matting; keep draft-only status until segmentation evidence exists.",
+            "external-professional-outputs",
         )
     return (
         "external-assets-required",
-        "No local mature segmentation stack detected; ask the user to install tools, provide external cutouts/masks, or proceed draft-only.",
+        "install-or-activate-tools",
     )
 
 
-def production_readiness(tools: dict) -> tuple[bool, list[str]]:
+def production_readiness(capabilities: dict) -> tuple[bool, list[str]]:
     missing: list[str] = []
-    has_runtime = tools["Torch"]["available"]
-    has_detector_or_modern_segmenter = tools["SAM2"]["available"] or tools["GroundingDINO"]["available"]
-    has_any_segmenter = has_detector_or_modern_segmenter or tools["segment-anything"]["available"]
-    has_matting = tools["rembg"]["available"]
+    environment = capabilities["environment"]
+    segmentation = capabilities["segmentation"]
+    matting = capabilities["matting"]
+    reconstruction = capabilities["reconstruction"]
 
-    if not has_runtime:
+    if not environment["torch"]["runtime_ready"]:
         missing.append("torch runtime")
-    if not has_detector_or_modern_segmenter:
+    if not segmentation["tooling"]["groundingdino"]["installed"] and not segmentation["tooling"]["sam2"]["installed"]:
         missing.append("SAM2 or grounded detector")
-    if not has_any_segmenter:
+    if not segmentation["production_ready"]:
         missing.append("segmentation model")
-    if not has_matting:
+    if not matting["production_ready"]:
         missing.append("matting/refinement")
+    if not reconstruction["production_ready"]:
+        missing.append("reconstruction/manual repair path")
     return not missing, missing
 
 
-def upstream_roles(tools: dict) -> dict:
+def build_capabilities(tools: dict) -> dict:
+    torch_runtime = _probe_torch_runtime()
+    onnx_runtime = _probe_runtime("onnxruntime")
+    rembg_runtime = _probe_runtime("rembg")
+    sam2_runtime = _probe_runtime("sam2")
+    groundingdino_runtime = _probe_runtime("groundingdino")
+    segment_anything_runtime = _probe_runtime("segment_anything")
+
+    segmentation_production_ready = bool(
+        torch_runtime["runtime_ready"]
+        and (
+            sam2_runtime["runtime_ready"]
+            or groundingdino_runtime["runtime_ready"]
+            or segment_anything_runtime["runtime_ready"]
+        )
+    )
+    matting_production_ready = bool(
+        rembg_runtime["runtime_ready"]
+        or onnx_runtime["runtime_ready"]
+    )
+    reconstruction_production_ready = bool(
+        onnx_runtime["runtime_ready"] or torch_runtime["runtime_ready"]
+    )
+    return {
+        "segmentation": {
+            "installed": any(
+                [
+                    sam2_runtime["installed"],
+                    groundingdino_runtime["installed"],
+                    segment_anything_runtime["installed"],
+                ]
+            ),
+            "runtime_ready": segmentation_production_ready,
+            "production_ready": segmentation_production_ready,
+            "tooling": {
+                "sam2": sam2_runtime,
+                "groundingdino": groundingdino_runtime,
+                "segment_anything": segment_anything_runtime,
+            },
+        },
+        "matting": {
+            "installed": bool(rembg_runtime["installed"]),
+            "runtime_ready": bool(rembg_runtime["runtime_ready"] or onnx_runtime["runtime_ready"]),
+            "production_ready": matting_production_ready,
+            "tooling": {
+                "rembg": rembg_runtime,
+                "onnxruntime": onnx_runtime,
+            },
+        },
+        "reconstruction": {
+            "installed": bool(torch_runtime["installed"] or onnx_runtime["installed"]),
+            "runtime_ready": reconstruction_production_ready,
+            "production_ready": reconstruction_production_ready,
+            "tooling": {
+                "onnxruntime": onnx_runtime,
+                "torch": torch_runtime,
+                "manual_redraw_path": {
+                    "installed": False,
+                    "runtime_ready": False,
+                    "note": "Manual redraw remains a human path, not a bundled runtime capability.",
+                },
+            },
+        },
+        "environment": {
+            "python": {
+                "installed": True,
+                "runtime_ready": True,
+                "version": sys.version.split()[0],
+                "executable": sys.executable,
+            },
+            "torch": torch_runtime,
+            "onnxruntime": onnx_runtime,
+            "cuda": {
+                "installed": torch_runtime["installed"],
+                "runtime_ready": torch_runtime["runtime_ready"],
+                "available": torch_runtime["cuda_available"],
+                "device_count": torch_runtime["cuda_device_count"],
+            },
+        },
+    }
+
+
+def upstream_roles(capabilities: dict) -> dict:
     return {
         "detection": {
             "recommended_tools": ["GroundingDINO", "Grounded-SAM", "grounded prompts"],
-            "available": tools["GroundingDINO"]["available"] or tools["SAM2"]["available"],
+            "available": capabilities["segmentation"]["tooling"]["groundingdino"]["runtime_ready"]
+            or capabilities["segmentation"]["tooling"]["sam2"]["runtime_ready"],
             "quality_impact": (
                 "Missing SAM2 or a grounded detector means object boundaries may need "
                 "manual prompts and may be less reliable."
@@ -87,7 +233,7 @@ def upstream_roles(tools: dict) -> dict:
         },
         "segmentation": {
             "recommended_tools": ["SAM2", "SAM", "Grounded-SAM", "segment-anything"],
-            "available": tools["SAM2"]["available"] or tools["segment-anything"]["available"],
+            "available": capabilities["segmentation"]["production_ready"],
             "quality_impact": (
                 "Missing a source-space mask generator blocks reliable object masks for "
                 "production asset extraction."
@@ -95,7 +241,7 @@ def upstream_roles(tools: dict) -> dict:
         },
         "alpha_refinement": {
             "recommended_tools": ["rembg", "BiRefNet", "RMBG"],
-            "available": tools["rembg"]["available"],
+            "available": capabilities["matting"]["production_ready"],
             "quality_impact": (
                 "Missing matting/refinement means transparent PNG alpha edges may keep "
                 "halos, dark fringes, or background residue."
@@ -103,7 +249,7 @@ def upstream_roles(tools: dict) -> dict:
         },
         "background_reconstruction": {
             "recommended_tools": ["IOPaint", "LaMa", "inpainting tools", "manual paint repair"],
-            "available": False,
+            "available": capabilities["reconstruction"]["production_ready"],
             "quality_impact": (
                 "Missing an inpainting or manual repair path means background_clean.png "
                 "can only be approximate or needs-review."
@@ -119,26 +265,32 @@ def upstream_roles(tools: dict) -> dict:
 
 def build_report() -> dict:
     tools = detect_tools()
-    recipe, next_step = choose_recipe(tools)
-    production_capable, missing_for_production = production_readiness(tools)
-    roles = upstream_roles(tools)
+    capabilities = build_capabilities(tools)
+    recipe, next_action = choose_recipe(capabilities)
+    production_capable, missing_for_production = production_readiness(capabilities)
+    roles = upstream_roles(capabilities)
     return {
         "python": {
             "executable": sys.executable,
             "version": sys.version.split()[0],
         },
         "tools": tools,
+        "segmentation": capabilities["segmentation"],
+        "matting": capabilities["matting"],
+        "reconstruction": capabilities["reconstruction"],
+        "environment": capabilities["environment"],
         "production_capable": production_capable,
         "missing_for_production": missing_for_production,
         "upstream_roles": roles,
         "recommended_recipe": recipe,
-        "recommended_next_step": next_step,
+        "recommended_next_action": next_action,
+        "recommended_next_step": next_action,
         "preflight_tooling_recommendation_gate": {
             "must_confirm_before_extraction": True,
             "user_choices": [
-                "install or activate a mature segmentation/matting toolchain",
-                "provide external segmented assets and masks",
-                "continue as draft-only packaging without production extraction claims",
+                "install-or-activate-tools",
+                "external-professional-outputs",
+                "draft-packaging-only",
             ],
             "recommended_answer": (
                 "For production-quality extraction, install or provide SAM2/Grounded-SAM "
@@ -163,6 +315,13 @@ def print_text_report(report: dict) -> None:
     for name, details in report["tools"].items():
         status = "available" if details["available"] else "missing"
         print(f"- {name}: {status} ({details['module']})")
+    print("Capability summary:")
+    for name in ["segmentation", "matting", "reconstruction"]:
+        details = report[name]
+        print(
+            f"- {name}: installed={details['installed']} runtime_ready={details['runtime_ready']} "
+            f"production_ready={details['production_ready']}"
+        )
     status = "yes" if report["production_capable"] else "no"
     print(f"Production capable: {status}")
     if report["missing_for_production"]:
@@ -172,10 +331,10 @@ def print_text_report(report: dict) -> None:
         status = "available" if details["available"] else "missing"
         print(f"- {role}: {status}; {details['quality_impact']}")
     print(f"Recommended recipe: {report['recommended_recipe']}")
-    print(f"Recommended next step: {report['recommended_next_step']}")
+    print(f"Recommended next action: {report['recommended_next_action']}")
     print(
-        "Preflight choices: install/activate tools, provide external professional outputs, "
-        "or continue as draft-packaging-only."
+        "Preflight choices: install-or-activate-tools, external-professional-outputs, "
+        "or draft-packaging-only."
     )
     print("If required tools are missing, do not claim production extraction.")
 

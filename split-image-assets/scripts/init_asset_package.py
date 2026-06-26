@@ -24,6 +24,11 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "mode": "unset",
             "user_confirmed": False,
             "notes": "",
+            "scope_strategy": "unset",
+            "text_handling": "unset",
+            "carrier_glyph_policy": "unset",
+            "background_expectation": "unset",
+            "layer_independence": "unset",
         },
         "capability": {
             "production_capable": False,
