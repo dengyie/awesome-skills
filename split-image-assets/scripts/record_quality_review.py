@@ -38,6 +38,13 @@ ALLOWED_REUSE_STATUSES = {
     "draft-candidate",
     "support-only",
     "blocked",
+    "approximate-reconstruction",
+}
+ALLOWED_DELIVERY_CLASSES = {
+    "clean-extraction",
+    "approximate-reconstruction",
+    "support-only",
+    "draft-candidate",
 }
 
 
@@ -204,6 +211,18 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             item["asset_class"] = args.asset_class
         if args.reuse_status is not None:
             item["reuse_status"] = args.reuse_status
+        if args.delivery_class is not None:
+            item["delivery_class"] = args.delivery_class
+        if args.current_asset_revision is not None:
+            item["current_asset_revision"] = args.current_asset_revision
+        if args.active_reconstruction_method is not None:
+            item["active_reconstruction_method"] = args.active_reconstruction_method
+        if args.selected_candidate_id is not None:
+            item["selected_candidate_id"] = args.selected_candidate_id
+        if args.repair_history_entry:
+            repair_history = item.setdefault("repair_history", [])
+            for entry in args.repair_history_entry:
+                repair_history.append(entry)
         quality_checks = item.setdefault("quality_checks", {})
         for arg_name, check_name in QUALITY_CHECK_ARGS.items():
             value = getattr(args, arg_name)
@@ -348,6 +367,15 @@ def main() -> int:
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
     parser.add_argument("--asset-class", choices=sorted(ALLOWED_ASSET_CLASSES))
     parser.add_argument("--reuse-status", choices=sorted(ALLOWED_REUSE_STATUSES))
+    parser.add_argument("--delivery-class", choices=sorted(ALLOWED_DELIVERY_CLASSES))
+    parser.add_argument("--current-asset-revision")
+    parser.add_argument("--active-reconstruction-method")
+    parser.add_argument("--selected-candidate-id")
+    parser.add_argument(
+        "--repair-history-entry",
+        action="append",
+        help="Append a repair or candidate selection note for the targeted object.",
+    )
     parser.add_argument("--mask-alignment", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
     parser.add_argument("--alpha-edges", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
     parser.add_argument("--background-residue", choices=sorted(ALLOWED_QUALITY_CHECK_STATUSES))
@@ -391,6 +419,12 @@ def main() -> int:
         parser.error("cannot set qa-status pass until metadata.capability.production_capable is true")
     if args.qa_status == "pass" and not reusable_layers_ready_for_pass(metadata):
         parser.error("cannot set qa-status pass until reusable layers are reuse_status=production-ready")
+    if args.qa_status == "pass":
+        decision_log = metadata.get("decision_log", [])
+        if not isinstance(decision_log, list) or not decision_log:
+            parser.error(
+                "cannot set qa-status pass until at least one decision_log entry records user acceptance"
+            )
     if args.qa_status:
         metadata.setdefault("qa", {})["status"] = args.qa_status
 

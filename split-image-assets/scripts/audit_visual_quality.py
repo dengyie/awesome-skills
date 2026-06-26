@@ -16,6 +16,7 @@ SUPPORT_MARKERS = {
     "panel",
     "chrome",
 }
+QUALITY_STAGING_DIR = Path("_staging") / "quality"
 
 
 def load_metadata(package_dir: Path, errors: list[str]) -> dict:
@@ -79,6 +80,10 @@ def warning(code: str, object_id: str, message: str, details: dict | None = None
     if details:
         record["details"] = details
     return record
+
+
+def audit_output_path(package_dir: Path) -> Path:
+    return package_dir / QUALITY_STAGING_DIR / "quality_audit.json"
 
 
 def alpha_channel(asset: Image.Image) -> Image.Image | None:
@@ -149,7 +154,7 @@ def audit_layer(package_dir: Path, item: dict, warnings: list[dict], errors: lis
         if opaque > 0 and partial == 0:
             warnings.append(
                 warning(
-                    "hard_alpha_edges",
+                    "hard-alpha-risk",
                     object_id,
                     "Alpha contains no partial transparency; inspect for hard cut edges.",
                     {"partial_alpha_ratio": partial_ratio},
@@ -158,9 +163,23 @@ def audit_layer(package_dir: Path, item: dict, warnings: list[dict], errors: lis
         if touches_canvas_edge(alpha):
             warnings.append(
                 warning(
-                    "asset_touches_canvas_edge",
+                    "detached-fragments",
                     object_id,
                     "Nontransparent pixels touch the asset canvas edge; crop may be loose or clipped.",
+                )
+            )
+        dark_opaque_ratio = sum(
+            1
+            for red, green, blue, alpha_value in asset.getdata()
+            if alpha_value > 0 and red < 24 and green < 24 and blue < 24
+        ) / max(1, asset.width * asset.height)
+        if dark_opaque_ratio > 0.08:
+            warnings.append(
+                warning(
+                    "color-residue",
+                    object_id,
+                    "Opaque pixels retain a notable amount of dark color; inspect for fringe or background residue.",
+                    {"dark_pixel_ratio": round(dark_opaque_ratio, 4)},
                 )
             )
 
@@ -177,7 +196,7 @@ def audit_layer(package_dir: Path, item: dict, warnings: list[dict], errors: lis
                 if ratio > 0.8:
                     warnings.append(
                         warning(
-                            "mask_area_large",
+                            "smear-artifact",
                             object_id,
                             "Source-space mask covers most of the source; inspect for whole-image or plate masking.",
                             {"foreground_ratio": ratio},
@@ -187,9 +206,35 @@ def audit_layer(package_dir: Path, item: dict, warnings: list[dict], errors: lis
     if item.get("asset_class") == "atomic" and looks_like_support_layer(item):
         warnings.append(
             warning(
-                "support_layer_marked_atomic",
+                "support-layer-misclassified",
                 object_id,
                 "Layer looks like a plate/background/support layer but is marked asset_class=atomic.",
+            )
+        )
+    layer_kind = str(item.get("layer_kind", "")).lower()
+    semantic_boundary = str(item.get("semantic_boundary", "")).lower()
+    if any(marker in layer_kind or marker in semantic_boundary for marker in ["glyph", "icon", "badge"]):
+        if looks_like_support_layer(item):
+            warnings.append(
+                warning(
+                    "carrier-glyph-cross-contamination",
+                    object_id,
+                    "Glyph-like layer still looks mixed with carrier/background semantics; inspect split cleanliness.",
+                )
+            )
+    if item.get("approximate") is True:
+        warnings.append(
+            warning(
+                "over-flat-reconstruction",
+                object_id,
+                "Approximate or reconstructed layer needs inspection for flattened style or missing detail.",
+            )
+        )
+        warnings.append(
+            warning(
+                "style-mismatch-reconstruction",
+                object_id,
+                "Approximate or reconstructed layer may not match the original design language closely enough.",
             )
         )
 
@@ -222,7 +267,7 @@ def build_contact_sheet(
     package_dir: Path, metadata: dict, warnings: list[dict], errors: list[str]
 ) -> str:
     layers = object_layers(metadata)
-    previews_dir = package_dir / "previews"
+    previews_dir = package_dir / QUALITY_STAGING_DIR
     previews_dir.mkdir(parents=True, exist_ok=True)
     cell_width = 180
     cell_height = 160
@@ -280,7 +325,15 @@ def main() -> int:
         audit_layer(package_dir, item, warnings, errors)
 
     contact_sheet_path = build_contact_sheet(package_dir, metadata, warnings, errors)
+    audit_report_path = audit_output_path(package_dir)
+    audit_report_path.parent.mkdir(parents=True, exist_ok=True)
     metadata.setdefault("previews", {})["qa_audit_contact_sheet"] = contact_sheet_path
+    metadata["audit"] = {
+        "quality_audit_path": str(audit_report_path.relative_to(package_dir)).replace("\\", "/"),
+        "status": "warning" if warnings else "ok",
+        "warning_count": len(warnings),
+        "warning_codes": sorted({item["code"] for item in warnings}),
+    }
     write_metadata(package_dir, metadata)
 
     report = {
@@ -291,7 +344,7 @@ def main() -> int:
         "contact_sheet": contact_sheet_path,
         "note": "Warning-only audit. This script does not replace human visual QA or set qa.status=pass.",
     }
-    (package_dir / "quality_audit.json").write_text(
+    audit_report_path.write_text(
         json.dumps(report, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
@@ -301,7 +354,7 @@ def main() -> int:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
 
-    print(f"Visual quality audit written: {package_dir / 'quality_audit.json'}")
+    print(f"Visual quality audit written: {audit_report_path}")
     return 0
 
 

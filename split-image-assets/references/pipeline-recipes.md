@@ -56,11 +56,15 @@ Missing capability impact:
 
 Record this recipe as `grounded-segmentation-matting-repair`.
 
+For small, stylized, hard-edge UI assets, generic matting tools may degrade shape fidelity or remove intentional details. Prefer visually verified segmentation plus targeted edge cleanup over mechanically forcing a matting tool on every asset.
+
 For complex flat UI, run this recipe first on a high-signal subset rather than attempting a full 100-layer atomization pass. Good first-pass targets include logos, nav icons, status dots, pins, checkboxes, chart marks, row glyphs, badges, and small foreground controls.
 
 For icon-in-tile or glyph-on-plate structures, segment or reconstruct the carrier tile and foreground glyph separately when semantic reuse matters.
 
 Imported objects from this recipe should start as `asset_class: candidate` and `reuse_status: draft-candidate`. Promote only after mask overlay, alpha inspection, warning audit, and manual/user acceptance pass.
+
+For stylized UI carriers with bevels, inset borders, lighting, or texture, treat glyph removal as a reconstruction or redraw problem, not a generic inpaint task. Do not promote a carrier layer cleaned only by generic inpaint when the original design language is materially altered or flattened.
 
 ## Layer-First Candidate: Qwen-Image-Layered Style Decomposition
 

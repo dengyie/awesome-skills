@@ -55,6 +55,7 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `extraction_pipeline.stages`
 - `extraction_pipeline.quality_gates`
 - `extraction_pipeline.tools`
+- `audit`
 - `objects`
 - `asset_summary.production_ready_assets`
 - `asset_summary.draft_candidate_assets`
@@ -98,7 +99,12 @@ Each object should include:
 - `confidence`: `high`, `medium`, or `low`
 - `edge_complexity`: `hard`, `soft`, or `transparent-reflective`
 - `asset_class`: `atomic`, `grouped-support`, `background-support`, `preview-reference`, or `candidate`
-- `reuse_status`: `production-ready`, `draft-candidate`, `support-only`, or `blocked`
+- `reuse_status`: `production-ready`, `draft-candidate`, `support-only`, `blocked`, or `approximate-reconstruction`
+- `delivery_class`: `clean-extraction`, `approximate-reconstruction`, `support-only`, or `draft-candidate`
+- `current_asset_revision`
+- `selected_candidate_id` when a staged candidate was promoted
+- `repair_history[]` when the asset was retried or replaced
+- `active_reconstruction_method` when a layer is rebuilt or approximated
 - `quality_checks.mask_alignment`
 - `quality_checks.alpha_edges`
 - `quality_checks.background_residue`
@@ -150,6 +156,8 @@ If an asset exists only because it is a convenient rectangular crop, mark it as 
 If a layer uses `mask_source` such as `bbox`, `crop`, or `manual-estimated crop`, it is crop-only draft evidence by default. A package-level `qa.status=pass` is invalid until the object records `manual_review_confirmed: true` through an explicit manual review step.
 
 If a layer represents an approximate clean plate, support plate, or reconstructed UI structure, record `approximate: true` and `reconstruction_provenance`. It must remain `needs-review` unless a human explicitly confirms the layer as acceptable.
+
+`audit.quality_audit_path` must point into `_staging/` or `_archive_intermediate/`, never the package root. Use it for warning-only quality audit evidence, not final deliverables.
 
 For UI icon-in-tile, badge-in-card, or glyph-on-plate structures, prefer separate semantic layers such as `status_row_02_icon_tile` and `status_row_02_icon_glyph` when downstream reuse or edge cleanup benefits from that separation.
 

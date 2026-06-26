@@ -34,6 +34,13 @@ ALLOWED_REUSE_STATUSES = {
     "draft-candidate",
     "support-only",
     "blocked",
+    "approximate-reconstruction",
+}
+ALLOWED_DELIVERY_CLASSES = {
+    "clean-extraction",
+    "approximate-reconstruction",
+    "support-only",
+    "draft-candidate",
 }
 CROP_ONLY_MARKERS = {"bbox", "crop", "manual-estimated crop", "manual-estimated-crop"}
 ALLOWED_ROOT_DIRECTORIES = {
@@ -67,6 +74,17 @@ REQUIRED_ASSET_SUMMARY_FIELDS = {
     "draft_candidate_assets",
     "support_only_layers",
     "blocked_assets",
+}
+ALLOWED_AUDIT_CODES = {
+    "edge-halo",
+    "color-residue",
+    "detached-fragments",
+    "smear-artifact",
+    "over-flat-reconstruction",
+    "style-mismatch-reconstruction",
+    "hard-alpha-risk",
+    "support-layer-misclassified",
+    "carrier-glyph-cross-contamination",
 }
 
 
@@ -129,6 +147,7 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         "extraction_pipeline",
         "objects",
         "asset_summary",
+        "audit",
         "qa",
     ]:
         if field not in metadata:
@@ -185,6 +204,12 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 value = entry.get(field)
                 if value is not None and (not isinstance(value, str) or not value.strip()):
                     errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
+    qa = metadata.get("qa", {})
+    qa_status = qa.get("status") if isinstance(qa, dict) else None
+    if qa_status == "pass" and not decision_log:
+        errors.append(
+            "qa.status pass requires at least one decision_log entry documenting user acceptance"
+        )
     asset_summary = metadata.get("asset_summary")
     if not isinstance(asset_summary, dict):
         errors.append("metadata.asset_summary must be an object")
@@ -198,6 +223,26 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         value = asset_summary.get(field)
         if isinstance(value, bool) or not isinstance(value, int) or value < 0:
             errors.append(f"metadata.asset_summary.{field} must be a non-negative integer")
+    audit = metadata.get("audit", {})
+    if not isinstance(audit, dict):
+        errors.append("metadata.audit must be an object")
+    elif audit:
+        quality_audit_path = audit.get("quality_audit_path")
+        if not isinstance(quality_audit_path, str) or not quality_audit_path.strip():
+            errors.append("metadata.audit.quality_audit_path must be a package-relative path")
+        elif not quality_audit_path.startswith("_staging/") and not quality_audit_path.startswith(
+            "_archive_intermediate/"
+        ):
+            errors.append(
+                "metadata.audit.quality_audit_path must stay in _staging/ or _archive_intermediate/"
+            )
+        warning_codes = audit.get("warning_codes", [])
+        if not isinstance(warning_codes, list) or not all(
+            isinstance(code, str) and code in ALLOWED_AUDIT_CODES for code in warning_codes
+        ):
+            errors.append(
+                "metadata.audit.warning_codes must use the supported visual warning taxonomy"
+            )
     capability = metadata.get("capability", {})
     if not isinstance(capability, dict):
         errors.append("metadata.capability must be an object")
@@ -355,6 +400,8 @@ def validate_objects(
     if not objects:
         errors.append("object inventory must include at least one object asset entry")
         return
+    qa = metadata.get("qa", {})
+    qa_status = qa.get("status") if isinstance(qa, dict) else None
 
     for item in objects:
         if not isinstance(item, dict):
@@ -362,22 +409,26 @@ def validate_objects(
             continue
         object_id = item.get("id", "<missing id>")
         role = item.get("role")
+        if role not in OBJECT_ASSET_ROLES:
+            errors.append(
+                f"{object_id}: role must be one of: " + ", ".join(sorted(OBJECT_ASSET_ROLES))
+            )
+            continue
         asset_path = item.get("asset_path")
-        if role in OBJECT_ASSET_ROLES:
-            if not asset_path:
-                errors.append(f"{object_id}: asset_path is required for role {role}")
+        if not asset_path:
+            errors.append(f"{object_id}: asset_path is required for role {role}")
+        else:
+            path = rel_path(package_dir, asset_path, errors, f"{object_id}: asset_path")
+            if path is None:
+                continue
+            if not path.exists():
+                errors.append(f"{object_id}: asset file is missing: {asset_path}")
+            elif path.suffix.lower() != ".png":
+                errors.append(f"{object_id}: asset must be a PNG: {asset_path}")
             else:
-                path = rel_path(package_dir, asset_path, errors, f"{object_id}: asset_path")
-                if path is None:
-                    continue
-                if not path.exists():
-                    errors.append(f"{object_id}: asset file is missing: {asset_path}")
-                elif path.suffix.lower() != ".png":
-                    errors.append(f"{object_id}: asset must be a PNG: {asset_path}")
-                else:
-                    mode = image_mode(path, errors)
-                    if mode and not has_alpha(mode):
-                        errors.append(f"{object_id}: asset PNG must include an alpha channel: {asset_path}")
+                mode = image_mode(path, errors)
+                if mode and not has_alpha(mode):
+                    errors.append(f"{object_id}: asset PNG must include an alpha channel: {asset_path}")
 
         mask_path = item.get("mask_path")
         if mask_path:
@@ -401,98 +452,117 @@ def validate_objects(
             errors.append(
                 f"{object_id}: low-confidence or AI-assisted work needs manual_review_flags"
             )
-        if role in OBJECT_ASSET_ROLES:
-            asset_class = item.get("asset_class")
-            reuse_status = item.get("reuse_status")
-            if asset_class not in ALLOWED_ASSET_CLASSES:
-                errors.append(
-                    f"{object_id}: asset_class is required and must be one of: "
-                    + ", ".join(sorted(ALLOWED_ASSET_CLASSES))
-                )
-            if reuse_status not in ALLOWED_REUSE_STATUSES:
-                errors.append(
-                    f"{object_id}: reuse_status is required and must be one of: "
-                    + ", ".join(sorted(ALLOWED_REUSE_STATUSES))
-                )
-            capability = metadata.get("capability", {})
-            production_capable = (
-                capability.get("production_capable") if isinstance(capability, dict) else None
+        asset_class = item.get("asset_class")
+        reuse_status = item.get("reuse_status")
+        if asset_class not in ALLOWED_ASSET_CLASSES:
+            errors.append(
+                f"{object_id}: asset_class is required and must be one of: "
+                + ", ".join(sorted(ALLOWED_ASSET_CLASSES))
             )
-            user_choice = capability.get("user_choice") if isinstance(capability, dict) else None
-            if reuse_status == "production-ready" and production_capable is not True:
-                if user_choice == "draft-packaging-only":
-                    errors.append(
-                        f"{object_id}: draft-packaging-only packages cannot contain "
-                        "production-ready reusable assets"
-                    )
-                else:
-                    errors.append(
-                        f"{object_id}: production-ready reuse_status requires "
-                        "metadata.capability.production_capable=true"
-                    )
-            qa = metadata.get("qa", {})
-            qa_status = qa.get("status") if isinstance(qa, dict) else None
-            if (
-                qa_status == "pass"
-                and asset_class in {"atomic", "candidate"}
-                and reuse_status != "production-ready"
-            ):
+        if reuse_status not in ALLOWED_REUSE_STATUSES:
+            errors.append(
+                f"{object_id}: reuse_status is required and must be one of: "
+                + ", ".join(sorted(ALLOWED_REUSE_STATUSES))
+            )
+        delivery_class = item.get("delivery_class")
+        if delivery_class not in ALLOWED_DELIVERY_CLASSES:
+            errors.append(
+                f"{object_id}: delivery_class is required and must be one of: "
+                + ", ".join(sorted(ALLOWED_DELIVERY_CLASSES))
+            )
+        capability = metadata.get("capability", {})
+        production_capable = (
+            capability.get("production_capable") if isinstance(capability, dict) else None
+        )
+        user_choice = capability.get("user_choice") if isinstance(capability, dict) else None
+        if reuse_status == "production-ready" and production_capable is not True:
+            if user_choice == "draft-packaging-only":
                 errors.append(
-                    f"{object_id}: qa.status pass requires atomic reusable layers to be "
-                    "reuse_status=production-ready"
+                    f"{object_id}: draft-packaging-only packages cannot contain "
+                    "production-ready reusable assets"
                 )
-            composition_order = item.get("composition_order")
-            if not isinstance(composition_order, int):
-                errors.append(f"{object_id}: composition_order is required for layer stacking")
-            for field in ["layer_kind", "semantic_boundary", "mask_source", "alpha_source"]:
-                value = item.get(field)
-                if not isinstance(value, str) or not value.strip():
-                    errors.append(f"{object_id}: {field} is required for segmentation quality evidence")
-            quality_checks = item.get("quality_checks")
-            if not isinstance(quality_checks, dict):
-                errors.append(f"{object_id}: quality_checks must record mask, alpha, edge, and reuse checks")
             else:
-                missing_checks = sorted(REQUIRED_OBJECT_QUALITY_CHECKS - set(quality_checks))
-                if missing_checks:
-                    errors.append(
-                        f"{object_id}: quality_checks missing required checks: "
-                        + ", ".join(missing_checks)
-                    )
-                for check_name, check_value in quality_checks.items():
-                    if check_value not in ALLOWED_QUALITY_CHECK_STATUSES:
-                        errors.append(
-                            f"{object_id}: quality_checks.{check_name} must be pass, needs-review, blocked, or unknown"
-                        )
-                    qa = metadata.get("qa", {})
-                    qa_status = qa.get("status") if isinstance(qa, dict) else None
-                    if qa_status == "pass" and check_value != "pass":
-                        errors.append(
-                            f"{object_id}: qa.status cannot be pass when quality_checks.{check_name} is {check_value}"
-                        )
-            qa = metadata.get("qa", {})
-            qa_status = qa.get("status") if isinstance(qa, dict) else None
-            if qa_status == "pass" and is_crop_only_layer(item) and item.get("manual_review_confirmed") is not True:
                 errors.append(
-                    f"{object_id}: crop-only or estimated layers cannot support qa.status pass "
+                    f"{object_id}: production-ready reuse_status requires "
+                    "metadata.capability.production_capable=true"
+                )
+        if (
+            qa_status == "pass"
+            and asset_class in {"atomic", "candidate"}
+            and reuse_status != "production-ready"
+        ):
+            errors.append(
+                f"{object_id}: qa.status pass requires atomic reusable layers to be "
+                "reuse_status=production-ready"
+            )
+        composition_order = item.get("composition_order")
+        if not isinstance(composition_order, int):
+            errors.append(f"{object_id}: composition_order is required for layer stacking")
+        for field in ["layer_kind", "semantic_boundary", "mask_source", "alpha_source"]:
+            value = item.get(field)
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"{object_id}: {field} is required for segmentation quality evidence")
+        quality_checks = item.get("quality_checks")
+        if not isinstance(quality_checks, dict):
+            errors.append(f"{object_id}: quality_checks must record mask, alpha, edge, and reuse checks")
+        else:
+            missing_checks = sorted(REQUIRED_OBJECT_QUALITY_CHECKS - set(quality_checks))
+            if missing_checks:
+                errors.append(
+                    f"{object_id}: quality_checks missing required checks: "
+                    + ", ".join(missing_checks)
+                )
+            for check_name, check_value in quality_checks.items():
+                if check_value not in ALLOWED_QUALITY_CHECK_STATUSES:
+                    errors.append(
+                        f"{object_id}: quality_checks.{check_name} must be pass, needs-review, blocked, or unknown"
+                    )
+                if qa_status == "pass" and check_value != "pass":
+                    errors.append(
+                        f"{object_id}: qa.status cannot be pass when quality_checks.{check_name} is {check_value}"
+                    )
+        if qa_status == "pass" and is_crop_only_layer(item) and item.get("manual_review_confirmed") is not True:
+            errors.append(
+                f"{object_id}: crop-only or estimated layers cannot support qa.status pass "
+                "without manual_review_confirmed=true"
+            )
+        if qa_status == "pass" and is_helper_only_layer(item) and item.get("manual_review_confirmed") is not True:
+            errors.append(
+                f"{object_id}: helper-only extraction sources cannot support qa.status pass "
+                "without manual_review_confirmed=true"
+            )
+        if is_reconstructed_or_approximate_layer(item):
+            provenance = item.get("reconstruction_provenance")
+            if not isinstance(provenance, str) or not provenance.strip():
+                errors.append(
+                    f"{object_id}: approximate or reconstructed layers must record "
+                    "reconstruction_provenance"
+                )
+            active_method = item.get("active_reconstruction_method")
+            if not isinstance(active_method, str) or not active_method.strip():
+                errors.append(
+                    f"{object_id}: approximate or reconstructed layers must record "
+                    "active_reconstruction_method"
+                )
+            if delivery_class != "approximate-reconstruction":
+                errors.append(
+                    f"{object_id}: approximate or reconstructed layers must use "
+                    "delivery_class=approximate-reconstruction"
+                )
+            if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
+                errors.append(
+                    f"{object_id}: approximate reconstructed layers cannot support qa.status pass "
                     "without manual_review_confirmed=true"
                 )
-            if qa_status == "pass" and is_helper_only_layer(item) and item.get("manual_review_confirmed") is not True:
-                errors.append(
-                    f"{object_id}: helper-only extraction sources cannot support qa.status pass "
-                    "without manual_review_confirmed=true"
-                )
-            if is_reconstructed_or_approximate_layer(item):
-                provenance = item.get("reconstruction_provenance")
-                if not isinstance(provenance, str) or not provenance.strip():
-                    errors.append(
-                        f"{object_id}: approximate or reconstructed layers must record "
-                        "reconstruction_provenance"
-                    )
-                if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
-                    errors.append(
-                        f"{object_id}: approximate reconstructed layers cannot support qa.status pass "
-                        "without manual_review_confirmed=true"
-                    )
+        current_revision = item.get("current_asset_revision")
+        if not isinstance(current_revision, str) or not current_revision.strip():
+            errors.append(f"{object_id}: current_asset_revision is required")
+        selected_candidate_id = item.get("selected_candidate_id")
+        if selected_candidate_id is not None and not isinstance(selected_candidate_id, str):
+            errors.append(f"{object_id}: selected_candidate_id must be a string when present")
+        repair_history = item.get("repair_history")
+        if repair_history is not None and not isinstance(repair_history, list):
+            errors.append(f"{object_id}: repair_history must be a list when present")
 
 
 def iter_preview_paths(previews: object) -> list[str]:
@@ -601,6 +671,11 @@ def validate_previews(package_dir: Path, metadata: dict, errors: list[str]) -> N
             continue
         if not path.exists():
             errors.append(f"preview file is missing: {preview_path}")
+    audit = metadata.get("audit", {})
+    if isinstance(audit, dict) and audit.get("quality_audit_path"):
+        audit_path = rel_path(package_dir, audit.get("quality_audit_path"), errors, "quality audit path")
+        if audit_path is not None and not audit_path.exists():
+            errors.append(f"quality audit file is missing: {audit.get('quality_audit_path')}")
 
 
 def validate_qa_report(package_dir: Path, errors: list[str]) -> None:

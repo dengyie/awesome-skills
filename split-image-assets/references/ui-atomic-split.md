@@ -45,6 +45,14 @@ Required evidence for carrier/glyph splits:
 
 If the glyph still contains carrier or background color after splitting, set `quality_checks.background_residue=blocked` or keep `reuse_status=draft-candidate`.
 
+When a stylized carrier is heavily occluded by the glyph, classify the cleanup path before repair:
+
+- `hidden-pixel recoverable`
+- `design-like redraw candidate`
+- `approximate support-only`
+
+Do not accept generic inpaint output as the final carrier by default in these cases.
+
 ## Draft-Only UI Runs
 
 When mature upstream extraction is missing, do not let a large UI package look finished because it has many files.

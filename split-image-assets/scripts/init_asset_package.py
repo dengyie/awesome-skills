@@ -45,6 +45,7 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "blocked_assets": 0,
         },
         "decision_log": [],
+        "audit": {},
         "previews": {},
         "qa": {
             "status": "needs-review",

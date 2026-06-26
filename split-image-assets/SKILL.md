@@ -113,7 +113,7 @@ The capability report distinguishes `production_capable` from `draft-packaging-o
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
-`scripts/audit_visual_quality.py` creates `quality_audit.json` and `previews/qa_audit_contact_sheet.png`. It is a warning-only visual audit for risks such as all-hard alpha, nontransparent pixels touching the asset canvas edge, unusually large masks, or support plates misclassified as atomic assets. It does not replace manual review and does not set `qa.status=pass`.
+`scripts/audit_visual_quality.py` creates `_staging/quality/quality_audit.json` and `_staging/quality/qa_audit_contact_sheet.png`. It is a warning-only visual audit for risks such as `edge-halo`, `color-residue`, `detached-fragments`, `smear-artifact`, `over-flat-reconstruction`, `style-mismatch-reconstruction`, `hard-alpha-risk`, `support-layer-misclassified`, and `carrier-glyph-cross-contamination`. It does not replace manual review and does not set `qa.status=pass`.
 
 `scripts/record_quality_review.py` is the standard manual-review adapter. Use it to write `metadata.analysis`, append `metadata.extraction_pipeline.quality_gates`, update per-object `quality_checks`, set `metadata.qa.status`, and append `qa_report.md` notes after inspection. It refuses `qa.status=pass` unless every required object quality check is `pass`.
 
@@ -121,11 +121,15 @@ The capability report distinguishes `production_capable` from `draft-packaging-o
 
 `scripts/archive_intermediates.py` moves active `_staging/` outputs into `_archive_intermediate/<run-id>/` and writes an `archive_manifest.json` for traceability.
 
+`scripts/promote_candidate_asset.py` is the deterministic promotion helper for high-risk repairs. Use it when `_staging/repair_candidates/` contains multiple staged candidate assets and one should become the current package-owned asset without hand-editing `metadata.json`.
+
 ## Pipeline Quality Rule
 
 Every reusable layer must have provenance. Record which tool or manual process created the mask, which process created or refined alpha, which stage repaired the background, the layer's `composition_order`, and which quality gates were inspected.
 
 Every object layer must also declare `asset_class` and `reuse_status`. Use `asset_class=atomic` plus `reuse_status=production-ready` only for inspected reusable assets. Use `candidate` plus `draft-candidate` for imported or unreviewed upstream results. Use `grouped-support`, `background-support`, or `preview-reference` plus `support-only` for plates, grouped UI chrome, backgrounds, contact sheets, and other support/reference layers.
+
+Every object layer must also declare `delivery_class`, `current_asset_revision`, and when relevant `selected_candidate_id`, `repair_history[]`, and `active_reconstruction_method`. This keeps the current promoted asset distinct from rejected or archived repair candidates.
 
 Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
 
@@ -150,6 +154,8 @@ Pillow crops, bbox masks, manual-estimated crop masks, or coordinate-only cuts a
 Likewise, helper-only extraction sources such as Pillow crop alpha, OpenCV threshold masks, or skimage thresholding cannot support `qa.status=pass` on their own unless a human explicitly confirms that layer.
 
 Background clean plates, support plates, grouped structural UI regions, and inpainted/reconstructed areas may be useful deliverables, but they must be marked approximate when they are approximate and must record `reconstruction_provenance`. Keep them `needs-review` unless a human explicitly accepts that layer.
+
+Approximate reconstructed carriers or clean plates should use `delivery_class=approximate-reconstruction`. Do not hide them inside `production-ready` naming or counts.
 
 Source-space masks are expected: `masks/*.png` should normally match the original source dimensions for overlay QA and provenance tracing. A black mask with a small white component is valid when the object is small. Store the tight reusable visual result in `assets/*.png`; store the full-source QA mask in `masks/*.png`.
 

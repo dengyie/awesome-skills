@@ -84,10 +84,15 @@ Source-space masks are normal QA artifacts. A small UI component can produce a m
 
 Run `scripts/audit_visual_quality.py` before final review when possible. Treat its findings as warnings that focus manual attention, not automatic pass/fail decisions. Typical warning codes include:
 
-- `hard_alpha_edges`: alpha has no partial transparency and may have hard cut edges
-- `asset_touches_canvas_edge`: nontransparent pixels touch the asset canvas edge
-- `mask_area_large`: source-space mask covers most of the source and may be a whole-image or plate mask
-- `support_layer_marked_atomic`: a plate/background/support layer may have been counted as atomic
+- `edge-halo`
+- `color-residue`
+- `detached-fragments`
+- `smear-artifact`
+- `over-flat-reconstruction`
+- `style-mismatch-reconstruction`
+- `hard-alpha-risk`
+- `support-layer-misclassified`
+- `carrier-glyph-cross-contamination`
 
 ## Background Repair
 

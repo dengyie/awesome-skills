@@ -101,11 +101,13 @@ Use `record_quality_review.py` after inspecting previews to update `metadata.jso
 
 Validation now requires both ordinary inspection previews from `build_previews.py` and quality previews from `build_quality_previews.py` for each reusable object layer. A package without preview evidence is incomplete even if the transparent PNGs and masks exist.
 
-Run `audit_visual_quality.py` before final review to write `quality_audit.json` and `previews/qa_audit_contact_sheet.png`. This audit only raises warnings such as hard alpha edges, edge-touching assets, large source-space masks, or support plates marked atomic. It does not replace manual review and does not set `qa.status=pass`.
+Run `audit_visual_quality.py` before final review to write `_staging/quality/quality_audit.json` and `_staging/quality/qa_audit_contact_sheet.png`. This audit only raises warnings such as `edge-halo`, `color-residue`, `detached-fragments`, `smear-artifact`, `over-flat-reconstruction`, `style-mismatch-reconstruction`, `hard-alpha-risk`, `support-layer-misclassified`, or `carrier-glyph-cross-contamination`. It does not replace manual review and does not set `qa.status=pass`.
 
 Bbox/manual-estimated crop layers are draft-only unless explicitly confirmed. Use `record_quality_review.py --confirm-crop-layer --object-id <id>` only after a human accepts that layer for production reuse.
 
 Approximate `background_clean.png` files and structural support plates should record `reconstruction_provenance` and remain `needs-review` unless the approximation has been explicitly accepted.
+
+For high-risk repairs, stage candidates in `_staging/repair_candidates/`, compare them there, and promote the selected candidate with `promote_candidate_asset.py`. Do not silently overwrite package assets before candidate selection is recorded.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.
 

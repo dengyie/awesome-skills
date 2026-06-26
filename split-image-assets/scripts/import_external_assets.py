@@ -37,6 +37,13 @@ ALLOWED_REUSE_STATUSES = {
     "draft-candidate",
     "support-only",
     "blocked",
+    "approximate-reconstruction",
+}
+ALLOWED_DELIVERY_CLASSES = {
+    "clean-extraction",
+    "approximate-reconstruction",
+    "support-only",
+    "draft-candidate",
 }
 
 
@@ -213,6 +220,12 @@ def build_import_plan(
         "reuse_status",
         parser,
     )
+    delivery_class = checked_choice(
+        str(record.get("delivery_class", "draft-candidate")),
+        ALLOWED_DELIVERY_CLASSES,
+        "delivery_class",
+        parser,
+    )
     confidence_value = checked_choice(
         str(record.get("confidence", confidence)),
         ALLOWED_CONFIDENCE,
@@ -265,6 +278,13 @@ def build_import_plan(
             "edge_complexity": edge_complexity_value,
             "asset_class": asset_class,
             "reuse_status": reuse_status,
+            "delivery_class": delivery_class,
+            "current_asset_revision": str(record.get("current_asset_revision", "initial-import")),
+            "active_reconstruction_method": str(record.get("active_reconstruction_method", "")),
+            "selected_candidate_id": str(record.get("selected_candidate_id", "")),
+            "repair_history": list(record.get("repair_history", []))
+            if isinstance(record.get("repair_history", []), list)
+            else [],
             "manual_review_flags": [
                 "external asset imported; inspect mask alignment and alpha edges"
             ],
@@ -355,6 +375,11 @@ def main() -> int:
         choices=sorted(ALLOWED_REUSE_STATUSES),
         default="draft-candidate",
     )
+    parser.add_argument(
+        "--delivery-class",
+        choices=sorted(ALLOWED_DELIVERY_CLASSES),
+        default="draft-candidate",
+    )
     parser.add_argument("--recipe", default="grounded-segmentation-matting-repair")
     parser.add_argument("--confidence", default="medium", choices=["high", "medium", "low"])
     parser.add_argument(
@@ -439,6 +464,7 @@ def main() -> int:
                 "alpha_source": args.alpha_source,
                 "asset_class": args.asset_class,
                 "reuse_status": args.reuse_status,
+                "delivery_class": args.delivery_class,
             },
             args.recipe,
             args.tool_name,

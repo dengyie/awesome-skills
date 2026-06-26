@@ -122,7 +122,12 @@ def build_manifest(package_dir: Path, metadata: dict, errors: list[str]) -> dict
         if not isinstance(item, dict):
             errors.append("metadata.objects entries must be objects")
             continue
-        if item.get("role") not in OBJECT_ASSET_ROLES:
+        role = item.get("role")
+        if role not in OBJECT_ASSET_ROLES:
+            object_id = item.get("id", "<missing id>")
+            errors.append(
+                f"{object_id}: role must be one of: " + ", ".join(sorted(OBJECT_ASSET_ROLES))
+            )
             continue
         record = layer_record(package_dir, item, errors)
         if record is not None:
