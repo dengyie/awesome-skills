@@ -22,6 +22,8 @@ python split-image-assets/scripts/check_extraction_environment.py
 
 If mature segmentation/matting tools are unavailable and no external masks or cutouts were provided, do not claim production extraction. Explain which upstream role is missing, what quality it affects, and ask whether to install or activate tools, provide external professional split outputs, or continue as draft-packaging-only.
 
+For reconstruction, do not treat `torch` or `onnxruntime` as enough to claim a production reconstruction path. Without a dedicated reconstruction tool, the honest fallback is `manual redraw required` or `approximate reconstruction only`.
+
 Always report whether the run is `production-capable` or `draft-packaging-only`. If it is not production-capable, explicitly list what is missing, record the user choice in `metadata.capability`, and keep the package honest.
 
 Missing upstream role examples:
@@ -108,6 +110,8 @@ Bbox/manual-estimated crop layers are draft-only unless explicitly confirmed. Us
 Approximate `background_clean.png` files and structural support plates should record `reconstruction_provenance` and remain `needs-review` unless the approximation has been explicitly accepted.
 
 For high-risk repairs, stage candidates in `_staging/repair_candidates/`, compare them there, and promote the selected candidate with `promote_candidate_asset.py`. Do not silently overwrite package assets before candidate selection is recorded.
+
+Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.
 

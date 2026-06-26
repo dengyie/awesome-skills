@@ -80,6 +80,15 @@ REQUIRED_ASSET_SUMMARY_FIELDS = {
     "support_only_layers",
     "blocked_assets",
 }
+REQUIRED_CANDIDATE_COMPARISON_FIELDS = {
+    "comparison_id",
+    "object_id",
+    "candidate_ids",
+    "compare_artifact_path",
+    "selected_candidate_id",
+    "selection_reason",
+    "created_at",
+}
 ALLOWED_AUDIT_CODES = {
     "edge-halo",
     "color-residue",
@@ -430,6 +439,18 @@ def is_ui_like_package(metadata: dict) -> bool:
     return False
 
 
+def requires_candidate_comparison_evidence(item: dict) -> bool:
+    if str(item.get("selected_candidate_id", "")).strip():
+        return True
+    repair_history = item.get("repair_history")
+    if not isinstance(repair_history, list) or not repair_history:
+        return False
+    return any(
+        isinstance(entry, dict) and str(entry.get("candidate_id", "")).strip()
+        for entry in repair_history
+    )
+
+
 def has_carrier_layer(item: dict) -> bool:
     text = " ".join(str(item.get(field, "")).lower() for field in ["layer_kind", "semantic_boundary", "id"])
     return any(marker in text for marker in {"carrier", "tile", "badge", "capsule", "icon-tile"})
@@ -661,6 +682,108 @@ def validate_objects(
         repair_history = item.get("repair_history")
         if repair_history is not None and not isinstance(repair_history, list):
             errors.append(f"{object_id}: repair_history must be a list when present")
+        candidate_comparisons = item.get("candidate_comparisons")
+        if candidate_comparisons is not None and not isinstance(candidate_comparisons, list):
+            errors.append(f"{object_id}: candidate_comparisons must be a list when present")
+            candidate_comparisons = []
+        if requires_candidate_comparison_evidence(item):
+            if not candidate_comparisons:
+                errors.append(
+                    f"{object_id}: high-risk repair or promoted candidates require candidate_comparisons evidence"
+                )
+            else:
+                selected_candidate_id = str(item.get("selected_candidate_id", "")).strip()
+                matching_comparison_found = False
+                for index, comparison in enumerate(candidate_comparisons):
+                    if not isinstance(comparison, dict):
+                        errors.append(f"{object_id}: candidate_comparisons[{index}] must be an object")
+                        continue
+                    missing = sorted(REQUIRED_CANDIDATE_COMPARISON_FIELDS - set(comparison))
+                    if missing:
+                        errors.append(
+                            f"{object_id}: candidate_comparisons[{index}] missing required fields: "
+                            + ", ".join(missing)
+                        )
+                        continue
+                    candidate_ids = comparison.get("candidate_ids")
+                    if not isinstance(candidate_ids, list) or not all(
+                        isinstance(candidate_id, str) and candidate_id.strip() for candidate_id in candidate_ids
+                    ):
+                        errors.append(
+                            f"{object_id}: candidate_comparisons[{index}].candidate_ids must be a list of non-empty strings"
+                        )
+                        continue
+                    artifact_path = comparison.get("compare_artifact_path")
+                    if not isinstance(artifact_path, str):
+                        errors.append(
+                            f"{object_id}: candidate_comparisons[{index}].compare_artifact_path must be a string"
+                        )
+                    elif artifact_path:
+                        if not artifact_path.startswith("_staging/") and not artifact_path.startswith(
+                            "_archive_intermediate/"
+                        ):
+                            errors.append(
+                                f"{object_id}: candidate_comparisons[{index}].compare_artifact_path must stay in _staging/ or _archive_intermediate/"
+                            )
+                        else:
+                            resolved_artifact = rel_path(
+                                package_dir,
+                                artifact_path,
+                                errors,
+                                f"{object_id}: candidate_comparisons[{index}].compare_artifact_path",
+                            )
+                            if resolved_artifact is not None and not resolved_artifact.exists():
+                                errors.append(
+                                    f"{object_id}: candidate comparison artifact is missing: {artifact_path}"
+                                )
+                    manifest_path = comparison.get("compare_manifest_path")
+                    if manifest_path is not None:
+                        if not isinstance(manifest_path, str):
+                            errors.append(
+                                f"{object_id}: candidate_comparisons[{index}].compare_manifest_path must be a string when present"
+                            )
+                        elif manifest_path:
+                            if not manifest_path.startswith("_staging/") and not manifest_path.startswith(
+                                "_archive_intermediate/"
+                            ):
+                                errors.append(
+                                    f"{object_id}: candidate_comparisons[{index}].compare_manifest_path must stay in _staging/ or _archive_intermediate/"
+                                )
+                            else:
+                                resolved_manifest = rel_path(
+                                    package_dir,
+                                    manifest_path,
+                                    errors,
+                                    f"{object_id}: candidate_comparisons[{index}].compare_manifest_path",
+                                )
+                                if resolved_manifest is not None and not resolved_manifest.exists():
+                                    errors.append(
+                                        f"{object_id}: candidate comparison manifest is missing: {manifest_path}"
+                                    )
+                    selection_reason = comparison.get("selection_reason")
+                    if not isinstance(selection_reason, str):
+                        errors.append(
+                            f"{object_id}: candidate_comparisons[{index}].selection_reason must be a string"
+                        )
+                    selected_in_entry = str(comparison.get("selected_candidate_id", "")).strip()
+                    if selected_candidate_id and selected_in_entry == selected_candidate_id:
+                        matching_comparison_found = True
+                        if not selection_reason.strip():
+                            errors.append(
+                                f"{object_id}: selected candidate comparison must record a non-empty selection_reason"
+                            )
+                        if selected_candidate_id not in candidate_ids:
+                            errors.append(
+                                f"{object_id}: selected_candidate_id must appear in the matching candidate comparison"
+                            )
+                        if not artifact_path and len(candidate_ids) > 1:
+                            errors.append(
+                                f"{object_id}: multi-candidate promotion requires compare_artifact_path evidence"
+                            )
+                if selected_candidate_id and not matching_comparison_found:
+                    errors.append(
+                        f"{object_id}: selected_candidate_id requires a matching candidate comparison record"
+                    )
 
     if ui_like_package and granularity.get("carrier_glyph_policy") == "split" and has_carrier and not has_glyph:
         errors.append(

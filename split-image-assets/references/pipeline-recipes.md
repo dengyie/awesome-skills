@@ -52,7 +52,7 @@ Missing capability impact:
 
 - Missing SAM2 or grounded detector: object boundaries may need manual prompts or may be less reliable.
 - Missing rembg/BiRefNet/RMBG: transparent PNG alpha edges may keep halos, dark fringes, or background residue.
-- Missing inpainting/manual repair path: `background_clean.png` can only be approximate or `needs-review`.
+- Missing dedicated reconstruction tooling: `background_clean.png` or carrier repair can only proceed through manual redraw or approximate reconstruction and should stay `needs-review`.
 
 Record this recipe as `grounded-segmentation-matting-repair`.
 
@@ -109,5 +109,7 @@ Background clean plates and support plates produced by inpainting, manual paint,
 
 - `production-capable`: mature upstream segmentation and refinement are available, and the package can proceed through the normal import/QA/validation path
 - `draft-packaging-only`: mature upstream extraction is unavailable, so the skill may initialize, stage, archive, or package evidence, but it must not claim production extraction
+
+For reconstruction specifically, do not treat `torch` or `onnxruntime` as a sufficient condition for `production-capable`. They are environment support, not a dedicated reconstruction path.
 
 `qa.status=pass` requires `metadata.capability.production_capable=true`. Draft-only or unrecorded tooling preflight cannot support `pass`.

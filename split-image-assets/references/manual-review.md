@@ -23,6 +23,7 @@
 - `granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, or `layer_independence` are missing on a UI-like package
 - `_staging/quality/quality_audit.json` reports `edge-halo`, `color-residue`, `detached-fragments`, `smear-artifact`, `over-flat-reconstruction`, `style-mismatch-reconstruction`, `hard-alpha-risk`, `support-layer-misclassified`, or `carrier-glyph-cross-contamination`
 - `asset_class` or `reuse_status` makes draft candidates, support-only layers, or blocked layers look production-ready
+- promoted repair candidates have no compare evidence or no selection reason
 
 ## Manual Review Output
 
@@ -43,6 +44,7 @@ When manual review is needed, report:
 - After carrier/glyph separation, inspect whether the glyph still carries carrier/background color. If yes, set `quality_checks.background_residue=blocked` or keep `reuse_status=draft-candidate`.
 - Large plates, `background_clean`, grouped UI chrome, and screenshot-level support layers should be `support-only` unless explicitly accepted as production reusable atomic assets.
 - A mostly black source-space mask is normal when the object is small. Do not judge the layer from `masks/*.png` alone; inspect `assets/*.png` for tight transparent reuse and inspect `*_mask_overlay.png` to verify source alignment.
+- If more than one repair candidate exists, inspect the compare artifact before promotion. If only one candidate exists, record why direct promotion was acceptable.
 
 ## Honesty Rule
 

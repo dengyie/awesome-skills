@@ -42,6 +42,23 @@ def update_archived_metadata(package_dir: Path, moved_paths: dict[str, str]) -> 
         audit_preview = previews.get("qa_audit_contact_sheet")
         if isinstance(audit_preview, str) and audit_preview in moved_paths:
             previews["qa_audit_contact_sheet"] = moved_paths[audit_preview]
+    objects = metadata.get("objects")
+    if isinstance(objects, list):
+        for item in objects:
+            if not isinstance(item, dict):
+                continue
+            candidate_comparisons = item.get("candidate_comparisons")
+            if not isinstance(candidate_comparisons, list):
+                continue
+            for comparison in candidate_comparisons:
+                if not isinstance(comparison, dict):
+                    continue
+                compare_artifact_path = comparison.get("compare_artifact_path")
+                if isinstance(compare_artifact_path, str) and compare_artifact_path in moved_paths:
+                    comparison["compare_artifact_path"] = moved_paths[compare_artifact_path]
+                compare_manifest_path = comparison.get("compare_manifest_path")
+                if isinstance(compare_manifest_path, str) and compare_manifest_path in moved_paths:
+                    comparison["compare_manifest_path"] = moved_paths[compare_manifest_path]
     write_metadata(package_dir, metadata)
 
 

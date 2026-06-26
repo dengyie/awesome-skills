@@ -62,10 +62,11 @@ Keep the workflow split into three layers:
 21. Run `scripts/audit_visual_quality.py` to create warning-only `_staging/quality/quality_audit.json` and `_staging/quality/qa_audit_contact_sheet.png` evidence before final review.
 22. Inspect previews and audit warnings, then update object quality checks and QA status with `scripts/record_quality_review.py` when appropriate.
 23. For high-risk repairs, write candidate outputs into `_staging/repair_candidates/`, compare at least two candidates when available, and promote the selected candidate with `scripts/promote_candidate_asset.py` instead of overwriting `assets/` by hand. Do not promote from an arbitrary package path.
-24. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`. If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
-25. Validate the package with `scripts/validate_asset_package.py`.
-26. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
-27. Report structural validation separately from visual quality status, plus production-ready, draft-candidate, support-only, and blocked counts.
+24. Use `scripts/compare_candidate_assets.py` before promotion when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`.
+25. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`. If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
+26. Validate the package with `scripts/validate_asset_package.py`.
+27. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
+28. Report structural validation separately from visual quality status, plus production-ready, draft-candidate, support-only, and blocked counts.
 
 ## Standard Failure Outputs
 

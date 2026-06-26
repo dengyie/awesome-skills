@@ -111,9 +111,9 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 
 `scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
 
-`scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It checks optional module presence, runtime readiness, and production-ready capability for segmentation, matting, reconstruction, and environment support. It does not install anything. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
+`scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It checks optional module presence, runtime readiness, and production-ready capability for segmentation, matting, reconstruction, and environment support. It does not install anything. For reconstruction, runtime support such as `torch` or `onnxruntime` is not enough by itself; only a dedicated reconstruction tool path should count as `production_ready=true`. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
 
-The capability report distinguishes module-installed from runtime-ready from production-ready states, lists `missing_for_production`, and explains missing upstream role impact so an agent does not confuse partial local tooling with production readiness.
+The capability report distinguishes module-installed from runtime-ready from production-ready states, lists `missing_for_production`, and explains missing upstream role impact so an agent does not confuse partial local tooling with production readiness. `manual_redraw_path` is a human workflow, not automatic runtime capability, and should lead to `manual redraw required` or `approximate reconstruction only`, not to `production_capable=true`.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
@@ -125,6 +125,8 @@ The capability report distinguishes module-installed from runtime-ready from pro
 
 `scripts/archive_intermediates.py` moves active `_staging/` outputs into `_archive_intermediate/<run-id>/`, writes an `archive_manifest.json` for traceability, and rewrites `metadata.audit.quality_audit_path` / `previews.qa_audit_contact_sheet` when those audit artifacts are archived.
 
+`scripts/compare_candidate_assets.py` is the standard compare helper for high-risk repairs. Use it to turn staged repair candidates into a compare artifact plus metadata evidence before promotion.
+
 `scripts/promote_candidate_asset.py` is the deterministic promotion helper for high-risk repairs. Use it when `_staging/repair_candidates/` contains multiple staged candidate assets and one should become the current package-owned asset without hand-editing `metadata.json`. Candidate promotion should come from `_staging/repair_candidates/`, not an arbitrary package path.
 
 ## Pipeline Quality Rule
@@ -133,7 +135,7 @@ Every reusable layer must have provenance. Record which tool or manual process c
 
 Every object layer must also declare `asset_class` and `reuse_status`. Use `asset_class=atomic` plus `reuse_status=production-ready` only for inspected reusable assets. Use `candidate` plus `draft-candidate` for imported or unreviewed upstream results. Use `grouped-support`, `background-support`, or `preview-reference` plus `support-only` for plates, grouped UI chrome, backgrounds, contact sheets, and other support/reference layers.
 
-Every object layer must also declare `delivery_class`, `current_asset_revision`, and when relevant `selected_candidate_id`, `repair_history[]`, and `active_reconstruction_method`. This keeps the current promoted asset distinct from rejected or archived repair candidates.
+Every object layer must also declare `delivery_class`, `current_asset_revision`, and when relevant `selected_candidate_id`, `repair_history[]`, `candidate_comparisons[]`, and `active_reconstruction_method`. This keeps the current promoted asset distinct from rejected or archived repair candidates.
 
 Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
 

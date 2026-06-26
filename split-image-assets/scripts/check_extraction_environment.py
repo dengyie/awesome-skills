@@ -62,6 +62,20 @@ def _probe_runtime(module_name: str) -> dict:
     }
 
 
+def _probe_first_runtime(module_names: list[str]) -> dict:
+    for module_name in module_names:
+        if importlib.util.find_spec(module_name) is None:
+            continue
+        result = _probe_runtime(module_name)
+        result["module"] = module_name
+        return result
+    return {
+        "installed": False,
+        "runtime_ready": False,
+        "module": module_names[0] if module_names else "unknown",
+    }
+
+
 TOOL_SPECS = {
     "Pillow": ["PIL"],
     "OpenCV": ["cv2"],
@@ -72,6 +86,8 @@ TOOL_SPECS = {
     "SAM2": ["sam2"],
     "segment-anything": ["segment_anything"],
     "GroundingDINO": ["groundingdino"],
+    "IOPaint": ["iopaint", "lama_cleaner"],
+    "LaMa": ["saicinpainting", "lama_cleaner"],
 }
 
 
@@ -134,8 +150,72 @@ def production_readiness(capabilities: dict) -> tuple[bool, list[str]]:
     if not matting["production_ready"]:
         missing.append("matting/refinement")
     if not reconstruction["production_ready"]:
-        missing.append("reconstruction/manual repair path")
+        if reconstruction["path_type"] == "manual-redraw-only":
+            missing.append("dedicated reconstruction tool or accepted manual redraw path")
+        else:
+            missing.append("dedicated reconstruction tool")
     return not missing, missing
+
+
+def build_reconstruction_capability(
+    torch_runtime: dict,
+    onnx_runtime: dict,
+    iopaint_runtime: dict,
+    lama_runtime: dict,
+) -> dict:
+    dedicated_installed = bool(iopaint_runtime["installed"] or lama_runtime["installed"])
+    dedicated_runtime_ready = bool(iopaint_runtime["runtime_ready"] or lama_runtime["runtime_ready"])
+    if dedicated_runtime_ready:
+        path_type = "dedicated-tool"
+        quality_impact = (
+            "Dedicated reconstruction tooling is available, but repaired layers still need review evidence "
+            "and honest approximate-reconstruction labeling when hidden pixels are inferred."
+        )
+    elif dedicated_installed:
+        path_type = "manual-redraw-only"
+        quality_impact = (
+            "A dedicated reconstruction tool appears installed but not runtime-ready. Do not claim a "
+            "production reconstruction path until that tool actually runs; fall back to manual redraw "
+            "or approximate reconstruction only in the meantime."
+        )
+    else:
+        path_type = "manual-redraw-only"
+        quality_impact = (
+            "No dedicated reconstruction tool is runtime-ready. Background/carrier repair falls back to manual "
+            "redraw or approximate reconstruction only, which requires explicit user acceptance and must not be "
+            "treated as automatic production capability."
+        )
+
+    return {
+        "installed": dedicated_installed,
+        "runtime_ready": dedicated_runtime_ready,
+        "production_ready": dedicated_runtime_ready,
+        "path_type": path_type,
+        "manual_redraw_required": path_type == "manual-redraw-only",
+        "requires_user_acceptance": path_type != "dedicated-tool",
+        "tooling": {
+            "iopaint": iopaint_runtime,
+            "lama": lama_runtime,
+            "torch": {
+                "installed": torch_runtime["installed"],
+                "runtime_ready": torch_runtime["runtime_ready"],
+                "note": "Environment support only; not sufficient for reconstruction production readiness.",
+            },
+            "onnxruntime": {
+                "installed": onnx_runtime["installed"],
+                "runtime_ready": onnx_runtime["runtime_ready"],
+                "note": "Environment support only; not sufficient for reconstruction production readiness.",
+            },
+            "manual_redraw_path": {
+                "installed": True,
+                "runtime_ready": False,
+                "production_ready": False,
+                "acceptance_required": True,
+                "note": "Human redraw path only. This is not an automatic runtime capability and needs explicit acceptance.",
+            },
+        },
+        "quality_impact": quality_impact,
+    }
 
 
 def build_capabilities(tools: dict) -> dict:
@@ -145,6 +225,8 @@ def build_capabilities(tools: dict) -> dict:
     sam2_runtime = _probe_runtime("sam2")
     groundingdino_runtime = _probe_runtime("groundingdino")
     segment_anything_runtime = _probe_runtime("segment_anything")
+    iopaint_runtime = _probe_first_runtime(["iopaint", "lama_cleaner"])
+    lama_runtime = _probe_first_runtime(["saicinpainting", "lama_cleaner"])
 
     segmentation_production_ready = bool(
         torch_runtime["runtime_ready"]
@@ -158,8 +240,8 @@ def build_capabilities(tools: dict) -> dict:
         rembg_runtime["runtime_ready"]
         or onnx_runtime["runtime_ready"]
     )
-    reconstruction_production_ready = bool(
-        onnx_runtime["runtime_ready"] or torch_runtime["runtime_ready"]
+    reconstruction = build_reconstruction_capability(
+        torch_runtime, onnx_runtime, iopaint_runtime, lama_runtime
     )
     return {
         "segmentation": {
@@ -188,18 +270,7 @@ def build_capabilities(tools: dict) -> dict:
             },
         },
         "reconstruction": {
-            "installed": bool(torch_runtime["installed"] or onnx_runtime["installed"]),
-            "runtime_ready": reconstruction_production_ready,
-            "production_ready": reconstruction_production_ready,
-            "tooling": {
-                "onnxruntime": onnx_runtime,
-                "torch": torch_runtime,
-                "manual_redraw_path": {
-                    "installed": False,
-                    "runtime_ready": False,
-                    "note": "Manual redraw remains a human path, not a bundled runtime capability.",
-                },
-            },
+            **reconstruction,
         },
         "environment": {
             "python": {
@@ -250,10 +321,7 @@ def upstream_roles(capabilities: dict) -> dict:
         "background_reconstruction": {
             "recommended_tools": ["IOPaint", "LaMa", "inpainting tools", "manual paint repair"],
             "available": capabilities["reconstruction"]["production_ready"],
-            "quality_impact": (
-                "Missing an inpainting or manual repair path means background_clean.png "
-                "can only be approximate or needs-review."
-            ),
+            "quality_impact": capabilities["reconstruction"]["quality_impact"],
         },
         "packaging_qa": {
             "recommended_tools": ["split-image-assets scripts"],
@@ -285,6 +353,16 @@ def build_report() -> dict:
         "recommended_recipe": recipe,
         "recommended_next_action": next_action,
         "recommended_next_step": next_action,
+        "recommended_next_action_detail": (
+            "Dedicated reconstruction tooling is installed but not runtime-ready; manual redraw required or approximate reconstruction only until that tool actually runs."
+            if capabilities["reconstruction"]["path_type"] == "manual-redraw-only"
+            and capabilities["reconstruction"]["installed"]
+            else (
+                "Dedicated reconstruction tooling is missing; manual redraw required or approximate reconstruction only."
+                if capabilities["reconstruction"]["path_type"] == "manual-redraw-only"
+                else "Dedicated reconstruction tooling is available before claiming production extraction."
+            )
+        ),
         "preflight_tooling_recommendation_gate": {
             "must_confirm_before_extraction": True,
             "user_choices": [
@@ -332,6 +410,7 @@ def print_text_report(report: dict) -> None:
         print(f"- {role}: {status}; {details['quality_impact']}")
     print(f"Recommended recipe: {report['recommended_recipe']}")
     print(f"Recommended next action: {report['recommended_next_action']}")
+    print(f"Recommended next action detail: {report['recommended_next_action_detail']}")
     print(
         "Preflight choices: install-or-activate-tools, external-professional-outputs, "
         "or draft-packaging-only."

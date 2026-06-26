@@ -1,6 +1,7 @@
 import argparse
 import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -61,6 +62,22 @@ def update_asset_summary(metadata: dict) -> None:
     metadata["asset_summary"] = summary
 
 
+def append_qa_report(package_dir: Path, object_id: str, candidate_id: str, selection_reason: str) -> None:
+    qa_path = package_dir / "qa_report.md"
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    lines = [
+        "",
+        "## Candidate Promotion",
+        "",
+        f"- Time: {timestamp}",
+        f"- Object: {object_id}",
+        f"- Selected candidate: {candidate_id}",
+        f"- Selection reason: {selection_reason}",
+    ]
+    existing = qa_path.read_text(encoding="utf-8") if qa_path.exists() else ""
+    qa_path.write_text(existing.rstrip() + "\n" + "\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Promote a staged repair candidate into the package asset inventory."
@@ -70,6 +87,7 @@ def main() -> int:
     parser.add_argument("--candidate-asset", required=True, help="Package-relative staged candidate asset path.")
     parser.add_argument("--candidate-mask", help="Package-relative staged candidate mask path.")
     parser.add_argument("--candidate-id", required=True, help="Candidate identifier recorded in metadata.")
+    parser.add_argument("--comparison-id", help="Existing candidate comparison record id to resolve.")
     parser.add_argument(
         "--delivery-class",
         choices=[
@@ -82,6 +100,7 @@ def main() -> int:
     )
     parser.add_argument("--active-reconstruction-method", default="")
     parser.add_argument("--repair-note", required=True)
+    parser.add_argument("--selection-reason", required=True)
     args = parser.parse_args()
 
     package_dir = Path(args.package_dir).resolve()
@@ -140,10 +159,48 @@ def main() -> int:
             "note": args.repair_note,
             "candidate_asset": args.candidate_asset,
             "candidate_mask": args.candidate_mask or "",
+            "selection_reason": args.selection_reason,
+            "comparison_id": args.comparison_id or "",
         }
     )
+    comparisons = target.setdefault("candidate_comparisons", [])
+    if not isinstance(comparisons, list):
+        parser.error("target object candidate_comparisons must be a list when present")
+    if args.comparison_id:
+        comparison = next(
+            (
+                item
+                for item in comparisons
+                if isinstance(item, dict) and item.get("comparison_id") == args.comparison_id
+            ),
+            None,
+        )
+        if comparison is None:
+            parser.error(f"unknown comparison-id: {args.comparison_id}")
+        candidate_ids = comparison.get("candidate_ids", [])
+        if not isinstance(candidate_ids, list) or args.candidate_id not in candidate_ids:
+            parser.error("comparison-id must reference a comparison that includes the selected candidate")
+        comparison["selected_candidate_id"] = args.candidate_id
+        comparison["selection_reason"] = args.selection_reason
+        comparison["selected_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        comparisons.append(
+            {
+                "comparison_id": f"manual-{args.candidate_id}",
+                "object_id": args.object_id,
+                "candidate_ids": [args.candidate_id],
+                "compare_artifact_path": "",
+                "compare_manifest_path": "",
+                "compare_note": "Manual direct promotion without multi-candidate comparison.",
+                "compare_criteria": [],
+                "selected_candidate_id": args.candidate_id,
+                "selection_reason": args.selection_reason,
+                "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }
+        )
     update_asset_summary(metadata)
     write_metadata(package_dir, metadata)
+    append_qa_report(package_dir, args.object_id, args.candidate_id, args.selection_reason)
     print(f"Promoted candidate {args.candidate_id} for {args.object_id}")
     return 0
 
