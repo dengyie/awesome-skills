@@ -83,6 +83,12 @@ For UI or dense compositions, `granularity` must also record:
 
 `capability` records the tooling preflight result before extraction. `production_capable` is true only when mature upstream extraction capability or equivalent professional external evidence is available. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
 
+The preflight report should also expose:
+
+- `missing_roles`
+- `recommended_installs`
+- `why_it_matters`
+
 For reconstruction, runtime support such as `torch` or `onnxruntime` is not enough by itself to claim `production_ready`. Treat `manual_redraw_path` as a human acceptance path, not as automatic production capability.
 
 `qa.status=pass` requires `capability.production_capable: true`. Draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked` until production-capable upstream evidence or professional external outputs are recorded.
@@ -224,4 +230,17 @@ It also rejects `qa.status=pass` unless reusable layers have been promoted to `r
 
 Use `scripts/archive_intermediates.py` when moving retained `_staging/` outputs into `_archive_intermediate/<run-id>/`. The helper writes `archive_manifest.json` so future reviewers can see which upstream candidate masks, temporary manifests, or refinement outputs were retained.
 
-Use `scripts/compare_candidate_assets.py` when more than one repair candidate should be reviewed. `candidate_comparisons[]` should record `comparison_id`, `candidate_ids`, `compare_artifact_path`, `selected_candidate_id`, and `selection_reason`. Multi-candidate promotions should not happen without compare evidence.
+Use `scripts/compare_candidate_assets.py` when more than one repair candidate should be reviewed. `candidate_comparisons[]` should record:
+
+- `comparison_id`
+- `candidate_ids`
+- `compare_artifact_path`
+- `compare_manifest_path`
+- `compare_note`
+- `compare_criteria`
+- `review_focus`
+- `risks`
+- `selected_candidate_id`
+- `selection_reason`
+
+Multi-candidate promotions should not happen without compare evidence. Compare manifest files are hard evidence, not optional sidecars.

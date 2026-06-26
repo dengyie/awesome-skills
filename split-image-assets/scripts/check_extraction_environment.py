@@ -157,6 +157,46 @@ def production_readiness(capabilities: dict) -> tuple[bool, list[str]]:
     return not missing, missing
 
 
+def missing_roles(capabilities: dict) -> list[str]:
+    roles: list[str] = []
+    if not capabilities["segmentation"]["production_ready"]:
+        roles.extend(["detection", "segmentation"])
+    if not capabilities["matting"]["production_ready"]:
+        roles.append("matting")
+    if not capabilities["reconstruction"]["production_ready"]:
+        roles.append("reconstruction")
+    # preserve order, remove duplicates
+    return list(dict.fromkeys(roles))
+
+
+def recommended_installs(capabilities: dict) -> list[str]:
+    installs: list[str] = []
+    if not capabilities["segmentation"]["production_ready"]:
+        installs.extend(["SAM2", "GroundingDINO", "Grounded-SAM"])
+    if not capabilities["matting"]["production_ready"]:
+        installs.extend(["rembg", "BiRefNet", "RMBG"])
+    if not capabilities["reconstruction"]["production_ready"]:
+        installs.extend(["IOPaint", "LaMa"])
+    return installs
+
+
+def why_it_matters(capabilities: dict) -> list[str]:
+    messages: list[str] = []
+    if not capabilities["segmentation"]["production_ready"]:
+        messages.append(
+            "Missing segmentation/grounding means object boundaries may fall back to rough prompts or manual estimation."
+        )
+    if not capabilities["matting"]["production_ready"]:
+        messages.append(
+            "Missing matting/refinement means halos, dark fringes, and contaminated hard edges are more likely."
+        )
+    if not capabilities["reconstruction"]["production_ready"]:
+        messages.append(
+            "Missing dedicated reconstruction tooling means carrier/background repair stays manual or approximate and should not be treated as automatic production output."
+        )
+    return messages
+
+
 def build_reconstruction_capability(
     torch_runtime: dict,
     onnx_runtime: dict,
@@ -337,6 +377,9 @@ def build_report() -> dict:
     recipe, next_action = choose_recipe(capabilities)
     production_capable, missing_for_production = production_readiness(capabilities)
     roles = upstream_roles(capabilities)
+    missing_role_names = missing_roles(capabilities)
+    recommended_install_names = recommended_installs(capabilities)
+    why_it_matters_messages = why_it_matters(capabilities)
     return {
         "python": {
             "executable": sys.executable,
@@ -349,6 +392,9 @@ def build_report() -> dict:
         "environment": capabilities["environment"],
         "production_capable": production_capable,
         "missing_for_production": missing_for_production,
+        "missing_roles": missing_role_names,
+        "recommended_installs": recommended_install_names,
+        "why_it_matters": why_it_matters_messages,
         "upstream_roles": roles,
         "recommended_recipe": recipe,
         "recommended_next_action": next_action,

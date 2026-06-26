@@ -4,12 +4,15 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` staged contract hardening is implemented and locally verified through Round 1-4. The skill now distinguishes installed/runtime-ready/production-ready preflight capability, records structured UI granularity axes, enforces carrier/glyph split policy and approximate-reconstruction honesty, restricts candidate promotion to `_staging/repair_candidates/`, and keeps archived audit metadata paths synchronized.
+- Current stage: `split-image-assets` staged contract hardening is extended with stricter reconstruction capability routing and structured candidate-comparison evidence. The skill now treats broken dedicated reconstruction installs as manual-redraw-only fallback paths, requires compare manifests plus selection rationale for promoted candidates, and keeps archived compare evidence paths synchronized.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-27: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (81 tests)
+- 2026-06-27: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-27: `git diff --check` (passed with only CRLF warnings)
 - 2026-06-26: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (70 tests)
 - 2026-06-26: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-06-26: `git diff --check` (passed with only CRLF warnings)

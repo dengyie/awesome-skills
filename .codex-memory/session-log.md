@@ -481,3 +481,9 @@
 - Results: `split-image-assets` now behaves more like a constrained workflow shell around professional upstream extraction than a loose packaging helper. Full package validation passed with 70 tests, and the current remaining limitation is that the original `concept-c-workshop-console.png` file was not available locally for a literal source-image replay, so the Round 4 replay used the field-retrospective document plus the existing UI atomic fixture.
 - Next: Stage and commit the Round 1-4 hardening pass, then optionally push or run user-facing manual trials.
 - Blockers: Original `concept-c-workshop-console.png` source image not present in the accessible workspace or attachment paths.
+## 2026-06-27 10:35
+- Task: Harden `split-image-assets` reconstruction capability and candidate compare evidence.
+- Actions: Added conservative dedicated-tool fallback logic to `check_extraction_environment.py`; introduced `recommended_installs`, `missing_roles`, and `why_it_matters`; added `compare_candidate_assets.py`; tightened validator requirements around compare manifests, selection rationale, and approximate-reconstruction acceptance; updated archive path rewrites for candidate comparison artifacts; synchronized workflow/reference/usage docs; expanded regression coverage and reran targeted plus full package tests and `quick_validate.py`.
+- Results: `split-image-assets` now treats broken reconstruction installs as manual-redraw-only instead of semi-available production paths, and promoted candidates require structured compare evidence that survives archiving. Full `split-image-assets` validation passed with 81 tests.
+- Next: Commit this reconstruction/compare hardening pass and push when desired.
+- Blockers: None.

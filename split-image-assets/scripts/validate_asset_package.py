@@ -85,6 +85,7 @@ REQUIRED_CANDIDATE_COMPARISON_FIELDS = {
     "object_id",
     "candidate_ids",
     "compare_artifact_path",
+    "compare_manifest_path",
     "selected_candidate_id",
     "selection_reason",
     "created_at",
@@ -99,6 +100,11 @@ ALLOWED_AUDIT_CODES = {
     "hard-alpha-risk",
     "support-layer-misclassified",
     "carrier-glyph-cross-contamination",
+}
+APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES = {
+    "approximate-reconstruction-acceptance",
+    "approximate-reconstruction-acceptance-gate",
+    "reconstruction-acceptance",
 }
 
 
@@ -492,6 +498,7 @@ def validate_objects(
     qa = metadata.get("qa", {})
     qa_status = qa.get("status") if isinstance(qa, dict) else None
     granularity = metadata.get("granularity", {}) if isinstance(metadata.get("granularity"), dict) else {}
+    decision_log = metadata.get("decision_log", []) if isinstance(metadata.get("decision_log"), list) else []
     ui_like_package = is_ui_like_package(metadata)
     if ui_like_package:
         for field_name in [
@@ -660,6 +667,17 @@ def validate_objects(
                 errors.append(
                     f"{object_id}: approximate or reconstructed layers must not use reuse_status=production-ready"
                 )
+            if str(item.get("selected_candidate_id", "")).strip():
+                accepted = any(
+                    isinstance(entry, dict)
+                    and str(entry.get("stage", "")).strip() in APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES
+                    and str(entry.get("user_answer", "")).strip()
+                    for entry in decision_log
+                )
+                if not accepted:
+                    errors.append(
+                        f"{object_id}: promoted approximate reconstruction requires an explicit reconstruction acceptance decision"
+                    )
             if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
                 errors.append(
                     f"{object_id}: approximate reconstructed layers cannot support qa.status pass "
@@ -737,29 +755,73 @@ def validate_objects(
                                     f"{object_id}: candidate comparison artifact is missing: {artifact_path}"
                                 )
                     manifest_path = comparison.get("compare_manifest_path")
-                    if manifest_path is not None:
-                        if not isinstance(manifest_path, str):
-                            errors.append(
-                                f"{object_id}: candidate_comparisons[{index}].compare_manifest_path must be a string when present"
-                            )
-                        elif manifest_path:
-                            if not manifest_path.startswith("_staging/") and not manifest_path.startswith(
-                                "_archive_intermediate/"
-                            ):
+                    if not isinstance(manifest_path, str) or not manifest_path.strip():
+                        errors.append(
+                            f"{object_id}: candidate_comparisons[{index}].compare_manifest_path must be a non-empty string"
+                        )
+                    elif not manifest_path.startswith("_staging/") and not manifest_path.startswith(
+                        "_archive_intermediate/"
+                    ):
+                        errors.append(
+                            f"{object_id}: candidate_comparisons[{index}].compare_manifest_path must stay in _staging/ or _archive_intermediate/"
+                        )
+                    else:
+                        resolved_manifest = rel_path(
+                            package_dir,
+                            manifest_path,
+                            errors,
+                            f"{object_id}: candidate_comparisons[{index}].compare_manifest_path",
+                        )
+                        if resolved_manifest is not None:
+                            if not resolved_manifest.exists():
                                 errors.append(
-                                    f"{object_id}: candidate_comparisons[{index}].compare_manifest_path must stay in _staging/ or _archive_intermediate/"
+                                    f"{object_id}: candidate comparison manifest is missing: {manifest_path}"
                                 )
                             else:
-                                resolved_manifest = rel_path(
-                                    package_dir,
-                                    manifest_path,
-                                    errors,
-                                    f"{object_id}: candidate_comparisons[{index}].compare_manifest_path",
-                                )
-                                if resolved_manifest is not None and not resolved_manifest.exists():
-                                    errors.append(
-                                        f"{object_id}: candidate comparison manifest is missing: {manifest_path}"
+                                try:
+                                    manifest_data = json.loads(
+                                        resolved_manifest.read_text(encoding="utf-8")
                                     )
+                                except json.JSONDecodeError as exc:
+                                    errors.append(
+                                        f"{object_id}: candidate comparison manifest is not valid JSON: {exc}"
+                                    )
+                                else:
+                                    if not isinstance(manifest_data, dict):
+                                        errors.append(
+                                            f"{object_id}: candidate comparison manifest must contain an object"
+                                        )
+                                    else:
+                                        manifest_criteria = manifest_data.get("compare_criteria")
+                                        if not isinstance(manifest_criteria, list) or not manifest_criteria:
+                                            errors.append(
+                                                f"{object_id}: candidate comparison manifest must record non-empty compare_criteria"
+                                            )
+                                        candidates_block = manifest_data.get("candidates")
+                                        if not isinstance(candidates_block, list) or not candidates_block:
+                                            errors.append(
+                                                f"{object_id}: candidate comparison manifest must record candidates with asset_path"
+                                            )
+                                        else:
+                                            for manifest_candidate in candidates_block:
+                                                if not isinstance(manifest_candidate, dict):
+                                                    errors.append(
+                                                        f"{object_id}: candidate comparison manifest candidates must be objects"
+                                                    )
+                                                    continue
+                                                asset_candidate_path = manifest_candidate.get("asset_path")
+                                                if not isinstance(asset_candidate_path, str) or not asset_candidate_path.strip():
+                                                    errors.append(
+                                                        f"{object_id}: candidate comparison manifest candidates must include asset_path"
+                                                    )
+                                        if "review_focus" not in manifest_data:
+                                            errors.append(
+                                                f"{object_id}: candidate comparison manifest must record review_focus"
+                                            )
+                                        if "risks" not in manifest_data:
+                                            errors.append(
+                                                f"{object_id}: candidate comparison manifest must record risks"
+                                            )
                     selection_reason = comparison.get("selection_reason")
                     if not isinstance(selection_reason, str):
                         errors.append(

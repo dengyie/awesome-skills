@@ -18,7 +18,7 @@ Keep the workflow split into three layers:
 2. Run `scripts/init_asset_package.py` if the package does not already exist.
 3. Run the Preflight Tooling Recommendation Gate before extraction:
    - run `scripts/check_extraction_environment.py`
-   - require a report that includes `segmentation`, `matting`, `reconstruction`, `environment`, `production_capable`, and `missing_for_production`
+   - require a report that includes `segmentation`, `matting`, `reconstruction`, `environment`, `production_capable`, `missing_for_production`, `missing_roles`, `recommended_installs`, and `why_it_matters`
    - distinguish installed tooling from runtime-ready and production-ready capability
    - explicitly classify the run as `production-capable` or `draft-packaging-only`
    - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
@@ -35,6 +35,26 @@ Keep the workflow split into three layers:
    - decide whether approximate background repair is acceptable or exact recovery is required
    - decide whether layers must be animation-ready or static-reuse ready
 6. Run the Semantic Split Plan Confirmation Gate when layer boundaries, grouping, carrier/glyph separation, or text ownership are subjective.
+   - `Granularity Alignment Gate`
+     - Trigger: complex UI, dashboard, dense composition, or reuse-boundary ambiguity.
+     - Ask: “Should this package target component-level, atomic-layer, or production-editable reconstruction?”
+     - Recommended answer: `atomic-layer` for reusable UI assets; `production-editable` when downstream rebuild is required.
+     - Metadata effect: record `mode`, `scope_strategy`, `text_handling`, `background_expectation`, and `layer_independence`.
+   - `Carrier/Glyph Split Gate`
+     - Trigger: icon-in-tile, badge-in-card, glyph-on-plate, or `carrier-glyph-pair`.
+     - Ask: “Should the carrier and glyph split into separate layers?”
+     - Recommended answer: `split`.
+     - Metadata effect: record `carrier_glyph_policy` and a decision-log entry.
+   - `Approximate Reconstruction Acceptance Gate`
+     - Trigger: inferred pixels, manual redraw, or approximate carrier/background repair.
+     - Ask: “Is approximate reconstruction acceptable for this layer?”
+     - Recommended answer: only when approximate delivery is explicitly acceptable.
+     - Metadata effect: keep `delivery_class=approximate-reconstruction`, record reconstruction provenance/method, and a reconstruction acceptance decision.
+   - `Final Promotion Acceptance Gate`
+     - Trigger: a candidate is ready to replace the current revision.
+     - Ask: “Should candidate X become the current revision?”
+     - Recommended answer: only after compare evidence or a direct-promotion rationale exists.
+     - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, and `candidate_comparisons[]`.
 7. Choose a high-signal first subset when the image is complex. For flat UI and dashboards, start with logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements that a professional segmenter can isolate and a reviewer can inspect clearly.
 8. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, read `ui-atomic-split.md` and create a layer plan that marks each expected layer as `must_extract`, `rebuild_downstream`, `support_only`, `skip_for_now`, or `requires_user_confirmation`.
 9. Analyze before extraction:
@@ -62,7 +82,7 @@ Keep the workflow split into three layers:
 21. Run `scripts/audit_visual_quality.py` to create warning-only `_staging/quality/quality_audit.json` and `_staging/quality/qa_audit_contact_sheet.png` evidence before final review.
 22. Inspect previews and audit warnings, then update object quality checks and QA status with `scripts/record_quality_review.py` when appropriate.
 23. For high-risk repairs, write candidate outputs into `_staging/repair_candidates/`, compare at least two candidates when available, and promote the selected candidate with `scripts/promote_candidate_asset.py` instead of overwriting `assets/` by hand. Do not promote from an arbitrary package path.
-24. Use `scripts/compare_candidate_assets.py` before promotion when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`.
+24. Use `scripts/compare_candidate_assets.py` before promotion when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Treat compare as a structured evidence step, not just a screenshot.
 25. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`. If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
 26. Validate the package with `scripts/validate_asset_package.py`.
 27. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.

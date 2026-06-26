@@ -44,7 +44,7 @@ NEVER HIDE UNCERTAINTY
 3. Initialize the package with `scripts/init_asset_package.py` when a package does not already exist.
 4. Run the Preflight Tooling Recommendation Gate before selecting a recipe or starting extraction:
    - run `scripts/check_extraction_environment.py`
-   - report `segmentation`, `matting`, `reconstruction`, `environment`, `production_capable`, and `missing_for_production`
+   - report `segmentation`, `matting`, `reconstruction`, `environment`, `production_capable`, `missing_for_production`, `missing_roles`, `recommended_installs`, and `why_it_matters`
    - distinguish installed tooling, runtime-ready tooling, and production-ready capability
    - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
    - proactively recommend installing or activating missing professional upstream tools
@@ -113,7 +113,7 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 
 `scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It checks optional module presence, runtime readiness, and production-ready capability for segmentation, matting, reconstruction, and environment support. It does not install anything. For reconstruction, runtime support such as `torch` or `onnxruntime` is not enough by itself; only a dedicated reconstruction tool path should count as `production_ready=true`. Use the report to decide whether to run a local mature pipeline, request external assets, or continue as draft-packaging-only.
 
-The capability report distinguishes module-installed from runtime-ready from production-ready states, lists `missing_for_production`, and explains missing upstream role impact so an agent does not confuse partial local tooling with production readiness. `manual_redraw_path` is a human workflow, not automatic runtime capability, and should lead to `manual redraw required` or `approximate reconstruction only`, not to `production_capable=true`.
+The capability report distinguishes module-installed from runtime-ready from production-ready states, lists `missing_for_production`, `missing_roles`, `recommended_installs`, and `why_it_matters`, and explains missing upstream role impact so an agent does not confuse partial local tooling with production readiness. `manual_redraw_path` is a human workflow, not automatic runtime capability, and should lead to `manual redraw required` or `approximate reconstruction only`, not to `production_capable=true`.
 
 `scripts/build_quality_previews.py` creates QA evidence images such as mask overlays and alpha inspection previews. These previews are inspection artifacts; they do not upgrade a package to `pass` by themselves.
 
@@ -168,6 +168,29 @@ Approximate reconstructed carriers or clean plates should use `delivery_class=ap
 Source-space masks are expected: `masks/*.png` should normally match the original source dimensions for overlay QA and provenance tracing. A black mask with a small white component is valid when the object is small. Store the tight reusable visual result in `assets/*.png`; store the full-source QA mask in `masks/*.png`.
 
 ## Decision Sync Rule
+
+Use these formal confirmation gates instead of vague “ask when needed” behavior:
+
+- `Granularity Alignment Gate`
+  - Trigger: complex UI, dashboard, dense composition, or any run where split scope affects reuse boundaries.
+  - Ask: “Should this package target component-level, atomic-layer, or production-editable reconstruction?”
+  - Recommended answer: `atomic-layer` for reusable UI atoms; `production-editable` when downstream rebuild matters.
+  - Metadata effect: update `metadata.granularity.mode`, `scope_strategy`, `text_handling`, `background_expectation`, and `layer_independence`.
+- `Carrier/Glyph Split Gate`
+  - Trigger: icon-in-tile, badge-in-card, glyph-on-plate, or any `carrier-glyph-pair`.
+  - Ask: “Should this carrier and glyph stay grouped, or split into separate reusable layers?”
+  - Recommended answer: `split` unless the grouped layer is explicitly the downstream requirement.
+  - Metadata effect: update `metadata.granularity.carrier_glyph_policy` and record the decision in `metadata.decision_log[]`.
+- `Approximate Reconstruction Acceptance Gate`
+  - Trigger: background/carrier repair requires inferred pixels or manual redraw.
+  - Ask: “Is an approximate reconstructed layer acceptable for this package?”
+  - Recommended answer: yes only when the layer can stay `needs-review` or is explicitly accepted for the target use.
+  - Metadata effect: keep `delivery_class=approximate-reconstruction`, record `reconstruction_provenance`, `active_reconstruction_method`, and a reconstruction acceptance decision in `metadata.decision_log[]`.
+- `Final Promotion Acceptance Gate`
+  - Trigger: a candidate is about to replace the current asset revision.
+  - Ask: “Should candidate X become the current revision for this object?”
+  - Recommended answer: yes only after compare evidence or a direct-promotion rationale exists.
+  - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, and the QA report.
 
 When a split decision affects reuse boundaries, editability, animation readiness, localization, approximate reconstruction acceptance, or final delivery claims, pause and run a one-question confirmation step before continuing that branch.
 

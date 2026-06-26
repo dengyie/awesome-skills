@@ -24,6 +24,12 @@ If mature segmentation/matting tools are unavailable and no external masks or cu
 
 For reconstruction, do not treat `torch` or `onnxruntime` as enough to claim a production reconstruction path. Without a dedicated reconstruction tool, the honest fallback is `manual redraw required` or `approximate reconstruction only`.
 
+The preflight report should explicitly call out:
+
+- `missing_roles`
+- `recommended_installs`
+- `why_it_matters`
+
 Always report whether the run is `production-capable` or `draft-packaging-only`. If it is not production-capable, explicitly list what is missing, record the user choice in `metadata.capability`, and keep the package honest.
 
 Missing upstream role examples:
@@ -35,6 +41,15 @@ Missing upstream role examples:
 Also align split granularity before cutting pixels: module-level, component-level, atomic-layer, or production-editable reconstruction; text as image assets or live downstream text; exact background recovery or approximate `background_clean.png`; animation-ready layers or static reuse.
 
 When granularity, carrier/glyph grouping, text ownership, approximate background acceptance, low-confidence masks, or final `pass` claims are subjective, use a grill-me style confirmation step: ask one focused question, include your recommended answer, resolve that branch, then record the outcome in `metadata.decision_log[]`. If prior instructions already answer the question, record the decision instead of asking again.
+
+Treat these as formal gates:
+
+- `Granularity Alignment Gate`
+- `Carrier/Glyph Split Gate`
+- `Approximate Reconstruction Acceptance Gate`
+- `Final Promotion Acceptance Gate`
+
+Each gate should ask one decisive question, offer a recommended answer, and update metadata in a durable way rather than leaving the choice only in chat.
 
 Use a professional segmenter or matting pipeline as the primary source for production masks. Pillow, OpenCV, and skimage are helpers for alpha compositing, source-space mask persistence, preview generation, repair, and packaging; they are not a substitute for SAM2/SAM/Grounded-SAM/rembg/BiRefNet/RMBG-style extraction.
 
@@ -111,7 +126,7 @@ Approximate `background_clean.png` files and structural support plates should re
 
 For high-risk repairs, stage candidates in `_staging/repair_candidates/`, compare them there, and promote the selected candidate with `promote_candidate_asset.py`. Do not silently overwrite package assets before candidate selection is recorded.
 
-Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`.
+Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.
 

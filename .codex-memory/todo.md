@@ -2,6 +2,7 @@
 ## In Progress
 ## Next
 ## Done
+- [x] Harden `split-image-assets` reconstruction capability and candidate-compare evidence so broken dedicated installs fall back honestly and archived compare manifests remain validator-visible.
 - [x] Commit the staged Round 1-4 `split-image-assets` contract hardening pass.
 - [x] Validate `split-image-assets` staged Round 1-4 hardening with targeted checks plus full package tests and quick validation.
 - [x] Push local `main` through `61e54cb` to `origin/main`.

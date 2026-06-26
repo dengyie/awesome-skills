@@ -113,7 +113,7 @@ When a layer is reconstructed rather than extracted, record that explicitly. A r
 
 Approximate background clean plates and structural support layers must record `reconstruction_provenance`. Keep them `needs-review` unless a human explicitly confirms the approximation is acceptable for the requested downstream use.
 
-High-risk repair promotion should leave evidence. If a layer records `selected_candidate_id`, it should also record candidate comparison evidence or an explicit direct-promotion rationale. Multi-candidate promotion should reference a compare artifact in `_staging/` or `_archive_intermediate/`.
+High-risk repair promotion should leave evidence. If a layer records `selected_candidate_id`, it should also record candidate comparison evidence or an explicit direct-promotion rationale. Multi-candidate promotion should reference both a compare artifact and a compare manifest in `_staging/` or `_archive_intermediate/`.
 
 ## Final Quality Report
 

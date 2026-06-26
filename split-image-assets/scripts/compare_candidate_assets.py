@@ -47,6 +47,16 @@ def parse_candidate_arg(value: str, parser: argparse.ArgumentParser) -> tuple[st
     return candidate_id, asset_path
 
 
+def candidate_records_for_manifest(candidates: list[dict]) -> list[dict]:
+    return [
+        {
+            "candidate_id": item["candidate_id"],
+            "asset_path": item["relative_path"],
+        }
+        for item in candidates
+    ]
+
+
 def make_checkerboard(size: tuple[int, int], cell: int = 8) -> Image.Image:
     image = Image.new("RGBA", size, (255, 255, 255, 255))
     draw = ImageDraw.Draw(image)
@@ -89,6 +99,30 @@ def build_compare_contact_sheet(candidates: list[dict], output_path: Path) -> No
     canvas.convert("RGB").save(output_path)
 
 
+def append_qa_report(
+    package_dir: Path,
+    object_id: str,
+    comparison_id: str,
+    compare_note: str,
+    compare_criteria: list[str],
+) -> None:
+    qa_path = package_dir / "qa_report.md"
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    lines = [
+        "",
+        "## Candidate Comparison",
+        "",
+        f"- Time: {timestamp}",
+        f"- Object: {object_id}",
+        f"- Comparison id: {comparison_id}",
+        f"- Criteria: {', '.join(compare_criteria)}",
+    ]
+    if compare_note:
+        lines.append(f"- Note: {compare_note}")
+    existing = qa_path.read_text(encoding="utf-8") if qa_path.exists() else ""
+    qa_path.write_text(existing.rstrip() + "\n" + "\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate candidate comparison evidence for staged repair candidates."
@@ -103,6 +137,8 @@ def main() -> int:
     )
     parser.add_argument("--compare-note", default="", help="Short note about the comparison context.")
     parser.add_argument("--compare-criterion", action="append", help="Criterion used in the comparison.")
+    parser.add_argument("--review-focus", action="append", help="Focus area for human review.")
+    parser.add_argument("--risk", action="append", help="Known risk to watch during comparison.")
     parser.add_argument("--comparison-id", help="Explicit comparison id. Defaults to object id plus timestamp.")
     args = parser.parse_args()
 
@@ -134,6 +170,9 @@ def main() -> int:
             }
         )
 
+    if not args.compare_criterion:
+        parser.error("at least one --compare-criterion is required")
+
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     comparison_id = args.comparison_id or (
         f"{args.object_id}-compare-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
@@ -151,9 +190,12 @@ def main() -> int:
                 "comparison_id": comparison_id,
                 "object_id": args.object_id,
                 "candidate_ids": [item["candidate_id"] for item in candidates],
+                "candidates": candidate_records_for_manifest(candidates),
                 "compare_artifact_path": str(compare_artifact_path.relative_to(package_dir)).replace("\\", "/"),
                 "compare_note": args.compare_note,
                 "compare_criteria": args.compare_criterion or [],
+                "review_focus": args.review_focus or [],
+                "risks": args.risk or [],
                 "created_at": timestamp,
             },
             indent=2,
@@ -175,12 +217,15 @@ def main() -> int:
             "compare_manifest_path": str(compare_manifest_path.relative_to(package_dir)).replace("\\", "/"),
             "compare_note": args.compare_note,
             "compare_criteria": args.compare_criterion or [],
+            "review_focus": args.review_focus or [],
+            "risks": args.risk or [],
             "selected_candidate_id": "",
             "selection_reason": "",
             "created_at": timestamp,
         }
     )
     write_metadata(package_dir, metadata)
+    append_qa_report(package_dir, args.object_id, comparison_id, args.compare_note, args.compare_criterion or [])
     print(f"Candidate comparison written: {compare_artifact_path}")
     return 0
 
