@@ -120,6 +120,21 @@ def has_classification_updates(args: argparse.Namespace) -> bool:
     return args.asset_class is not None or args.reuse_status is not None
 
 
+def has_object_targeted_updates(args: argparse.Namespace) -> bool:
+    return any(
+        value is not None
+        for value in [
+            args.object_type,
+            args.asset_class,
+            args.reuse_status,
+            args.delivery_class,
+            args.current_asset_revision,
+            args.active_reconstruction_method,
+            args.selected_candidate_id,
+        ]
+    ) or bool(args.repair_history_entry)
+
+
 def update_analysis(metadata: dict, args: argparse.Namespace) -> None:
     analysis = metadata.setdefault("analysis", {})
     if args.visual_hierarchy:
@@ -469,8 +484,8 @@ def main() -> int:
         parser.error("use either --all-objects or --object-id, not both")
     if has_quality_updates(args) and not args.all_objects and not args.object_id:
         parser.error("quality check updates require --object-id or --all-objects")
-    if has_classification_updates(args) and not args.all_objects and not args.object_id:
-        parser.error("asset classification updates require --object-id or --all-objects")
+    if has_object_targeted_updates(args) and not args.all_objects and not args.object_id:
+        parser.error("object-targeted updates require --object-id or --all-objects")
     if args.confirm_crop_layer and not args.all_objects and not args.object_id:
         parser.error("--confirm-crop-layer requires --object-id or --all-objects")
 

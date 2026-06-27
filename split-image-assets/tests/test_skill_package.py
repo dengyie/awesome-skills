@@ -3463,6 +3463,51 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             strategies = {item["strategy"] for item in manifest["candidates"]}
             self.assertIn("padded-delivery-variant", strategies)
 
+    def test_generate_ui_glyph_cleanup_candidates_tile_subtract_differs_from_plain_recolor(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            glyph_asset = output / "assets" / "main_object_transparent.png"
+            carrier_asset = output / "assets" / "carrier_reference.png"
+            glyph = Image.new("RGBA", (4, 4), (255, 255, 255, 0))
+            glyph.putpixel((1, 1), (240, 240, 240, 255))
+            glyph.putpixel((2, 1), (220, 220, 220, 255))
+            glyph.putpixel((1, 2), (200, 200, 200, 255))
+            glyph.putpixel((2, 2), (180, 180, 180, 255))
+            glyph.save(glyph_asset)
+            Image.new("RGBA", (4, 4), (80, 120, 200, 255)).save(carrier_asset)
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "generate_ui_glyph_cleanup_candidates.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--glyph-asset",
+                    "assets/main_object_transparent.png",
+                    "--carrier-reference",
+                    "assets/carrier_reference.png",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            recolor = Image.open(
+                candidate_dir / "main_object-keep-current-alpha-recolor.png"
+            ).convert("RGBA")
+            subtract = Image.open(
+                candidate_dir / "main_object-tile-subtract.png"
+            ).convert("RGBA")
+            self.assertNotEqual(recolor.getchannel("A").tobytes(), subtract.getchannel("A").tobytes())
+
     def test_upscale_repair_downscale_prepares_and_finalizes_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -3535,6 +3580,93 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     / "main-object-upscaled.png"
                 ).exists()
             )
+
+    def test_record_quality_review_requires_target_for_object_type_update(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--object-type",
+                    "ui-glyph",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("object-targeted updates require --object-id or --all-objects", result.stderr)
+
+    def test_compare_candidate_assets_rejects_score_manifest_missing_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (8, 8), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(candidate_dir / "candidate_a.png")
+            Image.new("RGBA", (4, 4), (200, 0, 0, 255)).save(candidate_dir / "candidate_b.png")
+
+            score_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "score_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--reference-asset",
+                    "assets/main_object_transparent.png",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(score_result.returncode, 0, score_result.stderr)
+            score_report = json.loads(score_result.stdout)
+
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/candidate_b.png",
+                    "--compare-note",
+                    "Reject stale score manifest coverage.",
+                    "--compare-criterion",
+                    "score completeness",
+                    "--score-manifest",
+                    score_report["score_manifest_path"],
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(compare_result.returncode, 0)
+            self.assertIn("score manifest is missing entries for compare candidates", compare_result.stderr)
 
     def test_candidate_compare_and_promote_end_to_end_flow(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -185,8 +185,10 @@ def main() -> int:
                 score_by_candidate[candidate_id] = entry
 
     candidates: list[dict] = []
+    requested_candidate_ids: list[str] = []
     for value in args.candidate:
         candidate_id, relative_path = parse_candidate_arg(value, parser)
+        requested_candidate_ids.append(candidate_id)
         asset_path = package_path(package_dir, relative_path, f"candidate {candidate_id}", parser)
         require_repair_candidate_path(asset_path, package_dir, f"candidate {candidate_id}", parser)
         if not asset_path.exists():
@@ -202,6 +204,16 @@ def main() -> int:
                 "aggregate_score": score_entry.get("aggregate_score"),
             }
         )
+
+    if args.score_manifest:
+        missing_score_candidates = [
+            candidate_id for candidate_id in requested_candidate_ids if candidate_id not in score_by_candidate
+        ]
+        if missing_score_candidates:
+            parser.error(
+                "score manifest is missing entries for compare candidates: "
+                + ", ".join(missing_score_candidates)
+            )
 
     if not args.compare_criterion:
         parser.error("at least one --compare-criterion is required")

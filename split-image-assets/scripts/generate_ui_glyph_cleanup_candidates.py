@@ -57,11 +57,12 @@ def tile_subtract_candidate(
     diff = ImageChops.difference(glyph.convert("RGBA"), carrier).convert("L")
     normalized = ImageOps.autocontrast(diff)
     recolored = recolor_with_alpha(alpha, foreground_color)
-    recolored_rgb = recolored.convert("RGBA")
-    recolored_rgb.putalpha(normalized)
-    final = recolored.copy()
-    final.putalpha(alpha)
-    return final
+    refined_alpha = ImageChops.lighter(
+        normalized,
+        alpha.point(lambda value: int(value * 0.6)),
+    )
+    recolored.putalpha(refined_alpha)
+    return recolored
 
 
 def padded_variant(image: Image.Image, padding: int) -> Image.Image:
