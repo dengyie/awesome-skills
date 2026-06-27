@@ -15,6 +15,12 @@ This skill is not a professional segmenter. It does not promise production-grade
 
 Structure the work as three layers: capability preparation, segmentation execution adapter, and quality adjudication. Capability preparation decides whether the run can be production-capable. The execution adapter normalizes professional upstream outputs into package-owned assets, masks, and provenance. Quality adjudication separates structural validation from visual quality warnings, user/manual acceptance, and production reuse claims.
 
+Before extraction, explicitly state the quality target tier for the run:
+
+- `structural-valid`: package contract, provenance, previews, and evidence are complete
+- `usable-draft`: candidate assets are organized and reviewable, but not yet signoff-ready
+- `visual-acceptance-ready`: current assets are intended to support final visual acceptance
+
 ## Iron Rules
 
 ```text
@@ -61,6 +67,8 @@ NEVER HIDE UNCERTAINTY
    - animation-ready independent layers required or static reuse enough
 7. For complex UI or graphic compositions, start with a high-signal subset instead of trying to atomize the entire image at once. Good first-pass targets are logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements whose masks can be inspected clearly.
 8. For UI, dashboard, badge, tile/glyph, or dense interface images, read `references/ui-atomic-split.md` and create a semantic split plan before extraction.
+   - classify each target as `ui-carrier`, `ui-glyph`, `carrier-glyph-pair`, `soft-edge-logo-brand-mark`, `outlined-illustration-logo`, `flat-support-plate`, or `photo-object-matte`
+   - choose the upstream orchestration and repair path from that object type before cutting pixels
 9. Analyze the source image before extraction:
    - visual hierarchy from background to foreground
    - main object
@@ -81,6 +89,10 @@ NEVER HIDE UNCERTAINTY
    - source-space masks
    - cleaned background
    - optional shadows and grouped object layers
+   - for UI carriers, use `scripts/generate_ui_carrier_candidates.py` when reconstruction candidates are needed
+   - for hard-edge UI glyphs, use `scripts/generate_ui_glyph_cleanup_candidates.py` when cleanup variants are needed
+   - for small assets under roughly 128 px, prefer `scripts/upscale_repair_downscale.py` before final cleanup when quality matters
+   - use `scripts/score_candidate_assets.py` before compare when candidate count or quality variance is high
 14. Put external model outputs, candidate masks, refinement files, and temporary manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
    - use `scripts/archive_intermediates.py` when you want a deterministic archive step
 15. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
@@ -135,9 +147,11 @@ Every reusable layer must have provenance. Record which tool or manual process c
 
 Every object layer must also declare `asset_class` and `reuse_status`. Use `asset_class=atomic` plus `reuse_status=production-ready` only for inspected reusable assets. Use `candidate` plus `draft-candidate` for imported or unreviewed upstream results. Use `grouped-support`, `background-support`, or `preview-reference` plus `support-only` for plates, grouped UI chrome, backgrounds, contact sheets, and other support/reference layers.
 
-Every object layer must also declare `delivery_class`, `current_asset_revision`, and when relevant `selected_candidate_id`, `repair_history[]`, `candidate_comparisons[]`, and `active_reconstruction_method`. This keeps the current promoted asset distinct from rejected or archived repair candidates.
+Every object layer must also declare `object_type`, `delivery_class`, `current_asset_revision`, and when relevant `selected_candidate_id`, `repair_history[]`, `candidate_comparisons[]`, and `active_reconstruction_method`. This keeps the current promoted asset distinct from rejected or archived repair candidates and forces UI/logo assets onto the right repair path.
 
 Record the split decision that governed the run. `metadata.granularity` is required so future agents can see whether the package was aligned to module, component, atomic-layer, production-editable, or draft expectations and whether the user confirmed that scope.
+
+Record the quality target that governed the run. `metadata.quality_target.tier` should stay aligned to `structural-valid`, `usable-draft`, or `visual-acceptance-ready`, and `qa.status=pass` requires `visual-acceptance-ready`.
 
 For UI and dense compositions, do not batch-extract the full image before granularity scope is explicitly confirmed or clearly derivable from prior user instructions. Record the high-signal subset strategy, text handling, carrier/glyph policy, background expectation, and layer independence inside `metadata.granularity`.
 
@@ -186,6 +200,7 @@ Use these formal confirmation gates instead of vague “ask when needed” behav
   - Ask: “Is an approximate reconstructed layer acceptable for this package?”
   - Recommended answer: yes only when the layer can stay `needs-review` or is explicitly accepted for the target use.
   - Metadata effect: keep `delivery_class=approximate-reconstruction`, record `reconstruction_provenance`, `active_reconstruction_method`, and a reconstruction acceptance decision in `metadata.decision_log[]`.
+  - Required wording before promotion: `This is still approximate because hidden pixels are inferred.`
 - `Final Promotion Acceptance Gate`
   - Trigger: a candidate is about to replace the current asset revision.
   - Ask: “Should candidate X become the current revision for this object?”
@@ -204,6 +219,7 @@ Ask when deciding:
 - whether to prefer exact source preservation, editable layers, animation-ready layers, or quick draft assets
 - whether a low-confidence automated mask should be retried with another upstream tool or sent to manual review
 - whether structurally valid output should remain `needs-review` until the user accepts its cleanliness and granularity
+- whether a warning is a true defect, an expected stylistic signal, or mixed and needs human judgment
 
 If the answer can be determined from the source image, existing metadata, or user-provided requirements, inspect that evidence first. If ambiguity remains, ask exactly one focused question and wait for the answer before continuing that branch.
 
@@ -231,7 +247,9 @@ At minimum report:
 - missing upstream roles/tools
 - user choice: install/activate tools, external professional outputs, or draft-packaging-only
 - quality implication of missing tools
+- quality target tier and why it is not higher yet
 - granularity mode, whether it was user-confirmed or inferred, split scope notes, and whether text/UI chrome is extracted or rebuilt downstream
+- object types and the chosen upstream orchestration per type
 - confirmation decisions recorded in `metadata.decision_log`
 - visual hierarchy and recommended split plan
 - extraction pipeline recipe, stages, upstream tools, and quality gates

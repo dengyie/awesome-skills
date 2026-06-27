@@ -42,6 +42,22 @@ ALLOWED_DELIVERY_CLASSES = {
     "support-only",
     "draft-candidate",
 }
+ALLOWED_OBJECT_TYPES = {
+    "ui-carrier",
+    "ui-glyph",
+    "carrier-glyph-pair",
+    "soft-edge-logo-brand-mark",
+    "outlined-illustration-logo",
+    "flat-support-plate",
+    "grouped-support-plate",
+    "photo-object-matte",
+    "generic-object",
+}
+ALLOWED_QUALITY_TARGET_TIERS = {
+    "structural-valid",
+    "usable-draft",
+    "visual-acceptance-ready",
+}
 CROP_ONLY_MARKERS = {"bbox", "crop", "manual-estimated crop", "manual-estimated-crop"}
 ALLOWED_ROOT_DIRECTORIES = {
     "source",
@@ -86,6 +102,8 @@ REQUIRED_CANDIDATE_COMPARISON_FIELDS = {
     "candidate_ids",
     "compare_artifact_path",
     "compare_manifest_path",
+    "review_focus",
+    "risks",
     "selected_candidate_id",
     "selection_reason",
     "created_at",
@@ -304,6 +322,22 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
             "qa.status pass requires metadata.capability.production_capable=true; "
             "draft-packaging-only or unrecorded tooling preflight must remain needs-review"
         )
+    quality_target = metadata.get("quality_target", {})
+    if not isinstance(quality_target, dict):
+        errors.append("metadata.quality_target must be an object")
+    else:
+        if quality_target.get("tier") not in ALLOWED_QUALITY_TARGET_TIERS:
+            errors.append(
+                "metadata.quality_target.tier must be one of: "
+                + ", ".join(sorted(ALLOWED_QUALITY_TARGET_TIERS))
+            )
+        notes = quality_target.get("notes")
+        if not isinstance(notes, str):
+            errors.append("metadata.quality_target.notes must be a string")
+        if qa_status_for_capability == "pass" and quality_target.get("tier") != "visual-acceptance-ready":
+            errors.append(
+                "qa.status pass requires metadata.quality_target.tier=visual-acceptance-ready"
+            )
     qa = metadata.get("qa", {})
     if not isinstance(qa, dict):
         errors.append("metadata.qa must be an object")
@@ -457,6 +491,14 @@ def requires_candidate_comparison_evidence(item: dict) -> bool:
     )
 
 
+def requires_object_type(item: dict) -> bool:
+    text = " ".join(str(item.get(field, "")).lower() for field in ["layer_kind", "semantic_boundary", "id"])
+    return any(
+        marker in text
+        for marker in {"tile", "glyph", "badge", "logo", "illustration", "plate", "icon", "checkbox"}
+    )
+
+
 def has_carrier_layer(item: dict) -> bool:
     text = " ".join(str(item.get(field, "")).lower() for field in ["layer_kind", "semantic_boundary", "id"])
     return any(marker in text for marker in {"carrier", "tile", "badge", "capsule", "icon-tile"})
@@ -526,6 +568,13 @@ def validate_objects(
                 f"{object_id}: role must be one of: " + ", ".join(sorted(OBJECT_ASSET_ROLES))
             )
             continue
+        object_type = item.get("object_type", "generic-object")
+        if object_type not in ALLOWED_OBJECT_TYPES:
+            errors.append(
+                f"{object_id}: object_type must be one of: " + ", ".join(sorted(ALLOWED_OBJECT_TYPES))
+            )
+        elif requires_object_type(item) and object_type == "generic-object":
+            errors.append(f"{object_id}: object_type must be recorded for UI/logo/support-style assets")
         has_carrier = has_carrier or has_carrier_layer(item)
         has_glyph = has_glyph or has_glyph_layer(item)
         asset_path = item.get("asset_path")
@@ -822,6 +871,77 @@ def validate_objects(
                                             errors.append(
                                                 f"{object_id}: candidate comparison manifest must record risks"
                                             )
+                                        score_manifest_path = comparison.get("score_manifest_path", "")
+                                        if score_manifest_path:
+                                            if not isinstance(score_manifest_path, str):
+                                                errors.append(
+                                                    f"{object_id}: candidate_comparisons[{index}].score_manifest_path must be a string"
+                                                )
+                                            elif not score_manifest_path.startswith("_staging/") and not score_manifest_path.startswith(
+                                                "_archive_intermediate/"
+                                            ):
+                                                errors.append(
+                                                    f"{object_id}: candidate_comparisons[{index}].score_manifest_path must stay in _staging/ or _archive_intermediate/"
+                                                )
+                                            else:
+                                                resolved_score_manifest = rel_path(
+                                                    package_dir,
+                                                    score_manifest_path,
+                                                    errors,
+                                                    f"{object_id}: candidate_comparisons[{index}].score_manifest_path",
+                                                )
+                                                if resolved_score_manifest is not None:
+                                                    if not resolved_score_manifest.exists():
+                                                        errors.append(
+                                                            f"{object_id}: score manifest is missing: {score_manifest_path}"
+                                                        )
+                                                    else:
+                                                        try:
+                                                            score_manifest = json.loads(
+                                                                resolved_score_manifest.read_text(encoding="utf-8")
+                                                            )
+                                                        except json.JSONDecodeError as exc:
+                                                            errors.append(
+                                                                f"{object_id}: score manifest is not valid JSON: {exc}"
+                                                            )
+                                                        else:
+                                                            if not isinstance(score_manifest, dict):
+                                                                errors.append(
+                                                                    f"{object_id}: score manifest must contain an object"
+                                                                )
+                                                            else:
+                                                                candidates_block = score_manifest.get("candidates")
+                                                                if not isinstance(candidates_block, list) or not candidates_block:
+                                                                    errors.append(
+                                                                        f"{object_id}: score manifest must list scored candidates"
+                                                                    )
+                                                                else:
+                                                                    for scored_candidate in candidates_block:
+                                                                        if not isinstance(scored_candidate, dict):
+                                                                            errors.append(
+                                                                                f"{object_id}: score manifest candidates must be objects"
+                                                                            )
+                                                                            continue
+                                                                        scores = scored_candidate.get("scores")
+                                                                        if not isinstance(scores, dict):
+                                                                            errors.append(
+                                                                                f"{object_id}: score manifest candidates must include scores"
+                                                                            )
+                                                                            continue
+                                                                        for score_key in [
+                                                                            "edge_touch_risk",
+                                                                            "detached_fragment_risk",
+                                                                            "carrier_residue_risk",
+                                                                            "glyph_residue_risk",
+                                                                            "border_preservation_score",
+                                                                            "texture_match_score",
+                                                                            "flatness_risk",
+                                                                            "style_mismatch_risk",
+                                                                        ]:
+                                                                            if score_key not in scores:
+                                                                                errors.append(
+                                                                                    f"{object_id}: score manifest candidates missing {score_key}"
+                                                                                )
                     selection_reason = comparison.get("selection_reason")
                     if not isinstance(selection_reason, str):
                         errors.append(

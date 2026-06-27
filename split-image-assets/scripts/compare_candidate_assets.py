@@ -52,6 +52,9 @@ def candidate_records_for_manifest(candidates: list[dict]) -> list[dict]:
         {
             "candidate_id": item["candidate_id"],
             "asset_path": item["relative_path"],
+            "score_manifest_path": item.get("score_manifest_path", ""),
+            "scores": item.get("scores"),
+            "aggregate_score": item.get("aggregate_score"),
         }
         for item in candidates
     ]
@@ -139,6 +142,10 @@ def main() -> int:
     parser.add_argument("--compare-criterion", action="append", help="Criterion used in the comparison.")
     parser.add_argument("--review-focus", action="append", help="Focus area for human review.")
     parser.add_argument("--risk", action="append", help="Known risk to watch during comparison.")
+    parser.add_argument(
+        "--score-manifest",
+        help="Package-relative candidate score manifest from score_candidate_assets.py.",
+    )
     parser.add_argument("--comparison-id", help="Explicit comparison id. Defaults to object id plus timestamp.")
     args = parser.parse_args()
 
@@ -155,6 +162,28 @@ def main() -> int:
     if target is None:
         parser.error(f"unknown object-id: {args.object_id}")
 
+    score_manifest_data = None
+    score_by_candidate: dict[str, dict] = {}
+    score_manifest_path_rel = ""
+    if args.score_manifest:
+        score_manifest_path = package_path(package_dir, args.score_manifest, "score manifest", parser)
+        try:
+            score_manifest_data = json.loads(score_manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            parser.error(f"score manifest is not valid JSON: {exc}")
+        if not isinstance(score_manifest_data, dict):
+            parser.error("score manifest must contain an object")
+        candidates_block = score_manifest_data.get("candidates")
+        if not isinstance(candidates_block, list):
+            parser.error("score manifest must contain candidates")
+        score_manifest_path_rel = str(score_manifest_path.relative_to(package_dir)).replace("\\", "/")
+        for entry in candidates_block:
+            if not isinstance(entry, dict):
+                parser.error("score manifest candidates must be objects")
+            candidate_id = entry.get("candidate_id")
+            if isinstance(candidate_id, str) and candidate_id.strip():
+                score_by_candidate[candidate_id] = entry
+
     candidates: list[dict] = []
     for value in args.candidate:
         candidate_id, relative_path = parse_candidate_arg(value, parser)
@@ -162,11 +191,15 @@ def main() -> int:
         require_repair_candidate_path(asset_path, package_dir, f"candidate {candidate_id}", parser)
         if not asset_path.exists():
             parser.error(f"candidate asset is missing: {asset_path}")
+        score_entry = score_by_candidate.get(candidate_id, {})
         candidates.append(
             {
                 "candidate_id": candidate_id,
                 "relative_path": relative_path,
                 "asset_path": asset_path,
+                "score_manifest_path": score_manifest_path_rel,
+                "scores": score_entry.get("scores"),
+                "aggregate_score": score_entry.get("aggregate_score"),
             }
         )
 
@@ -196,6 +229,13 @@ def main() -> int:
                 "compare_criteria": args.compare_criterion or [],
                 "review_focus": args.review_focus or [],
                 "risks": args.risk or [],
+                "score_manifest_path": score_manifest_path_rel,
+                "recommended_candidate_order": score_manifest_data.get("recommended_candidate_order", [])
+                if isinstance(score_manifest_data, dict)
+                else [],
+                "auto_rejected_candidate_ids": score_manifest_data.get("auto_rejected_candidate_ids", [])
+                if isinstance(score_manifest_data, dict)
+                else [],
                 "created_at": timestamp,
             },
             indent=2,
@@ -219,6 +259,7 @@ def main() -> int:
             "compare_criteria": args.compare_criterion or [],
             "review_focus": args.review_focus or [],
             "risks": args.risk or [],
+            "score_manifest_path": score_manifest_path_rel,
             "selected_candidate_id": "",
             "selection_reason": "",
             "created_at": timestamp,

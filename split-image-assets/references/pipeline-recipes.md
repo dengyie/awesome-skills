@@ -12,6 +12,16 @@ Think in three layers:
 - segmentation execution adapter: run or receive professional upstream outputs and normalize them with the import contract
 - quality adjudication: previews, warning-only visual audit, manual/user acceptance, structural validation, and manifest export
 
+Also think in object types before choosing tools:
+
+- `ui-carrier`
+- `ui-glyph`
+- `carrier-glyph-pair`
+- `soft-edge-logo-brand-mark`
+- `outlined-illustration-logo`
+- `flat-support-plate`
+- `photo-object-matte`
+
 Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. The preflight report must distinguish installed tooling from runtime-ready and production-ready capability across `segmentation`, `matting`, `reconstruction`, and `environment`, and it should explicitly report `recommended_installs`, `missing_roles`, and `why_it_matters`. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, run the Preflight Tooling Recommendation Gate: recommend `install-or-activate-tools`, ask for `external-professional-outputs`, or record that the user chose `draft-packaging-only`.
 
 Do not use Pillow, OpenCV, or skimage as the primary production segmenter. They are suitable for alpha compositing, PNG persistence, source-space mask expansion, preview generation, simple repair helpers, and metadata packaging. If the mature segmenter path is unavailable, ask the user for installation, external outputs, or draft-only packaging instead of silently falling back to coordinate crops.
@@ -62,9 +72,70 @@ For complex flat UI, run this recipe first on a high-signal subset rather than a
 
 For icon-in-tile or glyph-on-plate structures, segment or reconstruct the carrier tile and foreground glyph separately when semantic reuse matters.
 
+For `carrier-glyph-pair`, treat the task as a reconstruction workflow, not a one-pass cutout:
+
+```text
+grounded detection / SAM2 masks
+-> carrier mask + glyph mask
+-> glyph exclusion dilation
+-> generate_ui_carrier_candidates.py
+-> score_candidate_assets.py
+-> compare_candidate_assets.py
+-> promote_candidate_asset.py
+-> generate_ui_glyph_cleanup_candidates.py
+-> score_candidate_assets.py
+-> compare_candidate_assets.py
+-> promote_candidate_asset.py
+```
+
 Imported objects from this recipe should start as `asset_class: candidate` and `reuse_status: draft-candidate`. Promote only after mask overlay, alpha inspection, warning audit, and manual/user acceptance pass.
 
 For stylized UI carriers with bevels, inset borders, lighting, or texture, treat glyph removal as a reconstruction or redraw problem, not a generic inpaint task. Do not promote a carrier layer cleaned only by generic inpaint when the original design language is materially altered or flattened.
+
+Preferred UI carrier strategies:
+
+- `inpaint-direct`
+- `center-only-rebuild`
+- `center-rebuild-with-border-pasteback`
+- `manual-texture-reconstruct`
+
+Fallback ladder:
+
+- `IOPaint direct fail -> center-only rebuild`
+- `rebuild still flat -> manual texture reconstruct candidate`
+- do not promote a worse candidate only because it used a more “professional” tool
+
+For hard-edge UI glyphs, do not default to generic matting. Prefer:
+
+```text
+segmentation mask
+-> carrier/background estimate
+-> generate_ui_glyph_cleanup_candidates.py
+-> score_candidate_assets.py
+-> compare_candidate_assets.py
+```
+
+Preferred glyph cleanup strategies:
+
+- `keep-current-alpha-recolor`
+- `tile-subtract`
+- `tile-subtract-tight`
+- `padded-delivery-variant`
+
+Fallback ladder:
+
+- `glyph cleanup over-cuts -> revert to keep-current-alpha-recolor`
+- preserve silhouette before chasing perfectly clean alpha
+
+For small assets under roughly 128 px, prefer:
+
+```text
+upscale_repair_downscale.py
+-> repair at 2x or 4x
+-> compare candidate outputs after downscale
+```
+
+Small-asset cleanup done only at native tiny resolution should be treated as a weaker path when quality matters.
 
 ## Layer-First Candidate: Qwen-Image-Layered Style Decomposition
 

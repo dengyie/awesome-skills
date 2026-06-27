@@ -36,6 +36,10 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "user_choice": "unset",
             "notes": "",
         },
+        "quality_target": {
+            "tier": "structural-valid",
+            "notes": "",
+        },
         "extraction_pipeline": {
             "recipe": "",
             "stages": [],

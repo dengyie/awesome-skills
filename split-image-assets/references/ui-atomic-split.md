@@ -4,6 +4,16 @@ Use this reference before extracting complex UI screenshots, dashboards, app moc
 
 The problem is not only "can the pixels be cut out"; it is "what should become reusable". Build a semantic split plan before running a segmenter or importing upstream assets.
 
+Classify each target object before extraction or repair:
+
+- `ui-carrier`: tile, badge, chip, button body, panel capsule
+- `ui-glyph`: hard-edge icon, symbol, check mark, status glyph, nav icon
+- `carrier-glyph-pair`: icon-in-tile, symbol-on-button, badge-plus-glyph
+- `soft-edge-logo-brand-mark`: softer logo edges or glow-driven brand marks
+- `outlined-illustration-logo`: black-outline or strong-stroke illustration marks
+- `flat-support-plate`: support rectangle or reconstructed plate
+- `photo-object-matte`: matte-like non-UI object
+
 ## Planning Layers
 
 List expected UI layers in this order:
@@ -60,6 +70,26 @@ When a stylized carrier is heavily occluded by the glyph, classify the cleanup p
 - `approximate support-only`
 
 Do not accept generic inpaint output as the final carrier by default in these cases.
+
+## UI-Specific Repair Routing
+
+Use the object type to choose the repair path:
+
+- `ui-carrier`
+  - reconstruction candidate generation
+  - border pasteback if the carrier has visible framing or shading
+  - candidate scoring before compare/promotion
+- `ui-glyph`
+  - hard-edge cleanup
+  - preserve silhouette
+  - only tighten alpha deliberately
+  - padded delivery variant when edge breathing room helps downstream reuse
+- `carrier-glyph-pair`
+  - split first
+  - reconstruct carrier separately
+  - then clean glyph against the improved carrier/background estimate
+
+When a glyph or carrier is small, prefer upscale-repair-downscale as a formal path rather than hand-wavy “try enlarging it”.
 
 ## Draft-Only UI Runs
 

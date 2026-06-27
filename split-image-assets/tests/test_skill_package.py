@@ -133,6 +133,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "user_choice": "production-capable",
             "notes": "Test fixture uses production-capable upstream evidence.",
         }
+        metadata["quality_target"] = {
+            "tier": "visual-acceptance-ready",
+            "notes": "Test fixture targets final visual acceptance.",
+        }
         metadata["objects"] = [
             object_record
         ]
@@ -163,8 +167,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "scripts" / "audit_visual_quality.py",
             ROOT / "scripts" / "check_extraction_environment.py",
             ROOT / "scripts" / "compare_candidate_assets.py",
+            ROOT / "scripts" / "candidate_workflow_lib.py",
             ROOT / "scripts" / "archive_intermediates.py",
+            ROOT / "scripts" / "generate_ui_carrier_candidates.py",
+            ROOT / "scripts" / "generate_ui_glyph_cleanup_candidates.py",
             ROOT / "scripts" / "record_quality_review.py",
+            ROOT / "scripts" / "score_candidate_assets.py",
+            ROOT / "scripts" / "upscale_repair_downscale.py",
             ROOT / "scripts" / "export_asset_manifest.py",
             ROOT / "scripts" / "validate_asset_package.py",
             ROOT / "scripts" / "promote_candidate_asset.py",
@@ -200,6 +209,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("STAGE INTERMEDIATES", skill_text)
         self.assertIn("tile", skill_text)
         self.assertIn("glyph", skill_text)
+        self.assertIn("structural-valid", skill_text)
+        self.assertIn("usable-draft", skill_text)
+        self.assertIn("visual-acceptance-ready", skill_text)
+        self.assertIn("object type", skill_text.lower())
         self.assertIn("2x2 sprite sheet is only a preview", skill_text)
         self.assertIn("SEMANTIC LAYERS BEFORE RECTANGLES", skill_text)
         self.assertIn("rectangular crops", skill_text)
@@ -255,6 +268,11 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "production-ready assets",
             "draft candidate assets",
             "support-only layers",
+            "generate_ui_carrier_candidates.py",
+            "generate_ui_glyph_cleanup_candidates.py",
+            "score_candidate_assets.py",
+            "upscale_repair_downscale.py",
+            "visual-acceptance-ready",
         ]:
             self.assertIn(expected, usage)
 
@@ -380,6 +398,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "production_capable": False,
                     "missing_for_production": [],
                     "user_choice": "unset",
+                    "notes": "",
+                },
+            )
+            self.assertEqual(
+                metadata["quality_target"],
+                {
+                    "tier": "structural-valid",
                     "notes": "",
                 },
             )
@@ -890,6 +915,135 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("--compare-criterion", result.stderr)
 
+    def test_score_candidate_assets_writes_required_scores(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (8, 8), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(candidate_dir / "candidate_a.png")
+            Image.new("RGBA", (4, 4), (200, 0, 0, 255)).save(candidate_dir / "candidate_b.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "score_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/candidate_b.png",
+                    "--reference-asset",
+                    "assets/main_object_transparent.png",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            report = json.loads(result.stdout)
+            manifest_path = output / report["score_manifest_path"]
+            self.assertTrue(manifest_path.exists())
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                manifest["required_score_keys"],
+                [
+                    "edge_touch_risk",
+                    "detached_fragment_risk",
+                    "carrier_residue_risk",
+                    "glyph_residue_risk",
+                    "border_preservation_score",
+                    "texture_match_score",
+                    "flatness_risk",
+                    "style_mismatch_risk",
+                ],
+            )
+            self.assertEqual(len(manifest["candidates"]), 2)
+            self.assertIn("scores", manifest["candidates"][0])
+
+    def test_compare_candidate_assets_records_score_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (8, 8), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(candidate_dir / "candidate_a.png")
+            Image.new("RGBA", (4, 4), (200, 0, 0, 255)).save(candidate_dir / "candidate_b.png")
+
+            score_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "score_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/candidate_b.png",
+                    "--reference-asset",
+                    "assets/main_object_transparent.png",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(score_result.returncode, 0, score_result.stderr)
+            score_report = json.loads(score_result.stdout)
+
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/candidate_b.png",
+                    "--compare-note",
+                    "Use scores to narrow the repair shortlist.",
+                    "--compare-criterion",
+                    "border preservation",
+                    "--score-manifest",
+                    score_report["score_manifest_path"],
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            comparison = metadata["objects"][0]["candidate_comparisons"][0]
+            self.assertTrue(comparison["score_manifest_path"].endswith(".json"))
+            compare_manifest = json.loads(
+                (output / comparison["compare_manifest_path"]).read_text(encoding="utf-8")
+            )
+            self.assertEqual(compare_manifest["score_manifest_path"], comparison["score_manifest_path"])
+            self.assertIn("aggregate_score", compare_manifest["candidates"][0])
+
     def test_import_external_assets_records_tool_provenance_and_layer_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1067,6 +1221,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "production-capable",
                     "--capability-note",
                     "SAM2 and rembg external outputs were provided.",
+                    "--quality-target-tier",
+                    "visual-acceptance-ready",
+                    "--quality-target-note",
+                    "Imported layer is ready for final visual acceptance.",
                     "--quality-gate",
                     "mask overlay inspected",
                     "--object-id",
@@ -1831,6 +1989,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "extraction_method": "manual",
                     "confidence": "high",
                     "edge_complexity": "hard",
+                    "object_type": "flat-support-plate",
                     "asset_class": "grouped-support",
                     "reuse_status": "support-only",
                     "delivery_class": "approximate-reconstruction",
@@ -1866,6 +2025,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "extraction_method": "ai-assisted",
                     "confidence": "high",
                     "edge_complexity": "hard",
+                    "object_type": "ui-carrier",
                     "asset_class": "atomic",
                     "reuse_status": "production-ready",
                     "delivery_class": "clean-extraction",
@@ -1898,6 +2058,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "extraction_method": "ai-assisted",
                     "confidence": "high",
                     "edge_complexity": "hard",
+                    "object_type": "ui-glyph",
                     "asset_class": "atomic",
                     "reuse_status": "production-ready",
                     "delivery_class": "clean-extraction",
@@ -1919,6 +2080,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "missing_for_production": [],
                 "user_choice": "production-capable",
                 "notes": "UI atomic fixture uses production-capable upstream evidence.",
+            }
+            metadata["quality_target"] = {
+                "tier": "visual-acceptance-ready",
+                "notes": "UI atomic fixture is intended to support final visual acceptance.",
             }
             metadata["asset_summary"] = {
                 "production_ready_assets": 2,
@@ -3111,6 +3276,265 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(validate_result.returncode, 0, validate_result.stderr)
+
+    def test_validate_asset_package_rejects_pass_without_visual_acceptance_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["quality_target"]["tier"] = "usable-draft"
+            metadata["qa"]["status"] = "pass"
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-promotion-acceptance",
+                    "question": "Accept current layer?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Allow pass.",
+                }
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("quality_target.tier=visual-acceptance-ready", result.stderr)
+
+    def test_validate_asset_package_requires_object_type_for_ui_like_assets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["analysis"]["visual_hierarchy"] = ["ui panel", "status tile", "status glyph"]
+            metadata["objects"][0]["layer_kind"] = "glyph"
+            metadata["objects"][0]["semantic_boundary"] = "UI glyph in status tile."
+            metadata["objects"][0]["object_type"] = "generic-object"
+            metadata["decision_log"] = [
+                {
+                    "stage": "granularity-alignment",
+                    "question": "Split UI tile and glyph?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Use atomic UI split.",
+                }
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("object_type must be recorded", result.stderr)
+
+    def test_generate_ui_carrier_candidates_emits_manifest_and_updates_object_type(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (40, 50, 60, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            source_crop = output / "_staging" / "tile_source.png"
+            carrier_mask = output / "masks" / "mask_main.png"
+            glyph_mask = output / "_staging" / "glyph_mask.png"
+            Image.new("RGBA", (8, 8), (120, 140, 180, 255)).save(source_crop)
+            Image.new("L", (8, 8), 255).save(carrier_mask)
+            Image.new("L", (8, 8), 0).save(glyph_mask)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["mask_path"] = "masks/mask_main.png"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "generate_ui_carrier_candidates.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--source-crop",
+                    "_staging/tile_source.png",
+                    "--carrier-mask",
+                    "masks/mask_main.png",
+                    "--glyph-mask",
+                    "_staging/glyph_mask.png",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest_path = output / "_staging" / "repair_candidates" / "main_object" / "main_object_ui_carrier_candidates.json"
+            self.assertTrue(manifest_path.exists())
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            strategies = {item["strategy"] for item in manifest["candidates"]}
+            self.assertIn("center-rebuild-with-border-pasteback", strategies)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["object_type"], "ui-carrier")
+
+    def test_generate_ui_glyph_cleanup_candidates_emits_padded_variant(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            glyph_asset = output / "assets" / "main_object_transparent.png"
+            Image.new("RGBA", (4, 4), (255, 255, 255, 220)).save(glyph_asset)
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "generate_ui_glyph_cleanup_candidates.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--glyph-asset",
+                    "assets/main_object_transparent.png",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest_path = output / "_staging" / "repair_candidates" / "main_object" / "main_object_ui_glyph_candidates.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            strategies = {item["strategy"] for item in manifest["candidates"]}
+            self.assertIn("padded-delivery-variant", strategies)
+
+    def test_upscale_repair_downscale_prepares_and_finalizes_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            asset_path = output / "assets" / "main_object_transparent.png"
+            mask_path = output / "masks" / "mask_main.png"
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(asset_path)
+            Image.new("L", (4, 4), 255).save(mask_path)
+            self._write_single_object_metadata(output)
+
+            prep_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "upscale_repair_downscale.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--source-asset",
+                    "assets/main_object_transparent.png",
+                    "--source-mask",
+                    "masks/mask_main.png",
+                    "--scale",
+                    "2",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(prep_result.returncode, 0, prep_result.stderr)
+            prepared_asset = output / "_staging" / "upscale_work" / "main_object" / "main_object_x2_prepared.png"
+            prepared_mask = output / "_staging" / "upscale_work" / "main_object" / "main_object_x2_prepared_mask.png"
+            self.assertTrue(prepared_asset.exists())
+            self.assertTrue(prepared_mask.exists())
+
+            finalize_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "upscale_repair_downscale.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--source-asset",
+                    "assets/main_object_transparent.png",
+                    "--source-mask",
+                    "masks/mask_main.png",
+                    "--scale",
+                    "2",
+                    "--repaired-upscaled-asset",
+                    "_staging/upscale_work/main_object/main_object_x2_prepared.png",
+                    "--repaired-upscaled-mask",
+                    "_staging/upscale_work/main_object/main_object_x2_prepared_mask.png",
+                    "--candidate-id",
+                    "main-object-upscaled",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(finalize_result.returncode, 0, finalize_result.stderr)
+            self.assertTrue(
+                (
+                    output
+                    / "_staging"
+                    / "repair_candidates"
+                    / "main_object"
+                    / "main-object-upscaled.png"
+                ).exists()
+            )
 
     def test_candidate_compare_and_promote_end_to_end_flow(self):
         with tempfile.TemporaryDirectory() as tmp:

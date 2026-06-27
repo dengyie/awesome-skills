@@ -59,6 +59,9 @@ def update_archived_metadata(package_dir: Path, moved_paths: dict[str, str]) -> 
                 compare_manifest_path = comparison.get("compare_manifest_path")
                 if isinstance(compare_manifest_path, str) and compare_manifest_path in moved_paths:
                     comparison["compare_manifest_path"] = moved_paths[compare_manifest_path]
+                score_manifest_path = comparison.get("score_manifest_path")
+                if isinstance(score_manifest_path, str) and score_manifest_path in moved_paths:
+                    comparison["score_manifest_path"] = moved_paths[score_manifest_path]
     write_metadata(package_dir, metadata)
 
 

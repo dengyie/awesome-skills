@@ -4,12 +4,17 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` staged contract hardening is extended with stricter reconstruction capability routing and structured candidate-comparison evidence. The skill now treats broken dedicated reconstruction installs as manual-redraw-only fallback paths, requires compare manifests plus selection rationale for promoted candidates, and keeps archived compare evidence paths synchronized.
+- Current stage: `split-image-assets` is extended with UI-specific repair orchestration. The skill now records a three-tier quality target (`structural-valid`, `usable-draft`, `visual-acceptance-ready`), routes UI-like objects by `object_type`, ships deterministic helper scripts for UI carrier candidate generation, hard-edge glyph cleanup, candidate scoring, and upscale-repair-downscale preparation/finalization, and threads score evidence into compare/archive/validation.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-27: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (88 tests)
+- 2026-06-27: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-06-27: `git diff --check` (passed with only CRLF warnings)
+- 2026-06-27: `python split-image-assets\scripts\validate_asset_package.py .tmp-split-image-assets\concept-c-workshop-console-sam2-rembg-atomic` after real package compare-evidence repair and tile carrier promotion.
+- 2026-06-27: `python split-image-assets\scripts\build_previews.py`, `build_quality_previews.py`, `audit_visual_quality.py`, and `export_asset_manifest.py` for `.tmp-split-image-assets\concept-c-workshop-console-sam2-rembg-atomic`; warning count remains 82 and `qa.status=needs-review`.
 - 2026-06-27: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (81 tests)
 - 2026-06-27: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-06-27: `git diff --check` (passed with only CRLF warnings)
@@ -209,6 +214,8 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- `split-image-assets` now requires `metadata.quality_target.tier=visual-acceptance-ready` before `qa.status=pass`; older fixtures or hand-authored packages that only recorded capability and decision acceptance must be updated.
+- `split-image-assets` now requires `object_type` on UI/logo/support-style assets and will reject UI-like packages that still leave those layers as `generic-object`.
 - `split-image-assets` visual quality audit is warning-only by design; it highlights hard alpha, edge-touching assets, oversized masks, and support-layer misclassification, but final visual acceptance still requires preview inspection and user/manual review.
 - `split-image-assets` now distinguishes production-ready assets, draft candidates, support-only layers, and blocked layers; old or hand-authored packages without `asset_class`, `reuse_status`, and `asset_summary` must be migrated before validation passes.
 - `split-image-assets` intentionally does not perform deterministic segmentation, matting, or exact hidden-background recovery; those remain external AI/manual/tooling steps that must be recorded in metadata and QA.
@@ -223,15 +230,19 @@
 - None.
 
 ## Current Focus
-- Support user manual testing of `split-image-assets` using the three-layer workflow, capability gate, UI atomic split planner, professional upstream import adapter, required preview/audit evidence, validation gates, review adapter, and honest final report counts.
+- Support user manual testing of `split-image-assets` using the three-layer workflow plus the new UI repair adapters: object-type routing, UI carrier reconstruction candidates, hard-edge glyph cleanup candidates, candidate scoring, and upscale-repair-downscale. The current real package is `.tmp-split-image-assets\concept-c-workshop-console-sam2-rembg-atomic`; it is structurally valid, `qa.status=needs-review`, and still needs human judgment for approximate reconstruction acceptance and stylistic warning interpretation.
 
 ## Next Milestone
-- Manual test representative UI/images with `split-image-assets` and record concrete quality/usability gaps as bounded follow-ups.
+- Manual test representative UI/images with the new UI repair helpers and record whether the `carrier-glyph-pair` / small-asset workflows produce better candidate evidence and promotion discipline.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`
 - `split-image-assets/scripts/init_asset_package.py`
 - `split-image-assets/scripts/check_extraction_environment.py`
+- `split-image-assets/scripts/generate_ui_carrier_candidates.py`
+- `split-image-assets/scripts/generate_ui_glyph_cleanup_candidates.py`
+- `split-image-assets/scripts/score_candidate_assets.py`
+- `split-image-assets/scripts/upscale_repair_downscale.py`
 - `split-image-assets/scripts/import_external_assets.py`
 - `split-image-assets/scripts/build_previews.py`
 - `split-image-assets/scripts/build_quality_previews.py`

@@ -51,6 +51,22 @@ ALLOWED_DELIVERY_CLASSES = {
     "support-only",
     "draft-candidate",
 }
+ALLOWED_OBJECT_TYPES = {
+    "ui-carrier",
+    "ui-glyph",
+    "carrier-glyph-pair",
+    "soft-edge-logo-brand-mark",
+    "outlined-illustration-logo",
+    "flat-support-plate",
+    "grouped-support-plate",
+    "photo-object-matte",
+    "generic-object",
+}
+ALLOWED_QUALITY_TARGET_TIERS = {
+    "structural-valid",
+    "usable-draft",
+    "visual-acceptance-ready",
+}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -229,8 +245,20 @@ def update_capability(metadata: dict, args: argparse.Namespace) -> None:
         capability["notes"] = args.capability_note
 
 
+def update_quality_target(metadata: dict, args: argparse.Namespace) -> None:
+    if args.quality_target_tier is None and args.quality_target_note is None:
+        return
+    quality_target = metadata.setdefault("quality_target", {})
+    if args.quality_target_tier is not None:
+        quality_target["tier"] = args.quality_target_tier
+    if args.quality_target_note is not None:
+        quality_target["notes"] = args.quality_target_note
+
+
 def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
     for item in objects:
+        if args.object_type is not None:
+            item["object_type"] = args.object_type
         if args.asset_class is not None:
             item["asset_class"] = args.asset_class
         if args.reuse_status is not None:
@@ -363,10 +391,16 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append(f"- Capability user choice: {args.capability_user_choice}")
     if args.capability_note:
         lines.append(f"- Capability note: {args.capability_note}")
+    if args.quality_target_tier:
+        lines.append(f"- Quality target tier: {args.quality_target_tier}")
+    if args.quality_target_note:
+        lines.append(f"- Quality target note: {args.quality_target_note}")
     if args.object_id:
         lines.append("- Objects: " + ", ".join(args.object_id))
     elif args.all_objects:
         lines.append("- Objects: all")
+    if args.object_type:
+        lines.append(f"- Object type: {args.object_type}")
     if args.asset_class:
         lines.append(f"- Asset class: {args.asset_class}")
     if args.reuse_status:
@@ -401,9 +435,12 @@ def main() -> int:
     parser.add_argument("--missing-for-production", action="append")
     parser.add_argument("--capability-user-choice")
     parser.add_argument("--capability-note")
+    parser.add_argument("--quality-target-tier", choices=sorted(ALLOWED_QUALITY_TARGET_TIERS))
+    parser.add_argument("--quality-target-note")
     parser.add_argument("--quality-gate", action="append", help="Pipeline quality gate inspected.")
     parser.add_argument("--object-id", action="append", help="Object id whose quality checks are updated.")
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
+    parser.add_argument("--object-type", choices=sorted(ALLOWED_OBJECT_TYPES))
     parser.add_argument("--asset-class", choices=sorted(ALLOWED_ASSET_CLASSES))
     parser.add_argument("--reuse-status", choices=sorted(ALLOWED_REUSE_STATUSES))
     parser.add_argument("--delivery-class", choices=sorted(ALLOWED_DELIVERY_CLASSES))
@@ -446,6 +483,7 @@ def main() -> int:
     try:
         update_decision_log(metadata, args)
         update_capability(metadata, args)
+        update_quality_target(metadata, args)
     except ValueError as exc:
         parser.error(str(exc))
     update_quality_gates(metadata, args.quality_gate)
@@ -456,6 +494,14 @@ def main() -> int:
         parser.error("cannot set qa-status pass until every required object quality check is pass")
     if args.qa_status == "pass" and not capability_allows_pass(metadata):
         parser.error("cannot set qa-status pass until metadata.capability.production_capable is true")
+    quality_target = metadata.get("quality_target", {})
+    if args.qa_status == "pass" and (
+        not isinstance(quality_target, dict)
+        or quality_target.get("tier") != "visual-acceptance-ready"
+    ):
+        parser.error(
+            "cannot set qa-status pass until metadata.quality_target.tier is visual-acceptance-ready"
+        )
     if args.qa_status == "pass" and not reusable_layers_ready_for_pass(metadata):
         parser.error("cannot set qa-status pass until reusable layers are reuse_status=production-ready")
     if args.qa_status == "pass":

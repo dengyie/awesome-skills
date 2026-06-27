@@ -45,6 +45,17 @@ ALLOWED_DELIVERY_CLASSES = {
     "support-only",
     "draft-candidate",
 }
+ALLOWED_OBJECT_TYPES = {
+    "ui-carrier",
+    "ui-glyph",
+    "carrier-glyph-pair",
+    "soft-edge-logo-brand-mark",
+    "outlined-illustration-logo",
+    "flat-support-plate",
+    "grouped-support-plate",
+    "photo-object-matte",
+    "generic-object",
+}
 
 
 def read_metadata(package_dir: Path) -> dict:
@@ -238,6 +249,12 @@ def build_import_plan(
         "edge_complexity",
         parser,
     )
+    object_type = checked_choice(
+        str(record.get("object_type", "generic-object")),
+        ALLOWED_OBJECT_TYPES,
+        "object_type",
+        parser,
+    )
     asset_target = package_dir / "assets" / f"{object_id}_transparent.png"
     mask_target = package_dir / "masks" / f"mask_{object_id}.png"
 
@@ -276,6 +293,7 @@ def build_import_plan(
             "extraction_method": extraction_method_value,
             "confidence": confidence_value,
             "edge_complexity": edge_complexity_value,
+            "object_type": object_type,
             "asset_class": asset_class,
             "reuse_status": reuse_status,
             "delivery_class": delivery_class,
@@ -369,6 +387,7 @@ def main() -> int:
     parser.add_argument("--tool-name")
     parser.add_argument("--tool-role")
     parser.add_argument("--tool-version")
+    parser.add_argument("--object-type", choices=sorted(ALLOWED_OBJECT_TYPES), default="generic-object")
     parser.add_argument("--asset-class", choices=sorted(ALLOWED_ASSET_CLASSES), default="candidate")
     parser.add_argument(
         "--reuse-status",
@@ -462,6 +481,7 @@ def main() -> int:
                 "mask": args.mask,
                 "mask_source": args.mask_source,
                 "alpha_source": args.alpha_source,
+                "object_type": args.object_type,
                 "asset_class": args.asset_class,
                 "reuse_status": args.reuse_status,
                 "delivery_class": args.delivery_class,

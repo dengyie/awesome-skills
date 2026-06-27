@@ -1,4 +1,20 @@
 # Session Log
+## 2026-06-27 18:40
+- Task: Strengthen `split-image-assets` for UI atomic asset repair and reconstruction workflows.
+- Actions: Restored memory and the latest UI-focused task brief. Added `metadata.quality_target` and object-level `object_type` routing, plus four new helper scripts: `generate_ui_carrier_candidates.py`, `generate_ui_glyph_cleanup_candidates.py`, `score_candidate_assets.py`, and `upscale_repair_downscale.py`. Extended compare/archive/validator flow to carry score-manifest evidence. Updated `SKILL.md`, workflow, pipeline recipes, UI split guidance, asset contract, and usage docs so UI carrier/glyph work is explicitly routed and quality-tier honesty is front-loaded. Expanded tests for scoring, compare score ingestion, UI candidate generation, upscale workflow, `quality_target`, and `object_type`.
+- Results: `split-image-assets` now behaves more like a constrained UI repair workflow shell around professional upstream extraction instead of a generic packager. `qa.status=pass` now also requires `quality_target.tier=visual-acceptance-ready`, and UI/logo/support-style assets must record `object_type`.
+- Validation: Passed targeted regressions, `python -m unittest discover split-image-assets\tests -v` (88 tests), `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`, and `git diff --check` with only CRLF warnings.
+- Next: Commit this UI workflow strengthening pass and push when desired.
+- Blockers: None.
+
+## 2026-06-27 16:05
+- Task: Continue real-image validation and optimization for `concept-c-workshop-console-sam2-rembg-atomic` under the latest `split-image-assets` workflow.
+- Actions: Restored project memory and re-read the latest `split-image-assets` instructions plus relevant workflow, recipe, UI atomic split, contract, QA, manual-review, and confirmation references. Ran the tooling preflight, which reported production-capable local extraction support. Fixed legacy `candidate_comparisons[]` records that were missing compare manifests by adding structured compare/direct-promotion manifests under `_staging/repair_candidates/`. Rebuilt previews, quality previews, visual audit, and asset manifest. Generated and compared a new `tile_source_style_rebuild_padded` carrier candidate, then promoted it with `promote_candidate_asset.py` while keeping it labeled `approximate-reconstruction`.
+- Results: The package now validates structurally under the latest validator. `status_row_02_icon_tile` current revision is `tile_source_style_rebuild_padded`, which preserves more source-like carrier tone and border feel than the previous RBF padded carrier. `qa.status` remains `needs-review`; warning count remains 82 because the promoted tile is still approximate and the lighthouse/glyph hard-edge warnings remain honest review flags.
+- Validation: `validate_asset_package.py` passed for `.tmp-split-image-assets\concept-c-workshop-console-sam2-rembg-atomic`; `build_previews.py`, `build_quality_previews.py`, `audit_visual_quality.py`, and `export_asset_manifest.py` completed successfully.
+- Next: If continuing visual polish, focus on manual or stronger model-assisted reconstruction for `status_row_02_icon_tile`, then inspect lighthouse edge residue without removing legitimate black outline pixels.
+- Blockers: None; final `qa.status=pass` still requires explicit user acceptance of granularity, cleanliness, and approximate reconstruction quality.
+
 ## 2026-06-26 00:00
 - Task: Publish the verified `split-image-assets` three-layer workflow hardening.
 - Actions: Restored repository state from project memory, confirmed local `main` was ahead of `origin/main` by 15 commits, checked GitHub CLI auth status, and ran `git push origin main`.

@@ -55,6 +55,8 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `capability.missing_for_production`
 - `capability.user_choice`
 - `capability.notes`
+- `quality_target.tier`
+- `quality_target.notes`
 - `decision_log`
 - `extraction_pipeline.recipe`
 - `extraction_pipeline.stages`
@@ -82,6 +84,14 @@ For UI or dense compositions, `granularity` must also record:
 - `layer_independence`: `static-reuse`, `animation-ready`, or `unset`
 
 `capability` records the tooling preflight result before extraction. `production_capable` is true only when mature upstream extraction capability or equivalent professional external evidence is available. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
+
+`quality_target` records which target tier the run is aiming at:
+
+- `structural-valid`
+- `usable-draft`
+- `visual-acceptance-ready`
+
+`qa.status=pass` requires `quality_target.tier: visual-acceptance-ready`.
 
 The preflight report should also expose:
 
@@ -119,6 +129,7 @@ Each object should include:
 - `extraction_method`: `exact`, `ai-assisted`, `manual`, `estimated`, or `unknown`
 - `confidence`: `high`, `medium`, or `low`
 - `edge_complexity`: `hard`, `soft`, or `transparent-reflective`
+- `object_type`: `ui-carrier`, `ui-glyph`, `carrier-glyph-pair`, `soft-edge-logo-brand-mark`, `outlined-illustration-logo`, `flat-support-plate`, `grouped-support-plate`, `photo-object-matte`, or `generic-object`
 - `asset_class`: `atomic`, `grouped-support`, `background-support`, `preview-reference`, or `candidate`
 - `reuse_status`: `production-ready`, `draft-candidate`, `support-only`, `blocked`, or `approximate-reconstruction`
 - `delivery_class`: `clean-extraction`, `approximate-reconstruction`, `support-only`, or `draft-candidate`
@@ -136,6 +147,8 @@ Each object should include:
 - `approximate` and `reconstruction_provenance` when a layer was reconstructed, inpainted, or approximated rather than extracted exactly
 
 Use `asset_summary` to keep final counts honest. Production asset counts should only include `asset_class: atomic` plus `reuse_status: production-ready`. Draft-only runs should normally report `production_ready_assets: 0` even when many candidate PNGs exist.
+
+For UI-like assets, `object_type` must not stay `generic-object`. The workflow should make routing visible to future agents and reviewers.
 
 ## Pipeline Contract
 
@@ -240,6 +253,7 @@ Use `scripts/compare_candidate_assets.py` when more than one repair candidate sh
 - `compare_criteria`
 - `review_focus`
 - `risks`
+- `score_manifest_path` when `score_candidate_assets.py` was used
 - `selected_candidate_id`
 - `selection_reason`
 
