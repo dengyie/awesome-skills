@@ -4,6 +4,12 @@ Use these prompts when a split decision affects reuse boundaries, editability, a
 
 Ask one question at a time. Include the recommended answer. Resolve that branch before moving on. If the source image, metadata, or prior user instructions already answer the question, record the decision instead of asking again.
 
+These prompts are workflow gates, not optional suggestions. Record each gate with a confirmation source:
+
+- `explicit-user-confirmed`
+- `inferred-from-user`
+- `agent-defaulted`
+
 ## Tooling Preflight Confirmation
 
 Question: Production-quality asset splitting needs professional upstream tools. This environment is missing [missing capabilities/tools]. Should I pause so you can install/activate them, use external segmented assets/masks, or continue as draft-packaging-only?
@@ -19,6 +25,14 @@ Question: Should this package target module, component, atomic-layer, or product
 Recommended answer: Use `atomic-layer` for UI assets when reuse, animation, or clean icon separation matters; use `component` only for quick draft review.
 
 Decision effect: Record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, `metadata.granularity.notes`, and a `metadata.decision_log` entry.
+
+## Pilot Object Gate
+
+Question: Before I continue with the broader batch, should I use this representative object as a pilot and wait for your confirmation on granularity and cleanliness?
+
+Recommended answer: Yes for complex UI, dashboard, badge/tile/glyph, or approximate reconstruction work.
+
+Decision effect: Record `metadata.confirmation.pilot_object` with the chosen object id and stop wider batch extraction until it is `confirmed` or explicitly `not-required`.
 
 ## Carrier And Glyph Split
 

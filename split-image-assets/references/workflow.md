@@ -32,7 +32,7 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
    - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
    - proactively recommend installing or activating missing professional upstream tools
    - ask whether to continue with `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only`
-   - record the decision in `metadata.capability` and `metadata.decision_log[]`
+   - record the decision in `metadata.capability`, `metadata.confirmation.tooling_preflight`, and `metadata.decision_log[]`
    - do not continue into extraction until this decision is recorded
 4. Read `pipeline-recipes.md` and `grounded-sam-pipeline.md` and choose a pipeline recipe.
 5. Run the Granularity Confirmation Gate before extraction:
@@ -47,7 +47,7 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
      - Trigger: complex UI, dashboard, dense composition, or reuse-boundary ambiguity.
      - Ask: “Should this package target component-level, atomic-layer, or production-editable reconstruction?”
      - Recommended answer: `atomic-layer` for reusable UI assets; `production-editable` when downstream rebuild is required.
-     - Metadata effect: record `mode`, `scope_strategy`, `text_handling`, `background_expectation`, and `layer_independence`.
+     - Metadata effect: record `mode`, `scope_strategy`, `text_handling`, `background_expectation`, `layer_independence`, `metadata.confirmation.granularity_alignment`, and a decision-log entry.
    - `Carrier/Glyph Split Gate`
      - Trigger: icon-in-tile, badge-in-card, glyph-on-plate, or `carrier-glyph-pair`.
      - Ask: “Should the carrier and glyph split into separate layers?”
@@ -62,10 +62,11 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
      - Trigger: a candidate is ready to replace the current revision.
      - Ask: “Should candidate X become the current revision?”
      - Recommended answer: only after compare evidence or a direct-promotion rationale exists.
-     - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, and `candidate_comparisons[]`.
+     - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.final_acceptance`, and a decision-log entry.
 7. Choose a high-signal first subset when the image is complex. For flat UI and dashboards, start with logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements that a professional segmenter can isolate and a reviewer can inspect clearly.
-8. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, read `ui-atomic-split.md` and create a layer plan that marks each expected layer as `must_extract`, `rebuild_downstream`, `support_only`, `skip_for_now`, or `requires_user_confirmation`.
-9. Route each planned target by object type before extraction or repair:
+8. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, run the `Pilot Object Gate` before wider batch extraction. Record `metadata.confirmation.pilot_object` as `confirmed` or `not-required`.
+9. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, read `ui-atomic-split.md` and create a layer plan that marks each expected layer as `must_extract`, `rebuild_downstream`, `support_only`, `skip_for_now`, or `requires_user_confirmation`.
+10. Route each planned target by object type before extraction or repair:
    - `ui-carrier`
    - `ui-glyph`
    - `carrier-glyph-pair`
@@ -73,13 +74,13 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
    - `outlined-illustration-logo`
    - `flat-support-plate`
    - `photo-object-matte`
-10. Use the routed object type to choose the upstream orchestration:
+11. Use the routed object type to choose the upstream orchestration:
    - `carrier-glyph-pair`: grounded detection or SAM2 masks -> glyph/carrier split -> glyph exclusion dilation -> carrier reconstruction candidate generation -> glyph cleanup candidate generation -> candidate scoring -> compare -> promotion
    - `ui-carrier`: source crop + carrier mask + glyph mask -> `generate_ui_carrier_candidates.py` -> `score_candidate_assets.py` -> `compare_candidate_assets.py`
    - `ui-glyph`: isolated glyph + carrier/background estimate -> `generate_ui_glyph_cleanup_candidates.py` -> `score_candidate_assets.py` -> `compare_candidate_assets.py`
    - `soft-edge-logo-brand-mark` or `photo-object-matte`: professional segmentation + matting first, cleanup second
-11. For small assets under roughly 128 px, prefer `upscale-repair-downscale.py` as an official prep/finalize path instead of ad hoc manual resampling.
-12. Analyze before extraction:
+12. For small assets under roughly 128 px, prefer `upscale-repair-downscale.py` as an official prep/finalize path instead of ad hoc manual resampling.
+13. Analyze before extraction:
    - source dimensions
    - semantic layer hierarchy from background to foreground
    - main object
@@ -89,10 +90,10 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
    - shadows
    - complex edge regions
    - likely manual-review risks
-13. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
-14. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
-15. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
-16. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `capability`, `quality_target`, `decision_log`, `extraction_pipeline`, object `object_type`, object `asset_class`, object `reuse_status`, and the object inventory into `metadata.json`.
+14. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
+15. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
+16. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
+17. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `capability`, `quality_target`, `confirmation`, `decision_log`, `extraction_pipeline`, object `object_type`, object `asset_class`, object `reuse_status`, and the object inventory into `metadata.json`.
    - for UI or dense compositions, record `granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
 17. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
 18. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`, which should also keep audit metadata paths synchronized when `_staging/quality/` is archived.

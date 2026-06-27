@@ -55,7 +55,7 @@ NEVER HIDE UNCERTAINTY
    - explain which missing upstream roles affect the run: detection, segmentation, alpha refinement/matting, and background reconstruction
    - proactively recommend installing or activating missing professional upstream tools
    - ask whether to continue with `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only`
-   - record the decision in `metadata.capability` and `metadata.decision_log[]`
+   - record the decision in `metadata.capability`, `metadata.confirmation.tooling_preflight`, and `metadata.decision_log[]`
    - do not continue into extraction until this decision is recorded
 5. Read `references/pipeline-recipes.md` and `references/grounded-sam-pipeline.md` and select an extraction recipe before extraction.
 6. Run the Granularity Alignment Gate before cutting pixels:
@@ -66,6 +66,7 @@ NEVER HIDE UNCERTAINTY
    - exact background recovery required or approximate `background_clean.png` accepted as `needs-review`
    - animation-ready independent layers required or static reuse enough
 7. For complex UI or graphic compositions, start with a high-signal subset instead of trying to atomize the entire image at once. Good first-pass targets are logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements whose masks can be inspected clearly.
+   - for complex UI, run a pilot object first and stop for confirmation unless the pilot gate is explicitly recorded as `not-required`
 8. For UI, dashboard, badge, tile/glyph, or dense interface images, read `references/ui-atomic-split.md` and create a semantic split plan before extraction.
    - classify each target as `ui-carrier`, `ui-glyph`, `carrier-glyph-pair`, `soft-edge-logo-brand-mark`, `outlined-illustration-logo`, `flat-support-plate`, or `photo-object-matte`
    - choose the upstream orchestration and repair path from that object type before cutting pixels
@@ -80,6 +81,7 @@ NEVER HIDE UNCERTAINTY
    - recommended split plan
 10. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
 11. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the Confirmation Gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
+   - the default is to stop and align with the user
 12. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
    - for UI or dense compositions, also record `metadata.granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
@@ -223,7 +225,7 @@ Ask when deciding:
 
 If the answer can be determined from the source image, existing metadata, or user-provided requirements, inspect that evidence first. If ambiguity remains, ask exactly one focused question and wait for the answer before continuing that branch.
 
-Record confirmation outcomes in `metadata.decision_log[]` with `stage`, `question`, `recommended_answer`, `user_answer`, and `decision_effect`. Do not silently choose split granularity, grouping boundaries, approximate reconstruction acceptance, or final QA acceptance when those decisions materially affect downstream reuse.
+Record confirmation outcomes in `metadata.decision_log[]` with `stage`, `question`, `recommended_answer`, `user_answer`, `decision_effect`, and `decision_source`. For the hard workflow gates, also update `metadata.confirmation`.
 
 ## Reference Routing
 

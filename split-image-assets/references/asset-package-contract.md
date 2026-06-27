@@ -57,6 +57,7 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `capability.notes`
 - `quality_target.tier`
 - `quality_target.notes`
+- `confirmation`
 - `decision_log`
 - `extraction_pipeline.recipe`
 - `extraction_pipeline.stages`
@@ -110,8 +111,25 @@ For reconstruction, runtime support such as `torch` or `onnxruntime` is not enou
 - `recommended_answer`
 - `user_answer`
 - `decision_effect`
+- `decision_source`
 
 If prior user instructions or existing metadata already answer the question, record that inferred decision instead of asking again. Do not leave subjective split choices only in chat.
+
+`confirmation` records whether the hard workflow gates were actually cleared. It must include:
+
+- `tooling_preflight`
+- `granularity_alignment`
+- `pilot_object`
+- `approximate_reconstruction`
+- `final_acceptance`
+
+Each confirmation entry must include:
+
+- `status`: `pending`, `confirmed`, or `not-required`
+- `source`: `explicit-user-confirmed`, `inferred-from-user`, `agent-defaulted`, or `unset`
+- `notes`
+
+`pilot_object` must also include `object_id`.
 
 Each object should include:
 

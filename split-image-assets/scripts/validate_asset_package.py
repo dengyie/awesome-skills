@@ -89,12 +89,36 @@ REQUIRED_DECISION_FIELDS = {
     "recommended_answer",
     "user_answer",
     "decision_effect",
+    "decision_source",
 }
 REQUIRED_ASSET_SUMMARY_FIELDS = {
     "production_ready_assets",
     "draft_candidate_assets",
     "support_only_layers",
     "blocked_assets",
+}
+ALLOWED_DECISION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+    "agent-defaulted",
+}
+REQUIRED_CONFIRMATION_KEYS = {
+    "tooling_preflight",
+    "granularity_alignment",
+    "pilot_object",
+    "approximate_reconstruction",
+    "final_acceptance",
+}
+ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
+ALLOWED_CONFIRMATION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+    "agent-defaulted",
+    "unset",
+}
+NON_DEFAULT_CONFIRMATION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
 }
 REQUIRED_CANDIDATE_COMPARISON_FIELDS = {
     "comparison_id",
@@ -252,12 +276,56 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 value = entry.get(field)
                 if value is not None and (not isinstance(value, str) or not value.strip()):
                     errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
+            decision_source = entry.get("decision_source")
+            if decision_source not in ALLOWED_DECISION_SOURCES:
+                errors.append(
+                    f"metadata.decision_log[{index}].decision_source must be one of: "
+                    + ", ".join(sorted(ALLOWED_DECISION_SOURCES))
+                )
     qa = metadata.get("qa", {})
     qa_status = qa.get("status") if isinstance(qa, dict) else None
     if qa_status == "pass" and not decision_log:
         errors.append(
             "qa.status pass requires at least one decision_log entry documenting user acceptance"
         )
+    confirmation = metadata.get("confirmation", {})
+    if not isinstance(confirmation, dict):
+        errors.append("metadata.confirmation must be an object")
+        confirmation = {}
+    missing_confirmation = sorted(REQUIRED_CONFIRMATION_KEYS - set(confirmation))
+    if missing_confirmation:
+        errors.append(
+            "metadata.confirmation missing required gates: " + ", ".join(missing_confirmation)
+        )
+    else:
+        for key in REQUIRED_CONFIRMATION_KEYS:
+            entry = confirmation.get(key)
+            if not isinstance(entry, dict):
+                errors.append(f"metadata.confirmation.{key} must be an object")
+                continue
+            status = entry.get("status")
+            source = entry.get("source")
+            notes = entry.get("notes")
+            if status not in ALLOWED_CONFIRMATION_STATUSES:
+                errors.append(
+                    f"metadata.confirmation.{key}.status must be one of: "
+                    + ", ".join(sorted(ALLOWED_CONFIRMATION_STATUSES))
+                )
+            if source not in ALLOWED_CONFIRMATION_SOURCES:
+                errors.append(
+                    f"metadata.confirmation.{key}.source must be one of: "
+                    + ", ".join(sorted(ALLOWED_CONFIRMATION_SOURCES))
+                )
+            if not isinstance(notes, str):
+                errors.append(f"metadata.confirmation.{key}.notes must be a string")
+            if key == "pilot_object":
+                object_id = entry.get("object_id")
+                if not isinstance(object_id, str):
+                    errors.append("metadata.confirmation.pilot_object.object_id must be a string")
+                elif status == "confirmed" and not object_id.strip():
+                    errors.append(
+                        "metadata.confirmation.pilot_object.object_id must be non-empty when the pilot gate is confirmed"
+                    )
     asset_summary = metadata.get("asset_summary")
     if not isinstance(asset_summary, dict):
         errors.append("metadata.asset_summary must be an object")
@@ -322,6 +390,14 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
             "qa.status pass requires metadata.capability.production_capable=true; "
             "draft-packaging-only or unrecorded tooling preflight must remain needs-review"
         )
+    tooling_confirmation = confirmation.get("tooling_preflight", {}) if isinstance(confirmation, dict) else {}
+    if capability.get("user_choice") != "unset":
+        if tooling_confirmation.get("status") != "confirmed":
+            errors.append("metadata.confirmation.tooling_preflight must be confirmed before validation")
+        elif tooling_confirmation.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
+            errors.append(
+                "metadata.confirmation.tooling_preflight must come from explicit-user-confirmed or inferred-from-user"
+            )
     quality_target = metadata.get("quality_target", {})
     if not isinstance(quality_target, dict):
         errors.append("metadata.quality_target must be an object")
@@ -334,10 +410,19 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         notes = quality_target.get("notes")
         if not isinstance(notes, str):
             errors.append("metadata.quality_target.notes must be a string")
-        if qa_status_for_capability == "pass" and quality_target.get("tier") != "visual-acceptance-ready":
-            errors.append(
-                "qa.status pass requires metadata.quality_target.tier=visual-acceptance-ready"
-            )
+    if qa_status_for_capability == "pass" and quality_target.get("tier") != "visual-acceptance-ready":
+        errors.append(
+            "qa.status pass requires metadata.quality_target.tier=visual-acceptance-ready"
+        )
+    if qa_status_for_capability == "pass":
+        for key in ["granularity_alignment", "final_acceptance"]:
+            entry = confirmation.get(key, {}) if isinstance(confirmation, dict) else {}
+            if entry.get("status") != "confirmed":
+                errors.append(f"metadata.confirmation.{key} must be confirmed before qa.status=pass")
+            elif entry.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
+                errors.append(
+                    f"metadata.confirmation.{key} must come from explicit-user-confirmed or inferred-from-user before qa.status=pass"
+                )
     qa = metadata.get("qa", {})
     if not isinstance(qa, dict):
         errors.append("metadata.qa must be an object")
@@ -554,6 +639,13 @@ def validate_objects(
                 errors.append(
                     f"metadata.granularity.{field_name} must be recorded for UI or dense-composition packages"
                 )
+        pilot_entry = metadata.get("confirmation", {}).get("pilot_object", {})
+        if pilot_entry.get("status") not in {"confirmed", "not-required"}:
+            errors.append("metadata.confirmation.pilot_object must be confirmed or explicitly not-required for UI packages")
+        elif pilot_entry.get("status") == "confirmed" and pilot_entry.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
+            errors.append(
+                "metadata.confirmation.pilot_object must come from explicit-user-confirmed or inferred-from-user when confirmed"
+            )
 
     has_carrier = False
     has_glyph = False
@@ -726,6 +818,15 @@ def validate_objects(
                 if not accepted:
                     errors.append(
                         f"{object_id}: promoted approximate reconstruction requires an explicit reconstruction acceptance decision"
+                    )
+                confirmation_entry = metadata.get("confirmation", {}).get("approximate_reconstruction", {})
+                if confirmation_entry.get("status") != "confirmed":
+                    errors.append(
+                        f"{object_id}: metadata.confirmation.approximate_reconstruction must be confirmed before approximate promotion"
+                    )
+                elif confirmation_entry.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
+                    errors.append(
+                        f"{object_id}: metadata.confirmation.approximate_reconstruction must come from explicit-user-confirmed or inferred-from-user"
                     )
             if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
                 errors.append(

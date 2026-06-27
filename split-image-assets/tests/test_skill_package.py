@@ -408,6 +408,37 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "notes": "",
                 },
             )
+            self.assertEqual(
+                metadata["confirmation"],
+                {
+                    "tooling_preflight": {
+                        "status": "pending",
+                        "source": "unset",
+                        "notes": "",
+                    },
+                    "granularity_alignment": {
+                        "status": "pending",
+                        "source": "unset",
+                        "notes": "",
+                    },
+                    "pilot_object": {
+                        "status": "pending",
+                        "source": "unset",
+                        "object_id": "",
+                        "notes": "",
+                    },
+                    "approximate_reconstruction": {
+                        "status": "pending",
+                        "source": "unset",
+                        "notes": "",
+                    },
+                    "final_acceptance": {
+                        "status": "pending",
+                        "source": "unset",
+                        "notes": "",
+                    },
+                },
+            )
             self.assertEqual(metadata["decision_log"], [])
             self.assertEqual(metadata["audit"], {})
             self.assertEqual(metadata["qa"]["status"], "needs-review")
@@ -1392,6 +1423,79 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(entry["stage"], "semantic-split-plan")
             self.assertEqual(entry["recommended_answer"], "yes")
             self.assertEqual(entry["user_answer"], "yes")
+            self.assertEqual(entry["decision_source"], "agent-defaulted")
+
+    def test_record_quality_review_records_confirmation_gate_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--decision-stage",
+                    "granularity-alignment",
+                    "--decision-question",
+                    "Target atomic-layer granularity?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "yes",
+                    "--decision-effect",
+                    "Proceed with atomic-layer plan.",
+                    "--decision-source",
+                    "inferred-from-user",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                metadata["confirmation"]["granularity_alignment"]["status"],
+                "confirmed",
+            )
+            self.assertEqual(
+                metadata["confirmation"]["granularity_alignment"]["source"],
+                "inferred-from-user",
+            )
+
+    def test_record_quality_review_defaults_confirmation_source_to_agent_defaulted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--confirmation-key",
+                    "pilot_object",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-object-id",
+                    "status_glyph",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["confirmation"]["pilot_object"]["source"], "agent-defaulted")
 
     def test_record_quality_review_records_tooling_preflight_capability(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1439,6 +1543,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["capability"]["user_choice"], "draft-packaging-only")
             self.assertIn("matting/refinement", metadata["capability"]["missing_for_production"])
             self.assertEqual(metadata["decision_log"][0]["stage"], "tooling-preflight")
+            self.assertEqual(metadata["confirmation"]["tooling_preflight"]["status"], "confirmed")
 
     def test_record_quality_review_rejects_pass_without_decision_log(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1478,6 +1583,31 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("decision_log", result.stderr)
+
+    def test_record_quality_review_rejects_confirmation_key_without_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--confirmation-key",
+                    "pilot_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--confirmation-status", result.stderr)
 
     def test_record_quality_review_rejects_pass_for_draft_only_capability(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1871,7 +2001,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 output / "assets" / "main_object_transparent.png"
             )
             Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
-            self._write_single_object_metadata(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
+            metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
             preview_result = subprocess.run(
                 [
                     sys.executable,
@@ -2091,6 +2227,16 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "support_only_layers": 1,
                 "blocked_assets": 0,
             }
+            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
+            metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["granularity_alignment"]["status"] = "confirmed"
+            metadata["confirmation"]["granularity_alignment"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["pilot_object"]["status"] = "not-required"
+            metadata["confirmation"]["pilot_object"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
+            metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["final_acceptance"]["status"] = "confirmed"
+            metadata["confirmation"]["final_acceptance"]["source"] = "explicit-user-confirmed"
             metadata["decision_log"] = [
                 {
                     "stage": "final-acceptance",
@@ -2098,6 +2244,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "recommended_answer": "yes",
                     "user_answer": "yes",
                     "decision_effect": "Allow qa.status=pass for the validated fixture.",
+                    "decision_source": "explicit-user-confirmed",
                 }
             ]
             metadata["qa"]["status"] = "pass"
@@ -3153,8 +3300,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "recommended_answer": "yes",
                     "user_answer": "yes",
                     "decision_effect": "Allow archived compare evidence to support validation.",
+                    "decision_source": "explicit-user-confirmed",
                 }
             ]
+            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
+            metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
+            metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -3382,6 +3534,223 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("object_type must be recorded", result.stderr)
+
+    def test_validate_asset_package_requires_confirmation_gates_for_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-acceptance",
+                    "question": "Accept this layer?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Allow pass.",
+                    "decision_source": "explicit-user-confirmed",
+                }
+            ]
+            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
+            metadata["confirmation"]["tooling_preflight"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["final_acceptance"]["status"] = "confirmed"
+            metadata["confirmation"]["final_acceptance"]["source"] = "explicit-user-confirmed"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("granularity_alignment", result.stderr)
+
+    def test_validate_asset_package_requires_pilot_gate_for_ui_packages(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (2, 2), (255, 255, 255, 200)).save(
+                output / "assets" / "status_glyph_transparent.png"
+            )
+            Image.new("L", (8, 8), 255).save(output / "masks" / "mask_status_glyph.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["analysis"] = {
+                "visual_hierarchy": ["ui panel", "status tile", "status glyph"],
+                "recommended_split_plan": "Split tile and glyph after pilot approval.",
+            }
+            metadata["objects"] = [
+                {
+                    "id": "status_glyph",
+                    "role": "secondary",
+                    "layer_kind": "glyph",
+                    "composition_order": 10,
+                    "semantic_boundary": "UI status glyph.",
+                    "asset_path": "assets/status_glyph_transparent.png",
+                    "mask_path": "masks/mask_status_glyph.png",
+                    "mask_source": "sam",
+                    "alpha_source": "rgba-alpha",
+                    "width": 2,
+                    "height": 2,
+                    "aspect_ratio": 1.0,
+                    "area_ratio": 0.1,
+                    "extraction_method": "ai-assisted",
+                    "confidence": "high",
+                    "edge_complexity": "hard",
+                    "object_type": "ui-glyph",
+                    "asset_class": "atomic",
+                    "reuse_status": "production-ready",
+                    "delivery_class": "clean-extraction",
+                    "current_asset_revision": "glyph-v1",
+                    "selected_candidate_id": "",
+                    "repair_history": [],
+                    "active_reconstruction_method": "",
+                    "manual_review_flags": [],
+                    "quality_checks": {
+                        "mask_alignment": "pass",
+                        "alpha_edges": "pass",
+                        "background_residue": "pass",
+                        "reuse_readiness": "pass",
+                    },
+                }
+            ]
+            metadata["granularity"].update(
+                {
+                    "scope_strategy": "high-signal-subset",
+                    "text_handling": "rebuild-downstream",
+                    "carrier_glyph_policy": "split",
+                    "background_expectation": "approximate-accepted",
+                    "layer_independence": "animation-ready",
+                }
+            )
+            metadata["decision_log"] = [
+                {
+                    "stage": "granularity-alignment",
+                    "question": "Use atomic-layer granularity?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Proceed.",
+                    "decision_source": "explicit-user-confirmed",
+                }
+            ]
+            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
+            metadata["confirmation"]["tooling_preflight"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["granularity_alignment"]["status"] = "confirmed"
+            metadata["confirmation"]["granularity_alignment"]["source"] = "explicit-user-confirmed"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("pilot_object", result.stderr)
+
+    def test_validate_asset_package_rejects_agent_defaulted_final_acceptance_for_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-acceptance",
+                    "question": "Accept this layer?",
+                    "recommended_answer": "yes",
+                    "user_answer": "yes",
+                    "decision_effect": "Allow pass.",
+                    "decision_source": "agent-defaulted",
+                }
+            ]
+            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
+            metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["granularity_alignment"]["status"] = "confirmed"
+            metadata["confirmation"]["granularity_alignment"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["final_acceptance"]["status"] = "confirmed"
+            metadata["confirmation"]["final_acceptance"]["source"] = "agent-defaulted"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("final_acceptance must come from explicit-user-confirmed or inferred-from-user", result.stderr)
 
     def test_generate_ui_carrier_candidates_emits_manifest_and_updates_object_type(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -3704,8 +4073,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "recommended_answer": "yes",
                     "user_answer": "yes",
                     "decision_effect": "Allow promotion of the chosen candidate after compare evidence.",
+                    "decision_source": "explicit-user-confirmed",
                 }
             ]
+            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
+            metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
+            metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
             metadata["qa"]["status"] = "needs-review"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",

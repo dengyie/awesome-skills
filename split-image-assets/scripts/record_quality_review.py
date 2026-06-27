@@ -67,6 +67,28 @@ ALLOWED_QUALITY_TARGET_TIERS = {
     "usable-draft",
     "visual-acceptance-ready",
 }
+ALLOWED_DECISION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+    "agent-defaulted",
+}
+ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
+ALLOWED_CONFIRMATION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+    "agent-defaulted",
+    "unset",
+}
+CONFIRMATION_KEYS = {
+    "tooling-preflight": "tooling_preflight",
+    "granularity-alignment": "granularity_alignment",
+    "pilot-object-gate": "pilot_object",
+    "approximate-reconstruction-acceptance": "approximate_reconstruction",
+    "approximate-reconstruction-acceptance-gate": "approximate_reconstruction",
+    "reconstruction-acceptance": "approximate_reconstruction",
+    "final-acceptance": "final_acceptance",
+    "final-promotion-acceptance": "final_acceptance",
+}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -221,8 +243,37 @@ def update_decision_log(metadata: dict, args: argparse.Namespace) -> None:
             "recommended_answer": args.decision_recommended,
             "user_answer": args.decision_answer,
             "decision_effect": args.decision_effect,
+            "decision_source": args.decision_source or "agent-defaulted",
         }
     )
+
+
+def update_confirmation(metadata: dict, args: argparse.Namespace) -> None:
+    confirmation = metadata.setdefault("confirmation", {})
+    if args.confirmation_key is not None:
+        if args.confirmation_status is None:
+            raise ValueError("--confirmation-status is required when --confirmation-key is provided")
+        entry = confirmation.setdefault(args.confirmation_key, {})
+        entry["status"] = args.confirmation_status
+        entry["source"] = args.confirmation_source or "agent-defaulted"
+        if args.confirmation_note is not None:
+            entry["notes"] = args.confirmation_note
+        if args.confirmation_object_id is not None:
+            entry["object_id"] = args.confirmation_object_id
+
+    if args.decision_stage:
+        key = CONFIRMATION_KEYS.get(args.decision_stage)
+        if key:
+            entry = confirmation.setdefault(
+                key,
+                {"status": "pending", "source": "unset", "notes": ""},
+            )
+            entry["status"] = "confirmed"
+            entry["source"] = args.decision_source or "agent-defaulted"
+            if args.confirmation_note is not None:
+                entry["notes"] = args.confirmation_note
+            elif not entry.get("notes"):
+                entry["notes"] = args.decision_effect
 
 
 def parse_bool(value: str) -> bool:
@@ -398,6 +449,7 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append(f"- Recommended answer: {args.decision_recommended}")
         lines.append(f"- User answer: {args.decision_answer}")
         lines.append(f"- Decision effect: {args.decision_effect}")
+        lines.append(f"- Decision source: {args.decision_source or 'agent-defaulted'}")
     if args.production_capable is not None:
         lines.append(f"- Production capable: {args.production_capable}")
     if args.missing_for_production:
@@ -416,6 +468,12 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append("- Objects: all")
     if args.object_type:
         lines.append(f"- Object type: {args.object_type}")
+    if args.confirmation_key:
+        lines.append(f"- Confirmation gate: {args.confirmation_key}")
+        lines.append(f"- Confirmation status: {args.confirmation_status}")
+        lines.append(f"- Confirmation source: {args.confirmation_source or 'agent-defaulted'}")
+    if args.confirmation_object_id:
+        lines.append(f"- Pilot object: {args.confirmation_object_id}")
     if args.asset_class:
         lines.append(f"- Asset class: {args.asset_class}")
     if args.reuse_status:
@@ -446,12 +504,29 @@ def main() -> int:
     parser.add_argument("--decision-recommended")
     parser.add_argument("--decision-answer")
     parser.add_argument("--decision-effect")
+    parser.add_argument("--decision-source", choices=sorted(ALLOWED_DECISION_SOURCES))
     parser.add_argument("--production-capable", choices=["true", "false"])
     parser.add_argument("--missing-for-production", action="append")
     parser.add_argument("--capability-user-choice")
     parser.add_argument("--capability-note")
     parser.add_argument("--quality-target-tier", choices=sorted(ALLOWED_QUALITY_TARGET_TIERS))
     parser.add_argument("--quality-target-note")
+    parser.add_argument(
+        "--confirmation-key",
+        choices=sorted(
+            {
+                "tooling_preflight",
+                "granularity_alignment",
+                "pilot_object",
+                "approximate_reconstruction",
+                "final_acceptance",
+            }
+        ),
+    )
+    parser.add_argument("--confirmation-status", choices=sorted(ALLOWED_CONFIRMATION_STATUSES))
+    parser.add_argument("--confirmation-source", choices=sorted(ALLOWED_CONFIRMATION_SOURCES))
+    parser.add_argument("--confirmation-note")
+    parser.add_argument("--confirmation-object-id")
     parser.add_argument("--quality-gate", action="append", help="Pipeline quality gate inspected.")
     parser.add_argument("--object-id", action="append", help="Object id whose quality checks are updated.")
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
@@ -499,6 +574,7 @@ def main() -> int:
         update_decision_log(metadata, args)
         update_capability(metadata, args)
         update_quality_target(metadata, args)
+        update_confirmation(metadata, args)
     except ValueError as exc:
         parser.error(str(exc))
     update_quality_gates(metadata, args.quality_gate)

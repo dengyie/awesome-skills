@@ -40,6 +40,34 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "tier": "structural-valid",
             "notes": "",
         },
+        "confirmation": {
+            "tooling_preflight": {
+                "status": "pending",
+                "source": "unset",
+                "notes": "",
+            },
+            "granularity_alignment": {
+                "status": "pending",
+                "source": "unset",
+                "notes": "",
+            },
+            "pilot_object": {
+                "status": "pending",
+                "source": "unset",
+                "object_id": "",
+                "notes": "",
+            },
+            "approximate_reconstruction": {
+                "status": "pending",
+                "source": "unset",
+                "notes": "",
+            },
+            "final_acceptance": {
+                "status": "pending",
+                "source": "unset",
+                "notes": "",
+            },
+        },
         "extraction_pipeline": {
             "recipe": "",
             "stages": [],
