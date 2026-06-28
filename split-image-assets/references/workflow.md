@@ -98,7 +98,14 @@ Use these states consistently:
    - Pause category: `formal-approval`
    - Record `metadata.confirmation.pilot_object` as `confirmed` or evidence-backed `not-required`.
 9. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, read `ui-atomic-split.md` and create a layer plan that marks each expected layer as `must_extract`, `rebuild_downstream`, `support_only`, `skip_for_now`, or `requires_user_confirmation`.
-10. Route each planned target by object type before extraction or repair:
+10. Run the Asset Value Scoring Gate before extraction:
+   - classify each candidate as text-like or non-text
+   - assign `text_role` and `text_render_class`
+   - compute `editability_score`, `visual_complexity_score`, and `asset_value_score`
+   - set `decision_routing.recommended_action`
+   - resolve `decision_routing.final_action`
+   - extract only when `final_action=extract_asset`
+11. Route each planned target by object type before extraction or repair:
    - `ui-carrier`
    - `ui-glyph`
    - `carrier-glyph-pair`
@@ -106,13 +113,13 @@ Use these states consistently:
    - `outlined-illustration-logo`
    - `flat-support-plate`
    - `photo-object-matte`
-11. Use the routed object type to choose the upstream orchestration:
+12. Use the routed object type to choose the upstream orchestration:
    - `carrier-glyph-pair`: grounded detection or SAM2 masks -> glyph/carrier split -> glyph exclusion dilation -> carrier reconstruction candidate generation -> glyph cleanup candidate generation -> candidate scoring -> compare -> promotion
    - `ui-carrier`: source crop + carrier mask + glyph mask -> `generate_ui_carrier_candidates.py` -> `score_candidate_assets.py` -> `compare_candidate_assets.py`
    - `ui-glyph`: isolated glyph + carrier/background estimate -> `generate_ui_glyph_cleanup_candidates.py` -> `score_candidate_assets.py` -> `compare_candidate_assets.py`
    - `soft-edge-logo-brand-mark` or `photo-object-matte`: professional segmentation + matting first, cleanup second
-12. For small assets under roughly 128 px, prefer `upscale-repair-downscale.py` as an official prep/finalize path instead of ad hoc manual resampling.
-13. Analyze before extraction:
+13. For small assets under roughly 128 px, prefer `upscale-repair-downscale.py` as an official prep/finalize path instead of ad hoc manual resampling.
+14. Analyze before extraction:
    - source dimensions
    - semantic layer hierarchy from background to foreground
    - main object
@@ -122,29 +129,34 @@ Use these states consistently:
    - shadows
    - complex edge regions
    - likely manual-review risks
-14. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
-15. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
+15. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
+16. Route text-like content with an editability-first default:
+   - ordinary text, button labels, numeric values, and form values should normally end as `rebuild_downstream`
+   - logo wordmarks, decorative text, and visual-fidelity-critical text may end as `extract_asset`
+   - ambiguous high-complexity text-like targets should end as `requires_user_confirmation`
+17. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
    - Pause category: `user-decision` only when the branch materially changes deliverable truth; otherwise keep progress in commentary and continue the chosen path.
-16. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
-17. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `capability`, `quality_target`, `confirmation`, `decision_log`, `extraction_pipeline`, object `object_type`, object `asset_class`, object `reuse_status`, and the object inventory into `metadata.json`.
+18. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
+19. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `capability`, `quality_target`, `confirmation`, `decision_log`, `extraction_pipeline`, object `object_type`, object `asset_class`, object `reuse_status`, and the object inventory into `metadata.json`.
    - for UI or dense compositions, record `granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
-17. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
-18. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`, which should also keep audit metadata paths synchronized when `_staging/quality/` is archived.
-19. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files. Imported objects default to `asset_class=candidate` and `reuse_status=draft-candidate`.
-20. Record composition order, mask source, alpha source, semantic boundary, object type, asset class, reuse status, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, `quality_target`, `decision_log`, and `qa_report.md` stay synchronized.
-21. Keep individual objects separate before creating grouped or preview outputs. Grouped convenience layers should be marked `grouped-support` or `support-only`.
-22. Generate previews with `scripts/build_previews.py`.
-23. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
-24. Run `scripts/audit_visual_quality.py` to create warning-only `_staging/quality/quality_audit.json` and `_staging/quality/qa_audit_contact_sheet.png` evidence before final review.
-25. Inspect previews and audit warnings, then classify each warning as `true defect`, `expected stylistic signal`, or `mixed / needs human judgment` before “fixing” it.
-26. For high-risk repairs, write candidate outputs into `_staging/repair_candidates/`, score them with `scripts/score_candidate_assets.py`, compare at least two viable candidates when available, and promote the selected candidate with `scripts/promote_candidate_asset.py` instead of overwriting `assets/` by hand. Do not promote from an arbitrary package path.
-27. Use `scripts/compare_candidate_assets.py` before promotion when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Treat compare as a structured evidence step, not just a screenshot.
-28. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`.
+   - record per-object `value_scoring`, `decision_routing`, `rebuild_intent`, and `text_semantics`
+20. Produce or collect reusable assets through AI image tools, segmentation tools, manual editing, or user-provided files. Use professional segmentation or matting as the primary extraction path; Pillow/OpenCV/skimage are helper tools for compositing, refinement, previews, and packaging.
+21. Keep active external outputs, candidate masks, and temporary manifests in `_staging/`. Move retained intermediate evidence to `_archive_intermediate/` before final validation, preferably through `scripts/archive_intermediates.py`, which should also keep audit metadata paths synchronized when `_staging/quality/` is archived.
+22. Normalize external outputs with `scripts/import_external_assets.py` when assets come from SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual editing, or user-provided files. Imported objects default to `asset_class=candidate` and `reuse_status=draft-candidate`.
+23. Record composition order, mask source, alpha source, semantic boundary, object type, asset class, reuse status, and object-level quality checks for every reusable layer. Use `scripts/record_quality_review.py` after inspection so semantic analysis, quality gates, QA status, `quality_target`, `decision_log`, and `qa_report.md` stay synchronized.
+24. Keep individual objects separate before creating grouped or preview outputs. Grouped convenience layers should be marked `grouped-support` or `support-only`.
+25. Generate previews with `scripts/build_previews.py`.
+26. Generate segmentation-quality previews with `scripts/build_quality_previews.py`.
+27. Run `scripts/audit_visual_quality.py` to create warning-only `_staging/quality/quality_audit.json` and `_staging/quality/qa_audit_contact_sheet.png` evidence before final review.
+28. Inspect previews and audit warnings, then classify each warning as `true defect`, `expected stylistic signal`, or `mixed / needs human judgment` before “fixing” it.
+29. For high-risk repairs, write candidate outputs into `_staging/repair_candidates/`, score them with `scripts/score_candidate_assets.py`, compare at least two viable candidates when available, and promote the selected candidate with `scripts/promote_candidate_asset.py` instead of overwriting `assets/` by hand. Do not promote from an arbitrary package path.
+30. Use `scripts/compare_candidate_assets.py` before promotion when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Treat compare as a structured evidence step, not just a screenshot.
+31. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`.
    - Pause category: `formal-approval`
    - If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
-29. Validate the package with `scripts/validate_asset_package.py`.
-30. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
-31. Report structural validation separately from visual quality status, plus production-ready, draft-candidate, support-only, and blocked counts.
+32. Validate the package with `scripts/validate_asset_package.py`.
+33. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
+34. Report structural validation separately from visual quality status, plus production-ready, draft-candidate, support-only, and blocked counts.
 
 ## Standard Failure Outputs
 

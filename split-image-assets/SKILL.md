@@ -65,6 +65,18 @@ Use these states consistently:
 - `AwaitingApproval`: the workflow has enough evidence to request a formal approval gate such as pilot approval, final acceptance, or candidate promotion
 - `Completed`: the current run has reached a real terminal outcome
 
+## Asset Value Scoring Gate
+
+Asset value scoring happens before extraction. The goal is to decide whether an object should exist as a raster asset at all, not to justify extraction after the fact.
+
+Apply an editability-first bias:
+
+- ordinary text, button labels, numeric values, and form values should default to `rebuild_downstream`
+- logo wordmarks, decorative text, and other visual-fidelity-critical text may route to `extract_asset`
+- ambiguous high-complexity text-like objects should route to `requires_user_confirmation`
+
+This is a normal running stage, not a default pause gate. Ordinary text defaults do not stop the workflow. Only a true `requires_user_confirmation` outcome should pause and ask whether the object should be rebuilt downstream or preserved as a visual asset.
+
 ## Workflow
 
 1. Read `references/workflow.md`.
@@ -92,7 +104,14 @@ Use these states consistently:
 8. For UI, dashboard, badge, tile/glyph, or dense interface images, read `references/ui-atomic-split.md` and create a semantic split plan before extraction.
    - classify each target as `ui-carrier`, `ui-glyph`, `carrier-glyph-pair`, `soft-edge-logo-brand-mark`, `outlined-illustration-logo`, `flat-support-plate`, or `photo-object-matte`
    - choose the upstream orchestration and repair path from that object type before cutting pixels
-9. Analyze the source image before extraction:
+9. Run the Asset Value Scoring Gate before extraction:
+   - classify each candidate as text-like or non-text
+   - assign `text_role` and `text_render_class`
+   - score `editability_score`, `visual_complexity_score`, and `asset_value_score`
+   - set `decision_routing.recommended_action`
+   - resolve `decision_routing.final_action`
+   - only extract a production raster asset when `final_action=extract_asset`
+10. Analyze the source image before extraction:
    - visual hierarchy from background to foreground
    - main object
    - secondary objects
@@ -101,16 +120,17 @@ Use these states consistently:
    - complex edges
    - transparent, reflective, fuzzy, smoky, or low-contrast regions
    - recommended split plan
-10. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
-11. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the appropriate confirmation gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
+11. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
+12. When the split plan has an ambiguous decision point, an uncertain text-like preservation choice, or a subjective reuse boundary, run the appropriate confirmation gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
    - only real user decisions, genuine external blockers, and formal approvals may pause execution
    - if prior instructions already settle the branch, record the evidence-backed decision instead of asking again
    - ordinary progress updates remain commentary and do not pause execution
-12. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
+13. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
    - for UI or dense compositions, also record `metadata.granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
+   - record per-object `value_scoring`, `decision_routing`, `rebuild_intent`, and `text_semantics`
    - record object `asset_class` and `reuse_status` so draft candidates, support layers, and production-ready atomic assets cannot be confused
-13. Produce or collect reusable assets:
+14. Produce or collect reusable assets:
    - transparent PNGs for individual objects
    - source-space masks
    - cleaned background
@@ -119,9 +139,9 @@ Use these states consistently:
    - for hard-edge UI glyphs, use `scripts/generate_ui_glyph_cleanup_candidates.py` when cleanup variants are needed
    - for small assets under roughly 128 px, prefer `scripts/upscale_repair_downscale.py` before final cleanup when quality matters
    - use `scripts/score_candidate_assets.py` before compare when candidate count or quality variance is high
-14. Put external model outputs, candidate masks, refinement files, and temporary manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
+15. Put external model outputs, candidate masks, refinement files, and temporary manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
    - use `scripts/archive_intermediates.py` when you want a deterministic archive step
-15. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
+16. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
    - professional upstream
    - `scripts/import_external_assets.py`
    - `scripts/build_previews.py`
@@ -129,17 +149,17 @@ Use these states consistently:
    - `scripts/record_quality_review.py`
    - `scripts/validate_asset_package.py`
    - `scripts/export_asset_manifest.py`
-16. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
-17. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, formal gate decisions, and manual QA status after inspection instead of hand-editing JSON.
+17. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
+18. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, formal gate decisions, and manual QA status after inspection instead of hand-editing JSON.
    - use formal gate writes only for real decision/approval state
    - keep commentary and review progress out of `metadata.decision_log[]` and `metadata.confirmation`
-18. Build inspection previews with `scripts/build_previews.py`.
-19. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
-20. Run `scripts/audit_visual_quality.py` for warning-only checks such as hard alpha edges, loose crops, large masks, and support plates miscounted as atomic assets.
-21. Read `references/qa-standards.md` and inspect the package.
-22. Validate structure with `scripts/validate_asset_package.py`.
-23. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
-24. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
+19. Build inspection previews with `scripts/build_previews.py`.
+20. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
+21. Run `scripts/audit_visual_quality.py` for warning-only checks such as hard alpha edges, loose crops, large masks, and support plates miscounted as atomic assets.
+22. Read `references/qa-standards.md` and inspect the package.
+23. Validate structure with `scripts/validate_asset_package.py`.
+24. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
+25. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
 
 ## Script Boundaries
 

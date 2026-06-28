@@ -229,6 +229,19 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         missing = [path for path in reference_paths if not (ROOT / path).exists()]
         self.assertEqual(missing, [])
 
+    def test_skill_docs_describe_asset_value_scoring_and_text_routing(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = (ROOT / "references" / "workflow.md").read_text(encoding="utf-8")
+        contract_text = (ROOT / "references" / "asset-package-contract.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Asset Value Scoring Gate", skill_text)
+        self.assertIn("ordinary text", skill_text.lower())
+        self.assertIn("rebuild_downstream", workflow_text)
+        self.assertIn("text_role", contract_text)
+        self.assertIn("recommended_action", contract_text)
+
     def test_usage_doc_mentions_contract_previews_metadata_qa_and_manual_review(self):
         usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
             encoding="utf-8"
@@ -282,6 +295,19 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "formal approval",
         ]:
             self.assertIn(expected, usage)
+
+    def test_skill_docs_describe_asset_value_scoring_and_text_routing(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = (ROOT / "references" / "workflow.md").read_text(encoding="utf-8")
+        contract_text = (ROOT / "references" / "asset-package-contract.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Asset Value Scoring Gate", skill_text)
+        self.assertIn("ordinary text", skill_text.lower())
+        self.assertIn("rebuild_downstream", workflow_text)
+        self.assertIn("text_role", contract_text)
+        self.assertIn("recommended_action", contract_text)
 
     def test_check_extraction_environment_reports_capability_gate_json(self):
         result = subprocess.run(

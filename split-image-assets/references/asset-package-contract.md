@@ -175,6 +175,17 @@ Each object should include:
 - `repair_history[]` when the asset was retried or replaced
 - `candidate_comparisons[]` when staged repair candidates were compared
 - `active_reconstruction_method` when a layer is rebuilt or approximated
+- `value_scoring.editability_score`
+- `value_scoring.visual_complexity_score`
+- `value_scoring.asset_value_score`
+- `value_scoring.scoring_reason`
+- `decision_routing.recommended_action`
+- `decision_routing.final_action`
+- `decision_routing.decision_source`
+- `rebuild_intent.rebuildable_downstream`
+- `rebuild_intent.rebuild_notes`
+- `text_semantics.text_role`
+- `text_semantics.text_render_class`
 - `quality_checks.mask_alignment`
 - `quality_checks.alpha_edges`
 - `quality_checks.background_residue`
@@ -184,6 +195,15 @@ Each object should include:
 - `approximate` and `reconstruction_provenance` when a layer was reconstructed, inpainted, or approximated rather than extracted exactly
 
 Use `asset_summary` to keep final counts honest. Production asset counts should only include `asset_class: atomic` plus `reuse_status: production-ready`. Draft-only runs should normally report `production_ready_assets: 0` even when many candidate PNGs exist.
+
+The routing metadata should follow these allowed values:
+
+- `text_semantics.text_role`: `plain-text`, `button-label`, `numeric-value`, `form-value`, `logo-wordmark`, `decorative-text`, or `non-text`
+- `text_semantics.text_render_class`: `editable`, `styled-editable`, `visual-fidelity-critical`, or `non-text`
+- `value_scoring.*_score`: `unset`, `low`, `medium`, or `high`
+- `decision_routing.recommended_action` / `decision_routing.final_action`: `extract_asset`, `rebuild_downstream`, `requires_user_confirmation`, `support_only`, or `unset`
+
+Use `rebuild_downstream` for ordinary editable text-like content. Use `extract_asset` for visually fidelity-critical text such as logo wordmarks or decorative text. Use `requires_user_confirmation` for ambiguous high-complexity text-like objects that cannot be safely auto-routed.
 
 For UI-like assets, `object_type` must not stay `generic-object`. The workflow should make routing visible to future agents and reviewers.
 

@@ -21,6 +21,7 @@ Do not stop and wait for:
 - ordinary tool output summaries
 - internal implementation checkpoints
 - non-blocking uncertainty that does not change package truth
+- ordinary text defaults that already route to `rebuild_downstream`
 
 ## Tooling Preflight Confirmation
 
@@ -83,6 +84,20 @@ Question: Should text, labels, buttons, or UI chrome be extracted as image layer
 Recommended answer: Rebuild text and labels downstream when localization, editing, or crisp rendering matters.
 
 Decision effect: Record whether text is excluded from image assets, extracted as image layers, or represented as grouped reference layers.
+
+## Ambiguous Text-Like Preservation
+
+Pause category: `user-decision`
+
+Must ask when: a text-like object has strong visual treatment, high visual complexity, or unclear preservation needs, and the recommended route is `requires_user_confirmation`.
+
+Do not ask when: the object is ordinary editable text, a button label, a numeric value, or a form value that already defaults to `rebuild_downstream`.
+
+Question: Should this text-like object be rebuilt downstream as editable content, or preserved as a visual asset for fidelity?
+
+Recommended answer: Rebuild downstream unless the object is a logo wordmark, decorative text treatment, or another visual-fidelity-critical element.
+
+Decision effect: Record `value_scoring`, `decision_routing.recommended_action`, `decision_routing.final_action`, `decision_routing.decision_source`, and any `rebuild_intent` notes.
 
 ## Approximate Background Acceptance
 

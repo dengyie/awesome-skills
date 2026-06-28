@@ -46,6 +46,8 @@ Missing upstream role examples:
 
 Also align split granularity before cutting pixels: module-level, component-level, atomic-layer, or production-editable reconstruction; text as image assets or live downstream text; exact background recovery or approximate `background_clean.png`; animation-ready layers or static reuse.
 
+Run asset value scoring before extraction. Use an editability-first default: ordinary text, button labels, numeric values, and form values should normally stay out of raster export and route to `rebuild_downstream`. Logo wordmarks, decorative text, and other visual-fidelity-critical text may still route to `extract_asset`. When a text-like object is visually complex and ambiguous, route it to `requires_user_confirmation` instead of silently extracting it.
+
 Also classify each target object before choosing the repair path:
 
 - `ui-carrier`
@@ -102,6 +104,7 @@ asset-package/
 It should also record `granularity.mode`, `granularity.user_confirmed`, `granularity.notes`, `capability.production_capable`, `capability.missing_for_production`, `capability.user_choice`, `capability.notes`, and `decision_log[]` so later agents can see what split scope, tooling capability, and subjective decisions were agreed.
 Formal gate metadata should use `recorded_answer`, `pause_category`, `decision_source`, `evidence_ref`, and `blocking`. `inferred-from-user` is only valid when that evidence can be cited, and `agent-defaulted` must not satisfy a formal gate.
 It should also record `quality_target.tier`, `quality_target.notes`, and per-object `object_type` so later agents can see whether the package is only structurally valid, a usable draft, or ready for visual acceptance.
+For asset value routing, also record per-object `value_scoring`, `decision_routing`, `rebuild_intent`, and `text_semantics`. This keeps text-like objects auditable when they are rebuilt downstream instead of exported as image assets.
 
 `assets/*.png` are reusable transparent layers. `masks/*.png` are source-space QA masks aligned to the original image, so a small object may appear as a small white region on a mostly black mask. Put active external model outputs, candidate masks, and temporary manifests in `_staging/`; move retained evidence to `_archive_intermediate/` before final validation.
 
