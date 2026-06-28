@@ -204,6 +204,10 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
     ) or bool(args.repair_history_entry)
 
 
+def has_routing_action_updates(args: argparse.Namespace) -> bool:
+    return args.recommended_action is not None or args.final_action is not None
+
+
 def default_confirmation_entry(key: str) -> dict:
     entry = {
         "status": "pending",
@@ -799,6 +803,16 @@ def main() -> int:
         parser.error("object-targeted updates require --object-id or --all-objects")
     if args.confirm_crop_layer and not args.all_objects and not args.object_id:
         parser.error("--confirm-crop-layer requires --object-id or --all-objects")
+    if has_routing_action_updates(args) and args.routing_decision_source in {None, "unset"}:
+        parser.error("--routing-decision-source is required when routing actions are updated")
+    if (
+        has_routing_action_updates(args)
+        and args.routing_decision_source == "inferred-from-user"
+        and (args.evidence_ref is None or not args.evidence_ref.strip())
+    ):
+        parser.error(
+            "--evidence-ref is required when --routing-decision-source is inferred-from-user"
+        )
 
     package_dir = Path(args.package_dir).resolve()
     metadata = read_metadata(package_dir, parser)

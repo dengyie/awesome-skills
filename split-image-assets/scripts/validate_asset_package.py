@@ -42,6 +42,35 @@ ALLOWED_DELIVERY_CLASSES = {
     "support-only",
     "draft-candidate",
 }
+ALLOWED_TEXT_ROLES = {
+    "plain-text",
+    "button-label",
+    "numeric-value",
+    "form-value",
+    "logo-wordmark",
+    "decorative-text",
+    "non-text",
+}
+ALLOWED_TEXT_RENDER_CLASSES = {
+    "editable",
+    "styled-editable",
+    "visual-fidelity-critical",
+    "non-text",
+}
+ALLOWED_SCORE_VALUES = {"unset", "low", "medium", "high"}
+ALLOWED_ROUTING_ACTIONS = {
+    "unset",
+    "extract_asset",
+    "rebuild_downstream",
+    "requires_user_confirmation",
+    "support_only",
+}
+ALLOWED_ROUTING_DECISION_SOURCES = {
+    "unset",
+    "explicit-user-confirmed",
+    "inferred-from-user",
+}
+ORDINARY_TEXT_ROLES = {"plain-text", "button-label", "numeric-value", "form-value"}
 ALLOWED_OBJECT_TYPES = {
     "ui-carrier",
     "ui-glyph",
@@ -677,6 +706,33 @@ def has_glyph_layer(item: dict) -> bool:
     return "glyph" in text
 
 
+def has_text_routing_confirmation(item: dict, decision_log: list[dict]) -> bool:
+    object_id = str(item.get("id", "")).strip().lower()
+    for entry in decision_log:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("decision_source") not in ALLOWED_DECISION_SOURCES:
+            continue
+        evidence_text = " ".join(
+            str(entry.get(field, "")).lower()
+            for field in [
+                "stage",
+                "question",
+                "recommended_answer",
+                "recorded_answer",
+                "decision_effect",
+                "evidence_ref",
+            ]
+        )
+        if object_id and object_id in evidence_text:
+            return True
+        if "text-like object" in evidence_text:
+            return True
+        if "rebuild downstream" in evidence_text and "visual asset" in evidence_text:
+            return True
+    return False
+
+
 def validate_source(package_dir: Path, metadata: dict, errors: list[str]) -> tuple[int, int] | None:
     source = metadata.get("source", {})
     if not isinstance(source, dict):
@@ -932,6 +988,127 @@ def validate_objects(
         if reuse_status == "approximate-reconstruction" and delivery_class != "approximate-reconstruction":
             errors.append(
                 f"{object_id}: reuse_status=approximate-reconstruction requires delivery_class=approximate-reconstruction"
+            )
+        text_semantics = item.get(
+            "text_semantics",
+            {"text_role": "non-text", "text_render_class": "non-text"},
+        )
+        if not isinstance(text_semantics, dict):
+            errors.append(f"{object_id}: text_semantics must be an object when present")
+            text_semantics = {"text_role": "non-text", "text_render_class": "non-text"}
+        text_role = text_semantics.get("text_role", "non-text")
+        if text_role not in ALLOWED_TEXT_ROLES:
+            errors.append(
+                f"{object_id}: text_semantics.text_role must be one of: "
+                + ", ".join(sorted(ALLOWED_TEXT_ROLES))
+            )
+            text_role = "non-text"
+        text_render_class = text_semantics.get("text_render_class", "non-text")
+        if text_render_class not in ALLOWED_TEXT_RENDER_CLASSES:
+            errors.append(
+                f"{object_id}: text_semantics.text_render_class must be one of: "
+                + ", ".join(sorted(ALLOWED_TEXT_RENDER_CLASSES))
+            )
+            text_render_class = "non-text"
+        value_scoring = item.get(
+            "value_scoring",
+            {
+                "editability_score": "unset",
+                "visual_complexity_score": "unset",
+                "asset_value_score": "unset",
+                "scoring_reason": "",
+            },
+        )
+        if not isinstance(value_scoring, dict):
+            errors.append(f"{object_id}: value_scoring must be an object when present")
+            value_scoring = {}
+        for field_name in [
+            "editability_score",
+            "visual_complexity_score",
+            "asset_value_score",
+        ]:
+            score_value = value_scoring.get(field_name, "unset")
+            if score_value not in ALLOWED_SCORE_VALUES:
+                errors.append(
+                    f"{object_id}: value_scoring.{field_name} must be one of: "
+                    + ", ".join(sorted(ALLOWED_SCORE_VALUES))
+                )
+        scoring_reason = value_scoring.get("scoring_reason", "")
+        if not isinstance(scoring_reason, str):
+            errors.append(f"{object_id}: value_scoring.scoring_reason must be a string")
+        decision_routing = item.get(
+            "decision_routing",
+            {
+                "recommended_action": "unset",
+                "final_action": "unset",
+                "decision_source": "unset",
+            },
+        )
+        if not isinstance(decision_routing, dict):
+            errors.append(f"{object_id}: decision_routing must be an object when present")
+            decision_routing = {}
+        recommended_action = decision_routing.get("recommended_action", "unset")
+        if recommended_action not in ALLOWED_ROUTING_ACTIONS:
+            errors.append(
+                f"{object_id}: decision_routing.recommended_action must be one of: "
+                + ", ".join(sorted(ALLOWED_ROUTING_ACTIONS))
+            )
+            recommended_action = "unset"
+        final_action = decision_routing.get("final_action", "unset")
+        if final_action not in ALLOWED_ROUTING_ACTIONS:
+            errors.append(
+                f"{object_id}: decision_routing.final_action must be one of: "
+                + ", ".join(sorted(ALLOWED_ROUTING_ACTIONS))
+            )
+            final_action = "unset"
+        routing_source = decision_routing.get("decision_source", "unset")
+        if routing_source not in ALLOWED_ROUTING_DECISION_SOURCES:
+            errors.append(
+                f"{object_id}: decision_routing.decision_source must be one of: "
+                + ", ".join(sorted(ALLOWED_ROUTING_DECISION_SOURCES))
+            )
+            routing_source = "unset"
+        if (recommended_action != "unset" or final_action != "unset") and routing_source == "unset":
+            errors.append(
+                f"{object_id}: decision_routing.decision_source is required when routing actions are set"
+            )
+        rebuild_intent = item.get(
+            "rebuild_intent",
+            {
+                "rebuildable_downstream": False,
+                "rebuild_notes": "",
+            },
+        )
+        if not isinstance(rebuild_intent, dict):
+            errors.append(f"{object_id}: rebuild_intent must be an object when present")
+            rebuild_intent = {}
+        rebuildable_downstream = rebuild_intent.get("rebuildable_downstream", False)
+        if not isinstance(rebuildable_downstream, bool):
+            errors.append(f"{object_id}: rebuild_intent.rebuildable_downstream must be true or false")
+        rebuild_notes = rebuild_intent.get("rebuild_notes", "")
+        if not isinstance(rebuild_notes, str):
+            errors.append(f"{object_id}: rebuild_intent.rebuild_notes must be a string")
+        if (
+            text_role in ORDINARY_TEXT_ROLES
+            and text_render_class != "visual-fidelity-critical"
+            and final_action == "extract_asset"
+        ):
+            errors.append(
+                f"{object_id}: ordinary editable text-like content must not default to extract_asset"
+            )
+        if recommended_action == "requires_user_confirmation" and not has_text_routing_confirmation(
+            item, decision_log
+        ):
+            errors.append(
+                f"{object_id}: requires_user_confirmation must be resolved through a formal decision record"
+            )
+        if (
+            final_action == "rebuild_downstream"
+            and asset_class == "atomic"
+            and reuse_status == "production-ready"
+        ):
+            errors.append(
+                f"{object_id}: rebuild_downstream cannot publish a production raster asset"
             )
         current_revision = item.get("current_asset_revision")
         if not isinstance(current_revision, str) or not current_revision.strip():
