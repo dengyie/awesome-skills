@@ -42,119 +42,6 @@ QUALITY_CHECK_ARGS = {
     "background_residue": "background_residue",
     "reuse_readiness": "reuse_readiness",
 }
-ALLOWED_GRANULARITY_MODES = {
-    "module",
-    "component",
-    "atomic-layer",
-    "production-editable",
-    "draft",
-}
-ALLOWED_SCOPE_STRATEGIES = {"high-signal-subset", "full-image-batch", "unset"}
-ALLOWED_TEXT_HANDLING = {"extract-as-image", "rebuild-downstream", "unset"}
-ALLOWED_CARRIER_GLYPH_POLICIES = {"split", "grouped", "conditional", "unset"}
-ALLOWED_BACKGROUND_EXPECTATIONS = {"exact-recovery", "approximate-accepted", "unset"}
-ALLOWED_LAYER_INDEPENDENCE = {"static-reuse", "animation-ready", "unset"}
-ALLOWED_CAPABILITY_CHOICES = {
-    "install-or-activate-tools",
-    "external-professional-outputs",
-    "draft-packaging-only",
-    "production-capable",
-    "unset",
-}
-ALLOWED_ASSET_CLASSES = {
-    "atomic",
-    "grouped-support",
-    "background-support",
-    "preview-reference",
-    "candidate",
-}
-ALLOWED_REUSE_STATUSES = {
-    "production-ready",
-    "draft-candidate",
-    "support-only",
-    "blocked",
-    "approximate-reconstruction",
-}
-ALLOWED_DELIVERY_CLASSES = {
-    "clean-extraction",
-    "approximate-reconstruction",
-    "support-only",
-    "draft-candidate",
-}
-ALLOWED_TEXT_ROLES = {
-    "plain-text",
-    "button-label",
-    "numeric-value",
-    "form-value",
-    "logo-wordmark",
-    "decorative-text",
-    "non-text",
-}
-ALLOWED_TEXT_RENDER_CLASSES = {
-    "editable",
-    "styled-editable",
-    "visual-fidelity-critical",
-    "non-text",
-}
-ALLOWED_SCORE_VALUES = {"unset", "low", "medium", "high"}
-ALLOWED_ROUTING_ACTIONS = {
-    "unset",
-    "extract_asset",
-    "rebuild_downstream",
-    "requires_user_confirmation",
-    "support_only",
-}
-ALLOWED_ROUTING_DECISION_SOURCES = {
-    "unset",
-    "explicit-user-confirmed",
-    "inferred-from-user",
-}
-ALLOWED_OBJECT_TYPES = {
-    "ui-carrier",
-    "ui-glyph",
-    "carrier-glyph-pair",
-    "soft-edge-logo-brand-mark",
-    "outlined-illustration-logo",
-    "flat-support-plate",
-    "grouped-support-plate",
-    "photo-object-matte",
-    "generic-object",
-}
-ALLOWED_QUALITY_TARGET_TIERS = {
-    "structural-valid",
-    "usable-draft",
-    "visual-acceptance-ready",
-}
-ALLOWED_PAUSE_CATEGORIES = {"user-decision", "external-blocker", "formal-approval"}
-ALLOWED_BLOCKING_VALUES = {"true", "false"}
-ALLOWED_DECISION_SOURCES = {
-    "explicit-user-confirmed",
-    "inferred-from-user",
-}
-ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
-ALLOWED_CONFIRMATION_SOURCES = {
-    "explicit-user-confirmed",
-    "inferred-from-user",
-    "unset",
-}
-STAGE_TO_CONFIRMATION_KEY = {
-    "tooling-preflight": "tooling_preflight",
-    "granularity-alignment": "granularity_alignment",
-    "pilot-object-gate": "pilot_object",
-    "approximate-reconstruction-acceptance": "approximate_reconstruction",
-    "approximate-reconstruction-acceptance-gate": "approximate_reconstruction",
-    "reconstruction-acceptance": "approximate_reconstruction",
-    "final-acceptance": "final_acceptance",
-    "final-promotion-acceptance": "candidate_promotion",
-}
-DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION = {
-    "tooling_preflight": "external-blocker",
-    "granularity_alignment": "user-decision",
-    "pilot_object": "formal-approval",
-    "approximate_reconstruction": "formal-approval",
-    "final_acceptance": "formal-approval",
-    "candidate_promotion": "formal-approval",
-}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -236,20 +123,6 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
 
 def has_routing_action_updates(args: argparse.Namespace) -> bool:
     return args.recommended_action is not None or args.final_action is not None
-
-
-def default_confirmation_entry(key: str) -> dict:
-    entry = {
-        "status": "pending",
-        "source": "unset",
-        "pause_category": DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION.get(key, ""),
-        "notes": "",
-        "evidence_ref": "",
-    }
-    if key == "pilot_object":
-        entry["object_id"] = ""
-    return entry
-
 
 def require_pause_category(value: str | None, flag_name: str) -> str:
     if not value:
@@ -504,10 +377,7 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
                 repair_history.append(entry)
         text_semantics = item.setdefault(
             "text_semantics",
-            {
-                "text_role": "non-text",
-                "text_render_class": "non-text",
-            },
+            routing_defaults["text_semantics"],
         )
         if args.text_role is not None:
             text_semantics["text_role"] = args.text_role
@@ -515,12 +385,7 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             text_semantics["text_render_class"] = args.text_render_class
         value_scoring = item.setdefault(
             "value_scoring",
-            {
-                "editability_score": "unset",
-                "visual_complexity_score": "unset",
-                "asset_value_score": "unset",
-                "scoring_reason": "",
-            },
+            routing_defaults["value_scoring"],
         )
         if args.editability_score is not None:
             value_scoring["editability_score"] = args.editability_score
@@ -532,11 +397,7 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             value_scoring["scoring_reason"] = args.scoring_reason
         decision_routing = item.setdefault(
             "decision_routing",
-            {
-                "recommended_action": "unset",
-                "final_action": "unset",
-                "decision_source": "unset",
-            },
+            routing_defaults["decision_routing"],
         )
         if args.recommended_action is not None:
             decision_routing["recommended_action"] = args.recommended_action
@@ -546,10 +407,7 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             decision_routing["decision_source"] = args.routing_decision_source
         rebuild_intent = item.setdefault(
             "rebuild_intent",
-            {
-                "rebuildable_downstream": False,
-                "rebuild_notes": "",
-            },
+            routing_defaults["rebuild_intent"],
         )
         if args.rebuildable_downstream is not None:
             rebuild_intent["rebuildable_downstream"] = parse_bool(

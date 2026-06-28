@@ -6,7 +6,13 @@ from pathlib import Path
 
 from PIL import Image
 
-from init_asset_package import build_object_routing_defaults
+from split_image_assets_contract import (
+    ALLOWED_ASSET_CLASSES,
+    ALLOWED_DELIVERY_CLASSES,
+    ALLOWED_OBJECT_TYPES,
+    ALLOWED_REUSE_STATUSES,
+    default_object_routing_fields,
+)
 
 
 DEFAULT_STAGES = [
@@ -343,16 +349,9 @@ def build_import_plan(
             "repair_history": list(record.get("repair_history", []))
             if isinstance(record.get("repair_history", []), list)
             else [],
-            **build_object_routing_defaults(),
-            "manual_review_flags": [
-                "external asset imported; inspect mask alignment and alpha edges"
-            ],
-            "quality_checks": {
-                "mask_alignment": "needs-review",
-                "alpha_edges": "needs-review",
-                "background_residue": "needs-review",
-                "reuse_readiness": "needs-review",
-            },
+            **default_object_routing_fields(),
+            "manual_review_flags": list(DEFAULT_IMPORTED_MANUAL_REVIEW_FLAGS),
+            "quality_checks": dict(DEFAULT_IMPORTED_QUALITY_CHECKS),
         },
     }
 

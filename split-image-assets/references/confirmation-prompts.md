@@ -23,6 +23,8 @@ Those stop classes map to workflow states like this:
 
 These prompts must not be used for progress-only pauses.
 
+Medium/high-risk semantic divergence is not its own stop class. If it truly requires a human branch choice, it must still use `user-decision`.
+
 ## Normalized Gate Taxonomy
 
 These are the only retained allowed-stop templates:

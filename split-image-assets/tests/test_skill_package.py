@@ -492,6 +492,25 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("text_role", contract_text)
         self.assertIn("recommended_action", contract_text)
 
+    def test_skill_gate_list_matches_allowed_gate_taxonomy(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        for expected in [
+            "Granularity Alignment Gate",
+            "Pilot Object Gate",
+            "Approximate Reconstruction Acceptance Gate",
+            "Final Acceptance Gate",
+            "Candidate Promotion Acceptance Gate",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for retired in [
+            "Carrier/Glyph Split Gate",
+            "Final Promotion Acceptance Gate",
+            "user-decision` first, `formal-approval` when claim escalation is at stake",
+        ]:
+            self.assertNotIn(retired, skill_text)
+
     def test_workflow_doc_maps_gate_taxonomy_to_states(self):
         self._assert_text_in_file(
             ROOT / "references" / "workflow.md",
@@ -507,6 +526,25 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "AwaitingApproval",
             ],
         )
+
+    def test_ui_atomic_split_uses_canonical_routing_outcomes(self):
+        ui_atomic_split = (ROOT / "references" / "ui-atomic-split.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "extract_asset",
+            "rebuild_downstream",
+            "requires_user_confirmation",
+            "support_only",
+        ]:
+            self.assertIn(expected, ui_atomic_split)
+
+        for retired in [
+            "must_extract",
+            "skip_for_now",
+        ]:
+            self.assertNotIn(retired, ui_atomic_split)
 
     def test_confirmation_prompts_are_limited_to_allowed_stop_classes(self):
         prompts = (ROOT / "references" / "confirmation-prompts.md").read_text(
@@ -738,7 +776,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "approximate_reconstruction": {
                         "status": "pending",
                         "source": "unset",
-                        "pause_category": "formal-approval",
+                        "pause_category": "user-decision",
                         "notes": "",
                         "evidence_ref": "",
                     },
@@ -4989,7 +5027,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "approximate-reconstruction-acceptance",
-                    "pause_category": "formal-approval",
+                    "pause_category": "user-decision",
                     "question": "Accept approximate reconstructed candidate after compare?",
                     "recommended_answer": "yes",
                     "recorded_answer": "yes",
@@ -5981,7 +6019,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "reconstruction-acceptance",
-                    "pause_category": "formal-approval",
+                    "pause_category": "user-decision",
                     "question": "Accept approximate reconstructed carrier after candidate review?",
                     "recommended_answer": "yes",
                     "recorded_answer": "yes",

@@ -50,73 +50,6 @@ REQUIRED_OBJECT_QUALITY_CHECKS = {
     "background_residue",
     "reuse_readiness",
 }
-ALLOWED_QA_STATUSES = {"pass", "needs-review", "blocked"}
-ALLOWED_QUALITY_CHECK_STATUSES = {"pass", "needs-review", "blocked", "unknown"}
-ALLOWED_ASSET_CLASSES = {
-    "atomic",
-    "grouped-support",
-    "background-support",
-    "preview-reference",
-    "candidate",
-}
-ALLOWED_REUSE_STATUSES = {
-    "production-ready",
-    "draft-candidate",
-    "support-only",
-    "blocked",
-    "approximate-reconstruction",
-}
-ALLOWED_DELIVERY_CLASSES = {
-    "clean-extraction",
-    "approximate-reconstruction",
-    "support-only",
-    "draft-candidate",
-}
-ALLOWED_TEXT_ROLES = {
-    "plain-text",
-    "button-label",
-    "numeric-value",
-    "form-value",
-    "logo-wordmark",
-    "decorative-text",
-    "non-text",
-}
-ALLOWED_TEXT_RENDER_CLASSES = {
-    "editable",
-    "styled-editable",
-    "visual-fidelity-critical",
-    "non-text",
-}
-ALLOWED_SCORE_VALUES = {"unset", "low", "medium", "high"}
-ALLOWED_ROUTING_ACTIONS = {
-    "unset",
-    "extract_asset",
-    "rebuild_downstream",
-    "requires_user_confirmation",
-    "support_only",
-}
-ALLOWED_ROUTING_DECISION_SOURCES = {
-    "unset",
-    "explicit-user-confirmed",
-    "inferred-from-user",
-}
-ORDINARY_TEXT_ROLES = {"plain-text", "button-label", "numeric-value", "form-value"}
-ALLOWED_OBJECT_TYPES = {
-    "ui-carrier",
-    "ui-glyph",
-    "carrier-glyph-pair",
-    "soft-edge-logo-brand-mark",
-    "outlined-illustration-logo",
-    "flat-support-plate",
-    "grouped-support-plate",
-    "photo-object-matte",
-    "generic-object",
-}
-ALLOWED_QUALITY_TARGET_TIERS = {
-    "structural-valid",
-    "usable-draft",
-    "visual-acceptance-ready",
-}
 CROP_ONLY_MARKERS = {"bbox", "crop", "manual-estimated crop", "manual-estimated-crop"}
 ALLOWED_ROOT_DIRECTORIES = {
     "source",
@@ -129,21 +62,6 @@ ALLOWED_ROOT_DIRECTORIES = {
 ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json"}
 RECONSTRUCTION_MARKERS = {"reconstruct", "reconstructed", "reconstruction", "inpaint", "clean plate"}
 HELPER_ONLY_MARKERS = {"pillow", "opencv", "skimage", "threshold"}
-ALLOWED_GRANULARITY_MODES = {"module", "component", "atomic-layer", "production-editable", "draft"}
-ALLOWED_SCOPE_STRATEGIES = {"high-signal-subset", "full-image-batch", "unset"}
-ALLOWED_TEXT_HANDLING = {"extract-as-image", "rebuild-downstream", "unset"}
-ALLOWED_CARRIER_GLYPH_POLICIES = {"split", "grouped", "conditional", "unset"}
-ALLOWED_BACKGROUND_EXPECTATIONS = {"exact-recovery", "approximate-accepted", "unset"}
-ALLOWED_LAYER_INDEPENDENCE = {"static-reuse", "animation-ready", "unset"}
-ALLOWED_CAPABILITY_CHOICES = {
-    "install-or-activate-tools",
-    "external-professional-outputs",
-    "draft-packaging-only",
-    "production-capable",
-    "unset",
-}
-ALLOWED_PAUSE_CATEGORIES = {"user-decision", "external-blocker", "formal-approval"}
-ALLOWED_BLOCKING_VALUES = {"true", "false"}
 REQUIRED_DECISION_FIELDS = {
     "stage",
     "pause_category",
@@ -161,28 +79,6 @@ REQUIRED_ASSET_SUMMARY_FIELDS = {
     "draft_candidate_assets",
     "support_only_layers",
     "blocked_assets",
-}
-ALLOWED_DECISION_SOURCES = {
-    "explicit-user-confirmed",
-    "inferred-from-user",
-}
-REQUIRED_CONFIRMATION_KEYS = {
-    "tooling_preflight",
-    "granularity_alignment",
-    "pilot_object",
-    "approximate_reconstruction",
-    "final_acceptance",
-    "candidate_promotion",
-}
-ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
-ALLOWED_CONFIRMATION_SOURCES = {
-    "explicit-user-confirmed",
-    "inferred-from-user",
-    "unset",
-}
-NON_DEFAULT_CONFIRMATION_SOURCES = {
-    "explicit-user-confirmed",
-    "inferred-from-user",
 }
 REQUIRED_CANDIDATE_COMPARISON_FIELDS = {
     "comparison_id",
@@ -818,14 +714,18 @@ def validate_objects(
     granularity = metadata.get("granularity", {}) if isinstance(metadata.get("granularity"), dict) else {}
     decision_log = metadata.get("decision_log", []) if isinstance(metadata.get("decision_log"), list) else []
     ui_like_package = is_ui_like_package(metadata)
-    requires_confirmation_ids = {
-        str(item.get("id", "")).strip()
-        for item in objects
-        if isinstance(item, dict)
-        and item.get("decision_routing", {}).get("recommended_action") == "requires_user_confirmation"
-        and isinstance(item.get("id"), str)
-        and item.get("id").strip()
-    }
+    requires_confirmation_ids = set()
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        object_id = item.get("id")
+        if not isinstance(object_id, str) or not object_id.strip():
+            continue
+        decision_routing = item.get("decision_routing", {})
+        if not isinstance(decision_routing, dict):
+            continue
+        if decision_routing.get("recommended_action") == "requires_user_confirmation":
+            requires_confirmation_ids.add(object_id.strip())
     if ui_like_package:
         for field_name in [
             "scope_strategy",

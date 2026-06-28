@@ -42,7 +42,7 @@ Start by recording a semantic layer hierarchy in `metadata.analysis.visual_hiera
 
 ## Default Execution Model
 
-The default execution model is conservative continuous execution. Keep running by default, and stop only when the next branch would change package semantics or when a real hard stop event is present.
+The default execution model is conservative continuous execution. Keep running by default, and stop only when one of the three formal stop classes is justified by the next branch.
 
 Progress updates are commentary, not confirmation gates. Reporting that validation is running, previews are building, or QA evidence is being collected should not pause the workflow.
 
@@ -52,7 +52,7 @@ Progress updates are commentary, not confirmation gates. Reporting that validati
 | --- | --- | --- |
 | Normal progress | analysis, import, preview generation, QA inspection, validation, and metadata updates stay in `Running` | do not stop just to report progress |
 | Hard stop event | keep going only if existing evidence already resolves it | stop for a real user decision, external blocker, or formal approval |
-| Semantic divergence | continue when the next step preserves the already-agreed package semantics | stop when medium/high-risk semantic divergence would change reuse boundaries, text ownership, background acceptance, or production claims |
+| Semantic divergence | continue when the next step preserves the already-agreed package semantics | stop only by using a real `user-decision` event when medium/high-risk semantic divergence would change reuse boundaries, text ownership, background acceptance, or production claims |
 
 Anti-example: “I finished preview generation and validation is next. Should I continue?” This is a progress-only pause and should not happen.
 

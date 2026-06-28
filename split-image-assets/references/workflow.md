@@ -22,6 +22,8 @@ Default rule: continue in `Running` unless the next branch is a real `AwaitingDe
 
 The stop class says why the workflow is allowed to stop. The state says which waiting state the run enters after that stop.
 
+Medium/high-risk semantic divergence is not a fourth class. It is a reason to use `user-decision` when the branch would materially change package semantics and prior instructions do not already settle it.
+
 ## Continue-Versus-Stop Rules
 
 When a stage is in `Running`, keep going and report commentary only.

@@ -27,7 +27,7 @@ Conservative continuous execution is the default execution model. Keep the workf
 
 Progress updates are commentary only. They report what is happening, what changed, and what remains, but they do not ask for confirmation by themselves and they do not pause execution.
 
-Only hard stop events or medium/high-risk semantic divergence may exit the workflow early. Hard stop events are limited to the formal pause categories defined below. Medium/high-risk semantic divergence means the next branch would materially change package semantics, reuse boundaries, or acceptance claims in a way that cannot be justified from existing instructions and evidence.
+Only the three formal stop classes may exit the workflow. Medium/high-risk semantic divergence is not a fourth stop class; it is the reason a branch may require a `user-decision` stop when the next choice would materially change package semantics, reuse boundaries, or acceptance claims and existing instructions do not settle it.
 
 Every exit must include all of the following:
 
@@ -142,7 +142,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
    - only real user decisions, genuine external blockers, and formal approvals may pause execution
    - if prior instructions already settle the branch, record the evidence-backed decision instead of asking again
    - ordinary progress updates remain commentary and do not pause execution
-13. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
+13. Read `references/quick-contract.md` for the short contract view, then `references/asset-package-contract.md` when you need the full package contract. Update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
    - for UI or dense compositions, also record `metadata.granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
    - record per-object `value_scoring`, `decision_routing`, `rebuild_intent`, and `text_semantics`
@@ -255,15 +255,9 @@ Use these formal confirmation gates instead of vague “ask when needed” behav
   - Trigger: complex UI, dashboard, dense composition, or any run where split scope affects reuse boundaries.
   - Ask: “Should this package target component-level, atomic-layer, or production-editable reconstruction?”
   - Recommended answer: `atomic-layer` for reusable UI atoms; `production-editable` when downstream rebuild matters.
-  - Metadata effect: update `metadata.granularity.mode`, `scope_strategy`, `text_handling`, `background_expectation`, `layer_independence`, and record a formal decision-log entry.
-- `Carrier/Glyph Split Gate`
-  - Pause category: `user-decision`
-  - Trigger: icon-in-tile, badge-in-card, glyph-on-plate, or any `carrier-glyph-pair`.
-  - Ask: “Should this carrier and glyph stay grouped, or split into separate reusable layers?”
-  - Recommended answer: `split` unless the grouped layer is explicitly the downstream requirement.
-  - Metadata effect: update `metadata.granularity.carrier_glyph_policy` and record the decision in `metadata.decision_log[]`.
+  - Metadata effect: update `metadata.granularity.mode`, `scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, `layer_independence`, and record a formal decision-log entry.
 - `Approximate Reconstruction Acceptance Gate`
-  - Pause category: `user-decision` first, `formal-approval` when claim escalation is at stake
+  - Pause category: `user-decision`
   - Trigger: background/carrier repair requires inferred pixels or manual redraw.
   - Ask: “Is an approximate reconstructed layer acceptable for this package?”
   - Recommended answer: yes only when the layer can stay `needs-review` or is explicitly accepted for the target use.
@@ -281,12 +275,16 @@ Use these formal confirmation gates instead of vague “ask when needed” behav
   - Ask: “Does the current package meet the requested granularity and cleanliness well enough to mark pass?”
   - Recommended answer: keep `needs-review` unless the current boundaries, cleanliness, and approximations have actually been accepted.
   - Metadata effect: update `metadata.confirmation.final_acceptance` and record a formal decision-log entry.
-- `Final Promotion Acceptance Gate`
+- `Candidate Promotion Acceptance Gate`
   - Pause category: `formal-approval`
   - Trigger: a candidate is about to replace the current asset revision.
   - Ask: “Should candidate X become the current revision for this object?”
   - Recommended answer: yes only after compare evidence or a direct-promotion rationale exists.
   - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.candidate_promotion`, and the QA report.
+
+Carrier/glyph grouping is not a separate gate. It is one decision branch inside `Granularity Alignment Gate`, and should be recorded there rather than creating a fourth decision type.
+
+Medium/high-risk semantic divergence is not a fourth pause class either. It is the reason a branch may require a `user-decision` stop when reuse boundaries, text ownership, approximation truthfulness, or final claims would materially change and prior instructions do not already settle the branch.
 
 When a split decision affects reuse boundaries, editability, animation readiness, localization, approximate reconstruction acceptance, candidate replacement, or final delivery claims, pause and run a one-question confirmation step before continuing that branch.
 
