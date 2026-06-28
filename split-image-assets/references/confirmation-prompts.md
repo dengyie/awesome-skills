@@ -24,6 +24,7 @@ Do not stop and wait for:
 - ordinary tool output summaries
 - internal implementation checkpoints
 - non-blocking uncertainty that does not change package truth
+- ordinary text defaults that already route to `rebuild_downstream`
 
 - `user-decision`
 - `external-blocker`
@@ -111,7 +112,21 @@ Prompt body:
   - `draft-packaging-only`: continues now, but the package must remain draft-honest
 - `What I Will Do After Confirmation`: Record the chosen path in metadata and either continue with production-capable evidence or keep the package in draft-only status.
 
-### `granularity_alignment`
+## Ambiguous Text-Like Preservation
+
+Pause category: `user-decision`
+
+Must ask when: a text-like object has strong visual treatment, high visual complexity, or unclear preservation needs, and the recommended route is `requires_user_confirmation`.
+
+Do not ask when: the object is ordinary editable text, a button label, a numeric value, or a form value that already defaults to `rebuild_downstream`.
+
+Question: Should this text-like object be rebuilt downstream as editable content, or preserved as a visual asset for fidelity?
+
+Recommended answer: Rebuild downstream unless the object is a logo wordmark, decorative text treatment, or another visual-fidelity-critical element.
+
+Decision effect: Record `value_scoring`, `decision_routing.recommended_action`, `decision_routing.final_action`, `decision_routing.decision_source`, and any `rebuild_intent` notes.
+
+## Approximate Background Acceptance
 
 Pause category: `user-decision` first, `formal-approval` before pass-claim escalation
 

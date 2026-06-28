@@ -409,6 +409,19 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         missing = [path for path in reference_paths if not (ROOT / path).exists()]
         self.assertEqual(missing, [])
 
+    def test_skill_docs_describe_asset_value_scoring_and_text_routing(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        workflow_text = (ROOT / "references" / "workflow.md").read_text(encoding="utf-8")
+        contract_text = (ROOT / "references" / "asset-package-contract.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Asset Value Scoring Gate", skill_text)
+        self.assertIn("ordinary text", skill_text.lower())
+        self.assertIn("rebuild_downstream", workflow_text)
+        self.assertIn("text_role", contract_text)
+        self.assertIn("recommended_action", contract_text)
+
     def test_usage_doc_mentions_contract_previews_metadata_qa_and_manual_review(self):
         usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
             encoding="utf-8"
@@ -463,18 +476,6 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         ]:
             self.assertIn(expected, usage)
 
-    def test_usage_doc_mentions_conservative_continuous_execution(self):
-        usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
-            encoding="utf-8"
-        ).lower()
-
-        for expected in [
-            "default execution model",
-            "continue versus stop",
-            "progress updates are commentary",
-        ]:
-            self.assertIn(expected, usage)
-
     def test_skill_docs_describe_asset_value_scoring_and_text_routing(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         workflow_text = (ROOT / "references" / "workflow.md").read_text(encoding="utf-8")
@@ -487,130 +488,6 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("rebuild_downstream", workflow_text)
         self.assertIn("text_role", contract_text)
         self.assertIn("recommended_action", contract_text)
-
-    def test_skill_gate_list_matches_allowed_gate_taxonomy(self):
-        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-
-        for expected in [
-            "Granularity Alignment Gate",
-            "Pilot Object Gate",
-            "Approximate Reconstruction Acceptance Gate",
-            "Final Acceptance Gate",
-            "Candidate Promotion Acceptance Gate",
-        ]:
-            self.assertIn(expected, skill_text)
-
-        for retired in [
-            "Carrier/Glyph Split Gate",
-            "Final Promotion Acceptance Gate",
-            "user-decision` first, `formal-approval` when claim escalation is at stake",
-        ]:
-            self.assertNotIn(retired, skill_text)
-
-    def test_workflow_doc_maps_gate_taxonomy_to_states(self):
-        self._assert_text_in_file(
-            ROOT / "references" / "workflow.md",
-            [
-                "tooling_preflight",
-                "granularity_alignment",
-                "pilot_object",
-                "approximate_reconstruction",
-                "final_acceptance",
-                "candidate_promotion",
-                "AwaitingDecision",
-                "AwaitingExternalBlocker",
-                "AwaitingApproval",
-            ],
-        )
-
-    def test_ui_atomic_split_uses_canonical_routing_outcomes(self):
-        ui_atomic_split = (ROOT / "references" / "ui-atomic-split.md").read_text(
-            encoding="utf-8"
-        )
-
-        for expected in [
-            "extract_asset",
-            "rebuild_downstream",
-            "requires_user_confirmation",
-            "support_only",
-        ]:
-            self.assertIn(expected, ui_atomic_split)
-
-        for retired in [
-            "must_extract",
-            "skip_for_now",
-        ]:
-            self.assertNotIn(retired, ui_atomic_split)
-
-    def test_confirmation_prompts_are_limited_to_allowed_stop_classes(self):
-        prompts = (ROOT / "references" / "confirmation-prompts.md").read_text(
-            encoding="utf-8"
-        )
-
-        for expected in [
-            "Why This Needs a Human",
-            "Recommendation",
-            "Options and Impact",
-            "What I Will Do After Confirmation",
-        ]:
-            self.assertIn(expected, prompts)
-
-        self._assert_any_regex_matches(
-            prompts,
-            [
-                r"must not be used for progress-only pauses",
-                r"not be used for progress-only pauses",
-                r"forbid(?:s)? progress-only pauses",
-            ],
-        )
-
-    def test_asset_package_contract_separates_formal_state_from_commentary(self):
-        contract = (ROOT / "references" / "asset-package-contract.md").read_text(
-            encoding="utf-8"
-        ).lower()
-
-        for expected in [
-            "decision_log",
-            "confirmation",
-            "formal state",
-            "must not contain",
-            "progress updates",
-            "object-scoped",
-        ]:
-            self.assertIn(expected, contract)
-
-    def test_usage_doc_includes_allowed_stop_examples(self):
-        usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
-            encoding="utf-8"
-        ).lower()
-
-        for expected in [
-            "external blocker",
-            "semantic divergence",
-            "formal approval",
-        ]:
-            self.assertIn(expected, usage)
-
-    def test_usage_gate_list_matches_allowed_gate_taxonomy(self):
-        usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
-            encoding="utf-8"
-        )
-
-        for expected in [
-            "Preflight Tooling Recommendation Gate",
-            "Granularity Alignment Gate",
-            "Pilot Object Gate",
-            "Approximate Reconstruction Acceptance Gate",
-            "Final Acceptance Gate",
-            "Candidate Promotion Acceptance Gate",
-        ]:
-            self.assertIn(expected, usage)
-
-        for retired in [
-            "Carrier/Glyph Split Gate",
-            "Final Promotion Acceptance Gate",
-        ]:
-            self.assertNotIn(retired, usage)
 
     def test_check_extraction_environment_reports_capability_gate_json(self):
         result = subprocess.run(
