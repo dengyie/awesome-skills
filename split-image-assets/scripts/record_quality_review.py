@@ -42,6 +42,91 @@ QUALITY_CHECK_ARGS = {
     "background_residue": "background_residue",
     "reuse_readiness": "reuse_readiness",
 }
+ALLOWED_GRANULARITY_MODES = {
+    "module",
+    "component",
+    "atomic-layer",
+    "production-editable",
+    "draft",
+}
+ALLOWED_SCOPE_STRATEGIES = {"high-signal-subset", "full-image-batch", "unset"}
+ALLOWED_TEXT_HANDLING = {"extract-as-image", "rebuild-downstream", "unset"}
+ALLOWED_CARRIER_GLYPH_POLICIES = {"split", "grouped", "conditional", "unset"}
+ALLOWED_BACKGROUND_EXPECTATIONS = {"exact-recovery", "approximate-accepted", "unset"}
+ALLOWED_LAYER_INDEPENDENCE = {"static-reuse", "animation-ready", "unset"}
+ALLOWED_CAPABILITY_CHOICES = {
+    "install-or-activate-tools",
+    "external-professional-outputs",
+    "draft-packaging-only",
+    "production-capable",
+    "unset",
+}
+ALLOWED_ASSET_CLASSES = {
+    "atomic",
+    "grouped-support",
+    "background-support",
+    "preview-reference",
+    "candidate",
+}
+ALLOWED_REUSE_STATUSES = {
+    "production-ready",
+    "draft-candidate",
+    "support-only",
+    "blocked",
+    "approximate-reconstruction",
+}
+ALLOWED_DELIVERY_CLASSES = {
+    "clean-extraction",
+    "approximate-reconstruction",
+    "support-only",
+    "draft-candidate",
+}
+ALLOWED_OBJECT_TYPES = {
+    "ui-carrier",
+    "ui-glyph",
+    "carrier-glyph-pair",
+    "soft-edge-logo-brand-mark",
+    "outlined-illustration-logo",
+    "flat-support-plate",
+    "grouped-support-plate",
+    "photo-object-matte",
+    "generic-object",
+}
+ALLOWED_QUALITY_TARGET_TIERS = {
+    "structural-valid",
+    "usable-draft",
+    "visual-acceptance-ready",
+}
+ALLOWED_PAUSE_CATEGORIES = {"user-decision", "external-blocker", "formal-approval"}
+ALLOWED_BLOCKING_VALUES = {"true", "false"}
+ALLOWED_DECISION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+}
+ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
+ALLOWED_CONFIRMATION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+    "unset",
+}
+STAGE_TO_CONFIRMATION_KEY = {
+    "tooling-preflight": "tooling_preflight",
+    "granularity-alignment": "granularity_alignment",
+    "pilot-object-gate": "pilot_object",
+    "approximate-reconstruction-acceptance": "approximate_reconstruction",
+    "approximate-reconstruction-acceptance-gate": "approximate_reconstruction",
+    "reconstruction-acceptance": "approximate_reconstruction",
+    "final-acceptance": "final_acceptance",
+    "final-promotion-acceptance": "candidate_promotion",
+}
+DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION = {
+    "tooling_preflight": "external-blocker",
+    "granularity_alignment": "user-decision",
+    "pilot_object": "formal-approval",
+    "approximate_reconstruction": "formal-approval",
+    "final_acceptance": "formal-approval",
+    "candidate_promotion": "formal-approval",
+}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -121,8 +206,18 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
     ) or bool(args.repair_history_entry)
 
 
-def has_routing_action_updates(args: argparse.Namespace) -> bool:
-    return args.recommended_action is not None or args.final_action is not None
+def default_confirmation_entry(key: str) -> dict:
+    entry = {
+        "status": "pending",
+        "source": "unset",
+        "pause_category": DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION.get(key, ""),
+        "notes": "",
+        "evidence_ref": "",
+    }
+    if key == "pilot_object":
+        entry["object_id"] = ""
+    return entry
+
 
 def require_pause_category(value: str | None, flag_name: str) -> str:
     if not value:
@@ -238,20 +333,19 @@ def update_decision_log(metadata: dict, args: argparse.Namespace) -> None:
     decision_log = metadata.setdefault("decision_log", [])
     if not isinstance(decision_log, list):
         raise ValueError("metadata.decision_log must be a list before recording decisions")
-    entry = {
-        "stage": args.decision_stage,
-        "pause_category": pause_category,
-        "question": args.decision_question,
-        "recommended_answer": args.decision_recommended,
-        "recorded_answer": args.decision_answer,
-        "decision_effect": args.decision_effect,
-        "decision_source": decision_source,
-        "evidence_ref": args.evidence_ref or "",
-        "blocking": blocking,
-    }
-    if args.object_id and len(args.object_id) == 1:
-        entry["object_id"] = args.object_id[0]
-    decision_log.append(entry)
+    decision_log.append(
+        {
+            "stage": args.decision_stage,
+            "pause_category": pause_category,
+            "question": args.decision_question,
+            "recommended_answer": args.decision_recommended,
+            "recorded_answer": args.decision_answer,
+            "decision_effect": args.decision_effect,
+            "decision_source": decision_source,
+            "evidence_ref": args.evidence_ref or "",
+            "blocking": blocking,
+        }
+    )
 
 
 def update_confirmation(metadata: dict, args: argparse.Namespace) -> None:

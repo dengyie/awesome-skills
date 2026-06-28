@@ -109,9 +109,8 @@ Treat these as formal gates:
 - `Pilot Object Gate`
 - `Approximate Reconstruction Acceptance Gate`
 - `Final Acceptance Gate`
+- `Final Promotion Acceptance Gate`
 - `Candidate Promotion Acceptance Gate`
-
-Carrier/glyph disagreement is not a separate formal gate anymore. It is a decision branch inside `Granularity Alignment Gate`, and should reuse that gate's state, recommendation pattern, and metadata surface.
 
 Each gate should ask one decisive question, offer a recommended answer, and update metadata in a durable way rather than leaving the choice only in chat.
 

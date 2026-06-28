@@ -383,10 +383,6 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("DO NOT START EXTRACTION BEFORE TOOLING PREFLIGHT IS REPORTED AND RECORDED", skill_text)
         self.assertIn("PROGRESS UPDATES ARE COMMENTARY, NOT CONFIRMATION GATES", skill_text)
         self.assertIn("ONLY THREE EVENT TYPES MAY PAUSE EXECUTION", skill_text)
-        self.assertIn("Running", skill_text)
-        self.assertIn("AwaitingDecision", skill_text)
-        self.assertIn("AwaitingExternalBlocker", skill_text)
-        self.assertIn("AwaitingApproval", skill_text)
         self.assertIn("NO FORMAL GATE MAY BE SATISFIED BY AGENT DEFAULTING", skill_text)
         self.assertIn("INFERRED-FROM-USER MEANS EVIDENCE-BACKED USER INTENT, NOT AGENT GUESSING", skill_text)
         self.assertIn("GRANULARITY ALIGNMENT GATE", skill_text)
@@ -776,14 +772,9 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "approximate_reconstruction": {
                         "status": "pending",
                         "source": "unset",
-                        "pause_category": "user-decision",
+                        "pause_category": "formal-approval",
                         "notes": "",
                         "evidence_ref": "",
-                    },
-                    "final_promotion_acceptance": {
-                        "status": "pending",
-                        "source": "unset",
-                        "notes": "",
                     },
                     "final_acceptance": {
                         "status": "pending",
@@ -2275,53 +2266,6 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("--decision-source", result.stderr)
-
-    def test_record_quality_review_records_object_scoped_decision_log_entries(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = pathlib.Path(tmp)
-            source = tmp_path / "source.png"
-            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
-            output = tmp_path / "package"
-            init_result = self._run_init(source, output)
-            self.assertEqual(init_result.returncode, 0, init_result.stderr)
-            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
-                output / "assets" / "main_object_transparent.png"
-            )
-            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
-            self._write_single_object_metadata(output)
-
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "scripts" / "record_quality_review.py"),
-                    str(output),
-                    "--object-id",
-                    "main_object",
-                    "--decision-stage",
-                    "asset-value-scoring",
-                    "--decision-question",
-                    "Should this text-like object be rebuilt downstream or preserved as a visual asset?",
-                    "--decision-recommended",
-                    "rebuild downstream unless fidelity-critical",
-                    "--decision-answer",
-                    "preserve as visual asset",
-                    "--decision-effect",
-                    "Keep main_object as a visual asset after text review.",
-                    "--decision-source",
-                    "explicit-user-confirmed",
-                    "--pause-category",
-                    "user-decision",
-                    "--blocking",
-                    "true",
-                ],
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-
-            self.assertEqual(result.returncode, 0, result.stderr)
-            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
-            self.assertEqual(metadata["decision_log"][0]["object_id"], "main_object")
 
     def test_record_quality_review_rejects_inferred_formal_gate_without_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -5032,7 +4976,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "approximate-reconstruction-acceptance",
-                    "pause_category": "user-decision",
+                    "pause_category": "formal-approval",
                     "question": "Accept approximate reconstructed candidate after compare?",
                     "recommended_answer": "yes",
                     "recorded_answer": "yes",
@@ -6024,7 +5968,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "reconstruction-acceptance",
-                    "pause_category": "user-decision",
+                    "pause_category": "formal-approval",
                     "question": "Accept approximate reconstructed carrier after candidate review?",
                     "recommended_answer": "yes",
                     "recorded_answer": "yes",

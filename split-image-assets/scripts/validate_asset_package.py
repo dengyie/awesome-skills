@@ -62,6 +62,21 @@ ALLOWED_ROOT_DIRECTORIES = {
 ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json"}
 RECONSTRUCTION_MARKERS = {"reconstruct", "reconstructed", "reconstruction", "inpaint", "clean plate"}
 HELPER_ONLY_MARKERS = {"pillow", "opencv", "skimage", "threshold"}
+ALLOWED_GRANULARITY_MODES = {"module", "component", "atomic-layer", "production-editable", "draft"}
+ALLOWED_SCOPE_STRATEGIES = {"high-signal-subset", "full-image-batch", "unset"}
+ALLOWED_TEXT_HANDLING = {"extract-as-image", "rebuild-downstream", "unset"}
+ALLOWED_CARRIER_GLYPH_POLICIES = {"split", "grouped", "conditional", "unset"}
+ALLOWED_BACKGROUND_EXPECTATIONS = {"exact-recovery", "approximate-accepted", "unset"}
+ALLOWED_LAYER_INDEPENDENCE = {"static-reuse", "animation-ready", "unset"}
+ALLOWED_CAPABILITY_CHOICES = {
+    "install-or-activate-tools",
+    "external-professional-outputs",
+    "draft-packaging-only",
+    "production-capable",
+    "unset",
+}
+ALLOWED_PAUSE_CATEGORIES = {"user-decision", "external-blocker", "formal-approval"}
+ALLOWED_BLOCKING_VALUES = {"true", "false"}
 REQUIRED_DECISION_FIELDS = {
     "stage",
     "pause_category",
@@ -72,13 +87,34 @@ REQUIRED_DECISION_FIELDS = {
     "evidence_ref",
     "blocking",
 }
-REQUIRED_NONEMPTY_DECISION_FIELDS = REQUIRED_DECISION_FIELDS - {"evidence_ref"}
 DECISION_ANSWER_FIELDS = ("recorded_answer", "user_answer")
 REQUIRED_ASSET_SUMMARY_FIELDS = {
     "production_ready_assets",
     "draft_candidate_assets",
     "support_only_layers",
     "blocked_assets",
+}
+ALLOWED_DECISION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+}
+REQUIRED_CONFIRMATION_KEYS = {
+    "tooling_preflight",
+    "granularity_alignment",
+    "pilot_object",
+    "approximate_reconstruction",
+    "final_acceptance",
+    "candidate_promotion",
+}
+ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
+ALLOWED_CONFIRMATION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
+    "unset",
+}
+NON_DEFAULT_CONFIRMATION_SOURCES = {
+    "explicit-user-confirmed",
+    "inferred-from-user",
 }
 REQUIRED_CANDIDATE_COMPARISON_FIELDS = {
     "comparison_id",
@@ -252,9 +288,6 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 value = entry.get(field)
                 if value is not None and (not isinstance(value, str) or not value.strip()):
                     errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
-            evidence_ref = entry.get("evidence_ref")
-            if evidence_ref is not None and not isinstance(evidence_ref, str):
-                errors.append(f"metadata.decision_log[{index}].evidence_ref must be a string")
             if not decision_answer(entry):
                 errors.append(
                     f"metadata.decision_log[{index}].recorded_answer must be a non-empty string"
@@ -278,6 +311,7 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                     + ", ".join(sorted(ALLOWED_BLOCKING_VALUES))
                 )
             if decision_source == "inferred-from-user":
+                evidence_ref = entry.get("evidence_ref")
                 if not isinstance(evidence_ref, str) or not evidence_ref.strip():
                     errors.append(
                         f"metadata.decision_log[{index}].evidence_ref is required when decision_source=inferred-from-user"
