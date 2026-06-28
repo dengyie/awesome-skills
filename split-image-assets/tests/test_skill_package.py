@@ -15,6 +15,17 @@ REPO = ROOT.parent
 
 
 class SplitImageAssetsPackageTests(unittest.TestCase):
+    def _assert_text_in_file(self, relative_path: pathlib.Path, expected_fragments: list[str]):
+        text = relative_path.read_text(encoding="utf-8")
+        for fragment in expected_fragments:
+            self.assertIn(fragment, text)
+
+    def _assert_any_regex_matches(self, text: str, patterns: list[str]):
+        for pattern in patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                return
+        self.fail(f"none of the expected patterns matched: {patterns}")
+
     def _load_check_environment_module(self):
         module_path = ROOT / "scripts" / "check_extraction_environment.py"
         spec = importlib.util.spec_from_file_location("check_extraction_environment", module_path)
@@ -337,19 +348,6 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         missing = [path for path in reference_paths if not (ROOT / path).exists()]
         self.assertEqual(missing, [])
 
-    def test_skill_docs_describe_asset_value_scoring_and_text_routing(self):
-        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-        workflow_text = (ROOT / "references" / "workflow.md").read_text(encoding="utf-8")
-        contract_text = (ROOT / "references" / "asset-package-contract.md").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertIn("Asset Value Scoring Gate", skill_text)
-        self.assertIn("ordinary text", skill_text.lower())
-        self.assertIn("rebuild_downstream", workflow_text)
-        self.assertIn("text_role", contract_text)
-        self.assertIn("recommended_action", contract_text)
-
     def test_usage_doc_mentions_contract_previews_metadata_qa_and_manual_review(self):
         usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
             encoding="utf-8"
@@ -428,6 +426,44 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("rebuild_downstream", workflow_text)
         self.assertIn("text_role", contract_text)
         self.assertIn("recommended_action", contract_text)
+
+    def test_workflow_doc_maps_gate_taxonomy_to_states(self):
+        self._assert_text_in_file(
+            ROOT / "references" / "workflow.md",
+            [
+                "tooling_preflight",
+                "granularity_alignment",
+                "pilot_object",
+                "approximate_reconstruction",
+                "final_acceptance",
+                "candidate_promotion",
+                "AwaitingDecision",
+                "AwaitingExternalBlocker",
+                "AwaitingApproval",
+            ],
+        )
+
+    def test_confirmation_prompts_are_limited_to_allowed_stop_classes(self):
+        prompts = (ROOT / "references" / "confirmation-prompts.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "Why This Needs a Human",
+            "Recommendation",
+            "Options and Impact",
+            "What I Will Do After Confirmation",
+        ]:
+            self.assertIn(expected, prompts)
+
+        self._assert_any_regex_matches(
+            prompts,
+            [
+                r"must not be used for progress-only pauses",
+                r"not be used for progress-only pauses",
+                r"forbid(?:s)? progress-only pauses",
+            ],
+        )
 
     def test_check_extraction_environment_reports_capability_gate_json(self):
         result = subprocess.run(

@@ -1,144 +1,185 @@
 # Confirmation Prompts
 
-Use these prompts when a split decision affects reuse boundaries, editability, animation readiness, localization, approximate reconstruction acceptance, or final delivery claims.
-
-Ask one question at a time. Include the recommended answer. Resolve that branch before moving on. If the source image, metadata, or prior user instructions already answer the question, record the decision instead of asking again.
-
-These prompts are workflow gates, not optional suggestions. Record each gate with a confirmation source:
-
-- `explicit-user-confirmed`
-- `inferred-from-user`
-
-`inferred-from-user` means the answer is already supported by durable user evidence. It does not mean the agent guessed.
-
-Progress updates are commentary, not confirmation gates.
-
-## What Is Not A Confirmation Prompt
-
-Do not stop and wait for:
-
-- routine progress updates
-- ordinary tool output summaries
-- internal implementation checkpoints
-- non-blocking uncertainty that does not change package truth
-- ordinary text defaults that already route to `rebuild_downstream`
-
-## Tooling Preflight Confirmation
-
-Pause category: `external-blocker` by default
-
-Must ask when: tools or professional upstream outputs are still missing and no prior user-backed path already resolves the branch.
-
-May infer when: the user already approved `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only` for the current run and that evidence can be cited.
-
-Question: Production-quality asset splitting needs professional upstream tools. This environment is missing [missing capabilities/tools]. Should I pause so you can install/activate them, use external segmented assets/masks, or continue as draft-packaging-only?
-
-Recommended answer: For production-quality extraction, install or provide SAM2/Grounded-SAM plus rembg/BiRefNet/RMBG-style matting. Continue draft-packaging-only only when a reviewable package is enough and `qa.status` can remain `needs-review`.
-
-Decision effect: Record the choice in `metadata.capability` and `metadata.decision_log[]`, set capability status to `production-capable` or `draft-packaging-only`, and do not claim production extraction when the user chooses draft-only.
-
-## Granularity Confirmation
-
-Pause category: `user-decision`
-
-Must ask when: different answers would materially change asset boundaries, text handling, carrier/glyph behavior, or layer independence.
-
-May infer when: existing user instructions or approved metadata already settle those branches.
-
-Question: Should this package target module, component, atomic-layer, or production-editable reconstruction granularity?
-
-Recommended answer: Use `atomic-layer` for UI assets when reuse, animation, or clean icon separation matters; use `component` only for quick draft review.
-
-Decision effect: Record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, `metadata.granularity.notes`, and a `metadata.decision_log` entry.
-
-## Pilot Object Gate
-
-Pause category: `formal-approval`
-
-Must ask when: dense UI or approximate reconstruction work should not widen without a pilot signoff.
-
-May infer when: a prior accepted policy explicitly marks the current case as `not-required`.
-
-Question: Before I continue with the broader batch, should I use this representative object as a pilot and wait for your confirmation on granularity and cleanliness?
-
-Recommended answer: Yes for complex UI, dashboard, badge/tile/glyph, or approximate reconstruction work.
-
-Decision effect: Record `metadata.confirmation.pilot_object` with the chosen object id and stop wider batch extraction until it is `confirmed` or explicitly `not-required`.
-
-## Carrier And Glyph Split
-
-Pause category: `user-decision`
-
-Question: Should this icon or badge be split into a carrier tile and foreground glyph?
-
-Recommended answer: Yes, when the carrier shape and glyph have different reuse, recolor, animation, or cleanup needs.
-
-Decision effect: Create separate carrier and glyph object records, masks, previews, and quality checks.
-
-## Text Or UI Chrome
-
-Pause category: `user-decision`
-
-Question: Should text, labels, buttons, or UI chrome be extracted as image layers or rebuilt downstream as live UI/text?
-
-Recommended answer: Rebuild text and labels downstream when localization, editing, or crisp rendering matters.
-
-Decision effect: Record whether text is excluded from image assets, extracted as image layers, or represented as grouped reference layers.
-
-## Ambiguous Text-Like Preservation
-
-Pause category: `user-decision`
-
-Must ask when: a text-like object has strong visual treatment, high visual complexity, or unclear preservation needs, and the recommended route is `requires_user_confirmation`.
-
-Do not ask when: the object is ordinary editable text, a button label, a numeric value, or a form value that already defaults to `rebuild_downstream`.
-
-Question: Should this text-like object be rebuilt downstream as editable content, or preserved as a visual asset for fidelity?
-
-Recommended answer: Rebuild downstream unless the object is a logo wordmark, decorative text treatment, or another visual-fidelity-critical element.
-
-Decision effect: Record `value_scoring`, `decision_routing.recommended_action`, `decision_routing.final_action`, `decision_routing.decision_source`, and any `rebuild_intent` notes.
-
-## Approximate Background Acceptance
-
-Pause category: `user-decision` first, `formal-approval` before pass-claim escalation
-
-Question: Is an approximate reconstructed background or support plate acceptable for this package?
-
-Recommended answer: Accept approximate support plates only as `needs-review` unless the user explicitly accepts them for the target use.
-
-Decision effect: Record `approximate: true`, `reconstruction_provenance`, quality checks, and any manual confirmation.
-
-## Low-Confidence Mask Handling
-
-Pause category: `user-decision` only when the answer changes deliverable truth; otherwise continue and report commentary.
-
-Question: Should this low-confidence mask be retried with another upstream tool, sent to manual review, or retained as draft-only evidence?
-
-Recommended answer: Retry with a stronger upstream tool when the object is central; send to manual review when the boundary is subjective; retain draft-only for non-critical evidence.
-
-Decision effect: Keep `qa.status` as `needs-review` or `blocked` until the selected path is complete.
-
-## Final User Acceptance
-
-Pause category: `formal-approval`
-
-Question: Does the current package meet the requested granularity and cleanliness well enough to mark `qa.status=pass`?
-
-Recommended answer: Keep `needs-review` unless the user has explicitly accepted the current layer boundaries, cleanliness, and reconstructed regions.
-
-Decision effect: Only promote to `pass` after required quality checks pass and the acceptance decision is recorded.
-
-## Candidate Promotion Acceptance
-
-Pause category: `formal-approval`
-
-Must ask when: a candidate asset is about to replace the current revision and no prior approved promotion rule covers the replacement.
-
-May infer when: a prior accepted policy explicitly authorizes promotion under the same compare/direct-promotion conditions and that evidence can be cited.
-
-Question: Should candidate X replace the current revision for this object?
-
-Recommended answer: Yes only after compare evidence or a direct-promotion rationale exists.
-
-Decision effect: Record `metadata.confirmation.candidate_promotion`, update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, and keep the selection rationale durable.
+Use this file as the allowed-stop template library for split-image-assets.
+
+Every stop prompt must follow the grill-me-style exit contract:
+
+- `Why This Needs a Human`
+- `Recommendation`
+- `Options and Impact`
+- `What I Will Do After Confirmation`
+
+Only three stop classes are allowed:
+
+- `AwaitingDecision`
+- `AwaitingExternalBlocker`
+- `AwaitingApproval`
+
+These prompts must not be used for progress-only pauses.
+
+## Explicit Prohibitions
+
+- Forbid progress-only pauses.
+- Forbid stage-complete pauses.
+- Forbid multiple unrelated questions in one stop.
+- Forbid asks already resolved by prior user instructions or recorded metadata.
+
+If the workflow only needs to report status, keep running and send commentary instead of using a stop prompt.
+
+## Prompt Shape
+
+Each retained prompt should include:
+
+- event class
+- state
+- stop condition
+- recommended answer style
+- effect on metadata
+
+## Retained Prompt Templates
+
+### `tooling_preflight`
+
+- Event class: `external-blocker`
+- State: `AwaitingExternalBlocker`
+- Stop condition:
+  - the preflight report shows missing tooling or missing professional upstream outputs, and no prior user-backed path already resolves the branch
+- Recommended answer style:
+  - choose one explicit path: `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only`
+- Effect on metadata:
+  - update `metadata.capability`
+  - update `metadata.confirmation.tooling_preflight`
+  - append `metadata.decision_log[]`
+
+Prompt body:
+
+- `Why This Needs a Human`: Production-capable extraction is blocked until the run path is chosen.
+- `Recommendation`: Prefer `install-or-activate-tools` or `external-professional-outputs` when the goal is production reuse.
+- `Options and Impact`:
+  - `install-or-activate-tools`: highest quality path, but waits on environment changes
+  - `external-professional-outputs`: keeps the workflow moving if reliable upstream assets exist
+  - `draft-packaging-only`: continues now, but the package must remain draft-honest
+- `What I Will Do After Confirmation`: Record the chosen path in metadata and either continue with production-capable evidence or keep the package in draft-only status.
+
+### `granularity_alignment`
+
+- Event class: `user-decision`
+- State: `AwaitingDecision`
+- Stop condition:
+  - the split boundary, text handling, carrier/glyph policy, or layer independence would materially change reuse semantics and existing instructions do not already decide it
+- Recommended answer style:
+  - choose one durable granularity policy such as `component`, `atomic-layer`, or `production-editable`, plus any required text/background preferences
+- Effect on metadata:
+  - update `metadata.granularity.mode`
+  - update `metadata.granularity.scope_strategy`
+  - update `metadata.granularity.text_handling`
+  - update `metadata.granularity.carrier_glyph_policy`
+  - update `metadata.granularity.background_expectation`
+  - update `metadata.granularity.layer_independence`
+  - update `metadata.confirmation.granularity_alignment`
+  - append `metadata.decision_log[]`
+
+Prompt body:
+
+- `Why This Needs a Human`: Different split choices would produce materially different asset boundaries and downstream editing behavior.
+- `Recommendation`: Prefer `atomic-layer` for reusable UI assets and `production-editable` when downstream rebuild matters.
+- `Options and Impact`:
+  - `component`: faster draft review, less downstream flexibility
+  - `atomic-layer`: better reuse, recolor, animation, and inspection
+  - `production-editable`: strongest downstream rebuild path, more scope up front
+- `What I Will Do After Confirmation`: Record the chosen split policy and continue extraction without reopening the same branch later.
+
+### `pilot_object`
+
+- Event class: `formal-approval`
+- State: `AwaitingApproval`
+- Stop condition:
+  - a dense or high-risk composition should not widen beyond the pilot until the representative object is accepted
+- Recommended answer style:
+  - answer with `approved`, `revise-and-retry`, or `not-required`
+- Effect on metadata:
+  - update `metadata.confirmation.pilot_object`
+  - append `metadata.decision_log[]` when the pilot materially changes batch scope
+
+Prompt body:
+
+- `Why This Needs a Human`: Widening the batch before pilot approval risks scaling the wrong split or cleanup standard.
+- `Recommendation`: Approve the pilot only when its granularity and cleanliness match the target package quality.
+- `Options and Impact`:
+  - `approved`: continue the wider batch with the pilot as the reference standard
+  - `revise-and-retry`: hold the batch, improve the pilot, and recheck
+  - `not-required`: continue without a pilot stop because the composition or prior policy makes it unnecessary
+- `What I Will Do After Confirmation`: Either proceed with the broader batch, keep work focused on the pilot, or record that no pilot gate is needed.
+
+### `approximate_reconstruction`
+
+- Event class: `user-decision`
+- State: `AwaitingDecision`
+- Stop condition:
+  - exact hidden pixels are unavailable and accepting approximation would change truthfulness or downstream use
+- Recommended answer style:
+  - answer explicitly whether approximation is acceptable for the named layer and intended use
+- Effect on metadata:
+  - update `metadata.confirmation.approximate_reconstruction`
+  - record `delivery_class=approximate-reconstruction`
+  - record `reconstruction_provenance`
+  - record `active_reconstruction_method`
+  - append `metadata.decision_log[]`
+
+Prompt body:
+
+- `Why This Needs a Human`: The workflow can continue, but it cannot honestly treat an inferred reconstruction as exact without user acceptance.
+- `Recommendation`: Accept approximation only when the package can remain honest about the layer being approximate.
+- `Options and Impact`:
+  - `accept approximation`: continue with an approximate layer that may remain `needs-review`
+  - `reject approximation`: keep the layer blocked or draft-only until a better path exists
+- `What I Will Do After Confirmation`: Either record the approximate path and continue, or keep the package honest by leaving that layer unpromoted.
+
+### `final_acceptance`
+
+- Event class: `formal-approval`
+- State: `AwaitingApproval`
+- Stop condition:
+  - the package has enough evidence for a final pass claim, but formal user acceptance is still required
+- Recommended answer style:
+  - answer with `accept`, `keep-needs-review`, or a short correction directive tied to the current package state
+- Effect on metadata:
+  - update `metadata.confirmation.final_acceptance`
+  - append `metadata.decision_log[]`
+  - allow or deny promotion to final `qa.status=pass`
+
+Prompt body:
+
+- `Why This Needs a Human`: Marking the package as accepted changes the final delivery claim, not just the workflow status.
+- `Recommendation`: Keep `needs-review` unless the current granularity, cleanliness, and reconstructed regions are acceptable as delivered.
+- `Options and Impact`:
+  - `accept`: allows final acceptance metadata and a pass claim if all other evidence is green
+  - `keep-needs-review`: preserves an honest draft or review-required outcome
+  - `correction directive`: identifies what must change before another acceptance request
+- `What I Will Do After Confirmation`: Either finalize the package state or continue with the recorded review outcome.
+
+### `candidate_promotion`
+
+- Event class: `formal-approval`
+- State: `AwaitingApproval`
+- Stop condition:
+  - a candidate asset is about to replace the current revision and no prior approved rule already covers that promotion
+- Recommended answer style:
+  - answer with `promote <candidate-id>`, `keep current`, or a comparison-based correction note
+- Effect on metadata:
+  - update `metadata.confirmation.candidate_promotion`
+  - update `selected_candidate_id`
+  - update `current_asset_revision`
+  - update `repair_history[]`
+  - update `candidate_comparisons[]`
+  - append `metadata.decision_log[]`
+
+Prompt body:
+
+- `Why This Needs a Human`: Promotion changes the current package-owned revision and should not happen implicitly.
+- `Recommendation`: Promote only when compare evidence or a direct-promotion rationale supports the replacement.
+- `Options and Impact`:
+  - `promote <candidate-id>`: replaces the current revision and records the selection rationale
+  - `keep current`: leaves the existing revision in place and preserves the candidate as evidence only
+  - `correction note`: requests another candidate pass before any promotion
+- `What I Will Do After Confirmation`: Either promote the selected candidate with durable metadata or keep the current revision unchanged.
