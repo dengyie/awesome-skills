@@ -1,173 +1,98 @@
 # Awesome Skills 中文说明
 
-这是 `awesome-skills` 仓库的中文总览页。
+这是 `awesome-skills` 的中文入口页，目标是帮你先回答三件事：
 
-仓库当前不是单一 skill，而是一个多 skill 集合，重点提供面向真实项目交付的 Codex 工作流能力。
+- 这个仓库里有什么
+- 我该先用哪个 skill
+- 接下来该去看哪篇文档
 
-当前包含 6 个已交付 skill：
+## 仓库定位
 
-- `best-project-memory`：项目记忆、进度恢复、决策记录、交接延续
-- `evidence-driven-bugfix`：证据驱动的问题修复工作流
-- `little-lighthouse-blog-publisher`：Little Lighthouse 博客文章包发布、草稿、校验与修复
-- `production-code-quality-review`：面向生产环境的代码审查与合并前把关
-- `split-image-assets`：图片资产拆解、透明 PNG、mask、预览与 QA 工作流
-- `zero-to-website-design`：从模糊需求到设计落地的网站工作流
+这个仓库不是单一 skill，而是一组可复用的 Codex skill 包，重点面向证据优先、生产导向的真实项目工作流。
 
-英文版 `README.md` 仍然是默认入口；本页用于帮助中文使用者快速了解仓库结构、技能用途和后续阅读路径。
+当前包含 6 个主要 skill：
 
-## 仓库包含哪些 Skill
+- `best-project-memory`
+- `evidence-driven-bugfix`
+- `little-lighthouse-blog-publisher`
+- `production-code-quality-review`
+- `split-image-assets`
+- `zero-to-website-design`
 
-### `best-project-memory`
+英文 GitHub 首页仍然是默认入口：[`README.md`](../../README.md)。
 
-这个 skill 用于让 Codex 在项目任务开始前先恢复上下文，并把关键信息持续写回仓库内的记忆文件，例如当前目标、阶段状态、待办项、会话摘要和关键决策。
+## 选择 Skill
 
-适合场景：
+| Skill | 何时使用 | 最适合处理 | 文档 |
+| --- | --- | --- | --- |
+| `best-project-memory` | 需要跨会话保存项目状态 | 上下文恢复、决策记录、TODO 和交接 | [Guide](../usage/best-project-memory.md) |
+| `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
+| `little-lighthouse-blog-publisher` | 需要发布 Little Lighthouse 博客内容 | 文章包创建、元数据确认、发布校验 | [Guide](../usage/little-lighthouse-blog-publisher.md) |
+| `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
+| `split-image-assets` | 需要把单张图拆成可复用资产包 | mask、透明图层、预览、metadata、QA | [Guide](../usage/split-image-assets.md) |
+| `zero-to-website-design` | 需要从模糊网站需求走到交付 | 视觉方向、路由规划、实现与 QA | [Guide](../usage/zero-to-website-design.md) |
 
-- 跨会话延续项目工作
-- 在仓库里保留可追溯的项目状态
-- 维护长期 TODO 与里程碑
-- 输出简洁的交接摘要
-- 作为其他 skill 的连续性底座
+如果你还不确定该选哪个，优先看 [Skill Matrix](../usage/skill-matrix.md)。
 
-入口文件：
+## 推荐起点
 
-```text
-best-project-memory/SKILL.md
+- 不知道该选哪个 skill： [Skill Matrix](../usage/skill-matrix.md)
+- 想先快速安装一个 skill： [中文快速开始](quickstart.zh-CN.md)
+- 想看英文原版首页： [`README.md`](../../README.md)
+- 想先看仓库常用路径： [黄金路径](golden-path.zh-CN.md)
+
+## 安装
+
+当前 OpenAI Codex 文档常见安装路径：
+
+- 用户级：`$HOME/.agents/skills`
+- 仓库级：`.agents/skills`
+
+安装一个 skill 的最短方式：
+
+```bash
+mkdir -p ~/.agents/skills
+cp -R <skill-folder> ~/.agents/skills/
 ```
 
-相关文档：
+把 `<skill-folder>` 替换成你要安装的包名，例如 `evidence-driven-bugfix`。
 
-- [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
-- [`README.md`](../../README.md)
+更完整的安装入口看 [中文快速开始](quickstart.zh-CN.md)。
 
-### `evidence-driven-bugfix`
+## 文档导航
 
-这个 skill 用于让 Codex 按“先证据、后修复”的方式处理 bug：先看日志和代码，先拿到可复查的失败证据，再追根因、做最小修复，并且只有在新鲜验证通过后才允许说修好了。
-
-适合场景：
-
-- 线上问题排查
-- 反复出现“看起来修好了”但实际上没修好的 bugfix 会话
-- 需要先拿失败证据、再动代码的测试失败或集成故障
-- 需要持续循环直到真正修好，或拿到证据支持的合法 blocker
-
-入口文件：
-
-```text
-evidence-driven-bugfix/SKILL.md
-```
-
-相关文档：
-
-- [`docs/usage/evidence-driven-bugfix.md`](../usage/evidence-driven-bugfix.md)
-- [`README.md`](../../README.md)
-
-### `production-code-quality-review`
-
-这个 skill 用于让 Codex 以生产工程视角审查代码改动、工作树 diff、PR 和架构敏感变更。它优先关注正确性、稳健性、可维护性、可观测性、测试充分性与误报控制，而不是停留在表面风格建议。
-
-适合场景：
-
-- PR 审查
-- 合并前风险检查
-- 高风险改动评估
-- 生产发布前质量把关
-- 需要结构化 review 上下文的审查流程
-
-入口文件：
-
-```text
-production-code-quality-review/SKILL.md
-```
-
-相关文档：
-
-- [`production-code-quality-review/README.md`](../../production-code-quality-review/README.md)
-- [`review-workflows.zh-CN.md`](review-workflows.zh-CN.md)
-
-### `little-lighthouse-blog-publisher`
-
-这个 skill 用于通过分阶段 AI 工作流发布、起草、更新、校验或修复 Little Lighthouse 博客文章包。它不把 GitHub Pages 当成 CMS，而是在本地仓库中管理 Markdown 正文、`.meta.json` 元数据、可选图片资源、验证步骤、review 与原子提交。
-
-适合场景：
-
-- 把 Markdown 草稿或笔记整理成 Little Lighthouse 博客文章
-- 创建只保留为草稿的文章包
-- 更新已有文章的元数据或资源
-- 在发布前校验路由、RSS、站点地图和构建状态
-- 记录缺失图片时的 fallback 行为
-
-入口文件：
-
-```text
-little-lighthouse-blog-publisher/SKILL.md
-```
-
-相关文档：
-
-- [`docs/usage/little-lighthouse-blog-publisher.md`](../usage/little-lighthouse-blog-publisher.md)
-- [`README.md`](../../README.md)
-
-### `zero-to-website-design`
-
-这个 skill 用于把一个空白或模糊的网站需求推进成完整交付流程，包括视觉参考、设计方案、路线拆解、实现指引、截图验证和交付前检查。
-
-适合场景：
-
-- 从 0 到 1 的网站设计与实现
-- 先设计文档、后代码落地
-- 多页面路线规划
-- 基于参考图的视觉方向控制
-- 桌面端与移动端截图验收
-
-入口文件：
-
-```text
-zero-to-website-design/SKILL.md
-```
-
-相关文档：
-
-- [`docs/usage/zero-to-website-design.md`](../usage/zero-to-website-design.md)
-- [`quickstart.zh-CN.md`](quickstart.zh-CN.md)
-
-## 推荐阅读入口
-
-中文优先入口：
-
-- [Skill Matrix（英文技能总览）](../usage/skill-matrix.md)
 - [中文快速开始](quickstart.zh-CN.md)
-- [黄金路径](golden-path.zh-CN.md)
-- [审查工作流](review-workflows.zh-CN.md)
-- [示例](examples.zh-CN.md)
+- [Skill Matrix](../usage/skill-matrix.md)
 - [常见问题](faq.zh-CN.md)
 - [故障排查](troubleshooting.zh-CN.md)
-- [References 导读](references-guide.zh-CN.md)
+- [审查工作流](review-workflows.zh-CN.md)
+- [示例](examples.zh-CN.md)
 - [中文发布说明](releases/README.zh-CN.md)
 
-英文关键入口：
+说明：
 
-- [`README.md`](../../README.md)
-- [`docs/usage/best-project-memory.md`](../usage/best-project-memory.md)
-- [`docs/usage/evidence-driven-bugfix.md`](../usage/evidence-driven-bugfix.md)
-- [`docs/usage/little-lighthouse-blog-publisher.md`](../usage/little-lighthouse-blog-publisher.md)
-- [`docs/usage/split-image-assets.md`](../usage/split-image-assets.md) - `split-image-assets`
-- [`docs/usage/zero-to-website-design.md`](../usage/zero-to-website-design.md)
-- [`docs/usage/quickstart.md`](../usage/quickstart.md)
-- [`docs/usage/golden-path.md`](../usage/golden-path.md)
-- [`docs/usage/review-workflows.md`](../usage/review-workflows.md)
-- [`docs/releases/README.md`](../releases/README.md)
+- `Skill Matrix` 和大多数 skill 深页目前以英文为主
+- 进入英文页时，skill 名称、命令、路径保持不翻译
 
-当前正式按版本维护的发布说明主要覆盖 `production-code-quality-review`。
-`best-project-memory`、`evidence-driven-bugfix`、`little-lighthouse-blog-publisher` 和 `zero-to-website-design` 目前主要通过 usage 文档与 `docs/dev/` 阶段开发文档记录演进。
+## 仓库结构
 
-如果你现在的核心问题是“这几个 skill 到底该先用哪个”，优先看 [`docs/usage/skill-matrix.md`](../usage/skill-matrix.md)。
+```text
+best-project-memory/                 skill 包
+evidence-driven-bugfix/             skill 包
+little-lighthouse-blog-publisher/   skill 包
+production-code-quality-review/     skill 包
+split-image-assets/                 skill 包
+zero-to-website-design/             skill 包
+docs/usage/                         英文 usage 与导航页
+docs/zh/                            中文入口与辅助文档
+docs/releases/                      发布说明
+docs/superpowers/                   设计文档与实现计划
+tests/                              仓库级回归测试
+```
 
-## 使用建议
+## 维护者入口
 
-- 如果你首先关心“仓库里到底有什么”，先读英文 `README.md`
-- 如果你要把 skill 安装到本地，优先看对应 skill 的入口目录和安装说明
-- 如果你要理解审查工作流，优先看 `production-code-quality-review`
-- 如果你要发布 Little Lighthouse 博客文章，优先看 `little-lighthouse-blog-publisher`
-- 如果你要理解项目连续性与记忆文件流转，优先看 `best-project-memory`
-- 如果你要做网站类项目交付，优先看 `zero-to-website-design`
+- 仓库级文档检查：`python3 -m unittest discover tests -v`
+- 发布历史入口：[`docs/releases/README.md`](../releases/README.md)
+- 中文发布说明：[`releases/README.zh-CN.md`](releases/README.zh-CN.md)
+- 设计与开发历史主要保存在 `docs/superpowers/` 和 `docs/dev/`

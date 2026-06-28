@@ -4,6 +4,8 @@
 
 It belongs in this `awesome-skills` repository because it is reusable workflow logic. The actual blog resources, content packages, site code, images, and verifiers stay in `dengyie/dengyie.github.io`.
 
+Use it when the main job is producing or updating a Little Lighthouse post package instead of building a generic publishing system.
+
 ## Best Fit
 
 Use this skill when you want to:
@@ -22,6 +24,24 @@ Do not use it for:
 - asking for GitHub tokens on the public site
 - writing directly from GitHub Pages
 - redesigning the Little Lighthouse UI
+
+## What it produces
+
+Typical outputs:
+
+- a staged publication plan
+- Markdown and `.meta.json` package updates
+- asset fallback decisions
+- verification results for the target blog repo
+
+If you are still choosing among skills, go back to the [Skill Matrix](skill-matrix.md). If you only need installation help, use the [Quickstart](quickstart.md).
+
+## Related docs
+
+- [Skill Matrix](skill-matrix.md)
+- [Quickstart](quickstart.md)
+- [Examples](examples.md)
+- [FAQ](faq.md)
 
 ## Source Split
 

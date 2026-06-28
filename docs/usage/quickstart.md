@@ -1,96 +1,60 @@
 # Quickstart
 
-`production-code-quality-review` is designed to help Codex review code with a production-engineering mindset while grounding findings in deterministic repo context.
+Use this page when you want the shortest path from repository checkout to a working local skill install.
 
-## 1. Install The Skill
+If you are still deciding which package to install, start with the [Skill Matrix](skill-matrix.md).
+
+## 1. Choose one skill
+
+Pick the package folder you actually need:
+
+- `best-project-memory`
+- `evidence-driven-bugfix`
+- `little-lighthouse-blog-publisher`
+- `production-code-quality-review`
+- `split-image-assets`
+- `zero-to-website-design`
+
+Use the [Skill Matrix](skill-matrix.md) when the choice is unclear.
+
+## 2. Install one skill
 
 Current OpenAI Codex docs use:
 
 - user scope: `$HOME/.agents/skills`
 - repo scope: `.agents/skills`
 
-Install locally:
+Install one package by copying its folder:
 
 ```bash
 mkdir -p ~/.agents/skills
-cp -R production-code-quality-review ~/.agents/skills/
+cp -R <skill-folder> ~/.agents/skills/
 ```
 
-Then restart Codex or reload skills.
+Replace `<skill-folder>` with the package you chose, for example `evidence-driven-bugfix` or `zero-to-website-design`.
 
-Or use the helper:
+## 3. Reload Codex
 
-```bash
-bash production-code-quality-review/scripts/install-local-skill.sh
-```
+After copying the folder:
 
-The helper defaults to `~/.agents/skills`. Set `INSTALL_LEGACY_CODEX_COPY=1` only if you explicitly want a second legacy copy under `~/.codex/skills`.
-The installed copy also records its source checkout so the update helper can refresh from the original repo path.
+- restart Codex, or
+- reload skills in a fresh session
 
-Use `production-code-quality-review/scripts/...` when running from this checkout.
-Use `$HOME/.agents/skills/production-code-quality-review/scripts/...` when running from an installed copy outside the checkout.
+The goal is simply to make Codex rescan the installed skill directories.
 
-## 2. Collect Review Context
+## 4. Verify discovery
 
-Run:
-
-```bash
-python3 production-code-quality-review/scripts/collect-review-context.py --repo .
-```
-
-This returns JSON that includes:
-
-- base branch or fallback scope
-- staged, unstaged, and untracked files
-- changed files
-- changed-line ranges
-- detected stack
-- risk flags
-- suggested references
-- safe verification commands
-
-This is the main deterministic entrypoint. The smaller helper scripts expose subsets of the same context for narrow automation or debugging.
-Use `--base <ref>` or `--scope branch|working_tree` when you need to pin the review baseline.
-For automation, `review-entrypoint.py --format json` follows `references/review-context.schema.json`.
-
-## 3. Generate A Review Brief
-
-Run:
-
-```bash
-python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
-```
-
-This produces a concise brief for the current review scope with:
-
-- scope summary
-- routing mode
-- suggested references
-- changed-line summary
-- verification commands
-
-## 4. Use The Skill In Codex
-
-Prompt Codex with something like:
+Open a new session and ask Codex to use the installed package directly, for example:
 
 ```text
-Use $production-code-quality-review to review this change for production correctness and merge readiness.
+Use $evidence-driven-bugfix to fix this failure by first capturing failing evidence and tracing the root cause.
 ```
 
-The skill is strongest when Codex can also inspect the local repo or diff.
+If Codex recognizes the skill name, the install worked.
 
-## 5. Verify The Package
+## 5. Go deeper
 
-Run:
-
-```bash
-python3 -m unittest discover production-code-quality-review/tests -v
-```
-
-This validates the deterministic helper behavior.
-
-If you want one command that bundles the main release checks, run:
-
-```bash
-bash production-code-quality-review/scripts/verify-release.sh
-```
+- Need help choosing: [Skill Matrix](skill-matrix.md)
+- Want examples: [Examples](examples.md)
+- Hit a problem: [Troubleshooting](troubleshooting.md)
+- Prefer a guided repo walkthrough: [Golden Path](golden-path.md)

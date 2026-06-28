@@ -1,213 +1,28 @@
 # Awesome Skills
 
-Reusable Codex skills with an evidence-first, production-engineering bias.
+Reusable Codex skills for evidence-first, production-minded project work.
 
-Latest formal package release notes: `production-code-quality-review v0.1.6`
+This repository ships independent skill packages. Start by choosing the one that matches your problem, then install only what you need.
 
-## What This Repo Contains
+## Choose a Skill
 
-This repository is a multi-skill collection, not a single-package checkout.
+| Skill | When to use | Best for | Docs |
+| --- | --- | --- | --- |
+| `best-project-memory` | You need durable repo memory across long-running work | restoring context, recording decisions, keeping TODOs and handoffs current | [Guide](docs/usage/best-project-memory.md) |
+| `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
+| `little-lighthouse-blog-publisher` | You are publishing content into the Little Lighthouse blog repo | staged blog package creation, validation, and publication | [Guide](docs/usage/little-lighthouse-blog-publisher.md) |
+| `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
+| `split-image-assets` | You need to turn one image into reusable package assets | masks, transparent layers, previews, metadata, QA | [Guide](docs/usage/split-image-assets.md) |
+| `zero-to-website-design` | You need to go from vague website brief to delivery workflow | website design direction, route plans, implementation, QA | [Guide](docs/usage/zero-to-website-design.md) |
 
-It currently ships six Codex skills:
+If you are not sure which one to use, go straight to the [Skill Matrix](docs/usage/skill-matrix.md).
 
-- `best-project-memory`: repo-native project continuity and handoff memory
-- `evidence-driven-bugfix`: primary bugfix workflow that requires failing evidence before implementation, fresh verification before any success claim, and continued looping until fixed or legally blocked
-- `little-lighthouse-blog-publisher`: staged publisher workflow for the Little Lighthouse blog
-- `production-code-quality-review`: production-oriented review and merge-readiness workflow
-- `split-image-assets`: image asset decomposition workflow with reusable layers, masks, previews, metadata, and QA
-- `zero-to-website-design`: design-first website delivery workflow from brief to QA
+## Recommended Starting Points
 
-Each skill is packaged as its own folder with a `SKILL.md` entrypoint, supporting references, and package-level tests.
-
-## Included Skills
-
-### `best-project-memory`
-
-Use this skill when you want Codex to restore project context at the start of work, keep repo-native memory files current, record decisions, maintain actionable TODOs, and leave a clean handoff trail for later sessions.
-
-Best fit:
-
-- continuing work across sessions
-- keeping durable project state in the repository
-- recording decisions and milestones
-- generating compact handoff summaries
-- integrating continuity into other repo skills
-
-Skill entrypoint:
-
-```text
-best-project-memory/SKILL.md
-```
-
-Supporting package highlights:
-
-- `best-project-memory/scripts/` for memory initialization, linting, compaction, and repair helpers
-- `best-project-memory/references/` for schemas, examples, and operating guidance
-- `docs/usage/best-project-memory.md` for the user-facing guide
-
-### `evidence-driven-bugfix`
-
-Use this skill when you want Codex to run a disciplined bugfix workflow from symptom capture through root-cause investigation, minimal repair, fresh verification, and truthful completion reporting. It is built to prevent guess-fixes and to stop false "fixed" claims that are not backed by fresh evidence.
-
-Best fit:
-
-- production bug investigation
-- repeated bugfix sessions where "looks fixed" is not good enough
-- test failures that need evidence-first debugging
-- integration failures where a code diff is not proof of repair
-- bugfix work that should keep looping until fixed or legally blocked
-
-Skill entrypoint:
-
-```text
-evidence-driven-bugfix/SKILL.md
-```
-
-Supporting package highlights:
-
-- `evidence-driven-bugfix/references/` for gate-by-gate debugging, verification, and truthful-completion contracts
-- `evidence-driven-bugfix/tests/` for package-level workflow contract enforcement
-- `docs/usage/evidence-driven-bugfix.md` for the user-facing guide
-
-### `little-lighthouse-blog-publisher`
-
-Use this skill when you want Codex to publish, draft, update, validate, or repair posts for the Little Lighthouse blog through a staged AI workflow. It keeps the public GitHub Pages site static while Codex handles local package creation, metadata planning, asset fallback decisions, verification, review, memory updates, and commits.
-
-Best fit:
-
-- turning Markdown drafts or notes into Little Lighthouse blog packages
-- creating draft-only post packages
-- updating existing post metadata or article assets
-- validating a post package before publication
-- keeping blog resources in `dengyie/dengyie.github.io` while skill workflow logic lives in this repo
-
-Skill entrypoint:
-
-```text
-little-lighthouse-blog-publisher/SKILL.md
-```
-
-Supporting package highlights:
-
-- `little-lighthouse-blog-publisher/references/` for staged interaction, package contract, editorial, asset, verification, and commit guidance
-- validates against the blog repo's `scripts/verify-blog-package.mjs` gate
-- designed for `dengyie/dengyie.github.io`, with the reusable skill source maintained here
-- `docs/usage/little-lighthouse-blog-publisher.md` for the user-facing guide
-
-### `production-code-quality-review`
-
-Use this skill when you want Codex to review working-tree changes, pull requests, or architecture-sensitive diffs with a production mindset. It emphasizes correctness, robustness, maintainability, observability, and false-positive control over style-only commentary.
-
-Best fit:
-
-- pull request review
-- pre-merge risk assessment
-- architecture-sensitive change review
-- production readiness checks
-- review workflows that benefit from deterministic context collection
-
-Skill entrypoint:
-
-```text
-production-code-quality-review/SKILL.md
-```
-
-Supporting package highlights:
-
-- `production-code-quality-review/scripts/` for review-context collection and review-entrypoint helpers
-- `production-code-quality-review/references/` for schemas, heuristics, and review contracts
-- `production-code-quality-review/README.md` for the package guide
-
-### `split-image-assets`
-
-Use this skill when you want Codex to turn a source image into a reusable asset package instead of a single preview image. It separates visual analysis, object inventory, transparent PNG layers, masks, cleaned background, previews, metadata, QA, and manual-review flags.
-
-Best fit:
-
-- decomposing one source image into reusable design assets
-- packaging transparent object PNGs and masks for later layout or animation
-- building white-background, checkerboard, overview, and 2x2 inspection previews
-- validating asset package structure and metadata
-- marking AI-assisted or uncertain edge/background regions for manual review
-
-Skill entrypoint:
-
-```text
-split-image-assets/SKILL.md
-```
-
-Supporting package highlights:
-
-- `split-image-assets/scripts/` for deterministic package initialization, preview generation, and validation helpers
-- `split-image-assets/references/` for workflow, package contract, QA, and manual-review rules
-- `docs/usage/split-image-assets.md` for the user-facing guide
-
-### `zero-to-website-design`
-
-Use this skill when you want Codex to turn a blank or vague website brief into a documented, design-first delivery workflow. It pushes work through references, concept generation, route planning, implementation guidance, and browser QA before sign-off.
-
-Best fit:
-
-- zero-to-one website design
-- design documentation before code
-- route-by-route implementation planning
-- reference-image-backed visual direction
-- desktop and mobile screenshot QA
-
-Skill entrypoint:
-
-```text
-zero-to-website-design/SKILL.md
-```
-
-Supporting package highlights:
-
-- `zero-to-website-design/references/` for delivery workflow references and governance
-- `zero-to-website-design/assets/templates/` for reusable design and implementation templates
-- `docs/usage/zero-to-website-design.md` for the user-facing guide
-
-## Repo Layout
-
-```text
-best-project-memory/
-  SKILL.md              # Required Codex skill entrypoint
-  agents/               # Platform metadata
-  references/           # Memory schema, update policy, examples, handoff patterns
-  scripts/              # Deterministic memory initialization and handoff helpers
-  tests/                # Regression tests protecting package structure and scripts
-evidence-driven-bugfix/
-  SKILL.md              # Required Codex skill entrypoint
-  agents/               # Platform metadata
-  references/           # Workflow contract, gate rules, truthful completion, output contract
-  tests/                # Regression tests protecting package structure and workflow contract
-production-code-quality-review/
-  SKILL.md              # Required Codex skill entrypoint
-  README.md             # Skill package guide for users and maintainers
-  agents/               # Platform metadata and synthesis prompt
-  references/           # Review framework, output contract, heuristics, schemas
-  scripts/              # Deterministic context and install/update tooling
-  tests/                # Regression tests protecting the skill package
-split-image-assets/
-  SKILL.md              # Required Codex skill entrypoint
-  agents/               # Platform metadata
-  references/           # Asset splitting workflow and package contracts
-  scripts/              # Deterministic package initialization, preview, and validation helpers
-  tests/                # Regression tests protecting package structure and scripts
-zero-to-website-design/
-  SKILL.md              # Required Codex skill entrypoint
-  agents/               # Platform metadata
-  references/           # Website design workflow references
-  assets/templates/     # Copyable project documentation templates
-  tests/                # Regression tests protecting package structure
-little-lighthouse-blog-publisher/
-  SKILL.md              # Required Codex skill entrypoint
-  agents/               # Platform metadata
-  references/           # Blog publishing workflow contracts and checklists
-docs/
-  usage/                # User-facing documentation
-  releases/             # Release notes and release checklist
-  dev/                  # Development notes, kept separate from the skill packages
-```
+- I do not know which skill to use: [Skill Matrix](docs/usage/skill-matrix.md)
+- I want the fastest install path: [Quickstart](docs/usage/quickstart.md)
+- I prefer Chinese docs: [中文说明](docs/zh/README.zh-CN.md)
+- I want a repo walkthrough first: [Golden Path](docs/usage/golden-path.md)
 
 ## Install
 
@@ -216,108 +31,47 @@ Current OpenAI Codex docs use:
 - user scope: `$HOME/.agents/skills`
 - repo scope: `.agents/skills`
 
-Install a skill package by copying its folder:
+Install one skill by copying its folder:
 
 ```bash
 mkdir -p ~/.agents/skills
-cp -R best-project-memory ~/.agents/skills/
-cp -R evidence-driven-bugfix ~/.agents/skills/
-cp -R little-lighthouse-blog-publisher ~/.agents/skills/
-cp -R production-code-quality-review ~/.agents/skills/
-cp -R split-image-assets ~/.agents/skills/
-cp -R zero-to-website-design ~/.agents/skills/
+cp -R <skill-folder> ~/.agents/skills/
 ```
 
-Then start a new Codex session or reload skills so Codex can discover the installed package.
+Then restart Codex or reload skills so the new package is discovered.
 
-The `production-code-quality-review` package also includes a helper install script:
+If you want help deciding which folder to copy, start with the [Skill Matrix](docs/usage/skill-matrix.md).
 
-```bash
-bash production-code-quality-review/scripts/install-local-skill.sh
-```
+## Docs
 
-By default the helper installs to `~/.agents/skills/production-code-quality-review`.
-Set `INSTALL_LEGACY_CODEX_COPY=1` only if you explicitly want a second legacy copy under `~/.codex/skills`.
-The installed copy records its source checkout so `update-local-skill.sh` can refresh from that repo path.
-
-When running commands from this checkout, use `production-code-quality-review/scripts/...`.
-When running commands from an installed copy outside the checkout, use `$HOME/.agents/skills/production-code-quality-review/scripts/...`.
-
-## Main Entry Points
-
-### Review context collection
-
-```bash
-python3 production-code-quality-review/scripts/collect-review-context.py --repo .
-```
-
-Optional scope controls:
-
-```bash
-python3 production-code-quality-review/scripts/collect-review-context.py --repo . --base origin/main --scope branch
-```
-
-### Review brief generation
-
-```bash
-python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
-```
-
-### Compact review routing output
-
-```bash
-python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format compact
-```
-
-JSON output is available with `--format json` and follows `references/review-context.schema.json`.
-Machine-readable finding records should follow `references/finding.schema.json`.
-
-### Release verification bundle
-
-```bash
-bash production-code-quality-review/scripts/verify-release.sh
-```
-
-## Documentation
-
-Repository overview and usage:
-
-- [Skill Matrix](docs/usage/skill-matrix.md)
-- [Best Project Memory](docs/usage/best-project-memory.md)
-- [Evidence-Driven Bugfix](docs/usage/evidence-driven-bugfix.md)
-- [Little Lighthouse Blog Publisher](docs/usage/little-lighthouse-blog-publisher.md)
-- [Split Image Assets](docs/usage/split-image-assets.md)
-- [Zero-To-Website Design](docs/usage/zero-to-website-design.md)
-- [Golden Path](docs/usage/golden-path.md)
 - [Quickstart](docs/usage/quickstart.md)
-- [Review Workflows](docs/usage/review-workflows.md)
-- [Examples](docs/usage/examples.md)
+- [Skill Matrix](docs/usage/skill-matrix.md)
 - [FAQ](docs/usage/faq.md)
 - [Troubleshooting](docs/usage/troubleshooting.md)
+- [Review Workflows](docs/usage/review-workflows.md)
+- [Examples](docs/usage/examples.md)
+- [Chinese Overview](docs/zh/README.zh-CN.md)
 - [Release Notes](docs/releases/README.md)
 
-Current formal versioned release notes are published for `production-code-quality-review`.
-For `best-project-memory`, `evidence-driven-bugfix`, `little-lighthouse-blog-publisher`, `split-image-assets`, and `zero-to-website-design`, use the package usage guides plus `docs/dev/` staged development notes.
+## Repository Layout
 
-Chinese documentation:
-
-- [Chinese Overview](docs/zh/README.zh-CN.md)
-- [Chinese Release Notes](docs/zh/releases/README.zh-CN.md)
-- [Chinese References Guide](docs/zh/references-guide.zh-CN.md)
-
-## Local Verification
-
-```bash
-python3 -m unittest discover production-code-quality-review/tests -v
-python3 -m unittest discover best-project-memory/tests -v
-python3 -m unittest discover evidence-driven-bugfix/tests -v
-python3 -m unittest discover little-lighthouse-blog-publisher/tests -v
-python3 -m unittest discover split-image-assets/tests -v
-python3 -m unittest discover zero-to-website-design/tests -v
+```text
+best-project-memory/                 skill package
+evidence-driven-bugfix/             skill package
+little-lighthouse-blog-publisher/   skill package
+production-code-quality-review/     skill package
+split-image-assets/                 skill package
+zero-to-website-design/             skill package
+docs/usage/                         newcomer and usage guides
+docs/zh/                            Chinese entry docs
+docs/releases/                      release notes
+docs/superpowers/                   design specs and implementation plans
+tests/                              repository-level regression checks
 ```
 
-## Notes
+## For Maintainers
 
-- `language-specific.md` has been retired in favor of smaller, more focused references.
-- Development notes live in `docs/dev/`.
-- `review-entrypoint.py` supports `markdown`, `json`, and `compact` output.
+- Run repository-level docs checks with `python3 -m unittest discover tests -v`
+- Run package tests from the relevant skill directory before release work
+- Keep release history in [docs/releases/README.md](docs/releases/README.md)
+- Keep design and implementation history in `docs/superpowers/` and `docs/dev/`

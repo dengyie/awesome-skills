@@ -4,7 +4,29 @@ Use `split-image-assets` when a source image needs to become a reusable asset pa
 
 The skill helps produce transparent PNG object layers, mask files, `background_clean.png`, `metadata.json`, `qa_report.md`, and inspection previews such as `sprite_sheet_2x2.png`.
 
+Use it when the main job is packaging reusable visual assets with honest QA and metadata, not when you only need a quick crop or a fully automatic segmenter.
+
 The deterministic script layer does not perform segmentation. Use AI image editing, segmentation tools, manual editing, or user-provided cutouts to create object assets, then use the scripts to initialize, preview, and validate the package.
+
+## What it produces
+
+Typical outputs:
+
+- transparent PNG layers
+- source-space masks
+- `background_clean.png`
+- `metadata.json`
+- `qa_report.md`
+- reusable preview evidence
+
+If you are still choosing among skills, go back to the [Skill Matrix](skill-matrix.md). If you only need installation help, use the [Quickstart](quickstart.md).
+
+## Related docs
+
+- [Skill Matrix](skill-matrix.md)
+- [Quickstart](quickstart.md)
+- [Examples](examples.md)
+- [Troubleshooting](troubleshooting.md)
 
 The default production path is professional upstream -> import -> preview -> QA review -> validate -> manifest. This skill is the workflow, packaging, and QA tail of that chain; it is not the upstream segmenter.
 

@@ -2,6 +2,8 @@
 
 `zero-to-website-design` is an end-to-end workflow for turning a blank or vague website request into a designed, implemented, QA-checked, delivery-ready site.
 
+Use it when the main job is moving from a loose website brief to a governed delivery workflow instead of making a small isolated UI tweak.
+
 Use it when the user asks to:
 
 - design a website from zero
@@ -9,6 +11,25 @@ Use it when the user asks to:
 - build from reference images or screenshots
 - turn a loose idea into a blog, portfolio, landing page, product site, or docs site
 - follow a disciplined visual-source-to-implementation process
+
+## What it produces
+
+Typical outputs:
+
+- design direction records
+- route plans and implementation maps
+- visual provenance
+- implementation work ready for QA
+- browser-based verification artifacts
+
+If you are still choosing among skills, go back to the [Skill Matrix](skill-matrix.md). If you only need installation help, use the [Quickstart](quickstart.md).
+
+## Related docs
+
+- [Skill Matrix](skill-matrix.md)
+- [Quickstart](quickstart.md)
+- [Golden Path](golden-path.md)
+- [Examples](examples.md)
 
 ## Install
 

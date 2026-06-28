@@ -2,6 +2,8 @@
 
 Use `evidence-driven-bugfix` when you want a primary bugfix workflow that refuses guess-fixes and refuses to declare success without fresh evidence.
 
+It is for debugging work where logs, failing evidence, root-cause analysis, and fresh verification matter more than quick speculation.
+
 It is the right skill when the main job is not "review this diff" but:
 
 - inspect logs and code first
@@ -26,6 +28,25 @@ Avoid this skill when:
 - you only want a code review and not bugfix execution
 - you only need a narrow API lookup
 - the task is a new feature with no failure to investigate yet
+
+## What it produces
+
+Typical outputs:
+
+- a failing evidence chain
+- a root-cause statement
+- a minimal fix plan or fix diff
+- a fresh verification result
+- an honest final state: `Fixed`, `Manual-required`, or `Proven-external-blocker`
+
+If you are still choosing among skills, go back to the [Skill Matrix](skill-matrix.md). If you only need installation help, use the [Quickstart](quickstart.md).
+
+## Related docs
+
+- [Skill Matrix](skill-matrix.md)
+- [Quickstart](quickstart.md)
+- [Troubleshooting](troubleshooting.md)
+- [Review Workflows](review-workflows.md)
 
 ## The Six Gates
 

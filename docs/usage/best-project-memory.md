@@ -2,6 +2,8 @@
 
 `best-project-memory` is the repository's continuity skill for durable project state, decision capture, and handoff-ready memory files.
 
+It is the right skill when the main job is keeping project state recoverable across sessions instead of losing progress in chat history.
+
 ## When to use it
 
 Use it when you need to:
@@ -11,6 +13,24 @@ Use it when you need to:
 - capture durable decisions and their rationale
 - keep TODO state aligned with real work
 - prepare a compact handoff for the next session
+
+## What it produces
+
+Typical outputs:
+
+- updated `.codex-memory/project-state.md`
+- updated `.codex-memory/todo.md`
+- session summaries and handoff artifacts
+- durable decision records
+
+If you are still choosing among skills, go back to the [Skill Matrix](skill-matrix.md) first. If you only need installation help, use the [Quickstart](quickstart.md).
+
+## Related docs
+
+- [Skill Matrix](skill-matrix.md)
+- [Quickstart](quickstart.md)
+- [Golden Path](golden-path.md)
+- [Examples](examples.md)
 
 ## What it manages
 

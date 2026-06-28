@@ -1,96 +1,60 @@
 # 快速开始
 
-`production-code-quality-review` 的目标，是让 Codex 用生产工程视角审查代码，同时把结论建立在确定性的仓库上下文上。
+这页只负责一件事：用最短路径把一个 skill 安装到本地并让 Codex 识别它。
 
-## 1. 安装 Skill
+如果你还没有决定要装哪个 skill，先看 [Skill Matrix](../usage/skill-matrix.md)。
 
-当前 OpenAI Codex 文档推荐的路径是：
+## 1. 先选一个 skill
+
+当前仓库里常用的包有：
+
+- `best-project-memory`
+- `evidence-driven-bugfix`
+- `little-lighthouse-blog-publisher`
+- `production-code-quality-review`
+- `split-image-assets`
+- `zero-to-website-design`
+
+如果你不确定该选哪个，回到 [Skill Matrix](../usage/skill-matrix.md) 先做选型。
+
+## 2. 安装一个 skill
+
+当前 OpenAI Codex 文档常见安装路径：
 
 - 用户级：`$HOME/.agents/skills`
 - 仓库级：`.agents/skills`
 
-手动安装：
+安装一个包的最短方式：
 
 ```bash
 mkdir -p ~/.agents/skills
-cp -R production-code-quality-review ~/.agents/skills/
+cp -R <skill-folder> ~/.agents/skills/
 ```
 
-然后重启 Codex，或者重新加载 skills。
+把 `<skill-folder>` 替换成你要安装的 skill 目录名，例如 `evidence-driven-bugfix`。
 
-也可以直接使用辅助脚本：
+## 3. 重新加载 Codex
 
-```bash
-bash production-code-quality-review/scripts/install-local-skill.sh
-```
+复制完成后：
 
-该脚本默认安装到 `~/.agents/skills`。如果你明确需要第二份旧路径副本，再设置 `INSTALL_LEGACY_CODEX_COPY=1`。
-安装后的副本也会记录来源仓库路径，方便 `update-local-skill.sh` 回到原始 checkout 做安全更新。
+- 重启 Codex，或
+- 在新会话里重新加载 skills
 
-在当前 checkout 中运行时，使用 `production-code-quality-review/scripts/...`。
-如果是在 checkout 外运行已安装副本，使用 `$HOME/.agents/skills/production-code-quality-review/scripts/...`。
+目标就是让 Codex 重新扫描已安装的 skill 目录。
 
-## 2. 收集 Review 上下文
+## 4. 验证是否生效
 
-运行：
-
-```bash
-python3 production-code-quality-review/scripts/collect-review-context.py --repo .
-```
-
-它会输出 JSON，包含：
-
-- base branch 或 fallback scope
-- staged、unstaged、untracked 文件
-- changed files
-- changed-line ranges
-- detected stack
-- risk flags
-- suggested references
-- safe verification commands
-
-这是主要的确定性入口。其他小脚本主要是把同一份上下文拆成更窄的自动化或调试接口。
-如果需要固定 review 基线，可以使用 `--base <ref>` 或 `--scope branch|working_tree`。
-如果用于自动化，`review-entrypoint.py --format json` 遵循 `references/review-context.schema.json`。
-
-## 3. 生成 Review 简报
-
-运行：
-
-```bash
-python3 production-code-quality-review/scripts/review-entrypoint.py --repo . --format markdown
-```
-
-它会生成一份适合人阅读的简报，通常包括：
-
-- scope 摘要
-- review routing mode
-- 建议加载的 references
-- changed-line 范围摘要
-- 推荐验证命令
-
-## 4. 在 Codex 中调用 Skill
-
-可以这样提示 Codex：
+开一个新会话，直接用 skill 名称提示，例如：
 
 ```text
-Use $production-code-quality-review to review this change for production correctness and merge readiness.
+Use $evidence-driven-bugfix to fix this failure by first capturing failing evidence and tracing the root cause.
 ```
 
-如果 Codex 能访问本地仓库、diff 和测试，上述 skill 的效果会更稳定。
+如果 Codex 能识别这个 skill 名称，说明安装已经生效。
 
-## 5. 验证 Skill 包
+## 5. 继续往下走
 
-运行：
-
-```bash
-python3 -m unittest discover production-code-quality-review/tests -v
-```
-
-这会验证 deterministic helper 的核心行为。
-
-如果你想用一条命令跑完主要发布检查，可以运行：
-
-```bash
-bash production-code-quality-review/scripts/verify-release.sh
-```
+- 还在选 skill： [Skill Matrix](../usage/skill-matrix.md)
+- 想看中文仓库入口： [中文说明](README.zh-CN.md)
+- 遇到问题： [故障排查](troubleshooting.zh-CN.md)
+- 想看仓库常用路径： [黄金路径](golden-path.zh-CN.md)
