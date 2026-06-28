@@ -6,6 +6,22 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 
+def is_placeholder_only_rebuild(item: dict) -> bool:
+    if not isinstance(item, dict):
+        return False
+    decision_routing = item.get("decision_routing")
+    rebuild_intent = item.get("rebuild_intent")
+    if not isinstance(decision_routing, dict) or not isinstance(rebuild_intent, dict):
+        return False
+    return (
+        decision_routing.get("final_action") == "rebuild_downstream"
+        and rebuild_intent.get("rebuildable_downstream") is True
+        and item.get("reuse_status") == "support-only"
+        and item.get("delivery_class") == "support-only"
+        and item.get("asset_class") in {"grouped-support", "background-support", "preview-reference"}
+    )
+
+
 def read_metadata(package_dir: Path) -> dict:
     return json.loads((package_dir / "metadata.json").read_text(encoding="utf-8"))
 
@@ -64,6 +80,8 @@ def alpha_inspection(asset: Image.Image) -> Image.Image:
 def build_for_object(
     package_dir: Path, source: Image.Image, item: dict, preview_records: dict, errors: list[str]
 ) -> bool:
+    if is_placeholder_only_rebuild(item):
+        return False
     object_id = item.get("id")
     asset_path = item.get("asset_path")
     mask_path = item.get("mask_path")
@@ -119,12 +137,18 @@ def main() -> int:
 
     preview_records = metadata.setdefault("previews", {}).setdefault("quality", {})
     generated = 0
+    eligible_objects = 0
     for item in metadata.get("objects", []):
         if isinstance(item, dict):
+            if not is_placeholder_only_rebuild(item):
+                eligible_objects += 1
             if build_for_object(package_dir, source, item, preview_records, errors):
                 generated += 1
 
     write_metadata(package_dir, metadata)
+    if generated == 0 and eligible_objects == 0:
+        print(f"Built quality previews for: {package_dir}")
+        return 0
     if generated == 0:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)

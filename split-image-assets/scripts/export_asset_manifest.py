@@ -7,6 +7,22 @@ from pathlib import Path
 OBJECT_ASSET_ROLES = {"main", "secondary", "group", "background", "shadow"}
 
 
+def is_placeholder_only_rebuild(item: dict) -> bool:
+    if not isinstance(item, dict):
+        return False
+    decision_routing = item.get("decision_routing")
+    rebuild_intent = item.get("rebuild_intent")
+    if not isinstance(decision_routing, dict) or not isinstance(rebuild_intent, dict):
+        return False
+    return (
+        decision_routing.get("final_action") == "rebuild_downstream"
+        and rebuild_intent.get("rebuildable_downstream") is True
+        and item.get("reuse_status") == "support-only"
+        and item.get("delivery_class") == "support-only"
+        and item.get("asset_class") in {"grouped-support", "background-support", "preview-reference"}
+    )
+
+
 def load_metadata(package_dir: Path, errors: list[str]) -> dict:
     metadata_path = package_dir / "metadata.json"
     if not metadata_path.exists():
@@ -52,6 +68,8 @@ def quality_status(quality_checks: object) -> str:
 
 def layer_record(package_dir: Path, item: dict, errors: list[str]) -> dict | None:
     object_id = item.get("id", "<missing id>")
+    if is_placeholder_only_rebuild(item):
+        return None
     asset_path = item.get("asset_path")
     resolved_asset = package_path(package_dir, asset_path, f"{object_id}: asset_path", errors)
     if resolved_asset is None:

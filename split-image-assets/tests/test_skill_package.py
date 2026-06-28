@@ -1745,6 +1745,53 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("--decision-source", result.stderr)
 
+    def test_record_quality_review_records_object_scoped_decision_log_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--decision-stage",
+                    "asset-value-scoring",
+                    "--decision-question",
+                    "Should this text-like object be rebuilt downstream or preserved as a visual asset?",
+                    "--decision-recommended",
+                    "rebuild downstream unless fidelity-critical",
+                    "--decision-answer",
+                    "preserve as visual asset",
+                    "--decision-effect",
+                    "Keep main_object as a visual asset after text review.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "user-decision",
+                    "--blocking",
+                    "true",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["decision_log"][0]["object_id"], "main_object")
+
     def test_record_quality_review_rejects_inferred_formal_gate_without_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2416,6 +2463,59 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("No quality previews generated", result.stderr)
 
+    def test_build_quality_previews_skips_placeholder_only_rebuild_downstream_objects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "plain-text",
+                "text_render_class": "editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "high",
+                "visual_complexity_score": "low",
+                "asset_value_score": "low",
+                "scoring_reason": "Ordinary UI label.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "rebuild_downstream",
+                "final_action": "rebuild_downstream",
+                "decision_source": "explicit-user-confirmed",
+            }
+            metadata["objects"][0]["rebuild_intent"] = {
+                "rebuildable_downstream": True,
+                "rebuild_notes": "Keep only a placeholder record for downstream rebuild.",
+            }
+            metadata["objects"][0]["asset_class"] = "grouped-support"
+            metadata["objects"][0]["reuse_status"] = "support-only"
+            metadata["objects"][0]["delivery_class"] = "support-only"
+            metadata["objects"][0]["asset_path"] = ""
+            metadata["objects"][0]["mask_path"] = ""
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata.get("previews", {}).get("quality", {}), {})
+
     def test_build_quality_previews_rejects_paths_outside_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2700,6 +2800,9 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["objects"][0]["asset_class"] = "grouped-support"
             metadata["objects"][0]["reuse_status"] = "support-only"
             metadata["objects"][0]["delivery_class"] = "support-only"
+            metadata["objects"][0]["asset_path"] = ""
+            metadata["objects"][0]["mask_path"] = ""
+            metadata["previews"] = {}
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -2826,6 +2929,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "decision_source": "explicit-user-confirmed",
                     "evidence_ref": "",
                     "blocking": "true",
+                    "object_id": "main_object",
                 }
             ]
             metadata["objects"][0]["text_semantics"] = {
@@ -2857,6 +2961,108 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("Package valid", result.stdout)
+
+    def test_validate_asset_package_rejects_unscoped_confirmation_for_second_ambiguous_object(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 4), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (6, 4), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("RGBA", (6, 4), (0, 0, 255, 128)).save(
+                output / "assets" / "secondary_object_transparent.png"
+            )
+            Image.new("L", (6, 4), 255).save(output / "masks" / "mask_main.png")
+            Image.new("L", (6, 4), 255).save(output / "masks" / "mask_secondary.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["objects"][0]["id"] = "status_tile"
+            metadata["objects"][0]["layer_kind"] = "control"
+            metadata["objects"][0]["semantic_boundary"] = "Carrier tile for the left status control."
+            metadata["objects"][0]["asset_path"] = "assets/main_object_transparent.png"
+            metadata["objects"][0]["mask_path"] = "masks/mask_main.png"
+            metadata["objects"][0]["object_type"] = "ui-carrier"
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "decorative-text",
+                "text_render_class": "styled-editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "medium",
+                "visual_complexity_score": "high",
+                "asset_value_score": "medium",
+                "scoring_reason": "Styled status label with fidelity tradeoffs.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "requires_user_confirmation",
+                "final_action": "extract_asset",
+                "decision_source": "explicit-user-confirmed",
+            }
+
+            secondary = json.loads(json.dumps(metadata["objects"][0]))
+            secondary["id"] = "status_glyph"
+            secondary["role"] = "secondary"
+            secondary["composition_order"] = 20
+            secondary["layer_kind"] = "label"
+            secondary["semantic_boundary"] = "Outlined glyph text for the right status control."
+            secondary["asset_path"] = "assets/secondary_object_transparent.png"
+            secondary["mask_path"] = "masks/mask_secondary.png"
+            secondary["object_type"] = "ui-glyph"
+            metadata["objects"].append(secondary)
+            metadata["decision_log"] = [
+                {
+                    "stage": "asset-value-scoring",
+                    "pause_category": "user-decision",
+                    "question": "Should this text-like object be rebuilt downstream or preserved as a visual asset?",
+                    "recommended_answer": "rebuild downstream unless fidelity-critical",
+                    "recorded_answer": "preserve as visual asset",
+                    "decision_effect": "Keep status_tile as a visual asset after review.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                    "object_id": "status_tile",
+                }
+            ]
+            metadata["previews"]["status_tile"] = metadata["previews"].pop("main_object")
+            metadata["previews"]["status_glyph"] = {
+                "whitebg": "previews/status_glyph_whitebg.png",
+                "checkerboard": "previews/status_glyph_checkerboard.png",
+            }
+            metadata["previews"]["quality"]["status_tile"] = metadata["previews"]["quality"].pop(
+                "main_object"
+            )
+            metadata["previews"]["quality"]["status_glyph"] = {
+                "mask_overlay": "previews/status_glyph_mask_overlay.png",
+                "alpha_inspection": "previews/status_glyph_alpha_inspection.png",
+            }
+            Image.new("RGBA", (6, 4), (200, 200, 200, 255)).save(
+                output / "previews" / "status_glyph_whitebg.png"
+            )
+            Image.new("RGBA", (6, 4), (160, 160, 160, 255)).save(
+                output / "previews" / "status_glyph_checkerboard.png"
+            )
+            Image.new("RGBA", (6, 4), (120, 120, 120, 255)).save(
+                output / "previews" / "status_glyph_mask_overlay.png"
+            )
+            Image.new("RGBA", (6, 4), (220, 220, 255, 255)).save(
+                output / "previews" / "status_glyph_alpha_inspection.png"
+            )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("status_glyph: requires_user_confirmation", result.stderr)
 
     def test_validate_asset_package_rejects_routing_action_without_decision_source(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -3541,6 +3747,59 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(manifest["asset_summary"]["production_ready_assets"], 2)
             self.assertEqual(manifest["asset_summary"]["draft_candidate_assets"], 0)
             self.assertEqual(manifest["asset_summary"]["support_only_layers"], 0)
+
+    def test_export_asset_manifest_skips_placeholder_only_rebuild_downstream_objects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "plain-text",
+                "text_render_class": "editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "high",
+                "visual_complexity_score": "low",
+                "asset_value_score": "low",
+                "scoring_reason": "Ordinary UI label.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "rebuild_downstream",
+                "final_action": "rebuild_downstream",
+                "decision_source": "explicit-user-confirmed",
+            }
+            metadata["objects"][0]["rebuild_intent"] = {
+                "rebuildable_downstream": True,
+                "rebuild_notes": "Keep only a placeholder record for downstream rebuild.",
+            }
+            metadata["objects"][0]["asset_class"] = "grouped-support"
+            metadata["objects"][0]["reuse_status"] = "support-only"
+            metadata["objects"][0]["delivery_class"] = "support-only"
+            metadata["objects"][0]["asset_path"] = ""
+            metadata["objects"][0]["mask_path"] = ""
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "export_asset_manifest.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((output / "asset_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["layers"], [])
 
     def test_export_asset_manifest_rejects_unknown_object_role(self):
         with tempfile.TemporaryDirectory() as tmp:

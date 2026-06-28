@@ -335,19 +335,20 @@ def update_decision_log(metadata: dict, args: argparse.Namespace) -> None:
     decision_log = metadata.setdefault("decision_log", [])
     if not isinstance(decision_log, list):
         raise ValueError("metadata.decision_log must be a list before recording decisions")
-    decision_log.append(
-        {
-            "stage": args.decision_stage,
-            "pause_category": pause_category,
-            "question": args.decision_question,
-            "recommended_answer": args.decision_recommended,
-            "recorded_answer": args.decision_answer,
-            "decision_effect": args.decision_effect,
-            "decision_source": decision_source,
-            "evidence_ref": args.evidence_ref or "",
-            "blocking": blocking,
-        }
-    )
+    entry = {
+        "stage": args.decision_stage,
+        "pause_category": pause_category,
+        "question": args.decision_question,
+        "recommended_answer": args.decision_recommended,
+        "recorded_answer": args.decision_answer,
+        "decision_effect": args.decision_effect,
+        "decision_source": decision_source,
+        "evidence_ref": args.evidence_ref or "",
+        "blocking": blocking,
+    }
+    if args.object_id and len(args.object_id) == 1:
+        entry["object_id"] = args.object_id[0]
+    decision_log.append(entry)
 
 
 def update_confirmation(metadata: dict, args: argparse.Namespace) -> None:
