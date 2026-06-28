@@ -735,12 +735,35 @@ def has_glyph_layer(item: dict) -> bool:
     return "glyph" in text
 
 
-def has_text_routing_confirmation(item: dict, decision_log: list[dict]) -> bool:
+def is_placeholder_only_rebuild(item: dict) -> bool:
+    if not isinstance(item, dict):
+        return False
+    decision_routing = item.get("decision_routing")
+    rebuild_intent = item.get("rebuild_intent")
+    if not isinstance(decision_routing, dict) or not isinstance(rebuild_intent, dict):
+        return False
+    return (
+        decision_routing.get("final_action") == "rebuild_downstream"
+        and rebuild_intent.get("rebuildable_downstream") is True
+        and item.get("reuse_status") == "support-only"
+        and item.get("delivery_class") == "support-only"
+        and item.get("asset_class") in {"grouped-support", "background-support", "preview-reference"}
+    )
+
+
+def has_text_routing_confirmation(
+    item: dict, decision_log: list[dict], allow_legacy_unscoped: bool = False
+) -> bool:
     object_id = str(item.get("id", "")).strip().lower()
     for entry in decision_log:
         if not isinstance(entry, dict):
             continue
         if entry.get("decision_source") not in ALLOWED_DECISION_SOURCES:
+            continue
+        entry_object_id = str(entry.get("object_id", "")).strip().lower()
+        if object_id and entry_object_id:
+            if object_id == entry_object_id:
+                return True
             continue
         evidence_text = " ".join(
             str(entry.get(field, "")).lower()
@@ -755,9 +778,9 @@ def has_text_routing_confirmation(item: dict, decision_log: list[dict]) -> bool:
         )
         if object_id and object_id in evidence_text:
             return True
-        if "text-like object" in evidence_text:
+        if allow_legacy_unscoped and "text-like object" in evidence_text:
             return True
-        if "rebuild downstream" in evidence_text and "visual asset" in evidence_text:
+        if allow_legacy_unscoped and "rebuild downstream" in evidence_text and "visual asset" in evidence_text:
             return True
     return False
 
@@ -795,18 +818,14 @@ def validate_objects(
     granularity = metadata.get("granularity", {}) if isinstance(metadata.get("granularity"), dict) else {}
     decision_log = metadata.get("decision_log", []) if isinstance(metadata.get("decision_log"), list) else []
     ui_like_package = is_ui_like_package(metadata)
-    requires_confirmation_ids = set()
-    for item in objects:
-        if not isinstance(item, dict):
-            continue
-        object_id = item.get("id")
-        if not isinstance(object_id, str) or not object_id.strip():
-            continue
-        decision_routing = item.get("decision_routing", {})
-        if not isinstance(decision_routing, dict):
-            continue
-        if decision_routing.get("recommended_action") == "requires_user_confirmation":
-            requires_confirmation_ids.add(object_id.strip())
+    requires_confirmation_ids = {
+        str(item.get("id", "")).strip()
+        for item in objects
+        if isinstance(item, dict)
+        and item.get("decision_routing", {}).get("recommended_action") == "requires_user_confirmation"
+        and isinstance(item.get("id"), str)
+        and item.get("id").strip()
+    }
     if ui_like_package:
         for field_name in [
             "scope_strategy",
@@ -1143,7 +1162,9 @@ def validate_objects(
                 f"{object_id}: ordinary editable text-like content must not default to extract_asset"
             )
         if recommended_action == "requires_user_confirmation" and not has_text_routing_confirmation(
-            item, decision_log
+            item,
+            decision_log,
+            allow_legacy_unscoped=len(requires_confirmation_ids) == 1,
         ):
             errors.append(
                 f"{object_id}: requires_user_confirmation must be resolved through a formal decision record"
