@@ -20,11 +20,30 @@ Declare the target quality tier before extraction starts:
 
 Do not let `structural-valid` package success masquerade as `visual-acceptance-ready`.
 
+## Interaction State Machine
+
+Only three event classes may pause execution:
+
+- `user-decision`
+- `external-blocker`
+- `formal-approval`
+
+Everything else stays in `Running` and should be reported as commentary only. Progress updates do not create gate state and must not block execution.
+
+Use these states consistently:
+
+- `Running`
+- `AwaitingDecision`
+- `AwaitingExternalBlocker`
+- `AwaitingApproval`
+- `Completed`
+
 ## Stages
 
 1. Intake the source image and identify the desired output package directory.
 2. Run `scripts/init_asset_package.py` if the package does not already exist.
 3. Run the Preflight Tooling Recommendation Gate before extraction:
+   - Pause category: `external-blocker` by default, `user-decision` only when multiple valid user-selectable paths already exist
    - run `scripts/check_extraction_environment.py`
    - require a report that includes `segmentation`, `matting`, `reconstruction`, `environment`, `production_capable`, `missing_for_production`, `missing_roles`, `recommended_installs`, and `why_it_matters`
    - distinguish installed tooling from runtime-ready and production-ready capability
@@ -35,7 +54,8 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
    - record the decision in `metadata.capability`, `metadata.confirmation.tooling_preflight`, and `metadata.decision_log[]`
    - do not continue into extraction until this decision is recorded
 4. Read `pipeline-recipes.md` and `grounded-sam-pipeline.md` and choose a pipeline recipe.
-5. Run the Granularity Confirmation Gate before extraction:
+5. Run the Granularity Confirmation Gate before extraction.
+   - Pause category: `user-decision`
    - choose module-level, component-level, atomic-layer, or production-editable reconstruction
    - choose `high-signal-subset` or `full-image-batch` scope strategy
    - decide whether text, labels, buttons, and UI chrome become image assets or live downstream elements
@@ -44,27 +64,39 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
    - decide whether layers must be animation-ready or static-reuse ready
 6. Run the Semantic Split Plan Confirmation Gate when layer boundaries, grouping, carrier/glyph separation, or text ownership are subjective.
    - `Granularity Alignment Gate`
+     - Pause category: `user-decision`
      - Trigger: complex UI, dashboard, dense composition, or reuse-boundary ambiguity.
      - Ask: “Should this package target component-level, atomic-layer, or production-editable reconstruction?”
      - Recommended answer: `atomic-layer` for reusable UI assets; `production-editable` when downstream rebuild is required.
-     - Metadata effect: record `mode`, `scope_strategy`, `text_handling`, `background_expectation`, `layer_independence`, `metadata.confirmation.granularity_alignment`, and a decision-log entry.
+     - Metadata effect: record `mode`, `scope_strategy`, `text_handling`, `background_expectation`, `layer_independence`, `metadata.confirmation.granularity_alignment`, and a formal decision-log entry.
    - `Carrier/Glyph Split Gate`
+     - Pause category: `user-decision`
      - Trigger: icon-in-tile, badge-in-card, glyph-on-plate, or `carrier-glyph-pair`.
      - Ask: “Should the carrier and glyph split into separate layers?”
      - Recommended answer: `split`.
      - Metadata effect: record `carrier_glyph_policy` and a decision-log entry.
    - `Approximate Reconstruction Acceptance Gate`
+     - Pause category: `user-decision` first, `formal-approval` before claim escalation
      - Trigger: inferred pixels, manual redraw, or approximate carrier/background repair.
      - Ask: “Is approximate reconstruction acceptable for this layer?”
      - Recommended answer: only when approximate delivery is explicitly acceptable.
-     - Metadata effect: keep `delivery_class=approximate-reconstruction`, record reconstruction provenance/method, and a reconstruction acceptance decision.
+     - Metadata effect: keep `delivery_class=approximate-reconstruction`, record reconstruction provenance/method, `metadata.confirmation.approximate_reconstruction`, and a formal decision-log entry.
+   - `Final Acceptance Gate`
+     - Pause category: `formal-approval`
+     - Trigger: the package is about to claim `qa.status=pass`, `visual-acceptance-ready`, or `production-ready`.
+     - Ask: “Does the current package meet the requested granularity and cleanliness well enough to mark pass?”
+     - Recommended answer: keep `needs-review` unless current boundaries, cleanliness, and approximations have actually been accepted.
+     - Metadata effect: update `metadata.confirmation.final_acceptance` and a formal decision-log entry.
    - `Final Promotion Acceptance Gate`
+     - Pause category: `formal-approval`
      - Trigger: a candidate is ready to replace the current revision.
      - Ask: “Should candidate X become the current revision?”
      - Recommended answer: only after compare evidence or a direct-promotion rationale exists.
-     - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.final_promotion_acceptance`, and a decision-log entry.
+     - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.candidate_promotion`, and a formal decision-log entry.
 7. Choose a high-signal first subset when the image is complex. For flat UI and dashboards, start with logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements that a professional segmenter can isolate and a reviewer can inspect clearly.
-8. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, run the `Pilot Object Gate` before wider batch extraction. Record `metadata.confirmation.pilot_object` as `confirmed` or `not-required`.
+8. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, run the `Pilot Object Gate` before wider batch extraction.
+   - Pause category: `formal-approval`
+   - Record `metadata.confirmation.pilot_object` as `confirmed` or evidence-backed `not-required`.
 9. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, read `ui-atomic-split.md` and create a layer plan that marks each expected layer as `must_extract`, `rebuild_downstream`, `support_only`, `skip_for_now`, or `requires_user_confirmation`.
 10. Route each planned target by object type before extraction or repair:
    - `ui-carrier`
@@ -92,6 +124,7 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
    - likely manual-review risks
 14. For UI icon-in-tile, badge-in-card, and glyph-on-plate patterns, prefer separate carrier and glyph layers when that makes reuse or mask cleanup clearer.
 15. Run the Low-Confidence Mask Handling Gate when a mask should be retried, manually reviewed, or retained as draft-only.
+   - Pause category: `user-decision` only when the branch materially changes deliverable truth; otherwise keep progress in commentary and continue the chosen path.
 16. Run the Approximate Reconstruction Acceptance Gate before treating background clean plates or support plates as acceptable.
 17. Write `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `granularity`, `capability`, `quality_target`, `confirmation`, `decision_log`, `extraction_pipeline`, object `object_type`, object `asset_class`, object `reuse_status`, and the object inventory into `metadata.json`.
    - for UI or dense compositions, record `granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
@@ -106,7 +139,9 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
 25. Inspect previews and audit warnings, then classify each warning as `true defect`, `expected stylistic signal`, or `mixed / needs human judgment` before “fixing” it.
 26. For high-risk repairs, write candidate outputs into `_staging/repair_candidates/`, score them with `scripts/score_candidate_assets.py`, compare at least two viable candidates when available, and promote the selected candidate with `scripts/promote_candidate_asset.py` instead of overwriting `assets/` by hand. Do not promote from an arbitrary package path.
 27. Use `scripts/compare_candidate_assets.py` before promotion when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Treat compare as a structured evidence step, not just a screenshot.
-28. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`. If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
+28. Run the Final User Acceptance Gate before promoting subjective visual decomposition to `qa.status=pass`.
+   - Pause category: `formal-approval`
+   - If the user has not accepted the current granularity and cleanliness, keep `needs-review` even when validation passes.
 29. Validate the package with `scripts/validate_asset_package.py`.
 30. Export a downstream layer manifest with `scripts/export_asset_manifest.py`.
 31. Report structural validation separately from visual quality status, plus production-ready, draft-candidate, support-only, and blocked counts.
@@ -161,9 +196,9 @@ For UI assets, check whether a tile, badge, or panel background should be split 
 
 ## User Decision Sync
 
-When a split choice affects future reuse, editing, localization, animation, approximate reconstruction acceptance, final delivery claims, or visual truth, ask the user one focused question before continuing. Include your recommended answer. Do not batch multiple questions unless the user asks for a full grill-me style interrogation.
+When a split choice affects future reuse, editing, localization, animation, approximate reconstruction acceptance, candidate replacement, final delivery claims, or visual truth, ask the user one focused question before continuing. Include your recommended answer. Do not batch multiple questions unless the user asks for a full grill-me style interrogation.
 
-Record each confirmation in `metadata.decision_log[]`. If prior instructions or metadata already answer the question, record the decision instead of asking again.
+Record each formal gate in `metadata.decision_log[]` and `metadata.confirmation`. If prior instructions or metadata already answer the question, record the evidence-backed decision instead of asking again. Progress commentary must not be stored as gate state.
 
 ## Tooling Preflight
 

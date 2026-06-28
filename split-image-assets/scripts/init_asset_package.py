@@ -44,23 +44,31 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "tooling_preflight": {
                 "status": "pending",
                 "source": "unset",
+                "pause_category": "external-blocker",
                 "notes": "",
+                "evidence_ref": "",
             },
             "granularity_alignment": {
                 "status": "pending",
                 "source": "unset",
+                "pause_category": "user-decision",
                 "notes": "",
+                "evidence_ref": "",
             },
             "pilot_object": {
                 "status": "pending",
                 "source": "unset",
+                "pause_category": "formal-approval",
                 "object_id": "",
                 "notes": "",
+                "evidence_ref": "",
             },
             "approximate_reconstruction": {
                 "status": "pending",
                 "source": "unset",
+                "pause_category": "formal-approval",
                 "notes": "",
+                "evidence_ref": "",
             },
             "final_promotion_acceptance": {
                 "status": "pending",
@@ -70,7 +78,16 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "final_acceptance": {
                 "status": "pending",
                 "source": "unset",
+                "pause_category": "formal-approval",
                 "notes": "",
+                "evidence_ref": "",
+            },
+            "candidate_promotion": {
+                "status": "pending",
+                "source": "unset",
+                "pause_category": "formal-approval",
+                "notes": "",
+                "evidence_ref": "",
             },
         },
         "extraction_pipeline": {

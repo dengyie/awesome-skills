@@ -8,9 +8,27 @@ These prompts are workflow gates, not optional suggestions. Record each gate wit
 
 - `explicit-user-confirmed`
 - `inferred-from-user`
-- `agent-defaulted`
+
+`inferred-from-user` means the answer is already supported by durable user evidence. It does not mean the agent guessed.
+
+Progress updates are commentary, not confirmation gates.
+
+## What Is Not A Confirmation Prompt
+
+Do not stop and wait for:
+
+- routine progress updates
+- ordinary tool output summaries
+- internal implementation checkpoints
+- non-blocking uncertainty that does not change package truth
 
 ## Tooling Preflight Confirmation
+
+Pause category: `external-blocker` by default
+
+Must ask when: tools or professional upstream outputs are still missing and no prior user-backed path already resolves the branch.
+
+May infer when: the user already approved `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only` for the current run and that evidence can be cited.
 
 Question: Production-quality asset splitting needs professional upstream tools. This environment is missing [missing capabilities/tools]. Should I pause so you can install/activate them, use external segmented assets/masks, or continue as draft-packaging-only?
 
@@ -20,6 +38,12 @@ Decision effect: Record the choice in `metadata.capability` and `metadata.decisi
 
 ## Granularity Confirmation
 
+Pause category: `user-decision`
+
+Must ask when: different answers would materially change asset boundaries, text handling, carrier/glyph behavior, or layer independence.
+
+May infer when: existing user instructions or approved metadata already settle those branches.
+
 Question: Should this package target module, component, atomic-layer, or production-editable reconstruction granularity?
 
 Recommended answer: Use `atomic-layer` for UI assets when reuse, animation, or clean icon separation matters; use `component` only for quick draft review.
@@ -27,6 +51,12 @@ Recommended answer: Use `atomic-layer` for UI assets when reuse, animation, or c
 Decision effect: Record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, `metadata.granularity.notes`, and a `metadata.decision_log` entry.
 
 ## Pilot Object Gate
+
+Pause category: `formal-approval`
+
+Must ask when: dense UI or approximate reconstruction work should not widen without a pilot signoff.
+
+May infer when: a prior accepted policy explicitly marks the current case as `not-required`.
 
 Question: Before I continue with the broader batch, should I use this representative object as a pilot and wait for your confirmation on granularity and cleanliness?
 
@@ -36,6 +66,8 @@ Decision effect: Record `metadata.confirmation.pilot_object` with the chosen obj
 
 ## Carrier And Glyph Split
 
+Pause category: `user-decision`
+
 Question: Should this icon or badge be split into a carrier tile and foreground glyph?
 
 Recommended answer: Yes, when the carrier shape and glyph have different reuse, recolor, animation, or cleanup needs.
@@ -43,6 +75,8 @@ Recommended answer: Yes, when the carrier shape and glyph have different reuse, 
 Decision effect: Create separate carrier and glyph object records, masks, previews, and quality checks.
 
 ## Text Or UI Chrome
+
+Pause category: `user-decision`
 
 Question: Should text, labels, buttons, or UI chrome be extracted as image layers or rebuilt downstream as live UI/text?
 
@@ -52,6 +86,8 @@ Decision effect: Record whether text is excluded from image assets, extracted as
 
 ## Approximate Background Acceptance
 
+Pause category: `user-decision` first, `formal-approval` before pass-claim escalation
+
 Question: Is an approximate reconstructed background or support plate acceptable for this package?
 
 Recommended answer: Accept approximate support plates only as `needs-review` unless the user explicitly accepts them for the target use.
@@ -59,6 +95,8 @@ Recommended answer: Accept approximate support plates only as `needs-review` unl
 Decision effect: Record `approximate: true`, `reconstruction_provenance`, quality checks, and any manual confirmation.
 
 ## Low-Confidence Mask Handling
+
+Pause category: `user-decision` only when the answer changes deliverable truth; otherwise continue and report commentary.
 
 Question: Should this low-confidence mask be retried with another upstream tool, sent to manual review, or retained as draft-only evidence?
 
@@ -68,8 +106,24 @@ Decision effect: Keep `qa.status` as `needs-review` or `blocked` until the selec
 
 ## Final User Acceptance
 
+Pause category: `formal-approval`
+
 Question: Does the current package meet the requested granularity and cleanliness well enough to mark `qa.status=pass`?
 
 Recommended answer: Keep `needs-review` unless the user has explicitly accepted the current layer boundaries, cleanliness, and reconstructed regions.
 
 Decision effect: Only promote to `pass` after required quality checks pass and the acceptance decision is recorded.
+
+## Candidate Promotion Acceptance
+
+Pause category: `formal-approval`
+
+Must ask when: a candidate asset is about to replace the current revision and no prior approved promotion rule covers the replacement.
+
+May infer when: a prior accepted policy explicitly authorizes promotion under the same compare/direct-promotion conditions and that evidence can be cited.
+
+Question: Should candidate X replace the current revision for this object?
+
+Recommended answer: Yes only after compare evidence or a direct-promotion rationale exists.
+
+Decision effect: Record `metadata.confirmation.candidate_promotion`, update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, and keep the selection rationale durable.

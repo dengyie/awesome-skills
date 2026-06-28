@@ -67,19 +67,19 @@ ALLOWED_QUALITY_TARGET_TIERS = {
     "usable-draft",
     "visual-acceptance-ready",
 }
+ALLOWED_PAUSE_CATEGORIES = {"user-decision", "external-blocker", "formal-approval"}
+ALLOWED_BLOCKING_VALUES = {"true", "false"}
 ALLOWED_DECISION_SOURCES = {
     "explicit-user-confirmed",
     "inferred-from-user",
-    "agent-defaulted",
 }
 ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
 ALLOWED_CONFIRMATION_SOURCES = {
     "explicit-user-confirmed",
     "inferred-from-user",
-    "agent-defaulted",
     "unset",
 }
-CONFIRMATION_KEYS = {
+STAGE_TO_CONFIRMATION_KEY = {
     "tooling-preflight": "tooling_preflight",
     "granularity-alignment": "granularity_alignment",
     "pilot-object-gate": "pilot_object",
@@ -87,17 +87,15 @@ CONFIRMATION_KEYS = {
     "approximate-reconstruction-acceptance-gate": "approximate_reconstruction",
     "reconstruction-acceptance": "approximate_reconstruction",
     "final-acceptance": "final_acceptance",
-    "final-package-acceptance": "final_acceptance",
-    "final-promotion-acceptance": "final_promotion_acceptance",
+    "final-promotion-acceptance": "candidate_promotion",
 }
-AFFIRMATIVE_DECISION_ANSWERS = {"yes", "y", "accept", "accepted", "approve", "approved", "confirm", "confirmed"}
-AFFIRMATIVE_CONFIRMATION_STAGES = {
-    "approximate-reconstruction-acceptance",
-    "approximate-reconstruction-acceptance-gate",
-    "reconstruction-acceptance",
-    "final-acceptance",
-    "final-package-acceptance",
-    "final-promotion-acceptance",
+DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION = {
+    "tooling_preflight": "external-blocker",
+    "granularity_alignment": "user-decision",
+    "pilot_object": "formal-approval",
+    "approximate_reconstruction": "formal-approval",
+    "final_acceptance": "formal-approval",
+    "candidate_promotion": "formal-approval",
 }
 
 
@@ -167,8 +165,47 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
     ) or bool(args.repair_history_entry)
 
 
-def is_affirmative_answer(value: str | None) -> bool:
-    return isinstance(value, str) and value.strip().lower() in AFFIRMATIVE_DECISION_ANSWERS
+def default_confirmation_entry(key: str) -> dict:
+    entry = {
+        "status": "pending",
+        "source": "unset",
+        "pause_category": DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION.get(key, ""),
+        "notes": "",
+        "evidence_ref": "",
+    }
+    if key == "pilot_object":
+        entry["object_id"] = ""
+    return entry
+
+
+def require_pause_category(value: str | None, flag_name: str) -> str:
+    if not value:
+        raise ValueError(f"{flag_name} is required for formal gate writes")
+    if value not in ALLOWED_PAUSE_CATEGORIES:
+        raise ValueError(
+            f"{flag_name} must be one of: " + ", ".join(sorted(ALLOWED_PAUSE_CATEGORIES))
+        )
+    return value
+
+
+def require_formal_source(source: str | None, flag_name: str, evidence_ref: str | None) -> str:
+    if not source:
+        raise ValueError(f"{flag_name} is required for formal gate writes")
+    if source not in ALLOWED_DECISION_SOURCES:
+        raise ValueError(
+            f"{flag_name} must be one of: " + ", ".join(sorted(ALLOWED_DECISION_SOURCES))
+        )
+    if source == "inferred-from-user" and (evidence_ref is None or not evidence_ref.strip()):
+        raise ValueError("--evidence-ref is required when source is inferred-from-user")
+    return source
+
+
+def normalized_blocking(value: str | None) -> str:
+    if not value:
+        raise ValueError("--blocking is required for formal decision-log writes")
+    if value not in ALLOWED_BLOCKING_VALUES:
+        raise ValueError("--blocking must be one of: false, true")
+    return value
 
 
 def update_analysis(metadata: dict, args: argparse.Namespace) -> None:
@@ -247,17 +284,25 @@ def update_decision_log(metadata: dict, args: argparse.Namespace) -> None:
             if not value
         ]
         raise ValueError("decision log updates require: " + ", ".join(missing))
+    pause_category = require_pause_category(args.pause_category, "--pause-category")
+    decision_source = require_formal_source(
+        args.decision_source, "--decision-source", args.evidence_ref
+    )
+    blocking = normalized_blocking(args.blocking)
     decision_log = metadata.setdefault("decision_log", [])
     if not isinstance(decision_log, list):
         raise ValueError("metadata.decision_log must be a list before recording decisions")
     decision_log.append(
         {
             "stage": args.decision_stage,
+            "pause_category": pause_category,
             "question": args.decision_question,
             "recommended_answer": args.decision_recommended,
-            "user_answer": args.decision_answer,
+            "recorded_answer": args.decision_answer,
             "decision_effect": args.decision_effect,
-            "decision_source": args.decision_source or "agent-defaulted",
+            "decision_source": decision_source,
+            "evidence_ref": args.evidence_ref or "",
+            "blocking": blocking,
         }
     )
 
@@ -267,30 +312,54 @@ def update_confirmation(metadata: dict, args: argparse.Namespace) -> None:
     if args.confirmation_key is not None:
         if args.confirmation_status is None:
             raise ValueError("--confirmation-status is required when --confirmation-key is provided")
-        entry = confirmation.setdefault(args.confirmation_key, {})
+        source = args.confirmation_source
+        if source is None and args.confirmation_status == "pending":
+            source = "unset"
+        if args.confirmation_status in {"confirmed", "not-required"} and source == "unset":
+            raise ValueError(
+                "--confirmation-source must be explicit-user-confirmed or inferred-from-user "
+                f"when --confirmation-status is {args.confirmation_status}"
+            )
+        if args.confirmation_status == "pending" and source not in {None, "unset"}:
+            raise ValueError("--confirmation-source must be unset when --confirmation-status is pending")
+        if source != "unset":
+            require_formal_source(source, "--confirmation-source", args.evidence_ref)
+            pause_category = require_pause_category(args.pause_category, "--pause-category")
+        else:
+            pause_category = args.pause_category or DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION.get(
+                args.confirmation_key, ""
+            )
+        entry = confirmation.setdefault(args.confirmation_key, default_confirmation_entry(args.confirmation_key))
         entry["status"] = args.confirmation_status
-        entry["source"] = args.confirmation_source or "agent-defaulted"
+        entry["source"] = source
+        entry["pause_category"] = pause_category
         if args.confirmation_note is not None:
             entry["notes"] = args.confirmation_note
+        entry["evidence_ref"] = args.evidence_ref or ""
         if args.confirmation_object_id is not None:
             entry["object_id"] = args.confirmation_object_id
 
     if args.decision_stage:
-        key = CONFIRMATION_KEYS.get(args.decision_stage)
+        key = STAGE_TO_CONFIRMATION_KEY.get(args.decision_stage)
         if key:
             entry = confirmation.setdefault(
                 key,
-                {"status": "pending", "source": "unset", "notes": ""},
+                default_confirmation_entry(key),
             )
-            if args.decision_stage in AFFIRMATIVE_CONFIRMATION_STAGES:
-                entry["status"] = "confirmed" if is_affirmative_answer(args.decision_answer) else "pending"
-            else:
-                entry["status"] = "confirmed"
-            entry["source"] = args.decision_source or "agent-defaulted"
+            entry["status"] = "confirmed"
+            entry["source"] = require_formal_source(
+                args.decision_source, "--decision-source", args.evidence_ref
+            )
+            entry["pause_category"] = require_pause_category(
+                args.pause_category, "--pause-category"
+            )
             if args.confirmation_note is not None:
                 entry["notes"] = args.confirmation_note
             elif not entry.get("notes"):
                 entry["notes"] = args.decision_effect
+            entry["evidence_ref"] = args.evidence_ref or ""
+            if key == "pilot_object" and args.confirmation_object_id is not None:
+                entry["object_id"] = args.confirmation_object_id
 
 
 def parse_bool(value: str) -> bool:
@@ -474,11 +543,14 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append(f"- Layer independence: {args.layer_independence}")
     if args.decision_stage:
         lines.append(f"- Decision stage: {args.decision_stage}")
+        lines.append(f"- Pause category: {args.pause_category}")
         lines.append(f"- Decision question: {args.decision_question}")
         lines.append(f"- Recommended answer: {args.decision_recommended}")
-        lines.append(f"- User answer: {args.decision_answer}")
+        lines.append(f"- Recorded answer: {args.decision_answer}")
         lines.append(f"- Decision effect: {args.decision_effect}")
-        lines.append(f"- Decision source: {args.decision_source or 'agent-defaulted'}")
+        lines.append(f"- Decision source: {args.decision_source}")
+        lines.append(f"- Evidence ref: {args.evidence_ref or ''}")
+        lines.append(f"- Blocking: {args.blocking}")
     if args.production_capable is not None:
         lines.append(f"- Production capable: {args.production_capable}")
     if args.missing_for_production:
@@ -500,7 +572,11 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
     if args.confirmation_key:
         lines.append(f"- Confirmation gate: {args.confirmation_key}")
         lines.append(f"- Confirmation status: {args.confirmation_status}")
-        lines.append(f"- Confirmation source: {args.confirmation_source or 'agent-defaulted'}")
+        lines.append(f"- Confirmation source: {args.confirmation_source or 'unset'}")
+        lines.append(
+            f"- Confirmation pause category: {args.pause_category or DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION.get(args.confirmation_key, '')}"
+        )
+        lines.append(f"- Confirmation evidence ref: {args.evidence_ref or ''}")
     if args.confirmation_object_id:
         lines.append(f"- Pilot object: {args.confirmation_object_id}")
     if args.asset_class:
@@ -534,6 +610,9 @@ def main() -> int:
     parser.add_argument("--decision-answer")
     parser.add_argument("--decision-effect")
     parser.add_argument("--decision-source", choices=sorted(ALLOWED_DECISION_SOURCES))
+    parser.add_argument("--pause-category", choices=sorted(ALLOWED_PAUSE_CATEGORIES))
+    parser.add_argument("--blocking", choices=sorted(ALLOWED_BLOCKING_VALUES))
+    parser.add_argument("--evidence-ref")
     parser.add_argument("--production-capable", choices=["true", "false"])
     parser.add_argument("--missing-for-production", action="append")
     parser.add_argument("--capability-user-choice")
@@ -550,6 +629,7 @@ def main() -> int:
                 "approximate_reconstruction",
                 "final_promotion_acceptance",
                 "final_acceptance",
+                "candidate_promotion",
             }
         ),
     )

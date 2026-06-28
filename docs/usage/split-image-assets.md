@@ -58,12 +58,16 @@ Also classify each target object before choosing the repair path:
 
 When granularity, carrier/glyph grouping, text ownership, approximate background acceptance, low-confidence masks, or final `pass` claims are subjective, use a grill-me style confirmation step: ask one focused question, include your recommended answer, resolve that branch, then record the outcome in `metadata.decision_log[]`. If prior instructions already answer the question, record the decision instead of asking again.
 
+progress updates are commentary, not confirmation gates. Only three event classes should pause execution: real user decisions, genuine external blockers, and formal approval points.
+
 Treat these as formal gates:
 
 - `Granularity Alignment Gate`
 - `Carrier/Glyph Split Gate`
 - `Approximate Reconstruction Acceptance Gate`
+- `Final Acceptance Gate`
 - `Final Promotion Acceptance Gate`
+- `Candidate Promotion Acceptance Gate`
 
 Each gate should ask one decisive question, offer a recommended answer, and update metadata in a durable way rather than leaving the choice only in chat.
 
@@ -96,6 +100,7 @@ asset-package/
 
 `metadata.json` must also include `analysis.visual_hierarchy`, `analysis.recommended_split_plan`, `extraction_pipeline`, and per-object quality evidence so reviewers can tell whether extraction followed the image structure instead of only cutting page regions.
 It should also record `granularity.mode`, `granularity.user_confirmed`, `granularity.notes`, `capability.production_capable`, `capability.missing_for_production`, `capability.user_choice`, `capability.notes`, and `decision_log[]` so later agents can see what split scope, tooling capability, and subjective decisions were agreed.
+Formal gate metadata should use `recorded_answer`, `pause_category`, `decision_source`, `evidence_ref`, and `blocking`. `inferred-from-user` is only valid when that evidence can be cited, and `agent-defaulted` must not satisfy a formal gate.
 It should also record `quality_target.tier`, `quality_target.notes`, and per-object `object_type` so later agents can see whether the package is only structurally valid, a usable draft, or ready for visual acceptance.
 
 `assets/*.png` are reusable transparent layers. `masks/*.png` are source-space QA masks aligned to the original image, so a small object may appear as a small white region on a mostly black mask. Put active external model outputs, candidate masks, and temporary manifests in `_staging/`; move retained evidence to `_archive_intermediate/` before final validation.
@@ -144,6 +149,7 @@ Use `needs-review` or `blocked` when the background is only a reconstructed appr
 Per-object `quality_checks` should cover mask alignment, alpha edges, background residue, and reuse readiness. Missing mask or alpha provenance is a review blocker even when the PNG file opens correctly. Record `composition_order` so downstream renderers can rebuild the layer stack, and do not set package `qa.status` to `pass` unless every required object quality check is `pass`.
 
 Use `record_quality_review.py` after inspecting previews to update `metadata.json` and append `qa_report.md` together. This prevents the common failure where imported layers remain `needs-review`, semantic analysis is missing, or `qa.status` is promoted without matching object-level evidence.
+`candidate_promotion` is a formal approval gate, not a casual note. If a candidate asset replaces the current revision, the package should carry explicit candidate promotion evidence instead of relying on implicit QA status.
 
 Validation now requires both ordinary inspection previews from `build_previews.py` and quality previews from `build_quality_previews.py` for each reusable object layer. A package without preview evidence is incomplete even if the transparent PNGs and masks exist.
 

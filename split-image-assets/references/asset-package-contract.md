@@ -107,11 +107,22 @@ For reconstruction, runtime support such as `torch` or `onnxruntime` is not enou
 `decision_log` records confirmation-driven workflow decisions that materially affect reuse, editability, localization, reconstruction acceptance, or final delivery claims. Each entry must include:
 
 - `stage`
+- `pause_category`
 - `question`
 - `recommended_answer`
-- `user_answer`
+- `recorded_answer`
 - `decision_effect`
 - `decision_source`
+- `evidence_ref`
+- `blocking`
+
+`decision_log` is a formal gate ledger, not a progress note stream.
+
+- `pause_category` must be `user-decision`, `external-blocker`, or `formal-approval`
+- `decision_source` may only be `explicit-user-confirmed` or `inferred-from-user`
+- `agent-defaulted` is not legal in formal gate state
+- `inferred-from-user` requires a non-empty `evidence_ref`
+- `blocking` records whether this gate actually blocked downstream execution
 
 If prior user instructions or existing metadata already answer the question, record that inferred decision instead of asking again. Do not leave subjective split choices only in chat.
 
@@ -123,14 +134,21 @@ If prior user instructions or existing metadata already answer the question, rec
 - `approximate_reconstruction`
 - `final_promotion_acceptance`
 - `final_acceptance`
+- `candidate_promotion`
 
 Each confirmation entry must include:
 
 - `status`: `pending`, `confirmed`, or `not-required`
-- `source`: `explicit-user-confirmed`, `inferred-from-user`, `agent-defaulted`, or `unset`
+- `source`: `explicit-user-confirmed`, `inferred-from-user`, or `unset`
+- `pause_category`
 - `notes`
+- `evidence_ref`
 
 `pilot_object` must also include `object_id`.
+
+`status=confirmed` or `status=not-required` may only use `explicit-user-confirmed` or `inferred-from-user`. `inferred-from-user` requires durable evidence and must not be used for agent guesswork.
+
+Progress commentary, tool output summaries, and review notes must stay outside `decision_log` and `confirmation`. They can be stored in QA notes, but they do not count as formal gate evidence.
 
 Each object should include:
 

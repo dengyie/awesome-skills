@@ -30,6 +30,10 @@ PREFLIGHT TOOLING RECOMMENDATION GATE
 DO NOT START EXTRACTION BEFORE TOOLING PREFLIGHT IS REPORTED AND RECORDED
 GRANULARITY ALIGNMENT GATE
 CONFIRMATION GATE
+PROGRESS UPDATES ARE COMMENTARY, NOT CONFIRMATION GATES
+ONLY THREE EVENT TYPES MAY PAUSE EXECUTION
+NO FORMAL GATE MAY BE SATISFIED BY AGENT DEFAULTING
+INFERRED-FROM-USER MEANS EVIDENCE-BACKED USER INTENT, NOT AGENT GUESSING
 PROFESSIONAL SEGMENTER FIRST
 SEMANTIC LAYERS BEFORE RECTANGLES
 QUALITY-GATED PIPELINE
@@ -42,6 +46,24 @@ STAGE INTERMEDIATES
 PREVIEWS ARE INSPECTION ARTIFACTS
 NEVER HIDE UNCERTAINTY
 ```
+
+## Interaction State Machine
+
+Execution only pauses in three cases:
+
+- `user-decision`
+- `external-blocker`
+- `formal-approval`
+
+Everything else stays in `Running` and should be reported as commentary only. Progress summaries, tool output notes, and “still working” updates are not confirmation gates and must not stop the workflow.
+
+Use these states consistently:
+
+- `Running`: analysis, import, preview generation, scoring, QA inspection, validation, and evidence capture
+- `AwaitingDecision`: a real user choice is required and will change package semantics
+- `AwaitingExternalBlocker`: the workflow cannot proceed without tools, outputs, credentials, installs, or another external prerequisite
+- `AwaitingApproval`: the workflow has enough evidence to request a formal approval gate such as pilot approval, final acceptance, or candidate promotion
+- `Completed`: the current run has reached a real terminal outcome
 
 ## Workflow
 
@@ -80,8 +102,10 @@ NEVER HIDE UNCERTAINTY
    - transparent, reflective, fuzzy, smoky, or low-contrast regions
    - recommended split plan
 10. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
-11. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the Confirmation Gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
-   - the default is to stop and align with the user
+11. When the split plan has an ambiguous decision point or a subjective reuse boundary, run the appropriate confirmation gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
+   - only real user decisions, genuine external blockers, and formal approvals may pause execution
+   - if prior instructions already settle the branch, record the evidence-backed decision instead of asking again
+   - ordinary progress updates remain commentary and do not pause execution
 12. Read `references/asset-package-contract.md` and update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
    - for UI or dense compositions, also record `metadata.granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
@@ -106,7 +130,9 @@ NEVER HIDE UNCERTAINTY
    - `scripts/validate_asset_package.py`
    - `scripts/export_asset_manifest.py`
 16. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
-17. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, and manual QA status after inspection instead of hand-editing JSON.
+17. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, formal gate decisions, and manual QA status after inspection instead of hand-editing JSON.
+   - use formal gate writes only for real decision/approval state
+   - keep commentary and review progress out of `metadata.decision_log[]` and `metadata.confirmation`
 18. Build inspection previews with `scripts/build_previews.py`.
 19. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
 20. Run `scripts/audit_visual_quality.py` for warning-only checks such as hard alpha edges, loose crops, large masks, and support plates miscounted as atomic assets.
@@ -185,33 +211,51 @@ Source-space masks are expected: `masks/*.png` should normally match the origina
 
 ## Decision Sync Rule
 
-Use these formal confirmation gates instead of vague “ask when needed” behavior:
+Use these formal confirmation gates instead of vague “ask when needed” behavior. Each gate must map to one of the three allowed pause categories and must never rely on `agent-defaulted`.
 
 - `Granularity Alignment Gate`
+  - Pause category: `user-decision`
   - Trigger: complex UI, dashboard, dense composition, or any run where split scope affects reuse boundaries.
   - Ask: “Should this package target component-level, atomic-layer, or production-editable reconstruction?”
   - Recommended answer: `atomic-layer` for reusable UI atoms; `production-editable` when downstream rebuild matters.
-  - Metadata effect: update `metadata.granularity.mode`, `scope_strategy`, `text_handling`, `background_expectation`, and `layer_independence`.
+  - Metadata effect: update `metadata.granularity.mode`, `scope_strategy`, `text_handling`, `background_expectation`, `layer_independence`, and record a formal decision-log entry.
 - `Carrier/Glyph Split Gate`
+  - Pause category: `user-decision`
   - Trigger: icon-in-tile, badge-in-card, glyph-on-plate, or any `carrier-glyph-pair`.
   - Ask: “Should this carrier and glyph stay grouped, or split into separate reusable layers?”
   - Recommended answer: `split` unless the grouped layer is explicitly the downstream requirement.
   - Metadata effect: update `metadata.granularity.carrier_glyph_policy` and record the decision in `metadata.decision_log[]`.
 - `Approximate Reconstruction Acceptance Gate`
+  - Pause category: `user-decision` first, `formal-approval` when claim escalation is at stake
   - Trigger: background/carrier repair requires inferred pixels or manual redraw.
   - Ask: “Is an approximate reconstructed layer acceptable for this package?”
   - Recommended answer: yes only when the layer can stay `needs-review` or is explicitly accepted for the target use.
-  - Metadata effect: keep `delivery_class=approximate-reconstruction`, record `reconstruction_provenance`, `active_reconstruction_method`, and a reconstruction acceptance decision in `metadata.decision_log[]`.
+  - Metadata effect: keep `delivery_class=approximate-reconstruction`, record `reconstruction_provenance`, `active_reconstruction_method`, `metadata.confirmation.approximate_reconstruction`, and a formal decision-log entry.
   - Required wording before promotion: `This is still approximate because hidden pixels are inferred.`
+- `Pilot Object Gate`
+  - Pause category: `formal-approval`
+  - Trigger: complex UI, dashboard, badge/tile/glyph, or approximate reconstruction work that should not widen without a representative pilot.
+  - Ask: “Should I use this representative object as the pilot before broader extraction?”
+  - Recommended answer: yes for dense UI or reconstruction-heavy work.
+  - Metadata effect: update `metadata.confirmation.pilot_object` and keep the wider batch blocked until the gate is `confirmed` or evidence-backed `not-required`.
+- `Final Acceptance Gate`
+  - Pause category: `formal-approval`
+  - Trigger: the package is about to claim `qa.status=pass`, `visual-acceptance-ready`, or `production-ready`.
+  - Ask: “Does the current package meet the requested granularity and cleanliness well enough to mark pass?”
+  - Recommended answer: keep `needs-review` unless the current boundaries, cleanliness, and approximations have actually been accepted.
+  - Metadata effect: update `metadata.confirmation.final_acceptance` and record a formal decision-log entry.
 - `Final Promotion Acceptance Gate`
+  - Pause category: `formal-approval`
   - Trigger: a candidate is about to replace the current asset revision.
   - Ask: “Should candidate X become the current revision for this object?”
   - Recommended answer: yes only after compare evidence or a direct-promotion rationale exists.
-  - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.final_promotion_acceptance`, and the QA report.
+  - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.candidate_promotion`, and the QA report.
 
-When a split decision affects reuse boundaries, editability, animation readiness, localization, approximate reconstruction acceptance, or final delivery claims, pause and run a one-question confirmation step before continuing that branch.
+When a split decision affects reuse boundaries, editability, animation readiness, localization, approximate reconstruction acceptance, candidate replacement, or final delivery claims, pause and run a one-question confirmation step before continuing that branch.
 
 This is a confirmation-driven workflow, not passive ambiguity handling. Ask one question at a time, include the recommended answer, resolve one branch before moving on, and inspect the source image, metadata, and prior user instructions before asking. Do not batch unrelated questions unless the user explicitly asks for a full alignment round.
+
+`inferred-from-user` means the answer is already supported by durable user evidence such as earlier instructions, approved metadata, or a prior accepted policy. It does not mean the agent guessed what the user probably wants.
 
 Ask when deciding:
 
@@ -223,9 +267,9 @@ Ask when deciding:
 - whether structurally valid output should remain `needs-review` until the user accepts its cleanliness and granularity
 - whether a warning is a true defect, an expected stylistic signal, or mixed and needs human judgment
 
-If the answer can be determined from the source image, existing metadata, or user-provided requirements, inspect that evidence first. If ambiguity remains, ask exactly one focused question and wait for the answer before continuing that branch.
+If the answer can be determined from the source image, existing metadata, or user-provided requirements, inspect that evidence first. If ambiguity remains, ask exactly one focused question and wait for the answer before continuing that branch. Progress updates are commentary, not confirmation gates.
 
-Record confirmation outcomes in `metadata.decision_log[]` with `stage`, `question`, `recommended_answer`, `user_answer`, `decision_effect`, and `decision_source`. For the hard workflow gates, also update `metadata.confirmation`.
+Record formal gate outcomes in `metadata.decision_log[]` with `stage`, `pause_category`, `question`, `recommended_answer`, `recorded_answer`, `decision_effect`, `decision_source`, `evidence_ref`, and `blocking`. For the hard workflow gates, also update `metadata.confirmation`, including `candidate_promotion`.
 
 ## Reference Routing
 

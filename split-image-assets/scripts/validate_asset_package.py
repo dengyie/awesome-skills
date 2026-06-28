@@ -83,14 +83,19 @@ ALLOWED_CAPABILITY_CHOICES = {
     "production-capable",
     "unset",
 }
+ALLOWED_PAUSE_CATEGORIES = {"user-decision", "external-blocker", "formal-approval"}
+ALLOWED_BLOCKING_VALUES = {"true", "false"}
 REQUIRED_DECISION_FIELDS = {
     "stage",
+    "pause_category",
     "question",
     "recommended_answer",
-    "user_answer",
     "decision_effect",
     "decision_source",
+    "evidence_ref",
+    "blocking",
 }
+DECISION_ANSWER_FIELDS = ("recorded_answer", "user_answer")
 REQUIRED_ASSET_SUMMARY_FIELDS = {
     "production_ready_assets",
     "draft_candidate_assets",
@@ -100,7 +105,6 @@ REQUIRED_ASSET_SUMMARY_FIELDS = {
 ALLOWED_DECISION_SOURCES = {
     "explicit-user-confirmed",
     "inferred-from-user",
-    "agent-defaulted",
 }
 REQUIRED_CONFIRMATION_KEYS = {
     "tooling_preflight",
@@ -109,12 +113,12 @@ REQUIRED_CONFIRMATION_KEYS = {
     "approximate_reconstruction",
     "final_promotion_acceptance",
     "final_acceptance",
+    "candidate_promotion",
 }
 ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
 ALLOWED_CONFIRMATION_SOURCES = {
     "explicit-user-confirmed",
     "inferred-from-user",
-    "agent-defaulted",
     "unset",
 }
 NON_DEFAULT_CONFIRMATION_SOURCES = {
@@ -282,6 +286,8 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 errors.append(f"metadata.decision_log[{index}] must be an object")
                 continue
             missing = sorted(REQUIRED_DECISION_FIELDS - set(entry))
+            if not any(field_name in entry for field_name in DECISION_ANSWER_FIELDS):
+                missing.append("recorded_answer")
             if missing:
                 errors.append(
                     f"metadata.decision_log[{index}] missing required fields: "
@@ -291,12 +297,34 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 value = entry.get(field)
                 if value is not None and (not isinstance(value, str) or not value.strip()):
                     errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
+            if not decision_answer(entry):
+                errors.append(
+                    f"metadata.decision_log[{index}].recorded_answer must be a non-empty string"
+                )
             decision_source = entry.get("decision_source")
             if decision_source not in ALLOWED_DECISION_SOURCES:
                 errors.append(
                     f"metadata.decision_log[{index}].decision_source must be one of: "
                     + ", ".join(sorted(ALLOWED_DECISION_SOURCES))
                 )
+            pause_category = entry.get("pause_category")
+            if pause_category not in ALLOWED_PAUSE_CATEGORIES:
+                errors.append(
+                    f"metadata.decision_log[{index}].pause_category must be one of: "
+                    + ", ".join(sorted(ALLOWED_PAUSE_CATEGORIES))
+                )
+            blocking = entry.get("blocking")
+            if blocking not in ALLOWED_BLOCKING_VALUES:
+                errors.append(
+                    f"metadata.decision_log[{index}].blocking must be one of: "
+                    + ", ".join(sorted(ALLOWED_BLOCKING_VALUES))
+                )
+            if decision_source == "inferred-from-user":
+                evidence_ref = entry.get("evidence_ref")
+                if not isinstance(evidence_ref, str) or not evidence_ref.strip():
+                    errors.append(
+                        f"metadata.decision_log[{index}].evidence_ref is required when decision_source=inferred-from-user"
+                    )
     qa = metadata.get("qa", {})
     qa_status = qa.get("status") if isinstance(qa, dict) else None
     if qa_status == "pass" and not decision_log:
@@ -321,6 +349,8 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
             status = entry.get("status")
             source = entry.get("source")
             notes = entry.get("notes")
+            pause_category = entry.get("pause_category", "")
+            evidence_ref = entry.get("evidence_ref", "")
             if status not in ALLOWED_CONFIRMATION_STATUSES:
                 errors.append(
                     f"metadata.confirmation.{key}.status must be one of: "
@@ -333,6 +363,26 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 )
             if not isinstance(notes, str):
                 errors.append(f"metadata.confirmation.{key}.notes must be a string")
+            if not isinstance(evidence_ref, str):
+                errors.append(f"metadata.confirmation.{key}.evidence_ref must be a string")
+            if status in {"confirmed", "not-required"}:
+                if source not in NON_DEFAULT_CONFIRMATION_SOURCES:
+                    errors.append(
+                        f"metadata.confirmation.{key}.source must come from explicit-user-confirmed or inferred-from-user"
+                    )
+                if pause_category not in ALLOWED_PAUSE_CATEGORIES:
+                    errors.append(
+                        f"metadata.confirmation.{key}.pause_category must be one of: "
+                        + ", ".join(sorted(ALLOWED_PAUSE_CATEGORIES))
+                    )
+                if source == "inferred-from-user" and not evidence_ref.strip():
+                    errors.append(
+                        f"metadata.confirmation.{key}.evidence_ref is required when source=inferred-from-user"
+                    )
+            if status == "pending" and source != "unset":
+                errors.append(
+                    f"metadata.confirmation.{key}.source must be unset when status=pending"
+                )
             if key == "pilot_object":
                 object_id = entry.get("object_id")
                 if not isinstance(object_id, str):
@@ -539,6 +589,14 @@ def is_reconstructed_or_approximate_layer(item: dict) -> bool:
     ]
     text = " ".join(str(value).lower() for value in values)
     return any(marker in text for marker in RECONSTRUCTION_MARKERS)
+
+
+def decision_answer(entry: dict) -> str:
+    for field_name in DECISION_ANSWER_FIELDS:
+        value = entry.get(field_name)
+        if isinstance(value, str) and value.strip():
+            return value
+    return ""
 
 
 def is_helper_only_layer(item: dict) -> bool:
@@ -831,9 +889,11 @@ def validate_objects(
                     f"{object_id}: approximate or reconstructed layers must not use reuse_status=production-ready"
                 )
             if str(item.get("selected_candidate_id", "")).strip():
-                accepted = has_affirmative_decision(
-                    decision_log,
-                    APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES,
+                accepted = any(
+                    isinstance(entry, dict)
+                    and str(entry.get("stage", "")).strip() in APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES
+                    and decision_answer(entry)
+                    for entry in decision_log
                 )
                 if not accepted:
                     errors.append(
@@ -876,6 +936,19 @@ def validate_objects(
         selected_candidate_id = item.get("selected_candidate_id")
         if selected_candidate_id is not None and not isinstance(selected_candidate_id, str):
             errors.append(f"{object_id}: selected_candidate_id must be a string when present")
+        selected_candidate_id_value = (
+            str(selected_candidate_id).strip() if isinstance(selected_candidate_id, str) else ""
+        )
+        if selected_candidate_id_value:
+            candidate_promotion_entry = metadata.get("confirmation", {}).get("candidate_promotion", {})
+            if candidate_promotion_entry.get("status") != "confirmed":
+                errors.append(
+                    f"{object_id}: metadata.confirmation.candidate_promotion must be confirmed before candidate promotion"
+                )
+            elif candidate_promotion_entry.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
+                errors.append(
+                    f"{object_id}: metadata.confirmation.candidate_promotion must come from explicit-user-confirmed or inferred-from-user"
+                )
         repair_history = item.get("repair_history")
         if repair_history is not None and not isinstance(repair_history, list):
             errors.append(f"{object_id}: repair_history must be a list when present")

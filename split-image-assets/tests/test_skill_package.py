@@ -201,6 +201,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("EXTRACTION CAPABILITY GATE", skill_text)
         self.assertIn("PREFLIGHT TOOLING RECOMMENDATION GATE", skill_text)
         self.assertIn("DO NOT START EXTRACTION BEFORE TOOLING PREFLIGHT IS REPORTED AND RECORDED", skill_text)
+        self.assertIn("PROGRESS UPDATES ARE COMMENTARY, NOT CONFIRMATION GATES", skill_text)
+        self.assertIn("ONLY THREE EVENT TYPES MAY PAUSE EXECUTION", skill_text)
+        self.assertIn("NO FORMAL GATE MAY BE SATISFIED BY AGENT DEFAULTING", skill_text)
+        self.assertIn("INFERRED-FROM-USER MEANS EVIDENCE-BACKED USER INTENT, NOT AGENT GUESSING", skill_text)
         self.assertIn("GRANULARITY ALIGNMENT GATE", skill_text)
         self.assertIn("CONFIRMATION GATE", skill_text)
         self.assertIn("DO NOT DEFAULT TO ONE-PASS EXTRACTION", skill_text)
@@ -273,6 +277,9 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "score_candidate_assets.py",
             "upscale_repair_downscale.py",
             "visual-acceptance-ready",
+            "progress updates are commentary",
+            "candidate promotion",
+            "formal approval",
         ]:
             self.assertIn(expected, usage)
 
@@ -414,23 +421,31 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "tooling_preflight": {
                         "status": "pending",
                         "source": "unset",
+                        "pause_category": "external-blocker",
                         "notes": "",
+                        "evidence_ref": "",
                     },
                     "granularity_alignment": {
                         "status": "pending",
                         "source": "unset",
+                        "pause_category": "user-decision",
                         "notes": "",
+                        "evidence_ref": "",
                     },
                     "pilot_object": {
                         "status": "pending",
                         "source": "unset",
+                        "pause_category": "formal-approval",
                         "object_id": "",
                         "notes": "",
+                        "evidence_ref": "",
                     },
                     "approximate_reconstruction": {
                         "status": "pending",
                         "source": "unset",
+                        "pause_category": "formal-approval",
                         "notes": "",
+                        "evidence_ref": "",
                     },
                     "final_promotion_acceptance": {
                         "status": "pending",
@@ -440,7 +455,16 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "final_acceptance": {
                         "status": "pending",
                         "source": "unset",
+                        "pause_category": "formal-approval",
                         "notes": "",
+                        "evidence_ref": "",
+                    },
+                    "candidate_promotion": {
+                        "status": "pending",
+                        "source": "unset",
+                        "pause_category": "formal-approval",
+                        "notes": "",
+                        "evidence_ref": "",
                     },
                 },
             )
@@ -1289,6 +1313,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "yes",
                     "--decision-effect",
                     "Allow final pass and downstream reuse.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "formal-approval",
+                    "--blocking",
+                    "true",
                     "--review-note",
                     "Manual inspection accepted the imported layer.",
                 ],
@@ -1415,6 +1445,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "yes",
                     "--decision-effect",
                     "Create separate carrier and glyph layers.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "user-decision",
+                    "--blocking",
+                    "true",
                 ],
                 text=True,
                 capture_output=True,
@@ -1427,8 +1463,140 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             entry = metadata["decision_log"][0]
             self.assertEqual(entry["stage"], "semantic-split-plan")
             self.assertEqual(entry["recommended_answer"], "yes")
-            self.assertEqual(entry["user_answer"], "yes")
-            self.assertEqual(entry["decision_source"], "agent-defaulted")
+            self.assertEqual(entry["recorded_answer"], "yes")
+            self.assertEqual(entry["decision_source"], "explicit-user-confirmed")
+            self.assertEqual(entry["pause_category"], "user-decision")
+            self.assertEqual(entry["blocking"], "true")
+
+    def test_record_quality_review_rejects_formal_gate_without_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--decision-stage",
+                    "final-acceptance",
+                    "--decision-question",
+                    "Accept this package for pass?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "yes",
+                    "--decision-effect",
+                    "Allow qa.status pass.",
+                    "--pause-category",
+                    "formal-approval",
+                    "--blocking",
+                    "true",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--decision-source", result.stderr)
+
+    def test_record_quality_review_rejects_inferred_formal_gate_without_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--decision-stage",
+                    "granularity-alignment",
+                    "--decision-question",
+                    "Use atomic-layer granularity?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "yes",
+                    "--decision-effect",
+                    "Proceed with atomic-layer packaging.",
+                    "--decision-source",
+                    "inferred-from-user",
+                    "--pause-category",
+                    "user-decision",
+                    "--blocking",
+                    "true",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--evidence-ref", result.stderr)
+
+    def test_record_quality_review_records_candidate_promotion_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--decision-stage",
+                    "final-promotion-acceptance",
+                    "--decision-question",
+                    "Promote candidate v2 over the current revision?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "yes",
+                    "--decision-effect",
+                    "Promote candidate v2 as the active revision.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "formal-approval",
+                    "--blocking",
+                    "true",
+                    "--evidence-ref",
+                    "chat:promotion-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                metadata["confirmation"]["candidate_promotion"]["status"],
+                "confirmed",
+            )
+            self.assertEqual(
+                metadata["confirmation"]["candidate_promotion"]["pause_category"],
+                "formal-approval",
+            )
+            self.assertEqual(metadata["decision_log"][0]["recorded_answer"], "yes")
+            self.assertEqual(
+                metadata["decision_log"][0]["evidence_ref"],
+                "chat:promotion-approved",
+            )
 
     def test_record_quality_review_records_confirmation_gate_state(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1456,6 +1624,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "Proceed with atomic-layer plan.",
                     "--decision-source",
                     "inferred-from-user",
+                    "--pause-category",
+                    "user-decision",
+                    "--blocking",
+                    "true",
+                    "--evidence-ref",
+                    "chat:granularity-approved",
                 ],
                 text=True,
                 capture_output=True,
@@ -1472,8 +1646,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 metadata["confirmation"]["granularity_alignment"]["source"],
                 "inferred-from-user",
             )
+            self.assertEqual(
+                metadata["confirmation"]["granularity_alignment"]["evidence_ref"],
+                "chat:granularity-approved",
+            )
 
-    def test_record_quality_review_defaults_confirmation_source_to_agent_defaulted(self):
+    def test_record_quality_review_rejects_confirmation_gate_without_source(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -1493,14 +1671,75 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "confirmed",
                     "--confirmation-object-id",
                     "status_glyph",
+                    "--pause-category",
+                    "formal-approval",
                 ],
                 text=True,
                 capture_output=True,
                 check=False,
             )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
-            self.assertEqual(metadata["confirmation"]["pilot_object"]["source"], "agent-defaulted")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--confirmation-source", result.stderr)
+
+    def test_record_quality_review_rejects_confirmation_gate_with_unset_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--confirmation-key",
+                    "pilot_object",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "unset",
+                    "--confirmation-object-id",
+                    "status_glyph",
+                    "--pause-category",
+                    "formal-approval",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("explicit-user-confirmed or inferred-from-user", result.stderr)
+
+    def test_record_quality_review_rejects_pending_confirmation_with_non_unset_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--confirmation-key",
+                    "pilot_object",
+                    "--confirmation-status",
+                    "pending",
+                    "--confirmation-source",
+                    "explicit-user-confirmed",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must be unset", result.stderr)
 
     def test_record_quality_review_records_tooling_preflight_capability(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1536,6 +1775,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "continue draft-packaging-only",
                     "--decision-effect",
                     "Package must remain needs-review and cannot claim production extraction.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "external-blocker",
+                    "--blocking",
+                    "true",
                 ],
                 text=True,
                 capture_output=True,
@@ -2009,6 +2254,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata = self._write_single_object_metadata(output)
             metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
             metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["tooling_preflight"]["evidence_ref"] = "chat:tooling-approved"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -2234,22 +2480,29 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             }
             metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
             metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["tooling_preflight"]["evidence_ref"] = "chat:tooling-approved"
             metadata["confirmation"]["granularity_alignment"]["status"] = "confirmed"
             metadata["confirmation"]["granularity_alignment"]["source"] = "explicit-user-confirmed"
             metadata["confirmation"]["pilot_object"]["status"] = "not-required"
             metadata["confirmation"]["pilot_object"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["pilot_object"]["evidence_ref"] = "chat:pilot-waived"
             metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
             metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
             metadata["confirmation"]["final_acceptance"]["status"] = "confirmed"
             metadata["confirmation"]["final_acceptance"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["status"] = "not-required"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
             metadata["decision_log"] = [
                 {
                     "stage": "final-acceptance",
+                    "pause_category": "formal-approval",
                     "question": "Accept this UI atomic split as production-ready?",
                     "recommended_answer": "yes",
-                    "user_answer": "yes",
+                    "recorded_answer": "yes",
                     "decision_effect": "Allow qa.status=pass for the validated fixture.",
                     "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "chat:ui-final-acceptance",
+                    "blocking": "true",
                 }
             ]
             metadata["qa"]["status"] = "pass"
@@ -3384,15 +3637,19 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "approximate-reconstruction-acceptance",
+                    "pause_category": "formal-approval",
                     "question": "Accept approximate reconstructed candidate after compare?",
                     "recommended_answer": "yes",
-                    "user_answer": "yes",
+                    "recorded_answer": "yes",
                     "decision_effect": "Allow archived compare evidence to support validation.",
                     "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "chat:archived-reconstruction-accepted",
+                    "blocking": "true",
                 }
             ]
             metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
             metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["tooling_preflight"]["evidence_ref"] = "chat:tooling-approved"
             metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
             metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
             metadata["confirmation"]["final_promotion_acceptance"]["status"] = "confirmed"
@@ -3489,6 +3746,24 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "pass",
                     "--reuse-readiness",
                     "pass",
+                    "--decision-stage",
+                    "final-promotion-acceptance",
+                    "--decision-question",
+                    "Promote candidate-a before archiving compare evidence?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "yes",
+                    "--decision-effect",
+                    "Candidate A becomes the archived approved revision.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "formal-approval",
+                    "--blocking",
+                    "true",
+                    "--evidence-ref",
+                    "chat:archived-candidate-approved",
                     "--review-note",
                     "Archived compare evidence reviewed.",
                 ],
@@ -3842,7 +4117,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("final_acceptance must come from explicit-user-confirmed or inferred-from-user", result.stderr)
 
-    def test_validate_asset_package_rejects_negative_final_acceptance_for_pass(self):
+    def test_validate_asset_package_requires_evidence_for_inferred_confirmation(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -3859,19 +4134,47 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "final-acceptance",
+                    "pause_category": "formal-approval",
                     "question": "Accept this layer?",
                     "recommended_answer": "yes",
-                    "user_answer": "no",
-                    "decision_effect": "Do not allow pass.",
-                    "decision_source": "explicit-user-confirmed",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Allow pass.",
+                    "decision_source": "inferred-from-user",
+                    "evidence_ref": "",
+                    "blocking": "true",
                 }
             ]
-            metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
-            metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
-            metadata["confirmation"]["granularity_alignment"]["status"] = "confirmed"
-            metadata["confirmation"]["granularity_alignment"]["source"] = "inferred-from-user"
-            metadata["confirmation"]["final_acceptance"]["status"] = "confirmed"
-            metadata["confirmation"]["final_acceptance"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["tooling_preflight"].update(
+                {
+                    "status": "confirmed",
+                    "source": "inferred-from-user",
+                    "pause_category": "external-blocker",
+                    "evidence_ref": "",
+                }
+            )
+            metadata["confirmation"]["granularity_alignment"].update(
+                {
+                    "status": "confirmed",
+                    "source": "explicit-user-confirmed",
+                    "pause_category": "user-decision",
+                    "evidence_ref": "",
+                }
+            )
+            metadata["confirmation"]["final_acceptance"].update(
+                {
+                    "status": "confirmed",
+                    "source": "inferred-from-user",
+                    "pause_category": "formal-approval",
+                    "evidence_ref": "",
+                }
+            )
+            metadata["confirmation"]["candidate_promotion"] = {
+                "status": "not-required",
+                "source": "explicit-user-confirmed",
+                "pause_category": "formal-approval",
+                "notes": "",
+                "evidence_ref": "chat:not-promoting",
+            }
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -3898,9 +4201,9 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("affirmative final acceptance decision_log entry", result.stderr)
+            self.assertIn("evidence_ref", result.stderr)
 
-    def test_record_quality_review_rejects_pass_without_affirmative_final_acceptance(self):
+    def test_validate_asset_package_rejects_pending_confirmation_with_non_unset_source(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -3912,7 +4215,79 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 output / "assets" / "main_object_transparent.png"
             )
             Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
-            self._write_single_object_metadata(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["confirmation"]["tooling_preflight"]["source"] = "explicit-user-confirmed"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("status=pending", result.stderr)
+
+    def test_validate_asset_package_requires_candidate_promotion_for_promoted_revision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["objects"][0]["selected_candidate_id"] = "candidate-v2"
+            metadata["objects"][0]["repair_history"] = ["candidate-v2 promoted after compare"]
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-acceptance",
+                    "pause_category": "formal-approval",
+                    "question": "Accept this layer?",
+                    "recommended_answer": "yes",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Allow pass.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "chat:accepted-final",
+                    "blocking": "true",
+                }
+            ]
+            metadata["confirmation"]["tooling_preflight"].update(
+                {
+                    "status": "confirmed",
+                    "source": "explicit-user-confirmed",
+                    "pause_category": "external-blocker",
+                    "evidence_ref": "chat:tooling-clear",
+                }
+            )
+            metadata["confirmation"]["granularity_alignment"].update(
+                {
+                    "status": "confirmed",
+                    "source": "explicit-user-confirmed",
+                    "pause_category": "user-decision",
+                    "evidence_ref": "chat:granularity",
+                }
+            )
+            metadata["confirmation"]["final_acceptance"].update(
+                {
+                    "status": "confirmed",
+                    "source": "explicit-user-confirmed",
+                    "pause_category": "formal-approval",
+                    "evidence_ref": "chat:accepted-final",
+                }
+            )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
             preview_result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
                 text=True,
@@ -3929,31 +4304,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
 
             result = subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "scripts" / "record_quality_review.py"),
-                    str(output),
-                    "--decision-stage",
-                    "final-acceptance",
-                    "--decision-question",
-                    "Accept this layer?",
-                    "--decision-recommended",
-                    "yes",
-                    "--decision-answer",
-                    "no",
-                    "--decision-effect",
-                    "Do not allow qa.status pass.",
-                    "--decision-source",
-                    "explicit-user-confirmed",
-                    "--qa-status",
-                    "pass",
-                ],
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
                 text=True,
                 capture_output=True,
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("affirmative user answer", result.stderr)
+            self.assertIn("candidate_promotion", result.stderr)
 
     def test_generate_ui_carrier_candidates_emits_manifest_and_updates_object_type(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -4272,15 +4629,19 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "reconstruction-acceptance",
+                    "pause_category": "formal-approval",
                     "question": "Accept approximate reconstructed carrier after candidate review?",
                     "recommended_answer": "yes",
-                    "user_answer": "yes",
+                    "recorded_answer": "yes",
                     "decision_effect": "Allow promotion of the chosen candidate after compare evidence.",
                     "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "chat:reconstruction-accepted",
+                    "blocking": "true",
                 }
             ]
             metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
             metadata["confirmation"]["tooling_preflight"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["tooling_preflight"]["evidence_ref"] = "chat:tooling-approved"
             metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
             metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
             metadata["confirmation"]["final_promotion_acceptance"]["status"] = "confirmed"
@@ -4369,6 +4730,24 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "pass",
                     "--reuse-readiness",
                     "pass",
+                    "--decision-stage",
+                    "final-promotion-acceptance",
+                    "--decision-question",
+                    "Promote candidate-a as the current reconstruction revision?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "yes",
+                    "--decision-effect",
+                    "Candidate A becomes the current revision after compare review.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "formal-approval",
+                    "--blocking",
+                    "true",
+                    "--evidence-ref",
+                    "chat:candidate-a-promoted",
                     "--review-note",
                     "Compare and promotion evidence reviewed.",
                 ],
