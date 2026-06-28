@@ -464,6 +464,152 @@ The refactor is complete only when all of the following are true:
 6. validator rules reject illegal extraction/rebuild combinations
 7. package tests catch regressions back to text-first auto-extraction behavior
 
+## Milestone Delivery Contract
+
+This spec is also the execution contract for the next implementation milestone. No separate development doc should override it unless the user explicitly amends this document.
+
+```text
+Milestone：split-image-assets 资产价值评分与文字类重建优先改造
+目标：在 split-image-assets 中引入 editability-first 的资产价值评分层，让普通文字类默认不导出图片资产，只在视觉保真必须成立时才允许导出，并把高复杂度灰区路由到 requires_user_confirmation
+P0/P1 范围：价值评分模型、workflow 接入、metadata/schema 合同、validator enforcement、必要 prompts、回归测试、阶段审查与提交
+不做的 P2/P3：OCR 能力、字体推断、下游 live text 重建器、业务重要性评分、通用跨技能评分框架、无关图片处理优化
+Manual-required：无
+阶段上限：3
+阶段拆分：
+1) 评分与路由合同落地
+2) validator / prompts / tests 闭环
+3) 阶段审查、阻断修复、提交总结
+验收标准：
+- 普通文字类默认不导出正式图片资产
+- fidelity-critical 文字类可合法导出图片资产
+- 高复杂度灰区对象走 requires_user_confirmation
+- metadata 能记录 scoring / recommended_action / final_action / text semantics
+- validator 能拦截非法 text/action 组合
+- package 回归测试通过
+停止条件：
+1. 当前 milestone 的 P0/P1 完成并通过必要验证
+2. 阶段数量达到上限
+3. P0/P1 阻断项 3 次修复后仍无法解决
+4. 关键外部依赖缺失，导致当前环境无法完成验收
+```
+
+## Implementation Scope Freeze
+
+Only P0/P1 items from this spec may be implemented in the next milestone.
+
+### P0
+
+- prevent ordinary editable text-like content from defaulting into raster extraction
+- ensure ambiguous high-complexity text-like content cannot bypass `requires_user_confirmation`
+- ensure validator rejects illegal routing states that contradict the approved contract
+
+### P1
+
+- add durable scoring metadata and routing metadata to the package contract
+- update workflow and prompts so the scoring decision happens before extraction
+- add package regression coverage for ordinary text, fidelity-critical text, and ambiguous text-like routes
+- run milestone-end production review and fix any blocking findings
+
+### Backlog
+
+The following items are explicitly backlog and must not be auto-promoted during the milestone unless they block a P0/P1 acceptance criterion:
+
+- OCR-assisted text classification
+- richer numerical scoring calibration or learned weights
+- reconstruction guidance for downstream design systems
+- generalized reusable value-scoring engine across other skills
+- automatic migration of historical packages to the new schema
+
+## Phase Plan
+
+### Phase 1: Scoring And Routing Contract
+
+Phase goal:
+
+- define the new scoring/routing contract in skill docs, workflow, prompts, and metadata schema so extraction no longer starts from “object found means image asset”.
+
+Corresponding P0/P1:
+
+- P0 ordinary editable text must stop defaulting to raster extraction
+- P1 add structured scoring and routing metadata
+
+Planned file scope:
+
+- `split-image-assets/SKILL.md`
+- `split-image-assets/references/workflow.md`
+- `split-image-assets/references/confirmation-prompts.md`
+- `split-image-assets/references/asset-package-contract.md`
+- `docs/usage/split-image-assets.md`
+
+Verifiable result:
+
+- the docs and contract consistently describe `editability_score`, `visual_complexity_score`, `asset_value_score`, `recommended_action`, `final_action`, `text_role`, and `text_render_class`
+
+### Phase 2: Enforcement And Regression Closure
+
+Phase goal:
+
+- make the routing contract executable and validator-enforced, with regression tests that prove the intended text handling behavior.
+
+Corresponding P0/P1:
+
+- P0 illegal text/action combinations are blocked
+- P0 ambiguous high-complexity text-like content cannot skip confirmation
+- P1 add regression tests and confirmation prompt coverage
+
+Planned file scope:
+
+- `split-image-assets/scripts/record_quality_review.py`
+- `split-image-assets/scripts/validate_asset_package.py`
+- `split-image-assets/tests/test_skill_package.py`
+
+Verifiable result:
+
+- automated tests prove ordinary text routes to rebuild, fidelity-critical text can extract, and ambiguous text-like content requires confirmation evidence
+
+### Phase 3: Review, Fix Loop, And Delivery
+
+Phase goal:
+
+- run milestone-end validation and production review, repair only blocking issues, then ship an atomic milestone commit set.
+
+Corresponding P0/P1:
+
+- P1 complete required verification and review loop
+
+Verifiable result:
+
+- required tests pass
+- phase-gate review reports no remaining P0/P1 blockers
+- milestone stops after summary output
+
+## Required Verification Order
+
+At phase end, verification should follow this priority order and must stay scoped to this milestone:
+
+1. targeted unit/regression tests for the changed routing behavior
+2. full `split-image-assets` package test suite
+3. manual reasoning check for representative ordinary text, fidelity-critical text, and ambiguous text-like examples
+4. production-code-quality-review phase-gate review
+
+## Review Output Contract
+
+Each phase-end production review must report:
+
+```text
+严重问题：
+中等问题：
+非阻塞建议：
+安全风险：
+稳定性风险：
+可维护性风险：
+测试覆盖：
+质量评分：
+通过状态：通过 / 有条件通过 / 不通过
+```
+
+Blocking findings must be fixed in the same milestone loop. Non-blocking findings move to backlog.
+
 ## Review Checklist
 
 Before implementation planning begins, verify that:
