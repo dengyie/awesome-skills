@@ -6,6 +6,8 @@ from pathlib import Path
 
 from PIL import Image
 
+from init_asset_package import build_object_routing_defaults
+
 
 DEFAULT_STAGES = [
     "semantic-analysis",
@@ -303,6 +305,7 @@ def build_import_plan(
             "repair_history": list(record.get("repair_history", []))
             if isinstance(record.get("repair_history", []), list)
             else [],
+            **build_object_routing_defaults(),
             "manual_review_flags": [
                 "external asset imported; inspect mask alignment and alpha edges"
             ],

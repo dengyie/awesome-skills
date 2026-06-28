@@ -6,6 +6,30 @@ from pathlib import Path
 from PIL import Image
 
 
+def build_object_routing_defaults() -> dict:
+    return {
+        "value_scoring": {
+            "editability_score": "unset",
+            "visual_complexity_score": "unset",
+            "asset_value_score": "unset",
+            "scoring_reason": "",
+        },
+        "decision_routing": {
+            "recommended_action": "unset",
+            "final_action": "unset",
+            "decision_source": "unset",
+        },
+        "rebuild_intent": {
+            "rebuildable_downstream": False,
+            "rebuild_notes": "",
+        },
+        "text_semantics": {
+            "text_role": "non-text",
+            "text_render_class": "non-text",
+        },
+    }
+
+
 def build_metadata(source_path: Path, package_name: str, width: int, height: int) -> dict:
     return {
         "schema_version": "1.0",

@@ -51,6 +51,34 @@ ALLOWED_DELIVERY_CLASSES = {
     "support-only",
     "draft-candidate",
 }
+ALLOWED_TEXT_ROLES = {
+    "plain-text",
+    "button-label",
+    "numeric-value",
+    "form-value",
+    "logo-wordmark",
+    "decorative-text",
+    "non-text",
+}
+ALLOWED_TEXT_RENDER_CLASSES = {
+    "editable",
+    "styled-editable",
+    "visual-fidelity-critical",
+    "non-text",
+}
+ALLOWED_SCORE_VALUES = {"unset", "low", "medium", "high"}
+ALLOWED_ROUTING_ACTIONS = {
+    "unset",
+    "extract_asset",
+    "rebuild_downstream",
+    "requires_user_confirmation",
+    "support_only",
+}
+ALLOWED_ROUTING_DECISION_SOURCES = {
+    "unset",
+    "explicit-user-confirmed",
+    "inferred-from-user",
+}
 ALLOWED_OBJECT_TYPES = {
     "ui-carrier",
     "ui-glyph",
@@ -161,6 +189,17 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
             args.current_asset_revision,
             args.active_reconstruction_method,
             args.selected_candidate_id,
+            args.text_role,
+            args.text_render_class,
+            args.editability_score,
+            args.visual_complexity_score,
+            args.asset_value_score,
+            args.scoring_reason,
+            args.recommended_action,
+            args.final_action,
+            args.routing_decision_source,
+            args.rebuildable_downstream,
+            args.rebuild_notes,
         ]
     ) or bool(args.repair_history_entry)
 
@@ -362,13 +401,13 @@ def update_confirmation(metadata: dict, args: argparse.Namespace) -> None:
                 entry["object_id"] = args.confirmation_object_id
 
 
-def parse_bool(value: str) -> bool:
+def parse_bool(value: str, flag_name: str) -> bool:
     normalized = value.strip().lower()
     if normalized in {"true", "yes", "1"}:
         return True
     if normalized in {"false", "no", "0"}:
         return False
-    raise ValueError("--production-capable must be true or false")
+    raise ValueError(f"{flag_name} must be true or false")
 
 
 def update_capability(metadata: dict, args: argparse.Namespace) -> None:
@@ -381,7 +420,7 @@ def update_capability(metadata: dict, args: argparse.Namespace) -> None:
         return
     capability = metadata.setdefault("capability", {})
     if args.production_capable is not None:
-        capability["production_capable"] = parse_bool(args.production_capable)
+        capability["production_capable"] = parse_bool(args.production_capable, "--production-capable")
     if args.missing_for_production is not None:
         capability["missing_for_production"] = args.missing_for_production
     elif "missing_for_production" not in capability:
@@ -427,6 +466,61 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             repair_history = item.setdefault("repair_history", [])
             for entry in args.repair_history_entry:
                 repair_history.append(entry)
+        text_semantics = item.setdefault(
+            "text_semantics",
+            {
+                "text_role": "non-text",
+                "text_render_class": "non-text",
+            },
+        )
+        if args.text_role is not None:
+            text_semantics["text_role"] = args.text_role
+        if args.text_render_class is not None:
+            text_semantics["text_render_class"] = args.text_render_class
+        value_scoring = item.setdefault(
+            "value_scoring",
+            {
+                "editability_score": "unset",
+                "visual_complexity_score": "unset",
+                "asset_value_score": "unset",
+                "scoring_reason": "",
+            },
+        )
+        if args.editability_score is not None:
+            value_scoring["editability_score"] = args.editability_score
+        if args.visual_complexity_score is not None:
+            value_scoring["visual_complexity_score"] = args.visual_complexity_score
+        if args.asset_value_score is not None:
+            value_scoring["asset_value_score"] = args.asset_value_score
+        if args.scoring_reason is not None:
+            value_scoring["scoring_reason"] = args.scoring_reason
+        decision_routing = item.setdefault(
+            "decision_routing",
+            {
+                "recommended_action": "unset",
+                "final_action": "unset",
+                "decision_source": "unset",
+            },
+        )
+        if args.recommended_action is not None:
+            decision_routing["recommended_action"] = args.recommended_action
+        if args.final_action is not None:
+            decision_routing["final_action"] = args.final_action
+        if args.routing_decision_source is not None:
+            decision_routing["decision_source"] = args.routing_decision_source
+        rebuild_intent = item.setdefault(
+            "rebuild_intent",
+            {
+                "rebuildable_downstream": False,
+                "rebuild_notes": "",
+            },
+        )
+        if args.rebuildable_downstream is not None:
+            rebuild_intent["rebuildable_downstream"] = parse_bool(
+                args.rebuildable_downstream, "--rebuildable-downstream"
+            )
+        if args.rebuild_notes is not None:
+            rebuild_intent["rebuild_notes"] = args.rebuild_notes
         quality_checks = item.setdefault("quality_checks", {})
         for arg_name, check_name in QUALITY_CHECK_ARGS.items():
             value = getattr(args, arg_name)
@@ -569,6 +663,24 @@ def append_qa_report(package_dir: Path, args: argparse.Namespace) -> None:
         lines.append("- Objects: all")
     if args.object_type:
         lines.append(f"- Object type: {args.object_type}")
+    if args.text_role:
+        lines.append(f"- Text role: {args.text_role}")
+    if args.text_render_class:
+        lines.append(f"- Text render class: {args.text_render_class}")
+    if args.editability_score:
+        lines.append(f"- Editability score: {args.editability_score}")
+    if args.visual_complexity_score:
+        lines.append(f"- Visual complexity score: {args.visual_complexity_score}")
+    if args.asset_value_score:
+        lines.append(f"- Asset value score: {args.asset_value_score}")
+    if args.recommended_action:
+        lines.append(f"- Recommended action: {args.recommended_action}")
+    if args.final_action:
+        lines.append(f"- Final action: {args.final_action}")
+    if args.routing_decision_source:
+        lines.append(f"- Routing decision source: {args.routing_decision_source}")
+    if args.rebuildable_downstream:
+        lines.append(f"- Rebuildable downstream: {args.rebuildable_downstream}")
     if args.confirmation_key:
         lines.append(f"- Confirmation gate: {args.confirmation_key}")
         lines.append(f"- Confirmation status: {args.confirmation_status}")
@@ -641,6 +753,20 @@ def main() -> int:
     parser.add_argument("--object-id", action="append", help="Object id whose quality checks are updated.")
     parser.add_argument("--all-objects", action="store_true", help="Apply quality check updates to all objects.")
     parser.add_argument("--object-type", choices=sorted(ALLOWED_OBJECT_TYPES))
+    parser.add_argument("--text-role", choices=sorted(ALLOWED_TEXT_ROLES))
+    parser.add_argument("--text-render-class", choices=sorted(ALLOWED_TEXT_RENDER_CLASSES))
+    parser.add_argument("--editability-score", choices=sorted(ALLOWED_SCORE_VALUES))
+    parser.add_argument("--visual-complexity-score", choices=sorted(ALLOWED_SCORE_VALUES))
+    parser.add_argument("--asset-value-score", choices=sorted(ALLOWED_SCORE_VALUES))
+    parser.add_argument("--scoring-reason")
+    parser.add_argument("--recommended-action", choices=sorted(ALLOWED_ROUTING_ACTIONS))
+    parser.add_argument("--final-action", choices=sorted(ALLOWED_ROUTING_ACTIONS))
+    parser.add_argument(
+        "--routing-decision-source",
+        choices=sorted(ALLOWED_ROUTING_DECISION_SOURCES),
+    )
+    parser.add_argument("--rebuildable-downstream", choices=["true", "false"])
+    parser.add_argument("--rebuild-notes")
     parser.add_argument("--asset-class", choices=sorted(ALLOWED_ASSET_CLASSES))
     parser.add_argument("--reuse-status", choices=sorted(ALLOWED_REUSE_STATUSES))
     parser.add_argument("--delivery-class", choices=sorted(ALLOWED_DELIVERY_CLASSES))

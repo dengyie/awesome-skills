@@ -119,6 +119,25 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "selected_candidate_id": "",
             "repair_history": [],
             "active_reconstruction_method": "",
+            "value_scoring": {
+                "editability_score": "unset",
+                "visual_complexity_score": "unset",
+                "asset_value_score": "unset",
+                "scoring_reason": "",
+            },
+            "decision_routing": {
+                "recommended_action": "unset",
+                "final_action": "unset",
+                "decision_source": "unset",
+            },
+            "rebuild_intent": {
+                "rebuildable_downstream": False,
+                "rebuild_notes": "",
+            },
+            "text_semantics": {
+                "text_role": "non-text",
+                "text_render_class": "non-text",
+            },
         }
         if include_quality_evidence:
             object_record["quality_checks"] = {
@@ -544,6 +563,26 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 metadata["previews"]["sprite_sheet_2x2"],
                 "previews/sprite_sheet_2x2.png",
             )
+
+    def test_init_asset_package_object_schema_supports_value_scoring_fields(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+
+            metadata = self._write_single_object_metadata(output)
+            obj = metadata["objects"][0]
+            self.assertIn("value_scoring", obj)
+            self.assertIn("decision_routing", obj)
+            self.assertIn("rebuild_intent", obj)
+            self.assertIn("text_semantics", obj)
 
     def test_import_external_assets_supports_manifest_batch_import(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1446,6 +1485,62 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["granularity"]["carrier_glyph_policy"], "split")
             self.assertEqual(metadata["granularity"]["background_expectation"], "approximate-accepted")
             self.assertEqual(metadata["granularity"]["layer_independence"], "animation-ready")
+
+    def test_record_quality_review_records_text_routing_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--text-role",
+                    "plain-text",
+                    "--text-render-class",
+                    "editable",
+                    "--editability-score",
+                    "high",
+                    "--visual-complexity-score",
+                    "low",
+                    "--asset-value-score",
+                    "low",
+                    "--scoring-reason",
+                    "Ordinary editable text.",
+                    "--recommended-action",
+                    "rebuild_downstream",
+                    "--final-action",
+                    "rebuild_downstream",
+                    "--routing-decision-source",
+                    "explicit-user-confirmed",
+                    "--rebuildable-downstream",
+                    "true",
+                    "--rebuild-notes",
+                    "Do not export a raster asset.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            obj = metadata["objects"][0]
+            self.assertEqual(obj["text_semantics"]["text_role"], "plain-text")
+            self.assertEqual(obj["decision_routing"]["final_action"], "rebuild_downstream")
+            self.assertTrue(obj["rebuild_intent"]["rebuildable_downstream"])
 
     def test_record_quality_review_records_confirmation_decision_log(self):
         with tempfile.TemporaryDirectory() as tmp:
