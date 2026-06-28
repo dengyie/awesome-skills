@@ -383,6 +383,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("DO NOT START EXTRACTION BEFORE TOOLING PREFLIGHT IS REPORTED AND RECORDED", skill_text)
         self.assertIn("PROGRESS UPDATES ARE COMMENTARY, NOT CONFIRMATION GATES", skill_text)
         self.assertIn("ONLY THREE EVENT TYPES MAY PAUSE EXECUTION", skill_text)
+        self.assertIn("Running", skill_text)
+        self.assertIn("AwaitingDecision", skill_text)
+        self.assertIn("AwaitingExternalBlocker", skill_text)
+        self.assertIn("AwaitingApproval", skill_text)
         self.assertIn("NO FORMAL GATE MAY BE SATISFIED BY AGENT DEFAULTING", skill_text)
         self.assertIn("INFERRED-FROM-USER MEANS EVIDENCE-BACKED USER INTENT, NOT AGENT GUESSING", skill_text)
         self.assertIn("GRANULARITY ALIGNMENT GATE", skill_text)
@@ -473,6 +477,18 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "progress updates are commentary",
             "candidate promotion",
             "formal approval",
+        ]:
+            self.assertIn(expected, usage)
+
+    def test_usage_doc_mentions_conservative_continuous_execution(self):
+        usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
+            encoding="utf-8"
+        ).lower()
+
+        for expected in [
+            "default execution model",
+            "continue versus stop",
+            "progress updates are commentary",
         ]:
             self.assertIn(expected, usage)
 

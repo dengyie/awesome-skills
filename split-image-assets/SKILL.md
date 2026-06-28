@@ -27,7 +27,7 @@ Conservative continuous execution is the default execution model. Keep the workf
 
 Progress updates are commentary only. They report what is happening, what changed, and what remains, but they do not ask for confirmation by themselves and they do not pause execution.
 
-Only the three formal stop classes may exit the workflow. Medium/high-risk semantic divergence is not a fourth stop class; it is the reason a branch may require a `user-decision` stop when the next choice would materially change package semantics, reuse boundaries, or acceptance claims and existing instructions do not settle it.
+Only hard stop events or medium/high-risk semantic divergence may exit the workflow early. Hard stop events are limited to the formal pause categories defined below. Medium/high-risk semantic divergence means the next branch would materially change package semantics, reuse boundaries, or acceptance claims in a way that cannot be justified from existing instructions and evidence.
 
 Every exit must include all of the following:
 
@@ -79,6 +79,8 @@ Use these states consistently:
 - `AwaitingExternalBlocker`: the workflow cannot proceed without tools, outputs, credentials, installs, or another external prerequisite
 - `AwaitingApproval`: the workflow has enough evidence to request a formal approval gate such as pilot approval, final acceptance, or candidate promotion
 - `Completed`: the current run has reached a real terminal outcome
+
+When the workflow exits from `AwaitingDecision`, `AwaitingExternalBlocker`, or `AwaitingApproval`, the stop message must include `Why This Needs a Human`, `Recommendation`, `Options and Impact`, and `What I Will Do After Confirmation`. Do not exit with a bare question.
 
 ## Asset Value Scoring Gate
 
