@@ -50,6 +50,73 @@ REQUIRED_OBJECT_QUALITY_CHECKS = {
     "background_residue",
     "reuse_readiness",
 }
+ALLOWED_QA_STATUSES = {"pass", "needs-review", "blocked"}
+ALLOWED_QUALITY_CHECK_STATUSES = {"pass", "needs-review", "blocked", "unknown"}
+ALLOWED_ASSET_CLASSES = {
+    "atomic",
+    "grouped-support",
+    "background-support",
+    "preview-reference",
+    "candidate",
+}
+ALLOWED_REUSE_STATUSES = {
+    "production-ready",
+    "draft-candidate",
+    "support-only",
+    "blocked",
+    "approximate-reconstruction",
+}
+ALLOWED_DELIVERY_CLASSES = {
+    "clean-extraction",
+    "approximate-reconstruction",
+    "support-only",
+    "draft-candidate",
+}
+ALLOWED_TEXT_ROLES = {
+    "plain-text",
+    "button-label",
+    "numeric-value",
+    "form-value",
+    "logo-wordmark",
+    "decorative-text",
+    "non-text",
+}
+ALLOWED_TEXT_RENDER_CLASSES = {
+    "editable",
+    "styled-editable",
+    "visual-fidelity-critical",
+    "non-text",
+}
+ALLOWED_SCORE_VALUES = {"unset", "low", "medium", "high"}
+ALLOWED_ROUTING_ACTIONS = {
+    "unset",
+    "extract_asset",
+    "rebuild_downstream",
+    "requires_user_confirmation",
+    "support_only",
+}
+ALLOWED_ROUTING_DECISION_SOURCES = {
+    "unset",
+    "explicit-user-confirmed",
+    "inferred-from-user",
+}
+ORDINARY_TEXT_ROLES = {"plain-text", "button-label", "numeric-value", "form-value"}
+ALLOWED_OBJECT_TYPES = {
+    "ui-carrier",
+    "ui-glyph",
+    "carrier-glyph-pair",
+    "soft-edge-logo-brand-mark",
+    "outlined-illustration-logo",
+    "flat-support-plate",
+    "grouped-support-plate",
+    "photo-object-matte",
+    "generic-object",
+}
+ALLOWED_QUALITY_TARGET_TIERS = {
+    "structural-valid",
+    "usable-draft",
+    "visual-acceptance-ready",
+}
 CROP_ONLY_MARKERS = {"bbox", "crop", "manual-estimated crop", "manual-estimated-crop"}
 ALLOWED_ROOT_DIRECTORIES = {
     "source",
@@ -668,35 +735,12 @@ def has_glyph_layer(item: dict) -> bool:
     return "glyph" in text
 
 
-def is_placeholder_only_rebuild(item: dict) -> bool:
-    if not isinstance(item, dict):
-        return False
-    decision_routing = item.get("decision_routing")
-    rebuild_intent = item.get("rebuild_intent")
-    if not isinstance(decision_routing, dict) or not isinstance(rebuild_intent, dict):
-        return False
-    return (
-        decision_routing.get("final_action") == "rebuild_downstream"
-        and rebuild_intent.get("rebuildable_downstream") is True
-        and item.get("reuse_status") == "support-only"
-        and item.get("delivery_class") == "support-only"
-        and item.get("asset_class") in {"grouped-support", "background-support", "preview-reference"}
-    )
-
-
-def has_text_routing_confirmation(
-    item: dict, decision_log: list[dict], allow_legacy_unscoped: bool = False
-) -> bool:
+def has_text_routing_confirmation(item: dict, decision_log: list[dict]) -> bool:
     object_id = str(item.get("id", "")).strip().lower()
     for entry in decision_log:
         if not isinstance(entry, dict):
             continue
         if entry.get("decision_source") not in ALLOWED_DECISION_SOURCES:
-            continue
-        entry_object_id = str(entry.get("object_id", "")).strip().lower()
-        if object_id and entry_object_id:
-            if object_id == entry_object_id:
-                return True
             continue
         evidence_text = " ".join(
             str(entry.get(field, "")).lower()
@@ -711,9 +755,9 @@ def has_text_routing_confirmation(
         )
         if object_id and object_id in evidence_text:
             return True
-        if allow_legacy_unscoped and "text-like object" in evidence_text:
+        if "text-like object" in evidence_text:
             return True
-        if allow_legacy_unscoped and "rebuild downstream" in evidence_text and "visual asset" in evidence_text:
+        if "rebuild downstream" in evidence_text and "visual asset" in evidence_text:
             return True
     return False
 
@@ -1099,9 +1143,7 @@ def validate_objects(
                 f"{object_id}: ordinary editable text-like content must not default to extract_asset"
             )
         if recommended_action == "requires_user_confirmation" and not has_text_routing_confirmation(
-            item,
-            decision_log,
-            allow_legacy_unscoped=len(requires_confirmation_ids) == 1,
+            item, decision_log
         ):
             errors.append(
                 f"{object_id}: requires_user_confirmation must be resolved through a formal decision record"

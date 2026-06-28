@@ -2026,6 +2026,40 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(obj["decision_routing"]["final_action"], "rebuild_downstream")
             self.assertTrue(obj["rebuild_intent"]["rebuildable_downstream"])
 
+    def test_record_quality_review_rejects_routing_action_without_decision_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--recommended-action",
+                    "extract_asset",
+                    "--final-action",
+                    "extract_asset",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--routing-decision-source", result.stderr)
+
     def test_record_quality_review_records_confirmation_decision_log(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -3039,6 +3073,285 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("Package valid", result.stdout)
+
+    def test_validate_asset_package_rejects_plain_text_extract_asset_without_override(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "plain-text",
+                "text_render_class": "editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "high",
+                "visual_complexity_score": "low",
+                "asset_value_score": "low",
+                "scoring_reason": "Ordinary UI label.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "rebuild_downstream",
+                "final_action": "extract_asset",
+                "decision_source": "explicit-user-confirmed",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("ordinary editable text-like content", result.stderr)
+
+    def test_validate_asset_package_accepts_plain_text_rebuild_downstream(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "plain-text",
+                "text_render_class": "editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "high",
+                "visual_complexity_score": "low",
+                "asset_value_score": "low",
+                "scoring_reason": "Ordinary UI label.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "rebuild_downstream",
+                "final_action": "rebuild_downstream",
+                "decision_source": "explicit-user-confirmed",
+            }
+            metadata["objects"][0]["rebuild_intent"] = {
+                "rebuildable_downstream": True,
+                "rebuild_notes": "Do not export this as a production raster asset.",
+            }
+            metadata["objects"][0]["asset_class"] = "grouped-support"
+            metadata["objects"][0]["reuse_status"] = "support-only"
+            metadata["objects"][0]["delivery_class"] = "support-only"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Package valid", result.stdout)
+
+    def test_validate_asset_package_accepts_visual_fidelity_critical_wordmark_extract_asset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "logo-wordmark",
+                "text_render_class": "visual-fidelity-critical",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "low",
+                "visual_complexity_score": "high",
+                "asset_value_score": "high",
+                "scoring_reason": "Brand wordmark with custom letterforms.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "extract_asset",
+                "final_action": "extract_asset",
+                "decision_source": "explicit-user-confirmed",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Package valid", result.stdout)
+
+    def test_validate_asset_package_rejects_requires_user_confirmation_without_decision_log(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["decision_log"] = []
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "decorative-text",
+                "text_render_class": "styled-editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "medium",
+                "visual_complexity_score": "high",
+                "asset_value_score": "medium",
+                "scoring_reason": "Stylized heading with ambiguous preservation needs.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "requires_user_confirmation",
+                "final_action": "extract_asset",
+                "decision_source": "explicit-user-confirmed",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("requires_user_confirmation", result.stderr)
+
+    def test_validate_asset_package_accepts_confirmed_ambiguous_text_route(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["decision_log"] = [
+                {
+                    "stage": "asset-value-scoring",
+                    "pause_category": "user-decision",
+                    "question": "Should this text-like object be rebuilt downstream or preserved as a visual asset?",
+                    "recommended_answer": "rebuild downstream unless fidelity-critical",
+                    "recorded_answer": "preserve as visual asset",
+                    "decision_effect": "Keep main_object as a visual asset after text-like object review.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                }
+            ]
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "decorative-text",
+                "text_render_class": "styled-editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "medium",
+                "visual_complexity_score": "high",
+                "asset_value_score": "medium",
+                "scoring_reason": "Stylized heading with ambiguous preservation needs.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "requires_user_confirmation",
+                "final_action": "extract_asset",
+                "decision_source": "explicit-user-confirmed",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Package valid", result.stdout)
+
+    def test_validate_asset_package_rejects_routing_action_without_decision_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "logo-wordmark",
+                "text_render_class": "visual-fidelity-critical",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "low",
+                "visual_complexity_score": "high",
+                "asset_value_score": "high",
+                "scoring_reason": "Brand wordmark with custom letterforms.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "extract_asset",
+                "final_action": "extract_asset",
+                "decision_source": "unset",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("decision_routing.decision_source", result.stderr)
 
     def test_validate_asset_package_accepts_ui_atomic_fixture(self):
         with tempfile.TemporaryDirectory() as tmp:

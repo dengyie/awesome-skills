@@ -234,6 +234,10 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
     ) or bool(args.repair_history_entry)
 
 
+def has_routing_action_updates(args: argparse.Namespace) -> bool:
+    return args.recommended_action is not None or args.final_action is not None
+
+
 def default_confirmation_entry(key: str) -> dict:
     entry = {
         "status": "pending",
