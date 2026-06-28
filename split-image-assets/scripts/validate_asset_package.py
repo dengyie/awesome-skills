@@ -95,6 +95,7 @@ REQUIRED_DECISION_FIELDS = {
     "evidence_ref",
     "blocking",
 }
+REQUIRED_NONEMPTY_DECISION_FIELDS = REQUIRED_DECISION_FIELDS - {"evidence_ref"}
 DECISION_ANSWER_FIELDS = ("recorded_answer", "user_answer")
 REQUIRED_ASSET_SUMMARY_FIELDS = {
     "production_ready_assets",
@@ -293,10 +294,13 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                     f"metadata.decision_log[{index}] missing required fields: "
                     + ", ".join(missing)
                 )
-            for field in REQUIRED_DECISION_FIELDS:
+            for field in REQUIRED_NONEMPTY_DECISION_FIELDS:
                 value = entry.get(field)
                 if value is not None and (not isinstance(value, str) or not value.strip()):
                     errors.append(f"metadata.decision_log[{index}].{field} must be a non-empty string")
+            evidence_ref = entry.get("evidence_ref")
+            if evidence_ref is not None and not isinstance(evidence_ref, str):
+                errors.append(f"metadata.decision_log[{index}].evidence_ref must be a string")
             if not decision_answer(entry):
                 errors.append(
                     f"metadata.decision_log[{index}].recorded_answer must be a non-empty string"
@@ -320,7 +324,6 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                     + ", ".join(sorted(ALLOWED_BLOCKING_VALUES))
                 )
             if decision_source == "inferred-from-user":
-                evidence_ref = entry.get("evidence_ref")
                 if not isinstance(evidence_ref, str) or not evidence_ref.strip():
                     errors.append(
                         f"metadata.decision_log[{index}].evidence_ref is required when decision_source=inferred-from-user"

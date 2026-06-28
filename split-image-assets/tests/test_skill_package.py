@@ -2296,6 +2296,92 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("Package valid", result.stdout)
 
+    def test_validate_asset_package_accepts_explicit_decision_without_evidence_ref(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-acceptance",
+                    "pause_category": "formal-approval",
+                    "question": "Accept this layer?",
+                    "recommended_answer": "yes",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Allow pass.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                }
+            ]
+            metadata["confirmation"]["tooling_preflight"].update(
+                {
+                    "status": "confirmed",
+                    "source": "inferred-from-user",
+                    "pause_category": "external-blocker",
+                    "evidence_ref": "chat:tooling-approved",
+                }
+            )
+            metadata["confirmation"]["granularity_alignment"].update(
+                {
+                    "status": "confirmed",
+                    "source": "explicit-user-confirmed",
+                    "pause_category": "user-decision",
+                    "evidence_ref": "",
+                }
+            )
+            metadata["confirmation"]["final_acceptance"].update(
+                {
+                    "status": "confirmed",
+                    "source": "explicit-user-confirmed",
+                    "pause_category": "formal-approval",
+                    "evidence_ref": "",
+                }
+            )
+            metadata["confirmation"]["candidate_promotion"] = {
+                "status": "not-required",
+                "source": "explicit-user-confirmed",
+                "pause_category": "formal-approval",
+                "notes": "",
+                "evidence_ref": "",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_quality_previews.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Package valid", result.stdout)
+
     def test_validate_asset_package_accepts_ui_atomic_fixture(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
