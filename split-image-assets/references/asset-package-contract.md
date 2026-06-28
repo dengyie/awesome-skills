@@ -1,5 +1,9 @@
 # Asset Package Contract
 
+This file defines the formal package contract surfaces. It is intentionally narrower than commentary, progress reporting, or casual review notes.
+
+Use `quick-contract.md` when you need the short contract view. Use this file when you need the full package contract.
+
 ## Default Layout
 
 ```text

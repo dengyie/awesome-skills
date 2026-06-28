@@ -35,6 +35,23 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         spec.loader.exec_module(module)
         return module
 
+    def _load_script_module(self, script_name: str):
+        module_path = ROOT / "scripts" / script_name
+        spec = importlib.util.spec_from_file_location(script_name.replace(".py", ""), module_path)
+        self.assertIsNotNone(spec)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        scripts_dir = str((ROOT / "scripts").resolve())
+        had_scripts_dir = scripts_dir in sys.path
+        if not had_scripts_dir:
+            sys.path.insert(0, scripts_dir)
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            if not had_scripts_dir:
+                sys.path.remove(scripts_dir)
+        return module
+
     def _run_init(self, source: pathlib.Path, output: pathlib.Path, package_name: str = "fixture"):
         return subprocess.run(
             [
@@ -268,6 +285,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "agents" / "openai.yaml",
             ROOT / "references" / "workflow.md",
             ROOT / "references" / "pipeline-recipes.md",
+            ROOT / "references" / "quick-contract.md",
             ROOT / "references" / "asset-package-contract.md",
             ROOT / "references" / "qa-standards.md",
             ROOT / "references" / "manual-review.md",
@@ -292,11 +310,58 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "scripts" / "export_asset_manifest.py",
             ROOT / "scripts" / "validate_asset_package.py",
             ROOT / "scripts" / "promote_candidate_asset.py",
+            REPO / "docs" / "superpowers" / "split-image-assets" / "README.md",
+            REPO / "docs" / "superpowers" / "split-image-assets" / "design.md",
+            REPO / "docs" / "superpowers" / "split-image-assets" / "implementation-plan.md",
+            REPO / "docs" / "superpowers" / "split-image-assets" / "migration.md",
             REPO / "docs" / "usage" / "split-image-assets.md",
         ]
 
         missing = [str(path.relative_to(REPO)) for path in required_paths if not path.exists()]
         self.assertEqual(missing, [])
+
+    def test_split_image_assets_canonical_docs_are_directory_scoped(self):
+        docs_root = REPO / "docs" / "superpowers" / "split-image-assets"
+        readme = (docs_root / "README.md").read_text(encoding="utf-8")
+        design = (docs_root / "design.md").read_text(encoding="utf-8")
+        plan = (docs_root / "implementation-plan.md").read_text(encoding="utf-8")
+        migration = (docs_root / "migration.md").read_text(encoding="utf-8")
+
+        self.assertIn("single documentation entrypoint", readme)
+        self.assertIn("Future `split-image-assets` work must converge here first", readme)
+        self.assertIn("single governing design document", design)
+        self.assertIn("single implementation plan", plan)
+        self.assertIn("documentation-system migration", migration)
+
+        retired = [
+            REPO / "docs" / "superpowers" / "specs" / "2026-06-23-split-image-assets-design.md",
+            REPO / "docs" / "superpowers" / "specs" / "2026-06-23-split-image-assets-pipeline-refactor-design.md",
+            REPO / "docs" / "superpowers" / "specs" / "2026-06-28-split-image-assets-interaction-framework-design.md",
+            REPO / "docs" / "superpowers" / "specs" / "2026-06-28-split-image-assets-asset-value-scoring-design.md",
+            REPO / "docs" / "superpowers" / "specs" / "2026-06-29-split-image-assets-usability-redesign-design.md",
+            REPO / "docs" / "superpowers" / "plans" / "2026-06-23-split-image-assets.md",
+            REPO / "docs" / "superpowers" / "plans" / "2026-06-28-split-image-assets-interaction-framework.md",
+            REPO / "docs" / "superpowers" / "plans" / "2026-06-28-split-image-assets-asset-value-scoring-implementation-plan.md",
+            REPO / "docs" / "superpowers" / "plans" / "2026-06-29-split-image-assets-usability-redesign-implementation-plan.md",
+        ]
+        self.assertEqual([path for path in retired if path.exists()], [])
+
+    def test_quick_contract_provides_short_package_contract_view(self):
+        quick_contract = (ROOT / "references" / "quick-contract.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "Quick Contract",
+            "three formal stop classes",
+            "editability-first",
+            "formal state surfaces",
+            "qa.status=pass",
+            "production-ready assets",
+            "draft candidate assets",
+            "support-only layers",
+        ]:
+            self.assertIn(expected, quick_contract)
 
     def test_skill_frontmatter_and_core_rules_are_present(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -427,6 +492,25 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("text_role", contract_text)
         self.assertIn("recommended_action", contract_text)
 
+    def test_skill_gate_list_matches_allowed_gate_taxonomy(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        for expected in [
+            "Granularity Alignment Gate",
+            "Pilot Object Gate",
+            "Approximate Reconstruction Acceptance Gate",
+            "Final Acceptance Gate",
+            "Candidate Promotion Acceptance Gate",
+        ]:
+            self.assertIn(expected, skill_text)
+
+        for retired in [
+            "Carrier/Glyph Split Gate",
+            "Final Promotion Acceptance Gate",
+            "user-decision` first, `formal-approval` when claim escalation is at stake",
+        ]:
+            self.assertNotIn(retired, skill_text)
+
     def test_workflow_doc_maps_gate_taxonomy_to_states(self):
         self._assert_text_in_file(
             ROOT / "references" / "workflow.md",
@@ -442,6 +526,25 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "AwaitingApproval",
             ],
         )
+
+    def test_ui_atomic_split_uses_canonical_routing_outcomes(self):
+        ui_atomic_split = (ROOT / "references" / "ui-atomic-split.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "extract_asset",
+            "rebuild_downstream",
+            "requires_user_confirmation",
+            "support_only",
+        ]:
+            self.assertIn(expected, ui_atomic_split)
+
+        for retired in [
+            "must_extract",
+            "skip_for_now",
+        ]:
+            self.assertNotIn(retired, ui_atomic_split)
 
     def test_confirmation_prompts_are_limited_to_allowed_stop_classes(self):
         prompts = (ROOT / "references" / "confirmation-prompts.md").read_text(
@@ -673,7 +776,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "approximate_reconstruction": {
                         "status": "pending",
                         "source": "unset",
-                        "pause_category": "formal-approval",
+                        "pause_category": "user-decision",
                         "notes": "",
                         "evidence_ref": "",
                     },
@@ -708,6 +811,76 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "Final status: needs-review",
                 (output / "qa_report.md").read_text(encoding="utf-8"),
             )
+
+    def test_record_quality_review_defaults_approximate_reconstruction_to_user_decision(self):
+        review_script = (ROOT / "scripts" / "record_quality_review.py").read_text(encoding="utf-8")
+        self.assertIn("from split_image_assets_contract import (", review_script)
+        review = self._load_script_module("record_quality_review.py")
+        self.assertEqual(
+            review.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["approximate_reconstruction"],
+            "user-decision",
+        )
+
+    def test_shared_contract_module_defines_confirmation_pause_defaults(self):
+        contract = self._load_script_module("split_image_assets_contract.py")
+        self.assertEqual(
+            contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["approximate_reconstruction"],
+            "user-decision",
+        )
+        self.assertEqual(
+            contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["tooling_preflight"],
+            "external-blocker",
+        )
+        self.assertEqual(
+            contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["granularity_alignment"],
+            "user-decision",
+        )
+
+    def test_record_quality_review_uses_shared_confirmation_contract(self):
+        contract = self._load_script_module("split_image_assets_contract.py")
+        review_script = (ROOT / "scripts" / "record_quality_review.py").read_text(encoding="utf-8")
+        self.assertIn("from split_image_assets_contract import (", review_script)
+        review = self._load_script_module("record_quality_review.py")
+        self.assertEqual(
+            review.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION,
+            contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION,
+        )
+
+    def test_shared_contract_module_defines_asset_routing_taxonomy(self):
+        contract = self._load_script_module("split_image_assets_contract.py")
+
+        self.assertIn("rebuild_downstream", contract.ALLOWED_ROUTING_ACTIONS)
+        self.assertIn("requires_user_confirmation", contract.ALLOWED_ROUTING_ACTIONS)
+        self.assertIn("plain-text", contract.ALLOWED_TEXT_ROLES)
+        self.assertIn("decorative-text", contract.ALLOWED_TEXT_ROLES)
+        self.assertIn("editable", contract.ALLOWED_TEXT_RENDER_CLASSES)
+        self.assertIn("visual-fidelity-critical", contract.ALLOWED_TEXT_RENDER_CLASSES)
+        self.assertIn("plain-text", contract.ORDINARY_TEXT_ROLES)
+        self.assertIn("button-label", contract.ORDINARY_TEXT_ROLES)
+
+    def test_record_quality_review_and_validator_share_routing_contract(self):
+        contract = self._load_script_module("split_image_assets_contract.py")
+        review = self._load_script_module("record_quality_review.py")
+        validator = self._load_script_module("validate_asset_package.py")
+
+        self.assertEqual(review.ALLOWED_GRANULARITY_MODES, contract.ALLOWED_GRANULARITY_MODES)
+        self.assertEqual(review.ALLOWED_TEXT_ROLES, contract.ALLOWED_TEXT_ROLES)
+        self.assertEqual(review.ALLOWED_TEXT_RENDER_CLASSES, contract.ALLOWED_TEXT_RENDER_CLASSES)
+        self.assertEqual(review.ALLOWED_ROUTING_ACTIONS, contract.ALLOWED_ROUTING_ACTIONS)
+        self.assertEqual(review.ALLOWED_OBJECT_TYPES, contract.ALLOWED_OBJECT_TYPES)
+        self.assertEqual(review.ALLOWED_QUALITY_TARGET_TIERS, contract.ALLOWED_QUALITY_TARGET_TIERS)
+        self.assertEqual(validator.ALLOWED_GRANULARITY_MODES, contract.ALLOWED_GRANULARITY_MODES)
+        self.assertEqual(validator.ALLOWED_TEXT_ROLES, contract.ALLOWED_TEXT_ROLES)
+        self.assertEqual(
+            validator.ALLOWED_TEXT_RENDER_CLASSES,
+            contract.ALLOWED_TEXT_RENDER_CLASSES,
+        )
+        self.assertEqual(validator.ALLOWED_ROUTING_ACTIONS, contract.ALLOWED_ROUTING_ACTIONS)
+        self.assertEqual(validator.ALLOWED_OBJECT_TYPES, contract.ALLOWED_OBJECT_TYPES)
+        self.assertEqual(
+            validator.ALLOWED_QUALITY_TARGET_TIERS,
+            contract.ALLOWED_QUALITY_TARGET_TIERS,
+        )
 
     def test_build_previews_creates_inspection_images(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1414,6 +1587,133 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["objects"][0]["mask_source"], "sam2")
             self.assertEqual(metadata["objects"][0]["quality_checks"]["mask_alignment"], "needs-review")
 
+    def test_import_external_assets_preserves_existing_review_and_promotion_state_on_reimport(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            external_asset = tmp_path / "sam2_main.png"
+            external_mask = tmp_path / "sam2_mask.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(external_asset)
+            Image.new("L", (4, 3), 255).save(external_mask)
+
+            base_args = [
+                sys.executable,
+                str(ROOT / "scripts" / "import_external_assets.py"),
+                str(output),
+                "--object-id",
+                "main_object",
+                "--role",
+                "main",
+                "--layer-kind",
+                "primary-subject",
+                "--composition-order",
+                "10",
+                "--semantic-boundary",
+                "Main subject mask produced by SAM2.",
+                "--asset",
+                str(external_asset),
+                "--mask",
+                str(external_mask),
+                "--mask-source",
+                "sam2",
+                "--alpha-source",
+                "rembg-refine",
+                "--tool-name",
+                "SAM2",
+                "--tool-role",
+                "segmentation",
+                "--tool-version",
+                "external",
+                "--recipe",
+                "grounded-segmentation-matting-repair",
+            ]
+            first_import = subprocess.run(
+                base_args,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(first_import.returncode, 0, first_import.stderr)
+
+            metadata_path = output / "metadata.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            obj = metadata["objects"][0]
+            obj["manual_review_confirmed"] = True
+            obj["manual_review_notes"] = ["Human approved this crop after visual inspection."]
+            obj["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-1",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "_staging/compare_candidate_assets/cmp-1.png",
+                    "compare_manifest_path": "_staging/compare_candidate_assets/cmp-1.json",
+                    "review_focus": "Preserve approved repair evidence.",
+                    "risks": ["edge-halo"],
+                    "selected_candidate_id": "candidate-a",
+                    "selection_reason": "Candidate A preserved the silhouette best.",
+                    "created_at": "2026-06-29T00:00:00Z",
+                }
+            ]
+            obj["selected_candidate_id"] = "candidate-a"
+            obj["repair_history"] = [{"candidate_id": "candidate-a", "note": "Promoted"}]
+            obj["current_asset_revision"] = "candidate-a"
+            obj["active_reconstruction_method"] = "upscale_repair_downscale"
+            obj["manual_review_flags"] = [
+                "existing review flag",
+                "external asset imported; inspect mask alignment and alpha edges",
+            ]
+            obj["quality_checks"] = {
+                "mask_alignment": "pass",
+                "alpha_edges": "pass",
+                "background_residue": "pass",
+                "reuse_readiness": "pass",
+            }
+            metadata_path.write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            replacement_asset = tmp_path / "sam2_main_v2.png"
+            Image.new("RGBA", (4, 3), (0, 255, 0, 128)).save(replacement_asset)
+
+            second_import = subprocess.run(
+                [
+                    *base_args[:14],
+                    str(replacement_asset),
+                    *base_args[15:],
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(second_import.returncode, 0, second_import.stderr)
+
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            obj = metadata["objects"][0]
+            self.assertTrue(obj["manual_review_confirmed"])
+            self.assertEqual(
+                obj["manual_review_notes"],
+                ["Human approved this crop after visual inspection."],
+            )
+            self.assertEqual(obj["selected_candidate_id"], "candidate-a")
+            self.assertEqual(obj["repair_history"], [{"candidate_id": "candidate-a", "note": "Promoted"}])
+            self.assertEqual(obj["current_asset_revision"], "candidate-a")
+            self.assertEqual(obj["active_reconstruction_method"], "upscale_repair_downscale")
+            self.assertEqual(obj["quality_checks"]["mask_alignment"], "pass")
+            self.assertEqual(obj["candidate_comparisons"][0]["comparison_id"], "cmp-1")
+            self.assertCountEqual(
+                obj["manual_review_flags"],
+                [
+                    "existing review flag",
+                    "external asset imported; inspect mask alignment and alpha edges",
+                ],
+            )
+
     def test_import_external_assets_requires_source_space_mask(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1514,6 +1814,82 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             )
             self.assertEqual(import_result.returncode, 0, import_result.stderr)
 
+            tooling_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--confirmation-key",
+                    "tooling_preflight",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "external-blocker",
+                    "--confirmation-note",
+                    "External professional outputs were approved.",
+                    "--production-capable",
+                    "true",
+                    "--capability-user-choice",
+                    "production-capable",
+                    "--capability-note",
+                    "SAM2 and rembg external outputs were provided.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(tooling_result.returncode, 0, tooling_result.stderr)
+
+            granularity_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--granularity-mode",
+                    "atomic-layer",
+                    "--granularity-confirmed",
+                    "--granularity-note",
+                    "User approved isolated reusable object layers.",
+                    "--confirmation-key",
+                    "granularity_alignment",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "user-decision",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(granularity_result.returncode, 0, granularity_result.stderr)
+
+            preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
             review_result = subprocess.run(
                 [
                     sys.executable,
@@ -1525,12 +1901,6 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "main object",
                     "--recommended-split-plan",
                     "Keep the main object separate from the background.",
-                    "--production-capable",
-                    "true",
-                    "--capability-user-choice",
-                    "production-capable",
-                    "--capability-note",
-                    "SAM2 and rembg external outputs were provided.",
                     "--quality-target-tier",
                     "visual-acceptance-ready",
                     "--quality-target-note",
@@ -1624,6 +1994,67 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("cannot set qa-status pass", result.stderr)
+
+    def test_record_quality_review_rejects_pass_until_confirmation_and_preview_gates_are_satisfied(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["capability"] = {
+                "production_capable": True,
+                "missing_for_production": [],
+                "user_choice": "production-capable",
+                "notes": "User approved production-capable tooling.",
+            }
+            metadata["quality_target"] = {
+                "tier": "visual-acceptance-ready",
+                "notes": "Targeting final acceptance.",
+            }
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-acceptance",
+                    "pause_category": "formal-approval",
+                    "question": "Accept this extracted layer?",
+                    "recommended_answer": "yes",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Allow pass after verification.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                }
+            ]
+            metadata["qa"]["status"] = "needs-review"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--qa-status",
+                    "pass",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("tooling_preflight", result.stderr)
+            self.assertIn("build_previews.py", result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["qa"]["status"], "needs-review")
 
     def test_record_quality_review_records_granularity_alignment(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -4601,7 +5032,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "approximate-reconstruction-acceptance",
-                    "pause_category": "formal-approval",
+                    "pause_category": "user-decision",
                     "question": "Accept approximate reconstructed candidate after compare?",
                     "recommended_answer": "yes",
                     "recorded_answer": "yes",
@@ -5593,7 +6024,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["decision_log"] = [
                 {
                     "stage": "reconstruction-acceptance",
-                    "pause_category": "formal-approval",
+                    "pause_category": "user-decision",
                     "question": "Accept approximate reconstructed carrier after candidate review?",
                     "recommended_answer": "yes",
                     "recorded_answer": "yes",
@@ -6888,6 +7319,44 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertIn("metadata.source must be an object", result.stderr)
             self.assertIn("metadata.qa must be an object", result.stderr)
             self.assertIn("metadata.objects entries must be objects", result.stderr)
+
+    def test_validate_asset_package_rejects_non_object_decision_routing_without_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["analysis"] = {
+                "visual_hierarchy": ["ui panel", "status glyph"],
+                "recommended_split_plan": "Review text routing object by object.",
+            }
+            metadata["objects"][0]["decision_routing"] = "bad-string"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertNotIn("Traceback", result.stderr)
+            self.assertIn("decision_routing must be an object", result.stderr)
 
 
 if __name__ == "__main__":

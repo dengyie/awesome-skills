@@ -372,7 +372,7 @@ def build_safe_check_commands(
         if repo and prefers_pytest(repo, file_list):
             add("python3 -m pytest", "Run Python pytest coverage for changed behavior.")
         else:
-            add("python3 -m unittest discover", "Run Python test coverage for changed behavior.")
+            add_python_unittest_commands(add, file_list)
         if repo and uses_ruff(repo, file_list):
             add("python3 -m ruff check .", "Run configured Python lint checks.")
         if repo and uses_mypy(repo, file_list):
@@ -383,6 +383,39 @@ def build_safe_check_commands(
         add("docker compose config", "Validate container configuration without mutation.")
 
     return commands
+
+
+def add_python_unittest_commands(add, repo_files: Iterable[str]) -> None:
+    targets = detect_python_unittest_targets(repo_files)
+    if not targets:
+        add("python3 -m unittest discover", "Run Python unittest coverage for changed behavior.")
+        return
+
+    for target in targets:
+        if target == ".":
+            command = "python3 -m unittest discover -v"
+        else:
+            command = f"python3 -m unittest discover {target} -v"
+        add(command, f"Run Python unittest coverage for {target}.")
+
+
+def detect_python_unittest_targets(repo_files: Iterable[str]) -> List[str]:
+    candidates = set()
+
+    for file_name in repo_files:
+        path = pathlib.PurePosixPath(file_name)
+        if path.suffix != ".py" or not path.name.startswith("test"):
+            continue
+        parent = path.parent.as_posix()
+        if parent in {".", ""}:
+            candidates.add(".")
+            continue
+        if path.parent.name in {"tests", "test"}:
+            candidates.add(parent)
+            continue
+        candidates.add(parent)
+
+    return sorted(candidates)
 
 
 def detect_js_package_manager(repo_files: Iterable[str]) -> str:

@@ -26,6 +26,8 @@ Before choosing a recipe, run `scripts/check_extraction_environment.py` or other
 
 Do not use Pillow, OpenCV, or skimage as the primary production segmenter. They are suitable for alpha compositing, PNG persistence, source-space mask expansion, preview generation, simple repair helpers, and metadata packaging. If the mature segmenter path is unavailable, ask the user for installation, external outputs, or draft-only packaging instead of silently falling back to coordinate crops.
 
+Recipes do not create new stop classes. Stop behavior still comes from the canonical gate taxonomy in `workflow.md`.
+
 ## Recommended Default: Grounded Segmentation, Matting, And Repair
 
 Use this when segmentation quality matters more than speed.

@@ -5,29 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
-
-def build_object_routing_defaults() -> dict:
-    return {
-        "value_scoring": {
-            "editability_score": "unset",
-            "visual_complexity_score": "unset",
-            "asset_value_score": "unset",
-            "scoring_reason": "",
-        },
-        "decision_routing": {
-            "recommended_action": "unset",
-            "final_action": "unset",
-            "decision_source": "unset",
-        },
-        "rebuild_intent": {
-            "rebuildable_downstream": False,
-            "rebuild_notes": "",
-        },
-        "text_semantics": {
-            "text_role": "non-text",
-            "text_render_class": "non-text",
-        },
-    }
+from split_image_assets_contract import default_confirmation_entry
 
 
 def build_metadata(source_path: Path, package_name: str, width: int, height: int) -> dict:
@@ -65,54 +43,12 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "notes": "",
         },
         "confirmation": {
-            "tooling_preflight": {
-                "status": "pending",
-                "source": "unset",
-                "pause_category": "external-blocker",
-                "notes": "",
-                "evidence_ref": "",
-            },
-            "granularity_alignment": {
-                "status": "pending",
-                "source": "unset",
-                "pause_category": "user-decision",
-                "notes": "",
-                "evidence_ref": "",
-            },
-            "pilot_object": {
-                "status": "pending",
-                "source": "unset",
-                "pause_category": "formal-approval",
-                "object_id": "",
-                "notes": "",
-                "evidence_ref": "",
-            },
-            "approximate_reconstruction": {
-                "status": "pending",
-                "source": "unset",
-                "pause_category": "formal-approval",
-                "notes": "",
-                "evidence_ref": "",
-            },
-            "final_promotion_acceptance": {
-                "status": "pending",
-                "source": "unset",
-                "notes": "",
-            },
-            "final_acceptance": {
-                "status": "pending",
-                "source": "unset",
-                "pause_category": "formal-approval",
-                "notes": "",
-                "evidence_ref": "",
-            },
-            "candidate_promotion": {
-                "status": "pending",
-                "source": "unset",
-                "pause_category": "formal-approval",
-                "notes": "",
-                "evidence_ref": "",
-            },
+            "tooling_preflight": default_confirmation_entry("tooling_preflight"),
+            "granularity_alignment": default_confirmation_entry("granularity_alignment"),
+            "pilot_object": default_confirmation_entry("pilot_object"),
+            "approximate_reconstruction": default_confirmation_entry("approximate_reconstruction"),
+            "final_acceptance": default_confirmation_entry("final_acceptance"),
+            "candidate_promotion": default_confirmation_entry("candidate_promotion"),
         },
         "extraction_pipeline": {
             "recipe": "",

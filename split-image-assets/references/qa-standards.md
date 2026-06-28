@@ -1,5 +1,7 @@
 # QA Standards
 
+Use this file to judge package evidence, not to improvise new workflow states. Structural validity, visual acceptance, and production-ready claims should stay separate.
+
 ## Structure
 
 - Required directories and files exist.
@@ -16,6 +18,8 @@
 - Inspection previews and segmentation-quality previews exist for every reusable object layer.
 - `qa_report.md` contains a final status.
 - Intermediate external outputs are kept in `_staging/` or `_archive_intermediate/`, not loose in the package root.
+
+If these requirements are missing, the package is structurally incomplete even when previews look acceptable.
 
 ## Semantic Layer Quality
 
@@ -129,3 +133,10 @@ Blocked assets: N
 ```
 
 Also report expected semantic layers, extracted layers, missing layers, grouped-but-not-atomic layers, downstream rebuild layers, and approximate layers.
+
+Canonical reading order for final claims:
+
+1. structural package validity
+2. visual quality status
+3. production-ready asset count
+4. draft/support/blocked counts

@@ -2,6 +2,8 @@
 
 ## Enter Manual Review When
 
+Manual review is an evidence and quality activity. It does not create a fourth stop class. If a real human choice is required, route that branch through `user-decision`, `external-blocker`, or `formal-approval` instead of inventing a new pause reason.
+
 - segmentation confidence is low
 - foreground and background colors are similar
 - objects overlap heavily
@@ -52,6 +54,6 @@ When manual review is needed, report:
 
 Do not upgrade a package to `pass` because it looks acceptable in a small preview. Use `needs-review` when uncertainty remains in production assets, masks, or repaired background.
 
-Do not upgrade a package to `pass` when the asset set lacks the image's core semantic layers. Structural validity is not the same thing as reusable decomposition.
+Do not upgrade a package to `pass` when the asset set lacks the image's core semantic layers. Structural validity is not the same thing as reusable decomposition or visual acceptance.
 
 Do not call a draft-only package production reusable because it contains many candidate assets. Report `not production reusable` and keep production-ready counts separate from draft candidate and support-only counts.

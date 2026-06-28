@@ -6,7 +6,13 @@ from pathlib import Path
 
 from PIL import Image
 
-from init_asset_package import build_object_routing_defaults
+from split_image_assets_contract import (
+    ALLOWED_ASSET_CLASSES,
+    ALLOWED_DELIVERY_CLASSES,
+    ALLOWED_OBJECT_TYPES,
+    ALLOWED_REUSE_STATUSES,
+    default_object_routing_fields,
+)
 
 
 DEFAULT_STAGES = [
@@ -22,44 +28,20 @@ DEFAULT_QUALITY_GATES = [
     "background residue needs review",
     "reuse readiness needs review",
 ]
+DEFAULT_IMPORTED_MANUAL_REVIEW_FLAGS = [
+    "external asset imported; inspect mask alignment and alpha edges"
+]
+DEFAULT_IMPORTED_QUALITY_CHECKS = {
+    "mask_alignment": "needs-review",
+    "alpha_edges": "needs-review",
+    "background_residue": "needs-review",
+    "reuse_readiness": "needs-review",
+}
 SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 ALLOWED_ROLES = {"main", "secondary", "group", "background", "shadow"}
 ALLOWED_CONFIDENCE = {"high", "medium", "low"}
 ALLOWED_EDGE_COMPLEXITY = {"hard", "soft", "transparent-reflective"}
 ALLOWED_EXTRACTION_METHOD = {"exact", "ai-assisted", "manual", "estimated", "unknown"}
-ALLOWED_ASSET_CLASSES = {
-    "atomic",
-    "grouped-support",
-    "background-support",
-    "preview-reference",
-    "candidate",
-}
-ALLOWED_REUSE_STATUSES = {
-    "production-ready",
-    "draft-candidate",
-    "support-only",
-    "blocked",
-    "approximate-reconstruction",
-}
-ALLOWED_DELIVERY_CLASSES = {
-    "clean-extraction",
-    "approximate-reconstruction",
-    "support-only",
-    "draft-candidate",
-}
-ALLOWED_OBJECT_TYPES = {
-    "ui-carrier",
-    "ui-glyph",
-    "carrier-glyph-pair",
-    "soft-edge-logo-brand-mark",
-    "outlined-illustration-logo",
-    "flat-support-plate",
-    "grouped-support-plate",
-    "photo-object-matte",
-    "generic-object",
-}
-
-
 def read_metadata(package_dir: Path) -> dict:
     return json.loads((package_dir / "metadata.json").read_text(encoding="utf-8"))
 
@@ -155,11 +137,73 @@ def configure_pipeline(metadata: dict, recipe: str) -> None:
             quality_gates.append(gate)
 
 
+def preserve_existing_when_default(
+    merged: dict,
+    record: dict,
+    existing: dict,
+    field: str,
+    default_value,
+) -> None:
+    if record.get(field) == default_value and field in existing:
+        merged[field] = existing[field]
+
+
+def merge_defaulted_mapping(existing: dict, incoming: dict, defaults: dict) -> dict:
+    merged = dict(existing) if isinstance(existing, dict) else {}
+    incoming_dict = incoming if isinstance(incoming, dict) else {}
+    merged.update(incoming_dict)
+    for key, default_value in defaults.items():
+        if incoming_dict.get(key) == default_value and key in existing:
+            merged[key] = existing[key]
+    return merged
+
+
+def merge_imported_object(existing: dict, record: dict) -> dict:
+    merged = dict(existing)
+    merged.update(record)
+
+    for field, default_value in [
+        ("current_asset_revision", "initial-import"),
+        ("active_reconstruction_method", ""),
+        ("selected_candidate_id", ""),
+        ("repair_history", []),
+        ("asset_class", "candidate"),
+        ("reuse_status", "draft-candidate"),
+        ("delivery_class", "draft-candidate"),
+        ("object_type", "generic-object"),
+        ("confidence", "medium"),
+        ("edge_complexity", "soft"),
+        ("extraction_method", "ai-assisted"),
+    ]:
+        preserve_existing_when_default(merged, record, existing, field, default_value)
+
+    if isinstance(existing.get("manual_review_flags"), list):
+        flags = list(existing["manual_review_flags"])
+        for flag in record.get("manual_review_flags", []):
+            if flag not in flags:
+                flags.append(flag)
+        merged["manual_review_flags"] = flags
+
+    if record.get("quality_checks") == DEFAULT_IMPORTED_QUALITY_CHECKS and isinstance(
+        existing.get("quality_checks"), dict
+    ):
+        merged["quality_checks"] = dict(existing["quality_checks"])
+
+    routing_defaults = default_object_routing_fields()
+    for field_name, defaults in routing_defaults.items():
+        existing_value = existing.get(field_name, {})
+        incoming_value = record.get(field_name, {})
+        if isinstance(existing_value, dict) and isinstance(incoming_value, dict):
+            merged[field_name] = merge_defaulted_mapping(existing_value, incoming_value, defaults)
+
+    return merged
+
+
 def upsert_object(metadata: dict, record: dict) -> None:
     objects = metadata.setdefault("objects", [])
     for index, item in enumerate(objects):
         if isinstance(item, dict) and item.get("id") == record["id"]:
-            objects[index] = record
+            objects[index] = merge_imported_object(item, record)
             return
     objects.append(record)
 
@@ -305,16 +349,9 @@ def build_import_plan(
             "repair_history": list(record.get("repair_history", []))
             if isinstance(record.get("repair_history", []), list)
             else [],
-            **build_object_routing_defaults(),
-            "manual_review_flags": [
-                "external asset imported; inspect mask alignment and alpha edges"
-            ],
-            "quality_checks": {
-                "mask_alignment": "needs-review",
-                "alpha_edges": "needs-review",
-                "background_residue": "needs-review",
-                "reuse_readiness": "needs-review",
-            },
+            **default_object_routing_fields(),
+            "manual_review_flags": list(DEFAULT_IMPORTED_MANUAL_REVIEW_FLAGS),
+            "quality_checks": dict(DEFAULT_IMPORTED_QUALITY_CHECKS),
         },
     }
 

@@ -203,6 +203,43 @@ rename to src/new_name.ts
         self.assertIn("go test ./...", command_lines)
         self.assertIn("docker compose config", command_lines)
 
+    def test_build_safe_check_commands_uses_scoped_unittest_targets_for_multi_package_repo(self):
+        module = load_module()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            (repo / "split-image-assets" / "tests").mkdir(parents=True)
+            (repo / "split-image-assets" / "tests" / "test_skill_package.py").write_text(
+                "import unittest\n\nclass Demo(unittest.TestCase):\n    pass\n"
+            )
+            (repo / "production-code-quality-review" / "tests").mkdir(parents=True)
+            (
+                repo
+                / "production-code-quality-review"
+                / "tests"
+                / "test_review_skill_lib.py"
+            ).write_text("import unittest\n\nclass Demo(unittest.TestCase):\n    pass\n")
+            (repo / "split-image-assets" / "scripts").mkdir(parents=True)
+            (repo / "split-image-assets" / "scripts" / "tool.py").write_text("def run():\n    return 1\n")
+
+            commands = module.build_safe_check_commands(
+                detected_stack=["python"],
+                repo=repo,
+                repo_files=[
+                    "split-image-assets/scripts/tool.py",
+                    "split-image-assets/tests/test_skill_package.py",
+                    "production-code-quality-review/tests/test_review_skill_lib.py",
+                ],
+            )
+
+        command_lines = [item["command"] for item in commands]
+        self.assertIn("python3 -m unittest discover split-image-assets/tests -v", command_lines)
+        self.assertIn(
+            "python3 -m unittest discover production-code-quality-review/tests -v",
+            command_lines,
+        )
+        self.assertNotIn("python3 -m unittest discover", command_lines)
+
     def test_expand_repo_paths_flattens_untracked_directories_to_files(self):
         module = load_module()
 

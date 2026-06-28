@@ -2,7 +2,9 @@
 
 Use this reference before extracting complex UI screenshots, dashboards, app mockups, badges, icon tiles, or dense interface panels.
 
-The problem is not only "can the pixels be cut out"; it is "what should become reusable". Build a semantic split plan before running a segmenter or importing upstream assets.
+The question is not only "can the pixels be cut out"; it is "what should become reusable". Build a semantic split plan before running a segmenter or importing upstream assets.
+
+Default bias: editability first. Ordinary text-like UI content should usually route to `rebuild_downstream`. Only fidelity-critical visual elements should route to raster extraction.
 
 Classify each target object before extraction or repair:
 
@@ -36,10 +38,10 @@ For each planned layer, record:
 - `semantic_boundary`
 - `asset_class`: `atomic`, `grouped-support`, `background-support`, `preview-reference`, or `candidate`
 - `reuse_status`: `production-ready`, `draft-candidate`, `support-only`, or `blocked`
-- `decision`: `must_extract`, `rebuild_downstream`, `support_only`, `skip_for_now`, or `requires_user_confirmation`
+- `decision`: `extract_asset`, `rebuild_downstream`, `support_only`, or `requires_user_confirmation`
 - `notes`
 
-Use `requires_user_confirmation` when a decision affects editability, localization, animation readiness, approximate reconstruction acceptance, or final production claims.
+Use `requires_user_confirmation` only when ambiguity is real and the branch would materially change reuse boundaries, editability, approximation truthfulness, or final claims.
 
 For UI or dense compositions, the package-level `granularity` block should also record:
 
@@ -52,6 +54,8 @@ For UI or dense compositions, the package-level `granularity` block should also 
 ## Carrier/Glyph Rule
 
 For icon-in-tile, badge-in-card, glyph-on-plate, or symbol-on-button patterns, prefer separate carrier and glyph layers when either layer may be reused independently or when edge cleanup is easier separately.
+
+This is not a separate stop class or a separate formal gate. Carrier/glyph handling is a branch inside `granularity_alignment` and should be recorded through that decision surface.
 
 Required evidence for carrier/glyph splits:
 
@@ -110,3 +114,5 @@ Final reporting should separate:
 - `blocked assets`
 
 Do not count large plates, `background_clean`, grouped rows, or screenshot-level support layers as atomic production assets.
+
+For ordinary text, labels, numeric values, and form-like UI content, keep a placeholder/object record and route to `rebuild_downstream` unless the text is visually fidelity-critical.

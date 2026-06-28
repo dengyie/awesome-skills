@@ -4,6 +4,8 @@ Use this reference when the split should be production-capable and the user has 
 
 This skill does not vendor or install model weights. It defines the stable handoff contract so upstream tools can be swapped without weakening package QA.
 
+This is an upstream adapter contract, not a different workflow. Stop and approval behavior still comes from the canonical gate taxonomy.
+
 ## Three-Layer Flow
 
 1. Capability preparation:

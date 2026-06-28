@@ -4,18 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageFilter, ImageStat
-
-
-ALLOWED_OBJECT_TYPES = {
-    "ui-carrier",
-    "ui-glyph",
-    "carrier-glyph-pair",
-    "soft-edge-logo-brand-mark",
-    "outlined-illustration-logo",
-    "flat-support-plate",
-    "grouped-support-plate",
-    "photo-object-matte",
-}
+from split_image_assets_contract import ALLOWED_OBJECT_TYPES
 
 
 def utc_timestamp() -> str:

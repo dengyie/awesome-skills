@@ -580,6 +580,59 @@ class CollectReviewContextCliTests(unittest.TestCase):
             self.assertIn("python3 -m ruff check .", commands)
             self.assertIn("python3 -m mypy .", commands)
 
+    def test_collect_review_context_uses_scoped_unittest_targets_for_multi_package_repo(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo = pathlib.Path(temp_dir)
+            subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "config", "user.name", "Test User"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "test@example.com"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "alpha-skill" / "scripts").mkdir(parents=True)
+            (repo / "alpha-skill" / "scripts" / "tool.py").write_text("def run():\n    return 1\n")
+            (repo / "alpha-skill" / "tests").mkdir(parents=True)
+            (repo / "alpha-skill" / "tests" / "test_alpha.py").write_text(
+                "import unittest\n\nclass Alpha(unittest.TestCase):\n    pass\n"
+            )
+            (repo / "beta-skill" / "tests").mkdir(parents=True)
+            (repo / "beta-skill" / "tests" / "test_beta.py").write_text(
+                "import unittest\n\nclass Beta(unittest.TestCase):\n    pass\n"
+            )
+            subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "commit", "-m", "initial"],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            (repo / "alpha-skill" / "scripts" / "tool.py").write_text("def run():\n    return 2\n")
+
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--repo", str(repo), "--base", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+            commands = [item["command"] for item in payload["safe_check_commands"]]
+
+            self.assertIn("python3 -m unittest discover alpha-skill/tests -v", commands)
+            self.assertIn("python3 -m unittest discover beta-skill/tests -v", commands)
+            self.assertNotIn("python3 -m unittest discover", commands)
+
     def test_bun_test_script_uses_package_script(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = pathlib.Path(temp_dir)
