@@ -82,12 +82,14 @@ progress updates are commentary, not confirmation gates. Only three event classe
 
 Treat these as formal gates:
 
+- `Preflight Tooling Recommendation Gate`
 - `Granularity Alignment Gate`
-- `Carrier/Glyph Split Gate`
 - `Pilot Object Gate`
 - `Approximate Reconstruction Acceptance Gate`
 - `Final Acceptance Gate`
 - `Candidate Promotion Acceptance Gate`
+
+Carrier/glyph disagreement is not a separate formal gate anymore. It is a decision branch inside `Granularity Alignment Gate`, and should reuse that gate's state, recommendation pattern, and metadata surface.
 
 Each gate should ask one decisive question, offer a recommended answer, and update metadata in a durable way rather than leaving the choice only in chat.
 
