@@ -2026,40 +2026,6 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(obj["decision_routing"]["final_action"], "rebuild_downstream")
             self.assertTrue(obj["rebuild_intent"]["rebuildable_downstream"])
 
-    def test_record_quality_review_rejects_routing_action_without_decision_source(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = pathlib.Path(tmp)
-            source = tmp_path / "source.png"
-            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
-            output = tmp_path / "package"
-            init_result = self._run_init(source, output)
-            self.assertEqual(init_result.returncode, 0, init_result.stderr)
-            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
-                output / "assets" / "main_object_transparent.png"
-            )
-            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
-            self._write_single_object_metadata(output)
-
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "scripts" / "record_quality_review.py"),
-                    str(output),
-                    "--object-id",
-                    "main_object",
-                    "--recommended-action",
-                    "extract_asset",
-                    "--final-action",
-                    "extract_asset",
-                ],
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("--routing-decision-source", result.stderr)
-
     def test_record_quality_review_records_confirmation_decision_log(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

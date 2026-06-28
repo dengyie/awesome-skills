@@ -81,6 +81,34 @@ ALLOWED_DELIVERY_CLASSES = {
     "support-only",
     "draft-candidate",
 }
+ALLOWED_TEXT_ROLES = {
+    "plain-text",
+    "button-label",
+    "numeric-value",
+    "form-value",
+    "logo-wordmark",
+    "decorative-text",
+    "non-text",
+}
+ALLOWED_TEXT_RENDER_CLASSES = {
+    "editable",
+    "styled-editable",
+    "visual-fidelity-critical",
+    "non-text",
+}
+ALLOWED_SCORE_VALUES = {"unset", "low", "medium", "high"}
+ALLOWED_ROUTING_ACTIONS = {
+    "unset",
+    "extract_asset",
+    "rebuild_downstream",
+    "requires_user_confirmation",
+    "support_only",
+}
+ALLOWED_ROUTING_DECISION_SOURCES = {
+    "unset",
+    "explicit-user-confirmed",
+    "inferred-from-user",
+}
 ALLOWED_OBJECT_TYPES = {
     "ui-carrier",
     "ui-glyph",
@@ -471,7 +499,10 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
                 repair_history.append(entry)
         text_semantics = item.setdefault(
             "text_semantics",
-            routing_defaults["text_semantics"],
+            {
+                "text_role": "non-text",
+                "text_render_class": "non-text",
+            },
         )
         if args.text_role is not None:
             text_semantics["text_role"] = args.text_role
@@ -479,7 +510,12 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             text_semantics["text_render_class"] = args.text_render_class
         value_scoring = item.setdefault(
             "value_scoring",
-            routing_defaults["value_scoring"],
+            {
+                "editability_score": "unset",
+                "visual_complexity_score": "unset",
+                "asset_value_score": "unset",
+                "scoring_reason": "",
+            },
         )
         if args.editability_score is not None:
             value_scoring["editability_score"] = args.editability_score
@@ -491,7 +527,11 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             value_scoring["scoring_reason"] = args.scoring_reason
         decision_routing = item.setdefault(
             "decision_routing",
-            routing_defaults["decision_routing"],
+            {
+                "recommended_action": "unset",
+                "final_action": "unset",
+                "decision_source": "unset",
+            },
         )
         if args.recommended_action is not None:
             decision_routing["recommended_action"] = args.recommended_action
@@ -501,7 +541,10 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             decision_routing["decision_source"] = args.routing_decision_source
         rebuild_intent = item.setdefault(
             "rebuild_intent",
-            routing_defaults["rebuild_intent"],
+            {
+                "rebuildable_downstream": False,
+                "rebuild_notes": "",
+            },
         )
         if args.rebuildable_downstream is not None:
             rebuild_intent["rebuildable_downstream"] = parse_bool(
