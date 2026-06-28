@@ -106,10 +106,10 @@ Treat these as formal gates:
 
 - `Preflight Tooling Recommendation Gate`
 - `Granularity Alignment Gate`
+- `Carrier/Glyph Split Gate`
 - `Pilot Object Gate`
 - `Approximate Reconstruction Acceptance Gate`
 - `Final Acceptance Gate`
-- `Final Promotion Acceptance Gate`
 - `Candidate Promotion Acceptance Gate`
 
 Each gate should ask one decisive question, offer a recommended answer, and update metadata in a durable way rather than leaving the choice only in chat.

@@ -14,6 +14,14 @@ Default rule: continue in `Running` unless the next branch is a real `AwaitingDe
 - `AwaitingApproval`: the package has enough evidence to request a formal approval gate
 - `Completed`: the current run has reached a terminal outcome
 
+## Allowed Stop Classes
+
+- `user-decision` -> `AwaitingDecision`
+- `external-blocker` -> `AwaitingExternalBlocker`
+- `formal-approval` -> `AwaitingApproval`
+
+The stop class says why the workflow is allowed to stop. The state says which waiting state the run enters after that stop.
+
 ## Continue-Versus-Stop Rules
 
 When a stage is in `Running`, keep going and report commentary only.
@@ -33,7 +41,8 @@ If pause is not allowed, continue with the documented fallback and record the ra
 - Formal gate name: Preflight Tooling Recommendation Gate
 - Default state: `Running`
 - Pause allowed: yes
-- Allowed pause category: `AwaitingExternalBlocker`
+- Allowed stop class: `external-blocker`
+- Stop state: `AwaitingExternalBlocker`
 - Minimum evidence before stop:
   - `scripts/check_extraction_environment.py` report captured
   - missing roles identified for detection, segmentation, alpha refinement/matting, or reconstruction
@@ -49,7 +58,8 @@ If pause is not allowed, continue with the documented fallback and record the ra
 - Formal gate name: Granularity Alignment Gate
 - Default state: `Running`
 - Pause allowed: yes
-- Allowed pause category: `AwaitingDecision`
+- Allowed stop class: `user-decision`
+- Stop state: `AwaitingDecision`
 - Minimum evidence before stop:
   - semantic layer hierarchy analyzed
   - candidate split choices identified for granularity, text handling, carrier/glyph policy, background expectation, and layer independence
@@ -65,7 +75,8 @@ If pause is not allowed, continue with the documented fallback and record the ra
 - Formal gate name: Pilot Object Gate
 - Default state: `Running`
 - Pause allowed: yes
-- Allowed pause category: `AwaitingApproval`
+- Allowed stop class: `formal-approval`
+- Stop state: `AwaitingApproval`
 - Minimum evidence before stop:
   - image class is dense UI, dashboard, badge/tile/glyph, or another high-risk composition
   - one representative object has been selected as the pilot
@@ -81,7 +92,8 @@ If pause is not allowed, continue with the documented fallback and record the ra
 - Formal gate name: Approximate Reconstruction Acceptance Gate
 - Default state: `Running`
 - Pause allowed: yes
-- Allowed pause category: `AwaitingDecision`
+- Allowed stop class: `user-decision`
+- Stop state: `AwaitingDecision`
 - Minimum evidence before stop:
   - exact hidden pixels are unavailable
   - the layer would rely on inferred pixels, inpainting, manual redraw, or another approximate path
@@ -94,10 +106,11 @@ If pause is not allowed, continue with the documented fallback and record the ra
 
 ### `final_acceptance`
 
-- Formal gate name: Final User Acceptance Gate
+- Formal gate name: Final Acceptance Gate
 - Default state: `Running`
 - Pause allowed: yes
-- Allowed pause category: `AwaitingApproval`
+- Allowed stop class: `formal-approval`
+- Stop state: `AwaitingApproval`
 - Minimum evidence before stop:
   - required previews, quality previews, audit evidence, and QA review exist
   - requested granularity and cleanliness are visible in the current package
@@ -113,7 +126,8 @@ If pause is not allowed, continue with the documented fallback and record the ra
 - Formal gate name: Candidate Promotion Acceptance Gate
 - Default state: `Running`
 - Pause allowed: yes
-- Allowed pause category: `AwaitingApproval`
+- Allowed stop class: `formal-approval`
+- Stop state: `AwaitingApproval`
 - Minimum evidence before stop:
   - a candidate asset is ready to replace the current revision
   - compare evidence or a direct-promotion rationale exists

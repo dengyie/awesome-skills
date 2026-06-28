@@ -530,6 +530,33 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ],
         )
 
+    def test_asset_package_contract_separates_formal_state_from_commentary(self):
+        contract = (ROOT / "references" / "asset-package-contract.md").read_text(
+            encoding="utf-8"
+        ).lower()
+
+        for expected in [
+            "decision_log",
+            "confirmation",
+            "formal state",
+            "must not contain",
+            "progress updates",
+            "object-scoped",
+        ]:
+            self.assertIn(expected, contract)
+
+    def test_usage_doc_includes_allowed_stop_examples(self):
+        usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
+            encoding="utf-8"
+        ).lower()
+
+        for expected in [
+            "external blocker",
+            "semantic divergence",
+            "formal approval",
+        ]:
+            self.assertIn(expected, usage)
+
     def test_check_extraction_environment_reports_capability_gate_json(self):
         result = subprocess.run(
             [
