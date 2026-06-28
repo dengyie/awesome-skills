@@ -557,6 +557,27 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         ]:
             self.assertIn(expected, usage)
 
+    def test_usage_gate_list_matches_allowed_gate_taxonomy(self):
+        usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "Preflight Tooling Recommendation Gate",
+            "Granularity Alignment Gate",
+            "Pilot Object Gate",
+            "Approximate Reconstruction Acceptance Gate",
+            "Final Acceptance Gate",
+            "Candidate Promotion Acceptance Gate",
+        ]:
+            self.assertIn(expected, usage)
+
+        for retired in [
+            "Carrier/Glyph Split Gate",
+            "Final Promotion Acceptance Gate",
+        ]:
+            self.assertNotIn(retired, usage)
+
     def test_check_extraction_environment_reports_capability_gate_json(self):
         result = subprocess.run(
             [
