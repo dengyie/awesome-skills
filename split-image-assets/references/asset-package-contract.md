@@ -116,7 +116,7 @@ For reconstruction, runtime support such as `torch` or `onnxruntime` is not enou
 - `evidence_ref`
 - `blocking`
 
-`decision_log` is a formal gate ledger, not a progress note stream.
+`decision_log` is a formal state surface and formal gate ledger, not a progress note stream.
 
 - `pause_category` must be `user-decision`, `external-blocker`, or `formal-approval`
 - `decision_source` may only be `explicit-user-confirmed` or `inferred-from-user`
@@ -148,7 +148,11 @@ Each confirmation entry must include:
 
 `status=confirmed` or `status=not-required` may only use `explicit-user-confirmed` or `inferred-from-user`. `inferred-from-user` requires durable evidence and must not be used for agent guesswork.
 
+`confirmation` is a formal state surface. It must not contain progress updates, routine commentary, or stage-complete summaries with no decision meaning.
+
 Progress commentary, tool output summaries, and review notes must stay outside `decision_log` and `confirmation`. They can be stored in QA notes, but they do not count as formal gate evidence.
+
+When a semantic divergence is object-specific, the confirmation evidence must stay object-scoped. Do not let one object's accepted split, approximation, or promotion decision implicitly satisfy another object's branch.
 
 Each object should include:
 

@@ -11,11 +11,32 @@ Every stop prompt must follow the grill-me-style exit contract:
 
 Only three stop classes are allowed:
 
-- `AwaitingDecision`
-- `AwaitingExternalBlocker`
-- `AwaitingApproval`
+- `user-decision`
+- `external-blocker`
+- `formal-approval`
+
+Those stop classes map to workflow states like this:
+
+- `user-decision` -> `AwaitingDecision`
+- `external-blocker` -> `AwaitingExternalBlocker`
+- `formal-approval` -> `AwaitingApproval`
 
 These prompts must not be used for progress-only pauses.
+
+## Normalized Gate Taxonomy
+
+These are the only retained allowed-stop templates:
+
+| Gate id | Formal gate name | Stop class | State |
+| --- | --- | --- | --- |
+| `tooling_preflight` | Preflight Tooling Recommendation Gate | `external-blocker` | `AwaitingExternalBlocker` |
+| `granularity_alignment` | Granularity Alignment Gate | `user-decision` | `AwaitingDecision` |
+| `pilot_object` | Pilot Object Gate | `formal-approval` | `AwaitingApproval` |
+| `approximate_reconstruction` | Approximate Reconstruction Acceptance Gate | `user-decision` | `AwaitingDecision` |
+| `final_acceptance` | Final Acceptance Gate | `formal-approval` | `AwaitingApproval` |
+| `candidate_promotion` | Candidate Promotion Acceptance Gate | `formal-approval` | `AwaitingApproval` |
+
+There is no separate `Final Promotion Acceptance Gate`. Final package signoff uses `final_acceptance`. Replacing the current asset revision uses `candidate_promotion`.
 
 ## Explicit Prohibitions
 
@@ -30,7 +51,7 @@ If the workflow only needs to report status, keep running and send commentary in
 
 Each retained prompt should include:
 
-- event class
+- stop class
 - state
 - stop condition
 - recommended answer style
@@ -40,7 +61,8 @@ Each retained prompt should include:
 
 ### `tooling_preflight`
 
-- Event class: `external-blocker`
+- Formal gate name: Preflight Tooling Recommendation Gate
+- Stop class: `external-blocker`
 - State: `AwaitingExternalBlocker`
 - Stop condition:
   - the preflight report shows missing tooling or missing professional upstream outputs, and no prior user-backed path already resolves the branch
@@ -63,7 +85,8 @@ Prompt body:
 
 ### `granularity_alignment`
 
-- Event class: `user-decision`
+- Formal gate name: Granularity Alignment Gate
+- Stop class: `user-decision`
 - State: `AwaitingDecision`
 - Stop condition:
   - the split boundary, text handling, carrier/glyph policy, or layer independence would materially change reuse semantics and existing instructions do not already decide it
@@ -91,7 +114,8 @@ Prompt body:
 
 ### `pilot_object`
 
-- Event class: `formal-approval`
+- Formal gate name: Pilot Object Gate
+- Stop class: `formal-approval`
 - State: `AwaitingApproval`
 - Stop condition:
   - a dense or high-risk composition should not widen beyond the pilot until the representative object is accepted
@@ -113,7 +137,8 @@ Prompt body:
 
 ### `approximate_reconstruction`
 
-- Event class: `user-decision`
+- Formal gate name: Approximate Reconstruction Acceptance Gate
+- Stop class: `user-decision`
 - State: `AwaitingDecision`
 - Stop condition:
   - exact hidden pixels are unavailable and accepting approximation would change truthfulness or downstream use
@@ -137,7 +162,8 @@ Prompt body:
 
 ### `final_acceptance`
 
-- Event class: `formal-approval`
+- Formal gate name: Final Acceptance Gate
+- Stop class: `formal-approval`
 - State: `AwaitingApproval`
 - Stop condition:
   - the package has enough evidence for a final pass claim, but formal user acceptance is still required
@@ -160,7 +186,8 @@ Prompt body:
 
 ### `candidate_promotion`
 
-- Event class: `formal-approval`
+- Formal gate name: Candidate Promotion Acceptance Gate
+- Stop class: `formal-approval`
 - State: `AwaitingApproval`
 - Stop condition:
   - a candidate asset is about to replace the current revision and no prior approved rule already covers that promotion

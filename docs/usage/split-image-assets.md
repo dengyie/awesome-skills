@@ -84,12 +84,22 @@ Treat these as formal gates:
 
 - `Granularity Alignment Gate`
 - `Carrier/Glyph Split Gate`
+- `Pilot Object Gate`
 - `Approximate Reconstruction Acceptance Gate`
 - `Final Acceptance Gate`
-- `Final Promotion Acceptance Gate`
 - `Candidate Promotion Acceptance Gate`
 
 Each gate should ask one decisive question, offer a recommended answer, and update metadata in a durable way rather than leaving the choice only in chat.
+
+### Allowed Stop Examples
+
+True external blocker stop: “Production-capable extraction is blocked because the environment still lacks segmentation and matting outputs. Recommendation: use `external-professional-outputs` unless you want to pause for tool installation. After confirmation, I will record the preflight decision in `metadata.capability` and continue on the selected path.”
+
+Correct semantic divergence stop: “This dashboard badge can stay grouped, or the carrier and glyph can split into separate reusable layers. This is medium-risk semantic divergence because it changes reuse boundaries. Recommendation: split the carrier and glyph. After confirmation, I will record the decision in `metadata.decision_log[]` and continue extraction without reopening the branch.”
+
+Correct formal approval stop: “The pilot object now has previews, quality overlays, and QA notes. This is a formal approval point because widening the batch would reuse this cleanliness standard. Recommendation: approve the pilot if this granularity is acceptable. After confirmation, I will either continue the broader batch or keep work on the pilot.”
+
+Progress-only anti-example: “Preview generation is done and validation is next.” This should remain commentary, not a stop.
 
 Use a professional segmenter or matting pipeline as the primary source for production masks. Pillow, OpenCV, and skimage are helpers for alpha compositing, source-space mask persistence, preview generation, repair, and packaging; they are not a substitute for SAM2/SAM/Grounded-SAM/rembg/BiRefNet/RMBG-style extraction.
 
