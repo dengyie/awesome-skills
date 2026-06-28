@@ -9,71 +9,15 @@ Every stop prompt must follow the grill-me-style exit contract:
 - `Options and Impact`
 - `What I Will Do After Confirmation`
 
-- `explicit-user-confirmed`
-- `inferred-from-user`
+Only three stop classes are allowed:
 
-`inferred-from-user` means the answer is already supported by durable user evidence. It does not mean the agent guessed.
-
-Progress updates are commentary, not confirmation gates.
-
-## What Is Not A Confirmation Prompt
-
-Do not stop and wait for:
-
-- routine progress updates
-- ordinary tool output summaries
-- internal implementation checkpoints
-- non-blocking uncertainty that does not change package truth
-- ordinary text defaults that already route to `rebuild_downstream`
-
-- `user-decision`
-- `external-blocker`
-- `formal-approval`
-
-Pause category: `external-blocker` by default
-
-Must ask when: tools or professional upstream outputs are still missing and no prior user-backed path already resolves the branch.
-
-May infer when: the user already approved `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only` for the current run and that evidence can be cited.
-
-Question: Production-quality asset splitting needs professional upstream tools. This environment is missing [missing capabilities/tools]. Should I pause so you can install/activate them, use external segmented assets/masks, or continue as draft-packaging-only?
-
-- `user-decision` -> `AwaitingDecision`
-- `external-blocker` -> `AwaitingExternalBlocker`
-- `formal-approval` -> `AwaitingApproval`
+- `AwaitingDecision`
+- `AwaitingExternalBlocker`
+- `AwaitingApproval`
 
 These prompts must not be used for progress-only pauses.
 
-Medium/high-risk semantic divergence is not its own stop class. If it truly requires a human branch choice, it must still use `user-decision`.
-
-Pause category: `user-decision`
-
-Must ask when: different answers would materially change asset boundaries, text handling, carrier/glyph behavior, or layer independence.
-
-May infer when: existing user instructions or approved metadata already settle those branches.
-
-Question: Should this package target module, component, atomic-layer, or production-editable reconstruction granularity?
-
-These are the only retained allowed-stop templates:
-
-| Gate id | Formal gate name | Stop class | State |
-| --- | --- | --- | --- |
-| `tooling_preflight` | Preflight Tooling Recommendation Gate | `external-blocker` | `AwaitingExternalBlocker` |
-| `granularity_alignment` | Granularity Alignment Gate | `user-decision` | `AwaitingDecision` |
-| `pilot_object` | Pilot Object Gate | `formal-approval` | `AwaitingApproval` |
-| `approximate_reconstruction` | Approximate Reconstruction Acceptance Gate | `user-decision` | `AwaitingDecision` |
-| `final_acceptance` | Final Acceptance Gate | `formal-approval` | `AwaitingApproval` |
-| `candidate_promotion` | Candidate Promotion Acceptance Gate | `formal-approval` | `AwaitingApproval` |
-
-There is no separate `Final Promotion Acceptance Gate`. Final package signoff uses `final_acceptance`. Replacing the current asset revision uses `candidate_promotion`.
-
-Pause category: `formal-approval`
-
-Must ask when: dense UI or approximate reconstruction work should not widen without a pilot signoff.
-
-May infer when: a prior accepted policy explicitly marks the current case as `not-required`.
-
-Question: Before I continue with the broader batch, should I use this representative object as a pilot and wait for your confirmation on granularity and cleanliness?
+## Explicit Prohibitions
 
 - Forbid progress-only pauses.
 - Forbid stage-complete pauses.
@@ -84,11 +28,9 @@ If the workflow only needs to report status, keep running and send commentary in
 
 ## Prompt Shape
 
-Pause category: `user-decision`
+Each retained prompt should include:
 
-Question: Should this icon or badge be split into a carrier tile and foreground glyph?
-
-- stop class
+- event class
 - state
 - stop condition
 - recommended answer style
@@ -98,9 +40,16 @@ Question: Should this icon or badge be split into a carrier tile and foreground 
 
 ### `tooling_preflight`
 
-Pause category: `user-decision`
-
-Question: Should text, labels, buttons, or UI chrome be extracted as image layers or rebuilt downstream as live UI/text?
+- Event class: `external-blocker`
+- State: `AwaitingExternalBlocker`
+- Stop condition:
+  - the preflight report shows missing tooling or missing professional upstream outputs, and no prior user-backed path already resolves the branch
+- Recommended answer style:
+  - choose one explicit path: `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only`
+- Effect on metadata:
+  - update `metadata.capability`
+  - update `metadata.confirmation.tooling_preflight`
+  - append `metadata.decision_log[]`
 
 Prompt body:
 
@@ -112,25 +61,23 @@ Prompt body:
   - `draft-packaging-only`: continues now, but the package must remain draft-honest
 - `What I Will Do After Confirmation`: Record the chosen path in metadata and either continue with production-capable evidence or keep the package in draft-only status.
 
-## Ambiguous Text-Like Preservation
+### `granularity_alignment`
 
-Pause category: `user-decision`
-
-Must ask when: a text-like object has strong visual treatment, high visual complexity, or unclear preservation needs, and the recommended route is `requires_user_confirmation`.
-
-Do not ask when: the object is ordinary editable text, a button label, a numeric value, or a form value that already defaults to `rebuild_downstream`.
-
-Question: Should this text-like object be rebuilt downstream as editable content, or preserved as a visual asset for fidelity?
-
-Recommended answer: Rebuild downstream unless the object is a logo wordmark, decorative text treatment, or another visual-fidelity-critical element.
-
-Decision effect: Record `value_scoring`, `decision_routing.recommended_action`, `decision_routing.final_action`, `decision_routing.decision_source`, and any `rebuild_intent` notes.
-
-## Approximate Background Acceptance
-
-Pause category: `user-decision` first, `formal-approval` before pass-claim escalation
-
-Question: Is an approximate reconstructed background or support plate acceptable for this package?
+- Event class: `user-decision`
+- State: `AwaitingDecision`
+- Stop condition:
+  - the split boundary, text handling, carrier/glyph policy, or layer independence would materially change reuse semantics and existing instructions do not already decide it
+- Recommended answer style:
+  - choose one durable granularity policy such as `component`, `atomic-layer`, or `production-editable`, plus any required text/background preferences
+- Effect on metadata:
+  - update `metadata.granularity.mode`
+  - update `metadata.granularity.scope_strategy`
+  - update `metadata.granularity.text_handling`
+  - update `metadata.granularity.carrier_glyph_policy`
+  - update `metadata.granularity.background_expectation`
+  - update `metadata.granularity.layer_independence`
+  - update `metadata.confirmation.granularity_alignment`
+  - append `metadata.decision_log[]`
 
 Prompt body:
 
@@ -144,9 +91,15 @@ Prompt body:
 
 ### `pilot_object`
 
-Pause category: `user-decision` only when the answer changes deliverable truth; otherwise continue and report commentary.
-
-Question: Should this low-confidence mask be retried with another upstream tool, sent to manual review, or retained as draft-only evidence?
+- Event class: `formal-approval`
+- State: `AwaitingApproval`
+- Stop condition:
+  - a dense or high-risk composition should not widen beyond the pilot until the representative object is accepted
+- Recommended answer style:
+  - answer with `approved`, `revise-and-retry`, or `not-required`
+- Effect on metadata:
+  - update `metadata.confirmation.pilot_object`
+  - append `metadata.decision_log[]` when the pilot materially changes batch scope
 
 Prompt body:
 
@@ -160,24 +113,73 @@ Prompt body:
 
 ### `approximate_reconstruction`
 
-Pause category: `formal-approval`
-
-Question: Does the current package meet the requested granularity and cleanliness well enough to mark `qa.status=pass`?
+- Event class: `user-decision`
+- State: `AwaitingDecision`
+- Stop condition:
+  - exact hidden pixels are unavailable and accepting approximation would change truthfulness or downstream use
+- Recommended answer style:
+  - answer explicitly whether approximation is acceptable for the named layer and intended use
+- Effect on metadata:
+  - update `metadata.confirmation.approximate_reconstruction`
+  - record `delivery_class=approximate-reconstruction`
+  - record `reconstruction_provenance`
+  - record `active_reconstruction_method`
+  - append `metadata.decision_log[]`
 
 Prompt body:
 
-Decision effect: Only promote to `pass` after required quality checks pass and the acceptance decision is recorded.
+- `Why This Needs a Human`: The workflow can continue, but it cannot honestly treat an inferred reconstruction as exact without user acceptance.
+- `Recommendation`: Accept approximation only when the package can remain honest about the layer being approximate.
+- `Options and Impact`:
+  - `accept approximation`: continue with an approximate layer that may remain `needs-review`
+  - `reject approximation`: keep the layer blocked or draft-only until a better path exists
+- `What I Will Do After Confirmation`: Either record the approximate path and continue, or keep the package honest by leaving that layer unpromoted.
 
-## Candidate Promotion Acceptance
+### `final_acceptance`
 
-Pause category: `formal-approval`
+- Event class: `formal-approval`
+- State: `AwaitingApproval`
+- Stop condition:
+  - the package has enough evidence for a final pass claim, but formal user acceptance is still required
+- Recommended answer style:
+  - answer with `accept`, `keep-needs-review`, or a short correction directive tied to the current package state
+- Effect on metadata:
+  - update `metadata.confirmation.final_acceptance`
+  - append `metadata.decision_log[]`
+  - allow or deny promotion to final `qa.status=pass`
 
-Must ask when: a candidate asset is about to replace the current revision and no prior approved promotion rule covers the replacement.
+Prompt body:
 
-May infer when: a prior accepted policy explicitly authorizes promotion under the same compare/direct-promotion conditions and that evidence can be cited.
+- `Why This Needs a Human`: Marking the package as accepted changes the final delivery claim, not just the workflow status.
+- `Recommendation`: Keep `needs-review` unless the current granularity, cleanliness, and reconstructed regions are acceptable as delivered.
+- `Options and Impact`:
+  - `accept`: allows final acceptance metadata and a pass claim if all other evidence is green
+  - `keep-needs-review`: preserves an honest draft or review-required outcome
+  - `correction directive`: identifies what must change before another acceptance request
+- `What I Will Do After Confirmation`: Either finalize the package state or continue with the recorded review outcome.
 
-Question: Should candidate X replace the current revision for this object?
+### `candidate_promotion`
 
-Recommended answer: Yes only after compare evidence or a direct-promotion rationale exists.
+- Event class: `formal-approval`
+- State: `AwaitingApproval`
+- Stop condition:
+  - a candidate asset is about to replace the current revision and no prior approved rule already covers that promotion
+- Recommended answer style:
+  - answer with `promote <candidate-id>`, `keep current`, or a comparison-based correction note
+- Effect on metadata:
+  - update `metadata.confirmation.candidate_promotion`
+  - update `selected_candidate_id`
+  - update `current_asset_revision`
+  - update `repair_history[]`
+  - update `candidate_comparisons[]`
+  - append `metadata.decision_log[]`
 
-Decision effect: Record `metadata.confirmation.candidate_promotion`, update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, and keep the selection rationale durable.
+Prompt body:
+
+- `Why This Needs a Human`: Promotion changes the current package-owned revision and should not happen implicitly.
+- `Recommendation`: Promote only when compare evidence or a direct-promotion rationale supports the replacement.
+- `Options and Impact`:
+  - `promote <candidate-id>`: replaces the current revision and records the selection rationale
+  - `keep current`: leaves the existing revision in place and preserves the candidate as evidence only
+  - `correction note`: requests another candidate pass before any promotion
+- `What I Will Do After Confirmation`: Either promote the selected candidate with durable metadata or keep the current revision unchanged.
