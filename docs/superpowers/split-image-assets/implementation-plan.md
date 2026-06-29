@@ -12,6 +12,18 @@ It replaces the prior canonical milestone that focused on contract unification a
 
 All future development on this line should execute from this plan unless a newer canonical plan explicitly replaces it.
 
+## Prior Milestone Disposition
+
+The prior contract-hardening milestone is no longer the active execution target.
+
+For this plan, treat it as:
+
+- preserved baseline behavior that installer UX work must not violate
+- backlog for any remaining cleanup that is not a direct blocker
+- re-openable only when a concrete installer UX task proves that an older contract-hardening gap still blocks truthful behavior
+
+This avoids running two active canonical milestones in parallel.
+
 ## Execution Contract
 
 ```text
@@ -218,11 +230,14 @@ These define the installer UX authority and milestone order.
 - `split-image-assets/SKILL.md`
 - `split-image-assets/references/workflow.md`
 - `split-image-assets/references/pipeline-recipes.md`
-- `split-image-assets/references/confirmation-prompts.md`
-- `split-image-assets/references/asset-package-contract.md`
 - `docs/usage/split-image-assets.md`
 
-These must reflect the canonical docs and must not drift into a separate installation story.
+These are the primary package-facing docs for the current active line and must not drift into a separate installation story.
+
+Conditionally touched only when installer UX work reveals direct wording drift or broken references:
+
+- `split-image-assets/references/confirmation-prompts.md`
+- `split-image-assets/references/asset-package-contract.md`
 
 ### Code ownership hotspots
 
@@ -234,6 +249,12 @@ These must reflect the canonical docs and must not drift into a separate install
   - `verify`
   - `explain`
 - supporting runtime-mode and routing helpers
+
+Conditionally touched only when installer UX work exposes a real blocker in preserved baseline behavior:
+
+- `split-image-assets/scripts/init_asset_package.py`
+- `split-image-assets/scripts/record_quality_review.py`
+- `split-image-assets/scripts/validate_asset_package.py`
 
 ### Test ownership hotspots
 

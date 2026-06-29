@@ -98,19 +98,27 @@ The design is based on these explicit decisions from the current thread:
 
 ## Scope
 
-In scope:
+This section defines the active scope for the current installer UX line, not the full historical scope of every earlier `split-image-assets` refactor.
+
+In scope for the current active line:
 
 - `split-image-assets/SKILL.md`
 - `split-image-assets/references/workflow.md`
+- `split-image-assets/references/pipeline-recipes.md`
+- `docs/usage/split-image-assets.md`
+- `split-image-assets/scripts/check_extraction_environment.py`
+- new package-local capability helpers
+- new package-local installer and verification entrypoints
+- `split-image-assets/tests/test_skill_package.py`
+- docs/tests/runtime wording changes required to keep installer UX and preflight language aligned
+
+Conditionally in scope only if installer UX work exposes drift that must be corrected for honesty:
+
 - `split-image-assets/references/confirmation-prompts.md`
 - `split-image-assets/references/asset-package-contract.md`
-- `docs/usage/split-image-assets.md`
 - `split-image-assets/scripts/init_asset_package.py`
 - `split-image-assets/scripts/record_quality_review.py`
 - `split-image-assets/scripts/validate_asset_package.py`
-- new package-local installer and verification entrypoints
-- `split-image-assets/tests/test_skill_package.py`
-- local architecture refactors required to reduce contract drift inside this package
 
 Out of scope:
 
@@ -120,6 +128,18 @@ Out of scope:
 - adding new upstream model integrations as part of this redesign
 - rewriting package semantics unrelated to stop/continue behavior, asset routing, or contract maintainability
 - building a general-purpose environment manager for unrelated skills
+
+## Active-Line Disposition
+
+The earlier contract-hardening line remains part of the package baseline, but it is not the active milestone now.
+
+Its status for the purpose of this document is:
+
+- canonical stop taxonomy, asset-routing semantics, and validator/writer truth rules remain required baseline constraints
+- installer UX work must preserve those constraints
+- unfinished or future contract-hardening cleanups are backlog unless they become direct blockers for the current installer UX milestone
+
+This means the current active line is installer UX V1, while the earlier contract-hardening work is treated as preserved baseline plus backlog, not as a parallel active milestone.
 
 ## Non-Goals
 
