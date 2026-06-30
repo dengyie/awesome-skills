@@ -136,9 +136,10 @@ If prior user instructions or existing metadata already answer the question, rec
 - `granularity_alignment`
 - `pilot_object`
 - `approximate_reconstruction`
-- `final_promotion_acceptance`
 - `final_acceptance`
 - `candidate_promotion`
+
+`final_promotion_acceptance` is a legacy alias for older packages only. New packages and current tooling must use `candidate_promotion` as the canonical promotion gate.
 
 Each confirmation entry must include:
 

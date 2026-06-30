@@ -802,6 +802,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["asset_summary"]["production_ready_assets"], 0)
             self.assertEqual(metadata["asset_summary"]["draft_candidate_assets"], 0)
             self.assertEqual(metadata["asset_summary"]["support_only_layers"], 0)
+            self.assertNotIn("final_promotion_acceptance", metadata["confirmation"])
             self.assertIn(
                 "Final status: needs-review",
                 (output / "qa_report.md").read_text(encoding="utf-8"),
@@ -2416,6 +2417,60 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "chat:promotion-approved",
             )
 
+    def test_record_quality_review_negative_candidate_promotion_keeps_pending_confirmation_unset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--decision-stage",
+                    "final-promotion-acceptance",
+                    "--decision-question",
+                    "Promote candidate v2 over the current revision?",
+                    "--decision-recommended",
+                    "yes",
+                    "--decision-answer",
+                    "no",
+                    "--decision-effect",
+                    "Keep the current revision active.",
+                    "--decision-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "formal-approval",
+                    "--blocking",
+                    "true",
+                    "--evidence-ref",
+                    "chat:promotion-declined",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                metadata["confirmation"]["candidate_promotion"]["status"],
+                "pending",
+            )
+            self.assertEqual(
+                metadata["confirmation"]["candidate_promotion"]["source"],
+                "unset",
+            )
+            self.assertEqual(
+                metadata["confirmation"]["candidate_promotion"]["evidence_ref"],
+                "",
+            )
+            self.assertEqual(metadata["decision_log"][0]["recorded_answer"], "no")
+
     def test_record_quality_review_records_confirmation_gate_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2558,6 +2613,36 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("must be unset", result.stderr)
+
+    def test_record_quality_review_rejects_legacy_final_promotion_confirmation_key(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--confirmation-key",
+                    "final_promotion_acceptance",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "formal-approval",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("invalid choice", result.stderr)
 
     def test_record_quality_review_records_tooling_preflight_capability(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -3593,6 +3678,64 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("Package valid", result.stdout)
+
+    def test_validate_asset_package_rejects_unresolved_requires_user_confirmation_final_action(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["qa"]["status"] = "pass"
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "decorative-text",
+                "text_render_class": "styled-editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "medium",
+                "visual_complexity_score": "high",
+                "asset_value_score": "medium",
+                "scoring_reason": "Stylized heading with ambiguous preservation needs.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "requires_user_confirmation",
+                "final_action": "unset",
+                "decision_source": "explicit-user-confirmed",
+            }
+            metadata["decision_log"].append(
+                {
+                    "stage": "asset-routing-confirmation",
+                    "pause_category": "user-decision",
+                    "question": "Should this text-like object be rebuilt downstream or preserved as a visual asset?",
+                    "recommended_answer": "rebuild downstream unless fidelity-critical",
+                    "recorded_answer": "keep reviewing",
+                    "decision_effect": "Leave the route unresolved until a final action is chosen.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "chat:needs-text-routing-resolution",
+                    "blocking": "true",
+                    "object_id": "main_object",
+                }
+            )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("final_action", result.stderr)
 
     def test_validate_asset_package_rejects_unscoped_confirmation_for_second_ambiguous_object(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -5148,8 +5291,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["confirmation"]["tooling_preflight"]["evidence_ref"] = "chat:tooling-approved"
             metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
             metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
-            metadata["confirmation"]["final_promotion_acceptance"]["status"] = "confirmed"
-            metadata["confirmation"]["final_promotion_acceptance"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -6140,8 +6283,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata["confirmation"]["tooling_preflight"]["evidence_ref"] = "chat:tooling-approved"
             metadata["confirmation"]["approximate_reconstruction"]["status"] = "confirmed"
             metadata["confirmation"]["approximate_reconstruction"]["source"] = "explicit-user-confirmed"
-            metadata["confirmation"]["final_promotion_acceptance"]["status"] = "confirmed"
-            metadata["confirmation"]["final_promotion_acceptance"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
             metadata["qa"]["status"] = "needs-review"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",

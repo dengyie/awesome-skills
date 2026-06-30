@@ -289,17 +289,21 @@ def update_confirmation(metadata: dict, args: argparse.Namespace) -> None:
     if args.decision_stage:
         key = STAGE_TO_CONFIRMATION_KEY.get(args.decision_stage)
         if key:
-            entry = confirmation.setdefault(
-                key,
-                default_confirmation_entry(key),
-            )
+            affirmative_gate = args.decision_stage in AFFIRMATIVE_CONFIRMATION_STAGES
+            if affirmative_gate and not is_affirmative_answer(args.decision_answer):
+                entry = default_confirmation_entry(key)
+                confirmation[key] = entry
+                if args.confirmation_note is not None:
+                    entry["notes"] = args.confirmation_note
+                elif args.decision_effect:
+                    entry["notes"] = args.decision_effect
+                if key == "pilot_object" and args.confirmation_object_id is not None:
+                    entry["object_id"] = args.confirmation_object_id
+                return
+            entry = confirmation.setdefault(key, default_confirmation_entry(key))
             entry["status"] = "confirmed"
-            entry["source"] = require_formal_source(
-                args.decision_source, "--decision-source", args.evidence_ref
-            )
-            entry["pause_category"] = require_pause_category(
-                args.pause_category, "--pause-category"
-            )
+            entry["source"] = require_formal_source(args.decision_source, "--decision-source", args.evidence_ref)
+            entry["pause_category"] = require_pause_category(args.pause_category, "--pause-category")
             if args.confirmation_note is not None:
                 entry["notes"] = args.confirmation_note
             elif not entry.get("notes"):
@@ -633,7 +637,6 @@ def main() -> int:
                 "granularity_alignment",
                 "pilot_object",
                 "approximate_reconstruction",
-                "final_promotion_acceptance",
                 "final_acceptance",
                 "candidate_promotion",
             }

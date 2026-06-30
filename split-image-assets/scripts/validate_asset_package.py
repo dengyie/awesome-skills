@@ -153,6 +153,21 @@ def has_affirmative_decision(decision_log: list[dict], stages: set[str]) -> bool
     )
 
 
+def confirmation_satisfies_promotion(metadata: dict, key: str) -> bool:
+    entry = metadata.get("confirmation", {}).get(key, {})
+    return (
+        isinstance(entry, dict)
+        and entry.get("status") == "confirmed"
+        and entry.get("source") in NON_DEFAULT_CONFIRMATION_SOURCES
+    )
+
+
+def promotion_confirmation_satisfied(metadata: dict) -> bool:
+    return confirmation_satisfies_promotion(metadata, "candidate_promotion") or confirmation_satisfies_promotion(
+        metadata, "final_promotion_acceptance"
+    )
+
+
 def load_metadata(package_dir: Path, errors: list[str]) -> dict:
     metadata_path = package_dir / "metadata.json"
     if not metadata_path.exists():
@@ -949,14 +964,9 @@ def validate_objects(
                     errors.append(
                         f"{object_id}: metadata.confirmation.approximate_reconstruction must come from explicit-user-confirmed or inferred-from-user"
                     )
-                promotion_confirmation = metadata.get("confirmation", {}).get("final_promotion_acceptance", {})
-                if promotion_confirmation.get("status") != "confirmed":
+                if not promotion_confirmation_satisfied(metadata):
                     errors.append(
-                        f"{object_id}: metadata.confirmation.final_promotion_acceptance must be confirmed before candidate promotion"
-                    )
-                elif promotion_confirmation.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
-                    errors.append(
-                        f"{object_id}: metadata.confirmation.final_promotion_acceptance must come from explicit-user-confirmed or inferred-from-user"
+                        f"{object_id}: metadata.confirmation.candidate_promotion must be confirmed before candidate promotion"
                     )
             if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
                 errors.append(
@@ -1086,6 +1096,14 @@ def validate_objects(
             errors.append(
                 f"{object_id}: requires_user_confirmation must be resolved through a formal decision record"
             )
+        if recommended_action == "requires_user_confirmation" and final_action not in {
+            "extract_asset",
+            "rebuild_downstream",
+            "support_only",
+        }:
+            errors.append(
+                f"{object_id}: requires_user_confirmation must resolve decision_routing.final_action before validation"
+            )
         if (
             final_action == "rebuild_downstream"
             and asset_class == "atomic"
@@ -1104,14 +1122,9 @@ def validate_objects(
             str(selected_candidate_id).strip() if isinstance(selected_candidate_id, str) else ""
         )
         if selected_candidate_id_value:
-            candidate_promotion_entry = metadata.get("confirmation", {}).get("candidate_promotion", {})
-            if candidate_promotion_entry.get("status") != "confirmed":
+            if not promotion_confirmation_satisfied(metadata):
                 errors.append(
                     f"{object_id}: metadata.confirmation.candidate_promotion must be confirmed before candidate promotion"
-                )
-            elif candidate_promotion_entry.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
-                errors.append(
-                    f"{object_id}: metadata.confirmation.candidate_promotion must come from explicit-user-confirmed or inferred-from-user"
                 )
         repair_history = item.get("repair_history")
         if repair_history is not None and not isinstance(repair_history, list):
