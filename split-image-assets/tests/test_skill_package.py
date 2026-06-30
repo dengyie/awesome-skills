@@ -1582,7 +1582,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["objects"][0]["mask_source"], "sam2")
             self.assertEqual(metadata["objects"][0]["quality_checks"]["mask_alignment"], "needs-review")
 
-    def test_import_external_assets_preserves_existing_review_and_promotion_state_on_reimport(self):
+    def test_import_external_assets_resets_stale_review_and_promotion_state_on_reimport(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -1690,24 +1690,29 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
             metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
             obj = metadata["objects"][0]
-            self.assertTrue(obj["manual_review_confirmed"])
+            self.assertNotIn("manual_review_confirmed", obj)
+            self.assertNotIn("manual_review_notes", obj)
+            self.assertEqual(obj["selected_candidate_id"], "")
+            self.assertEqual(obj["repair_history"], [])
+            self.assertEqual(obj["current_asset_revision"], "initial-import")
+            self.assertEqual(obj["active_reconstruction_method"], "")
             self.assertEqual(
-                obj["manual_review_notes"],
-                ["Human approved this crop after visual inspection."],
+                obj["quality_checks"],
+                {
+                    "mask_alignment": "needs-review",
+                    "alpha_edges": "needs-review",
+                    "background_residue": "needs-review",
+                    "reuse_readiness": "needs-review",
+                },
             )
-            self.assertEqual(obj["selected_candidate_id"], "candidate-a")
-            self.assertEqual(obj["repair_history"], [{"candidate_id": "candidate-a", "note": "Promoted"}])
-            self.assertEqual(obj["current_asset_revision"], "candidate-a")
-            self.assertEqual(obj["active_reconstruction_method"], "upscale_repair_downscale")
-            self.assertEqual(obj["quality_checks"]["mask_alignment"], "pass")
-            self.assertEqual(obj["candidate_comparisons"][0]["comparison_id"], "cmp-1")
-            self.assertCountEqual(
+            self.assertEqual(obj["candidate_comparisons"], [])
+            self.assertEqual(
                 obj["manual_review_flags"],
-                [
-                    "existing review flag",
-                    "external asset imported; inspect mask alignment and alpha edges",
-                ],
+                ["external asset imported; inspect mask alignment and alpha edges"],
             )
+            self.assertEqual(obj["asset_class"], "candidate")
+            self.assertEqual(obj["reuse_status"], "draft-candidate")
+            self.assertEqual(obj["delivery_class"], "draft-candidate")
 
     def test_import_external_assets_requires_source_space_mask(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -3042,6 +3047,50 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata.get("previews", {}).get("quality", {}), {})
 
+    def test_build_quality_previews_fails_when_any_eligible_object_is_missing_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+
+            secondary = json.loads(json.dumps(metadata["objects"][0]))
+            secondary["id"] = "secondary_01"
+            secondary["role"] = "secondary"
+            secondary["composition_order"] = 20
+            secondary["asset_path"] = "assets/missing_secondary.png"
+            secondary["mask_path"] = "masks/missing_secondary.png"
+            metadata["objects"].append(secondary)
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("secondary_01: missing files for quality preview", result.stderr)
+            self.assertIn("Built only 1 of 2 quality preview sets", result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertIn("main_object", metadata["previews"]["quality"])
+            self.assertNotIn("secondary_01", metadata["previews"]["quality"])
+
     def test_build_quality_previews_rejects_paths_outside_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -3401,6 +3450,63 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
             metadata = self._write_ready_validation_package(output)
             metadata["decision_log"] = []
+            metadata["objects"][0]["text_semantics"] = {
+                "text_role": "decorative-text",
+                "text_render_class": "styled-editable",
+            }
+            metadata["objects"][0]["value_scoring"] = {
+                "editability_score": "medium",
+                "visual_complexity_score": "high",
+                "asset_value_score": "medium",
+                "scoring_reason": "Stylized heading with ambiguous preservation needs.",
+            }
+            metadata["objects"][0]["decision_routing"] = {
+                "recommended_action": "requires_user_confirmation",
+                "final_action": "extract_asset",
+                "decision_source": "explicit-user-confirmed",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_asset_package.py"), str(output)],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("requires_user_confirmation", result.stderr)
+
+    def test_validate_asset_package_rejects_unrelated_decision_for_ambiguous_text_route(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 128)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_ready_validation_package(output)
+            metadata["decision_log"] = [
+                {
+                    "stage": "final-acceptance",
+                    "pause_category": "formal-approval",
+                    "question": "Accept this extracted layer?",
+                    "recommended_answer": "yes",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Allow final pass after visual QA.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                    "object_id": "main_object",
+                }
+            ]
             metadata["objects"][0]["text_semantics"] = {
                 "text_role": "decorative-text",
                 "text_render_class": "styled-editable",

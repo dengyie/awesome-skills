@@ -149,10 +149,16 @@ def main() -> int:
     if generated == 0 and eligible_objects == 0:
         print(f"Built quality previews for: {package_dir}")
         return 0
-    if generated == 0:
+    if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
-        print("ERROR: No quality previews generated", file=sys.stderr)
+        if generated == 0:
+            print("ERROR: No quality previews generated", file=sys.stderr)
+        else:
+            print(
+                f"ERROR: Built only {generated} of {eligible_objects} quality preview sets",
+                file=sys.stderr,
+            )
         return 1
     print(f"Built quality previews for: {package_dir}")
     return 0

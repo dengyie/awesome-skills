@@ -163,31 +163,22 @@ def merge_imported_object(existing: dict, record: dict) -> dict:
     merged.update(record)
 
     for field, default_value in [
-        ("current_asset_revision", "initial-import"),
-        ("active_reconstruction_method", ""),
-        ("selected_candidate_id", ""),
-        ("repair_history", []),
-        ("asset_class", "candidate"),
-        ("reuse_status", "draft-candidate"),
-        ("delivery_class", "draft-candidate"),
         ("object_type", "generic-object"),
-        ("confidence", "medium"),
-        ("edge_complexity", "soft"),
-        ("extraction_method", "ai-assisted"),
     ]:
         preserve_existing_when_default(merged, record, existing, field, default_value)
 
-    if isinstance(existing.get("manual_review_flags"), list):
-        flags = list(existing["manual_review_flags"])
-        for flag in record.get("manual_review_flags", []):
-            if flag not in flags:
-                flags.append(flag)
-        merged["manual_review_flags"] = flags
-
-    if record.get("quality_checks") == DEFAULT_IMPORTED_QUALITY_CHECKS and isinstance(
-        existing.get("quality_checks"), dict
-    ):
-        merged["quality_checks"] = dict(existing["quality_checks"])
+    # A newly imported asset supersedes prior review or promotion evidence for the old pixels.
+    merged["manual_review_flags"] = list(record.get("manual_review_flags", DEFAULT_IMPORTED_MANUAL_REVIEW_FLAGS))
+    merged["quality_checks"] = dict(record.get("quality_checks", DEFAULT_IMPORTED_QUALITY_CHECKS))
+    merged["selected_candidate_id"] = str(record.get("selected_candidate_id", ""))
+    merged["repair_history"] = list(record.get("repair_history", []))
+    merged["current_asset_revision"] = str(record.get("current_asset_revision", "initial-import"))
+    merged["active_reconstruction_method"] = str(record.get("active_reconstruction_method", ""))
+    merged["candidate_comparisons"] = []
+    merged.pop("manual_review_confirmed", None)
+    merged.pop("manual_review_notes", None)
+    merged.pop("approximate", None)
+    merged.pop("reconstruction_provenance", None)
 
     routing_defaults = default_object_routing_fields()
     for field_name, defaults in routing_defaults.items():

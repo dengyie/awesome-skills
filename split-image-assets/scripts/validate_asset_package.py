@@ -109,6 +109,19 @@ APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES = {
     "reconstruction-acceptance",
 }
 AFFIRMATIVE_DECISION_ANSWERS = {"yes", "y", "accept", "accepted", "approve", "approved", "confirm", "confirmed"}
+TEXT_ROUTING_CONFIRMATION_STAGES = {
+    "asset-value-scoring",
+    "asset-routing",
+    "asset-routing-confirmation",
+    "text-routing",
+    "text-routing-confirmation",
+}
+TEXT_ROUTING_CONFIRMATION_MARKERS = {
+    "rebuild downstream",
+    "visual asset",
+    "text-like object",
+    "fidelity-critical",
+}
 
 
 def rel_path(package_dir: Path, value: str, errors: list[str], label: str) -> Path | None:
@@ -657,8 +670,9 @@ def has_text_routing_confirmation(
         if entry.get("decision_source") not in ALLOWED_DECISION_SOURCES:
             continue
         entry_object_id = str(entry.get("object_id", "")).strip().lower()
+        stage = str(entry.get("stage", "")).strip().lower()
         if object_id and entry_object_id:
-            if object_id == entry_object_id:
+            if object_id == entry_object_id and stage in TEXT_ROUTING_CONFIRMATION_STAGES:
                 return True
             continue
         evidence_text = " ".join(
@@ -672,11 +686,14 @@ def has_text_routing_confirmation(
                 "evidence_ref",
             ]
         )
-        if object_id and object_id in evidence_text:
+        semantic_match = any(marker in evidence_text for marker in TEXT_ROUTING_CONFIRMATION_MARKERS)
+        if object_id and object_id in evidence_text and (
+            stage in TEXT_ROUTING_CONFIRMATION_STAGES or semantic_match
+        ):
             return True
-        if allow_legacy_unscoped and "text-like object" in evidence_text:
+        if allow_legacy_unscoped and stage in TEXT_ROUTING_CONFIRMATION_STAGES and "text-like object" in evidence_text:
             return True
-        if allow_legacy_unscoped and "rebuild downstream" in evidence_text and "visual asset" in evidence_text:
+        if allow_legacy_unscoped and stage in TEXT_ROUTING_CONFIRMATION_STAGES and "rebuild downstream" in evidence_text and "visual asset" in evidence_text:
             return True
     return False
 
