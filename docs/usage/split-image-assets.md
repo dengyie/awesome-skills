@@ -205,6 +205,7 @@ Per-object `quality_checks` should cover mask alignment, alpha edges, background
 
 Use `record_quality_review.py` after inspecting previews to update `metadata.json` and append `qa_report.md` together. This prevents the common failure where imported layers remain `needs-review`, semantic analysis is missing, or `qa.status` is promoted without matching object-level evidence.
 `candidate_promotion` is a formal approval gate, not a casual note. If a candidate asset replaces the current revision, the package should carry explicit candidate promotion evidence instead of relying on implicit QA status.
+`final_promotion_acceptance` should be treated as a legacy alias in older packages only. New package state and current tooling should use `candidate_promotion` as the single canonical promotion gate.
 
 Validation now requires both ordinary inspection previews from `build_previews.py` and quality previews from `build_quality_previews.py` for each reusable object layer. A package without preview evidence is incomplete even if the transparent PNGs and masks exist.
 

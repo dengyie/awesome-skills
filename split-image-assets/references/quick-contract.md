@@ -26,6 +26,8 @@ Use this file as the short package contract view. Read this first when you need 
 - They record real decisions, approvals, blockers, and evidence-backed inferred user intent.
 - They must not contain progress updates, routine commentary, or stage-complete summaries.
 - `agent-defaulted` is not legal for formal gate state.
+- Use `metadata.confirmation.candidate_promotion` as the canonical promotion gate.
+- Treat `final_promotion_acceptance` only as a legacy read-compatibility alias for older packages.
 
 ## Package Truth Rules
 
