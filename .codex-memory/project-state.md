@@ -4,12 +4,14 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` is extended with UI-specific repair orchestration. The skill now records a three-tier quality target (`structural-valid`, `usable-draft`, `visual-acceptance-ready`), routes UI-like objects by `object_type`, ships deterministic helper scripts for UI carrier candidate generation, hard-edge glyph cleanup, candidate scoring, and upscale-repair-downscale preparation/finalization, and threads score evidence into compare/archive/validation.
+- Current stage: `split-image-assets` is extended with UI-specific repair orchestration and stricter promotion/acceptance semantics. The skill now records a three-tier quality target (`structural-valid`, `usable-draft`, `visual-acceptance-ready`), routes UI-like objects by `object_type`, ships deterministic helper scripts for UI carrier candidate generation, hard-edge glyph cleanup, candidate scoring, and upscale-repair-downscale preparation/finalization, threads score evidence into compare/archive/validation, separates `final_promotion_acceptance` from package-level `final_acceptance`, and prevents negative final-acceptance answers from satisfying pass gates.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-06-30: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (100 tests)
+- 2026-06-30: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-06-27: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (88 tests)
 - 2026-06-27: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-06-27: `git diff --check` (passed with only CRLF warnings)

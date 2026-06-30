@@ -1,4 +1,12 @@
 # Session Log
+## 2026-06-30
+- Task: Fix the latest `split-image-assets` review findings around acceptance semantics and direct candidate promotion evidence.
+- Actions: Reproduced the two confirmed workflow bugs. Updated `record_quality_review.py` so only affirmative answers can clear approximate/final acceptance gates, split `final_promotion_acceptance` from package-level `final_acceptance`, and blocked `qa.status=pass` unless a final acceptance decision-log entry is affirmative. Updated `validate_asset_package.py` to enforce the same semantics and require promotion acceptance for approximate promoted candidates. Updated `promote_candidate_asset.py` so direct single-candidate promotion writes a minimal compare manifest instead of empty compare evidence. Synced `init_asset_package.py`, workflow/contract docs, and expanded regression coverage.
+- Results: The skill no longer treats a user `no` as acceptance, direct promotion no longer produces metadata that is doomed to fail validation, and candidate promotion semantics are now split cleanly between object-level promotion approval and package-level final acceptance.
+- Validation: Passed targeted regressions, `python -m unittest discover split-image-assets\tests -v` (100 tests), and `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`.
+- Next: Review the current diff and commit/push this acceptance/promotion fix set when desired.
+- Blockers: None.
+
 ## 2026-06-27 18:40
 - Task: Strengthen `split-image-assets` for UI atomic asset repair and reconstruction workflows.
 - Actions: Restored memory and the latest UI-focused task brief. Added `metadata.quality_target` and object-level `object_type` routing, plus four new helper scripts: `generate_ui_carrier_candidates.py`, `generate_ui_glyph_cleanup_candidates.py`, `score_candidate_assets.py`, and `upscale_repair_downscale.py`. Extended compare/archive/validator flow to carry score-manifest evidence. Updated `SKILL.md`, workflow, pipeline recipes, UI split guidance, asset contract, and usage docs so UI carrier/glyph work is explicitly routed and quality-tier honesty is front-loaded. Expanded tests for scoring, compare score ingestion, UI candidate generation, upscale workflow, `quality_target`, and `object_type`.

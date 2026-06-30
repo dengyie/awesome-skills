@@ -207,7 +207,7 @@ Use these formal confirmation gates instead of vague “ask when needed” behav
   - Trigger: a candidate is about to replace the current asset revision.
   - Ask: “Should candidate X become the current revision for this object?”
   - Recommended answer: yes only after compare evidence or a direct-promotion rationale exists.
-  - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, and the QA report.
+  - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.final_promotion_acceptance`, and the QA report.
 
 When a split decision affects reuse boundaries, editability, animation readiness, localization, approximate reconstruction acceptance, or final delivery claims, pause and run a one-question confirmation step before continuing that branch.
 

@@ -107,6 +107,7 @@ REQUIRED_CONFIRMATION_KEYS = {
     "granularity_alignment",
     "pilot_object",
     "approximate_reconstruction",
+    "final_promotion_acceptance",
     "final_acceptance",
 }
 ALLOWED_CONFIRMATION_STATUSES = {"pending", "confirmed", "not-required"}
@@ -148,6 +149,7 @@ APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES = {
     "approximate-reconstruction-acceptance-gate",
     "reconstruction-acceptance",
 }
+AFFIRMATIVE_DECISION_ANSWERS = {"yes", "y", "accept", "accepted", "approve", "approved", "confirm", "confirmed"}
 
 
 def rel_path(package_dir: Path, value: str, errors: list[str], label: str) -> Path | None:
@@ -164,6 +166,19 @@ def rel_path(package_dir: Path, value: str, errors: list[str], label: str) -> Pa
         errors.append(f"{label} must stay inside the package: {value}")
         return None
     return resolved
+
+
+def is_affirmative_answer(value: object) -> bool:
+    return isinstance(value, str) and value.strip().lower() in AFFIRMATIVE_DECISION_ANSWERS
+
+
+def has_affirmative_decision(decision_log: list[dict], stages: set[str]) -> bool:
+    return any(
+        isinstance(entry, dict)
+        and str(entry.get("stage", "")).strip() in stages
+        and is_affirmative_answer(entry.get("user_answer"))
+        for entry in decision_log
+    )
 
 
 def load_metadata(package_dir: Path, errors: list[str]) -> dict:
@@ -423,6 +438,13 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                 errors.append(
                     f"metadata.confirmation.{key} must come from explicit-user-confirmed or inferred-from-user before qa.status=pass"
                 )
+        if not has_affirmative_decision(
+            decision_log,
+            {"final-acceptance", "final-package-acceptance"},
+        ):
+            errors.append(
+                "qa.status pass requires an affirmative final acceptance decision_log entry"
+            )
     qa = metadata.get("qa", {})
     if not isinstance(qa, dict):
         errors.append("metadata.qa must be an object")
@@ -809,11 +831,9 @@ def validate_objects(
                     f"{object_id}: approximate or reconstructed layers must not use reuse_status=production-ready"
                 )
             if str(item.get("selected_candidate_id", "")).strip():
-                accepted = any(
-                    isinstance(entry, dict)
-                    and str(entry.get("stage", "")).strip() in APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES
-                    and str(entry.get("user_answer", "")).strip()
-                    for entry in decision_log
+                accepted = has_affirmative_decision(
+                    decision_log,
+                    APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES,
                 )
                 if not accepted:
                     errors.append(
@@ -827,6 +847,15 @@ def validate_objects(
                 elif confirmation_entry.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
                     errors.append(
                         f"{object_id}: metadata.confirmation.approximate_reconstruction must come from explicit-user-confirmed or inferred-from-user"
+                    )
+                promotion_confirmation = metadata.get("confirmation", {}).get("final_promotion_acceptance", {})
+                if promotion_confirmation.get("status") != "confirmed":
+                    errors.append(
+                        f"{object_id}: metadata.confirmation.final_promotion_acceptance must be confirmed before candidate promotion"
+                    )
+                elif promotion_confirmation.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
+                    errors.append(
+                        f"{object_id}: metadata.confirmation.final_promotion_acceptance must come from explicit-user-confirmed or inferred-from-user"
                     )
             if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
                 errors.append(

@@ -62,7 +62,7 @@ Do not let `structural-valid` package success masquerade as `visual-acceptance-r
      - Trigger: a candidate is ready to replace the current revision.
      - Ask: “Should candidate X become the current revision?”
      - Recommended answer: only after compare evidence or a direct-promotion rationale exists.
-     - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.final_acceptance`, and a decision-log entry.
+     - Metadata effect: update `selected_candidate_id`, `current_asset_revision`, `repair_history[]`, `candidate_comparisons[]`, `metadata.confirmation.final_promotion_acceptance`, and a decision-log entry.
 7. Choose a high-signal first subset when the image is complex. For flat UI and dashboards, start with logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements that a professional segmenter can isolate and a reviewer can inspect clearly.
 8. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, run the `Pilot Object Gate` before wider batch extraction. Record `metadata.confirmation.pilot_object` as `confirmed` or `not-required`.
 9. For UI, dashboard, badge, tile/glyph, control-heavy, or dense interface images, read `ui-atomic-split.md` and create a layer plan that marks each expected layer as `must_extract`, `rebuild_downstream`, `support_only`, `skip_for_now`, or `requires_user_confirmation`.

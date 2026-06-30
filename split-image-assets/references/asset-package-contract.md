@@ -121,6 +121,7 @@ If prior user instructions or existing metadata already answer the question, rec
 - `granularity_alignment`
 - `pilot_object`
 - `approximate_reconstruction`
+- `final_promotion_acceptance`
 - `final_acceptance`
 
 Each confirmation entry must include:

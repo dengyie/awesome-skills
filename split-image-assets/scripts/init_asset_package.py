@@ -62,6 +62,11 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
                 "source": "unset",
                 "notes": "",
             },
+            "final_promotion_acceptance": {
+                "status": "pending",
+                "source": "unset",
+                "notes": "",
+            },
             "final_acceptance": {
                 "status": "pending",
                 "source": "unset",

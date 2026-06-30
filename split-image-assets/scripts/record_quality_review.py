@@ -87,7 +87,17 @@ CONFIRMATION_KEYS = {
     "approximate-reconstruction-acceptance-gate": "approximate_reconstruction",
     "reconstruction-acceptance": "approximate_reconstruction",
     "final-acceptance": "final_acceptance",
-    "final-promotion-acceptance": "final_acceptance",
+    "final-package-acceptance": "final_acceptance",
+    "final-promotion-acceptance": "final_promotion_acceptance",
+}
+AFFIRMATIVE_DECISION_ANSWERS = {"yes", "y", "accept", "accepted", "approve", "approved", "confirm", "confirmed"}
+AFFIRMATIVE_CONFIRMATION_STAGES = {
+    "approximate-reconstruction-acceptance",
+    "approximate-reconstruction-acceptance-gate",
+    "reconstruction-acceptance",
+    "final-acceptance",
+    "final-package-acceptance",
+    "final-promotion-acceptance",
 }
 
 
@@ -155,6 +165,10 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
             args.selected_candidate_id,
         ]
     ) or bool(args.repair_history_entry)
+
+
+def is_affirmative_answer(value: str | None) -> bool:
+    return isinstance(value, str) and value.strip().lower() in AFFIRMATIVE_DECISION_ANSWERS
 
 
 def update_analysis(metadata: dict, args: argparse.Namespace) -> None:
@@ -268,7 +282,10 @@ def update_confirmation(metadata: dict, args: argparse.Namespace) -> None:
                 key,
                 {"status": "pending", "source": "unset", "notes": ""},
             )
-            entry["status"] = "confirmed"
+            if args.decision_stage in AFFIRMATIVE_CONFIRMATION_STAGES:
+                entry["status"] = "confirmed" if is_affirmative_answer(args.decision_answer) else "pending"
+            else:
+                entry["status"] = "confirmed"
             entry["source"] = args.decision_source or "agent-defaulted"
             if args.confirmation_note is not None:
                 entry["notes"] = args.confirmation_note
@@ -390,6 +407,18 @@ def reusable_layers_ready_for_pass(metadata: dict) -> bool:
 def capability_allows_pass(metadata: dict) -> bool:
     capability = metadata.get("capability")
     return isinstance(capability, dict) and capability.get("production_capable") is True
+
+
+def has_affirmative_decision(metadata: dict, stages: set[str]) -> bool:
+    decision_log = metadata.get("decision_log", [])
+    if not isinstance(decision_log, list):
+        return False
+    return any(
+        isinstance(entry, dict)
+        and entry.get("stage") in stages
+        and is_affirmative_answer(entry.get("user_answer"))
+        for entry in decision_log
+    )
 
 
 def update_asset_summary(metadata: dict) -> None:
@@ -519,6 +548,7 @@ def main() -> int:
                 "granularity_alignment",
                 "pilot_object",
                 "approximate_reconstruction",
+                "final_promotion_acceptance",
                 "final_acceptance",
             }
         ),
@@ -600,6 +630,15 @@ def main() -> int:
         if not isinstance(decision_log, list) or not decision_log:
             parser.error(
                 "cannot set qa-status pass until at least one decision_log entry records user acceptance"
+            )
+        if not has_affirmative_decision(metadata, {"final-acceptance", "final-package-acceptance"}):
+            parser.error(
+                "cannot set qa-status pass until a final acceptance decision records an affirmative user answer"
+            )
+        final_acceptance = metadata.get("confirmation", {}).get("final_acceptance", {})
+        if not isinstance(final_acceptance, dict) or final_acceptance.get("status") != "confirmed":
+            parser.error(
+                "cannot set qa-status pass until metadata.confirmation.final_acceptance is confirmed"
             )
     if args.qa_status:
         metadata.setdefault("qa", {})["status"] = args.qa_status

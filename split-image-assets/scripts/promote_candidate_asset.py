@@ -16,6 +16,14 @@ def write_metadata(package_dir: Path, metadata: dict) -> None:
     )
 
 
+def write_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def package_path(package_dir: Path, value: object, label: str, parser: argparse.ArgumentParser) -> Path:
     if not isinstance(value, str) or not value.strip():
         parser.error(f"{label} must be a package-relative path")
@@ -104,6 +112,7 @@ def main() -> int:
     args = parser.parse_args()
 
     package_dir = Path(args.package_dir).resolve()
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     metadata = read_metadata(package_dir)
     objects = metadata.get("objects", [])
     target = next(
@@ -182,23 +191,46 @@ def main() -> int:
             parser.error("comparison-id must reference a comparison that includes the selected candidate")
         comparison["selected_candidate_id"] = args.candidate_id
         comparison["selection_reason"] = args.selection_reason
-        comparison["selected_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        comparison["selected_at"] = now
     else:
+        comparison_id = f"manual-{args.candidate_id}"
+        compare_manifest_rel = f"_staging/repair_candidates/{comparison_id}_compare.json"
+        write_json(
+            package_dir / compare_manifest_rel,
+            {
+                "comparison_id": comparison_id,
+                "object_id": args.object_id,
+                "candidate_ids": [args.candidate_id],
+                "candidates": [
+                    {
+                        "candidate_id": args.candidate_id,
+                        "asset_path": args.candidate_asset,
+                    }
+                ],
+                "compare_artifact_path": "",
+                "compare_note": "Manual direct promotion without multi-candidate comparison.",
+                "compare_criteria": ["single-candidate direct promotion"],
+                "review_focus": ["selection rationale"],
+                "risks": [],
+                "score_manifest_path": "",
+                "created_at": now,
+            },
+        )
         comparisons.append(
             {
-                "comparison_id": f"manual-{args.candidate_id}",
+                "comparison_id": comparison_id,
                 "object_id": args.object_id,
                 "candidate_ids": [args.candidate_id],
                 "compare_artifact_path": "",
-                "compare_manifest_path": "",
+                "compare_manifest_path": compare_manifest_rel,
                 "compare_note": "Manual direct promotion without multi-candidate comparison.",
-                "compare_criteria": [],
-                "review_focus": [],
+                "compare_criteria": ["single-candidate direct promotion"],
+                "review_focus": ["selection rationale"],
                 "risks": [],
                 "score_manifest_path": "",
                 "selected_candidate_id": args.candidate_id,
                 "selection_reason": args.selection_reason,
-                "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "created_at": now,
             }
         )
     update_asset_summary(metadata)
