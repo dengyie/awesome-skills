@@ -42,6 +42,20 @@ QUALITY_CHECK_ARGS = {
     "background_residue": "background_residue",
     "reuse_readiness": "reuse_readiness",
 }
+AFFIRMATIVE_DECISION_ANSWERS = {"yes", "y", "accept", "accepted", "approve", "approved", "confirm", "confirmed"}
+AFFIRMATIVE_CONFIRMATION_STAGES = {
+    "approximate-reconstruction-acceptance",
+    "approximate-reconstruction-acceptance-gate",
+    "approximate_reconstruction",
+    "reconstruction-acceptance",
+    "final-acceptance",
+    "final-package-acceptance",
+    "final_acceptance",
+    "candidate-promotion-acceptance",
+    "candidate-promotion-acceptance-gate",
+    "candidate_promotion",
+    "final-promotion-acceptance",
+}
 
 
 def read_metadata(package_dir: Path, parser: argparse.ArgumentParser) -> dict:
@@ -123,6 +137,10 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
 
 def has_routing_action_updates(args: argparse.Namespace) -> bool:
     return args.recommended_action is not None or args.final_action is not None
+
+
+def is_affirmative_answer(value: str | None) -> bool:
+    return isinstance(value, str) and value.strip().lower() in AFFIRMATIVE_DECISION_ANSWERS
 
 def require_pause_category(value: str | None, flag_name: str) -> str:
     if not value:
@@ -470,6 +488,14 @@ def capability_allows_pass(metadata: dict) -> bool:
     return isinstance(capability, dict) and capability.get("production_capable") is True
 
 
+def decision_answer(entry: dict) -> str:
+    for field_name in ("recorded_answer", "user_answer"):
+        value = entry.get(field_name)
+        if isinstance(value, str) and value.strip():
+            return value
+    return ""
+
+
 def has_affirmative_decision(metadata: dict, stages: set[str]) -> bool:
     decision_log = metadata.get("decision_log", [])
     if not isinstance(decision_log, list):
@@ -477,7 +503,7 @@ def has_affirmative_decision(metadata: dict, stages: set[str]) -> bool:
     return any(
         isinstance(entry, dict)
         and entry.get("stage") in stages
-        and is_affirmative_answer(entry.get("user_answer"))
+        and is_affirmative_answer(decision_answer(entry))
         for entry in decision_log
     )
 

@@ -2032,6 +2032,14 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "blocking": "true",
                 }
             ]
+            metadata["confirmation"]["final_acceptance"].update(
+                {
+                    "status": "confirmed",
+                    "source": "explicit-user-confirmed",
+                    "pause_category": "formal-approval",
+                    "evidence_ref": "",
+                }
+            )
             metadata["qa"]["status"] = "needs-review"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
@@ -5005,6 +5013,9 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             metadata["confirmation"]["tooling_preflight"]["status"] = "confirmed"
             metadata["confirmation"]["tooling_preflight"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["evidence_ref"] = "chat:promote-candidate"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",

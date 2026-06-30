@@ -148,7 +148,7 @@ def has_affirmative_decision(decision_log: list[dict], stages: set[str]) -> bool
     return any(
         isinstance(entry, dict)
         and str(entry.get("stage", "")).strip() in stages
-        and is_affirmative_answer(entry.get("user_answer"))
+        and is_affirmative_answer(decision_answer(entry))
         for entry in decision_log
     )
 
