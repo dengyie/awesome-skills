@@ -215,6 +215,15 @@ def load_provider_result(package_dir: Path, provider_id: str, object_id: str) ->
     return result
 
 
+def load_provider_request(package_dir: Path, provider_id: str, object_id: str) -> dict:
+    path = provider_request_path(package_dir, provider_id, object_id)
+    if not path.exists():
+        raise ValueError(f"provider request is missing: {path}")
+    request = json.loads(path.read_text(encoding="utf-8"))
+    validate_provider_request(package_dir, request)
+    return request
+
+
 def build_provider_result(
     package_dir: Path,
     provider_id: str,

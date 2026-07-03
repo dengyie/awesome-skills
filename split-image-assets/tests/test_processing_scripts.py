@@ -676,6 +676,20 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             output = tmp_path / "package"
             init_result = self._run_init(source, output)
             self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_generation_brief(output)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
             provider_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
             provider_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(provider_dir / "candidate.png")
@@ -735,6 +749,23 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     / "generated-v1.png"
                 ).exists()
             )
+            provider_stage = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "repair_candidates"
+                    / "main_object"
+                    / "generated-v1_provider_stage.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(provider_stage["generation_source"], "codex-controlled-generation")
+            self.assertEqual(provider_stage["generation_model_or_tool"], "gpt-image-1")
+            self.assertEqual(provider_stage["generation_version"], "host-managed")
+            self.assertEqual(
+                provider_stage["generation_prompt_or_brief_ref"],
+                "_staging/generation_briefs/main_object.json",
+            )
+            self.assertEqual(provider_stage["generation_reference_inputs"], ["source/source_original.png"])
     def test_consume_provider_result_uses_provider_manifest_when_manifest_flag_is_omitted(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1038,6 +1069,19 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._write_generation_brief(output)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
 
             codex_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
             codex_dir.mkdir(parents=True, exist_ok=True)
@@ -2691,6 +2735,157 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             qa_report = (output / "qa_report.md").read_text(encoding="utf-8")
             self.assertIn("Selection reason: Cleaner interior edge and better carrier silhouette.", qa_report)
+    def test_promote_candidate_asset_generated_reconstruction_uses_provider_stage_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            self._write_generated_plan_manifest(output)
+            self._write_generation_brief(output)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            provider_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(provider_dir / "candidate.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/codex-controlled-generation/main_object/candidate.png",
+                    "--tool-name",
+                    "gpt-image-1",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "test-version",
+                    "--execution-mode",
+                    "host-managed",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "stage-candidate",
+                    "--candidate-id",
+                    "generated-v2",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate-asset",
+                    "_staging/repair_candidates/main_object/generated-v2.png",
+                    "--candidate-id",
+                    "generated-v2",
+                    "--delivery-class",
+                    "generated-reconstruction",
+                    "--repair-note",
+                    "Promote generated candidate using staged provider evidence.",
+                    "--selection-reason",
+                    "Generated candidate is the accepted reconstruction result.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            obj = metadata["objects"][0]
+            self.assertEqual(obj["generation_source"], "codex-controlled-generation")
+            self.assertEqual(obj["generation_model_or_tool"], "gpt-image-1")
+            self.assertEqual(obj["generation_version"], "test-version")
+            self.assertEqual(
+                obj["generation_prompt_or_brief_ref"],
+                "_staging/generation_briefs/main_object.json",
+            )
+            self.assertEqual(obj["generation_reference_inputs"], ["source/source_original.png"])
+    def test_promote_candidate_asset_generated_reconstruction_requires_evidence_when_stage_manifest_is_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "generated-v3.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate-asset",
+                    "_staging/repair_candidates/main_object/generated-v3.png",
+                    "--candidate-id",
+                    "generated-v3",
+                    "--delivery-class",
+                    "generated-reconstruction",
+                    "--repair-note",
+                    "Reject generated promotion without evidence.",
+                    "--selection-reason",
+                    "Generated delivery evidence is required.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("generated-reconstruction promotion requires generation_source", result.stderr)
     def test_promote_candidate_asset_rejects_target_asset_path_outside_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

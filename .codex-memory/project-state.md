@@ -4,7 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` generated-route provider brief contract V1 is complete locally. Generate-route provider requests now require package-owned generation brief artifacts under `_staging/generation_briefs/`, and `prepare_provider_request.py` auto-attaches those brief inputs once they exist.
+- Current stage: `split-image-assets` generated candidate stage evidence V1 is complete locally. Generated `stage-candidate` consumption now writes provider-stage evidence beside staged candidates, and generated-reconstruction promotion can auto-reuse that evidence instead of forcing manual restatement.
 - The canonical `split-image-assets` doc surface has also been re-clustered so `docs/superpowers/split-image-assets/` is the single design/baseline entrypoint, `implementation-plan.md` now reflects the shipped baseline instead of stale checklist phases, and `quick-contract.md` now matches generated-only pass semantics.
 - Bridge-first provider integration V1 is also complete locally. The package now has a standardized provider request/result contract, a provider registry, default route chains, and deterministic bridge request/result scripts under `_staging/providers/`.
 - Provider bridge default-selection V2 is now complete locally. `prepare_provider_request.py` can select the default provider without `--provider-id`, object-type overrides are explicit, and `consume_provider_result.py` is now the canonical explicit consumer for bridge results.
@@ -13,6 +13,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (179 tests, generated candidate stage evidence V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, generated candidate stage evidence V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (generated candidate stage evidence V1 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, generated candidate stage evidence V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (177 tests, generated-route provider brief contract V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, generated-route provider brief contract V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (generated-route provider brief contract V1 review brief; no new P0/P1 blockers)
@@ -251,6 +255,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Generated candidate stage evidence V1 now closes the stage-to-promotion evidence hop, but provider-specific compare/promotion orchestration is still manual and remains future work.
 - Generated-route provider brief contract V1 now hardens request-side inputs, but generated candidate naming and broader provider-specific candidate lifecycle automation still remain separate future work.
 - Provider result default-consumption V1 lowers operator overhead, but default candidate staging still stays intentionally explicit about `--candidate-id`; generated candidate naming strategy is still a separate future concern.
 - Provider bridge V4 closes the external-manifest consumption hop, but it still intentionally supports only a narrow provider surface; broader native runner support and multi-step orchestration remain out of scope.
@@ -274,10 +279,10 @@
 - None.
 
 ## Current Focus
-- The generated-route provider brief contract milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The generated candidate stage-evidence milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the generated-route provider brief contract V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the generated candidate stage evidence V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

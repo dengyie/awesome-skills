@@ -220,6 +220,7 @@ python split-image-assets/scripts/record_provider_result.py output-package --pro
 python split-image-assets/scripts/consume_provider_result.py output-package --provider-id grounded-sam-bridge --object-id main_object --mode import-extract --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject imported from provider result"
 python split-image-assets/scripts/consume_provider_result.py output-package --provider-id external-professional-outputs --object-id main_object --mode import-manifest
 python split-image-assets/scripts/consume_provider_result.py output-package --object-id main_object
+python split-image-assets/scripts/consume_provider_result.py output-package --provider-id codex-controlled-generation --object-id main_object --mode stage-candidate --candidate-id generated-v1
 python split-image-assets/scripts/import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from SAM2 mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets/scripts/build_previews.py output-package
 python split-image-assets/scripts/build_quality_previews.py output-package

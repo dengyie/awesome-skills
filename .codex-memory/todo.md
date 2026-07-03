@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after generated-route provider brief contract V1. Candidate directions: deeper provider/runtime support on top of the brief-first bridge loop, richer generated candidate lifecycle helpers, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after generated candidate stage evidence V1. Candidate directions: deeper provider/runtime support on top of the stage-evidence chain, richer generated compare/promotion orchestration, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` generated candidate stage evidence V1: richer stage-candidate provider manifest, generated promotion evidence autofill, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` generated-route provider brief contract V1: package-owned generation brief helper, generate-route request gate, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider result default-consumption V1: inferred provider/mode consume path, metadata-object extract defaults, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` external-manifest provider consumption V4: canonical `provider_manifest` bridge output, implicit import-manifest consumption, docs, memory, and regression coverage.

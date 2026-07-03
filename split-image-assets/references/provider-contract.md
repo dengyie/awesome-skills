@@ -79,6 +79,13 @@ For `generate` routes, the preferred request-side pattern is:
 - let `prepare_provider_request.py` auto-attach those files as `input_refs.generation_brief` and `input_refs.reference_inputs`
 - do not allow a generate-route provider request to proceed when those package-owned inputs are missing
 
+For generated candidate staging, the preferred result-side pattern is:
+
+- `consume_provider_result.py --mode stage-candidate` copies the chosen candidate into `_staging/repair_candidates/<object-id>/`
+- it also writes `<candidate-id>_provider_stage.json` beside that candidate
+- that provider-stage manifest should carry `generation_source`, `generation_model_or_tool`, `generation_version`, `generation_prompt_or_brief_ref`, and `generation_reference_inputs`
+- `promote_candidate_asset.py` may reuse that provider-stage manifest to fill generated-reconstruction evidence instead of requiring those flags to be repeated manually
+
 ## Provider Request Contract
 
 Every provider request should include:

@@ -4,7 +4,11 @@ import shutil
 from pathlib import Path
 
 from import_external_assets import checked_metadata, import_record, load_manifest
-from provider_bridge_lib import load_provider_result, resolve_result_provider_id
+from provider_bridge_lib import (
+    load_provider_request,
+    load_provider_result,
+    resolve_result_provider_id,
+)
 
 
 def find_metadata_object(metadata: dict, object_id: str) -> dict | None:
@@ -51,6 +55,28 @@ def resolve_import_extract_value(
     return None
 
 
+def load_reference_inputs(
+    package_dir: Path,
+    relative_manifest_path: str,
+    parser: argparse.ArgumentParser,
+) -> list[str]:
+    manifest_path = (package_dir / relative_manifest_path).resolve()
+    if not manifest_path.exists():
+        parser.error(f"reference_inputs manifest is missing: {relative_manifest_path}")
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        parser.error(f"reference_inputs manifest is not valid JSON: {exc}")
+    if not isinstance(payload, dict):
+        parser.error("reference_inputs manifest must contain an object")
+    reference_inputs = payload.get("reference_inputs")
+    if not isinstance(reference_inputs, list) or not all(
+        isinstance(item, str) and item.strip() for item in reference_inputs
+    ):
+        parser.error("reference_inputs manifest must contain a non-empty reference_inputs list")
+    return list(reference_inputs)
+
+
 def stage_generated_candidate(
     package_dir: Path,
     parser: argparse.ArgumentParser,
@@ -69,15 +95,37 @@ def stage_generated_candidate(
     target_dir.mkdir(parents=True, exist_ok=True)
     target_asset = target_dir / f"{candidate_id}.png"
     shutil.copy2(source, target_asset)
+    provider_id = str(result.get("provider_id", "")).strip()
+    try:
+        request = load_provider_request(package_dir, provider_id, object_id)
+    except ValueError as exc:
+        parser.error(str(exc))
+    input_refs = request.get("input_refs", {})
+    if not isinstance(input_refs, dict):
+        parser.error("provider request input_refs must be an object")
+    generation_brief_ref = input_refs.get("generation_brief")
+    if not isinstance(generation_brief_ref, str) or not generation_brief_ref.strip():
+        parser.error("stage-candidate requires provider request input_refs.generation_brief")
+    reference_inputs_ref = input_refs.get("reference_inputs")
+    if not isinstance(reference_inputs_ref, str) or not reference_inputs_ref.strip():
+        parser.error("stage-candidate requires provider request input_refs.reference_inputs")
+    generation_reference_inputs = load_reference_inputs(package_dir, reference_inputs_ref, parser)
+    provenance = result.get("provenance", {})
     manifest_path = target_dir / f"{candidate_id}_provider_stage.json"
     manifest_path.write_text(
         json.dumps(
             {
                 "object_id": object_id,
                 "candidate_id": candidate_id,
-                "provider_id": result.get("provider_id", ""),
-                "provider_result_path": f"_staging/providers/{result.get('provider_id', '')}/{object_id}/result.json",
+                "provider_id": provider_id,
+                "provider_request_path": f"_staging/providers/{provider_id}/{object_id}/request.json",
+                "provider_result_path": f"_staging/providers/{provider_id}/{object_id}/result.json",
                 "staged_candidate_path": str(target_asset.relative_to(package_dir)).replace("\\", "/"),
+                "generation_source": provider_id,
+                "generation_model_or_tool": str(provenance.get("tool_name", "")),
+                "generation_version": str(provenance.get("tool_version", "")),
+                "generation_prompt_or_brief_ref": generation_brief_ref,
+                "generation_reference_inputs": generation_reference_inputs,
             },
             indent=2,
             ensure_ascii=False,

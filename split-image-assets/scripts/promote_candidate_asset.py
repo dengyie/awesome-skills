@@ -61,6 +61,23 @@ def append_qa_report(package_dir: Path, object_id: str, candidate_id: str, selec
     qa_path.write_text(existing.rstrip() + "\n" + "\n".join(lines) + "\n", encoding="utf-8")
 
 
+def load_provider_stage_manifest(
+    package_dir: Path,
+    candidate_asset: Path,
+    candidate_id: str,
+) -> dict:
+    manifest_path = candidate_asset.parent / f"{candidate_id}_provider_stage.json"
+    if not manifest_path.exists():
+        return {}
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"provider stage manifest is not valid JSON: {exc}")
+    if not isinstance(data, dict):
+        raise ValueError("provider stage manifest must contain an object")
+    return data
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Promote a staged repair candidate into the package asset inventory."
@@ -135,6 +152,11 @@ def main() -> int:
         destination_mask.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(candidate_mask, destination_mask)
 
+    try:
+        provider_stage = load_provider_stage_manifest(package_dir, candidate_asset, args.candidate_id)
+    except ValueError as exc:
+        parser.error(str(exc))
+
     target["selected_candidate_id"] = args.candidate_id
     target["current_asset_revision"] = args.candidate_id
     target["delivery_class"] = args.delivery_class
@@ -142,11 +164,40 @@ def main() -> int:
         target["reuse_status"] = "approximate-reconstruction"
         target["approximate"] = True
     if args.delivery_class == "generated-reconstruction":
-        target["generation_source"] = args.generation_source
-        target["generation_model_or_tool"] = args.generation_model_or_tool
-        target["generation_version"] = args.generation_version
-        target["generation_prompt_or_brief_ref"] = args.generation_prompt_or_brief_ref
-        target["generation_reference_inputs"] = list(args.generation_reference_input)
+        generation_source = args.generation_source or str(provider_stage.get("generation_source", "")).strip()
+        generation_model_or_tool = args.generation_model_or_tool or str(
+            provider_stage.get("generation_model_or_tool", "")
+        ).strip()
+        generation_version = args.generation_version or str(provider_stage.get("generation_version", "")).strip()
+        generation_prompt_or_brief_ref = args.generation_prompt_or_brief_ref or str(
+            provider_stage.get("generation_prompt_or_brief_ref", "")
+        ).strip()
+        generation_reference_inputs = list(args.generation_reference_input) or list(
+            provider_stage.get("generation_reference_inputs", [])
+            if isinstance(provider_stage.get("generation_reference_inputs", []), list)
+            else []
+        )
+        if not generation_source:
+            parser.error(
+                "generated-reconstruction promotion requires generation_source or a provider stage manifest with generation_source"
+            )
+        if not generation_model_or_tool:
+            parser.error(
+                "generated-reconstruction promotion requires generation_model_or_tool or a provider stage manifest with generation_model_or_tool"
+            )
+        if not generation_prompt_or_brief_ref:
+            parser.error(
+                "generated-reconstruction promotion requires generation_prompt_or_brief_ref or a provider stage manifest with generation_prompt_or_brief_ref"
+            )
+        if not generation_reference_inputs:
+            parser.error(
+                "generated-reconstruction promotion requires generation_reference_inputs or a provider stage manifest with generation_reference_inputs"
+            )
+        target["generation_source"] = generation_source
+        target["generation_model_or_tool"] = generation_model_or_tool
+        target["generation_version"] = generation_version
+        target["generation_prompt_or_brief_ref"] = generation_prompt_or_brief_ref
+        target["generation_reference_inputs"] = generation_reference_inputs
     target["active_reconstruction_method"] = args.active_reconstruction_method
     repair_history = target.setdefault("repair_history", [])
     repair_history.append(
