@@ -14,6 +14,7 @@ from split_image_assets_contract import (
     ALLOWED_CONFIRMATION_STATUSES,
     ALLOWED_DECISION_SOURCES,
     ALLOWED_DELIVERY_CLASSES,
+    ALLOWED_GENERATION_PROVIDER_CLASSES,
     ALLOWED_GRANULARITY_MODES,
     ALLOWED_LAYER_INDEPENDENCE,
     ALLOWED_OBJECT_TYPES,
@@ -457,6 +458,10 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
     notes = capability.get("notes")
     if not isinstance(notes, str):
         errors.append("metadata.capability.notes must be a string")
+    generation_capability = capability.get("generation")
+    if generation_capability is not None and not isinstance(generation_capability, dict):
+        errors.append("metadata.capability.generation must be an object when present")
+        generation_capability = None
     qa_for_capability = metadata.get("qa", {})
     qa_status_for_capability = (
         qa_for_capability.get("status") if isinstance(qa_for_capability, dict) else None
@@ -490,10 +495,10 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         notes = quality_target.get("notes")
         if not isinstance(notes, str):
             errors.append("metadata.quality_target.notes must be a string")
-    if qa_status_for_capability == "pass" and quality_target.get("tier") != "visual-acceptance-ready":
-        errors.append(
-            "qa.status pass requires metadata.quality_target.tier=visual-acceptance-ready"
-        )
+        if qa_status_for_capability == "pass" and quality_target.get("tier") != "visual-acceptance-ready":
+            errors.append(
+                "qa.status pass requires metadata.quality_target.tier=visual-acceptance-ready"
+            )
     if qa_status_for_capability == "pass":
         for key in ["granularity_alignment", "final_acceptance"]:
             entry = confirmation.get(key, {}) if isinstance(confirmation, dict) else {}
@@ -806,6 +811,8 @@ def validate_objects(
     qa_status = qa.get("status") if isinstance(qa, dict) else None
     granularity = metadata.get("granularity", {}) if isinstance(metadata.get("granularity"), dict) else {}
     decision_log = metadata.get("decision_log", []) if isinstance(metadata.get("decision_log"), list) else []
+    capability = metadata.get("capability", {}) if isinstance(metadata.get("capability"), dict) else {}
+    generation_capability = capability.get("generation")
     ui_like_package = is_ui_like_package(metadata)
     requires_confirmation_ids = set()
     for item in objects:
@@ -949,6 +956,45 @@ def validate_objects(
             )
         generated_delivery = is_generated_delivery_layer(item)
         if generated_delivery:
+            generation_routing = metadata.get("confirmation", {}).get("generation_routing", {})
+            if generation_routing.get("status") not in {"confirmed", "not-required"}:
+                errors.append(
+                    f"{object_id}: metadata.confirmation.generation_routing must be confirmed or explicitly not-required for generated-route delivery"
+                )
+            elif generation_routing.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
+                errors.append(
+                    f"{object_id}: metadata.confirmation.generation_routing must come from explicit-user-confirmed or inferred-from-user"
+                )
+            if not isinstance(generation_capability, dict):
+                errors.append(
+                    f"{object_id}: metadata.capability.generation must be recorded for generated-route delivery"
+                )
+            else:
+                provider_class = generation_capability.get("provider_class", "unset")
+                if provider_class not in ALLOWED_GENERATION_PROVIDER_CLASSES:
+                    errors.append(
+                        f"{object_id}: metadata.capability.generation.provider_class must be one of: "
+                        + ", ".join(sorted(ALLOWED_GENERATION_PROVIDER_CLASSES))
+                    )
+                for field_name in ["installed", "runtime_ready", "production_ready"]:
+                    if not isinstance(generation_capability.get(field_name), bool):
+                        errors.append(
+                            f"{object_id}: metadata.capability.generation.{field_name} must be true or false"
+                        )
+                generation_notes = generation_capability.get("notes", "")
+                if not isinstance(generation_notes, str):
+                    errors.append(
+                        f"{object_id}: metadata.capability.generation.notes must be a string"
+                    )
+                if provider_class == "unset":
+                    errors.append(
+                        f"{object_id}: metadata.capability.generation.provider_class must not stay unset for generated-route delivery"
+                    )
+                if reuse_status == "accepted-generated-reconstruction" or qa_status == "pass":
+                    if generation_capability.get("production_ready") is not True:
+                        errors.append(
+                            f"{object_id}: accepted generated delivery requires metadata.capability.generation.production_ready=true"
+                        )
             if plan_manifest is None:
                 errors.append(
                     f"{object_id}: generated-route objects require plan_manifest.json during staged rollout"

@@ -14,6 +14,7 @@ from split_image_assets_contract import (
     ALLOWED_DECISION_SOURCES,
     ALLOWED_DELIVERY_CLASSES,
     ALLOWED_GRANULARITY_MODES,
+    ALLOWED_GENERATION_PROVIDER_CLASSES,
     ALLOWED_LAYER_INDEPENDENCE,
     ALLOWED_OBJECT_TYPES,
     ALLOWED_PAUSE_CATEGORIES,
@@ -350,6 +351,11 @@ def update_capability(metadata: dict, args: argparse.Namespace) -> None:
         and not args.missing_for_production
         and args.capability_user_choice is None
         and args.capability_note is None
+        and args.generation_provider_class is None
+        and args.generation_installed is None
+        and args.generation_runtime_ready is None
+        and args.generation_production_ready is None
+        and args.generation_capability_note is None
     ):
         return
     capability = metadata.setdefault("capability", {})
@@ -368,6 +374,42 @@ def update_capability(metadata: dict, args: argparse.Namespace) -> None:
         capability["user_choice"] = args.capability_user_choice
     if args.capability_note is not None:
         capability["notes"] = args.capability_note
+    if (
+        args.generation_provider_class is not None
+        or args.generation_installed is not None
+        or args.generation_runtime_ready is not None
+        or args.generation_production_ready is not None
+        or args.generation_capability_note is not None
+    ):
+        generation = capability.setdefault(
+            "generation",
+            {
+                "provider_class": "unset",
+                "installed": False,
+                "runtime_ready": False,
+                "production_ready": False,
+                "notes": "",
+            },
+        )
+        if args.generation_provider_class is not None:
+            if args.generation_provider_class not in ALLOWED_GENERATION_PROVIDER_CLASSES:
+                raise ValueError(
+                    "--generation-provider-class must be one of: "
+                    + ", ".join(sorted(ALLOWED_GENERATION_PROVIDER_CLASSES))
+                )
+            generation["provider_class"] = args.generation_provider_class
+        if args.generation_installed is not None:
+            generation["installed"] = parse_bool(args.generation_installed, "--generation-installed")
+        if args.generation_runtime_ready is not None:
+            generation["runtime_ready"] = parse_bool(
+                args.generation_runtime_ready, "--generation-runtime-ready"
+            )
+        if args.generation_production_ready is not None:
+            generation["production_ready"] = parse_bool(
+                args.generation_production_ready, "--generation-production-ready"
+            )
+        if args.generation_capability_note is not None:
+            generation["notes"] = args.generation_capability_note
 
 
 def update_quality_target(metadata: dict, args: argparse.Namespace) -> None:
@@ -679,6 +721,11 @@ def main() -> int:
     parser.add_argument("--missing-for-production", action="append")
     parser.add_argument("--capability-user-choice")
     parser.add_argument("--capability-note")
+    parser.add_argument("--generation-provider-class")
+    parser.add_argument("--generation-installed", choices=["true", "false"])
+    parser.add_argument("--generation-runtime-ready", choices=["true", "false"])
+    parser.add_argument("--generation-production-ready", choices=["true", "false"])
+    parser.add_argument("--generation-capability-note")
     parser.add_argument("--quality-target-tier", choices=sorted(ALLOWED_QUALITY_TARGET_TIERS))
     parser.add_argument("--quality-target-note")
     parser.add_argument(

@@ -37,6 +37,13 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
             "missing_for_production": [],
             "user_choice": "unset",
             "notes": "",
+            "generation": {
+                "provider_class": "unset",
+                "installed": False,
+                "runtime_ready": False,
+                "production_ready": False,
+                "notes": "",
+            },
         },
         "quality_target": {
             "tier": "structural-valid",

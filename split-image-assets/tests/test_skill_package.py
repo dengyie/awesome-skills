@@ -842,6 +842,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "missing_for_production": [],
                     "user_choice": "unset",
                     "notes": "",
+                    "generation": {
+                        "provider_class": "unset",
+                        "installed": False,
+                        "runtime_ready": False,
+                        "production_ready": False,
+                        "notes": "",
+                    },
                 },
             )
             self.assertEqual(
@@ -2716,6 +2723,16 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                     "_staging/generation_briefs/main_object.json",
                     "--generation-reference-input",
                     "source/source_original.png",
+                    "--generation-provider-class",
+                    "codex-controlled-generation",
+                    "--generation-installed",
+                    "true",
+                    "--generation-runtime-ready",
+                    "true",
+                    "--generation-production-ready",
+                    "true",
+                    "--generation-capability-note",
+                    "Controlled generation path is available for this fixture.",
                     "--review-note",
                     "Recorded generated reconstruction evidence.",
                 ],
@@ -2736,6 +2753,16 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 "_staging/generation_briefs/main_object.json",
             )
             self.assertEqual(obj["generation_reference_inputs"], ["source/source_original.png"])
+            self.assertEqual(
+                metadata["capability"]["generation"],
+                {
+                    "provider_class": "codex-controlled-generation",
+                    "installed": True,
+                    "runtime_ready": True,
+                    "production_ready": True,
+                    "notes": "Controlled generation path is available for this fixture.",
+                },
+            )
 
     def test_record_quality_review_rejects_confirmation_gate_with_unset_source(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -5669,6 +5696,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             obj["manual_review_confirmed"] = True
             metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
             metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["generation_routing"]["status"] = "confirmed"
+            metadata["confirmation"]["generation_routing"]["source"] = "explicit-user-confirmed"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -5710,6 +5739,15 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             obj["manual_review_confirmed"] = True
             metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
             metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["generation_routing"]["status"] = "confirmed"
+            metadata["confirmation"]["generation_routing"]["source"] = "explicit-user-confirmed"
+            metadata["capability"]["generation"] = {
+                "provider_class": "codex-controlled-generation",
+                "installed": True,
+                "runtime_ready": True,
+                "production_ready": True,
+                "notes": "Fixture generated route capability.",
+            }
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -5728,6 +5766,100 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             )
 
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validate_asset_package_rejects_generated_delivery_without_generation_capability_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_ready_validation_package(output)
+            obj = metadata["objects"][0]
+            obj["delivery_class"] = "generated-reconstruction"
+            obj["reuse_status"] = "accepted-generated-reconstruction"
+            obj["generation_source"] = "codex-controlled-generation"
+            obj["generation_model_or_tool"] = "gpt-image-1"
+            obj["generation_version"] = "test"
+            obj["generation_prompt_or_brief_ref"] = "_staging/generation_briefs/main_object.json"
+            obj["generation_reference_inputs"] = ["source/source_original.png"]
+            obj["manual_review_confirmed"] = True
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["generation_routing"]["status"] = "confirmed"
+            metadata["confirmation"]["generation_routing"]["source"] = "explicit-user-confirmed"
+            metadata["capability"].pop("generation", None)
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generated_plan_manifest(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("metadata.capability.generation", result.stderr)
+
+    def test_validate_asset_package_rejects_generated_delivery_with_pending_generation_routing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_ready_validation_package(output)
+            obj = metadata["objects"][0]
+            obj["delivery_class"] = "generated-reconstruction"
+            obj["reuse_status"] = "accepted-generated-reconstruction"
+            obj["generation_source"] = "codex-controlled-generation"
+            obj["generation_model_or_tool"] = "gpt-image-1"
+            obj["generation_version"] = "test"
+            obj["generation_prompt_or_brief_ref"] = "_staging/generation_briefs/main_object.json"
+            obj["generation_reference_inputs"] = ["source/source_original.png"]
+            obj["manual_review_confirmed"] = True
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["generation_routing"]["status"] = "pending"
+            metadata["confirmation"]["generation_routing"]["source"] = "unset"
+            metadata["capability"]["generation"] = {
+                "provider_class": "codex-controlled-generation",
+                "installed": True,
+                "runtime_ready": True,
+                "production_ready": True,
+                "notes": "Fixture generated route capability.",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generated_plan_manifest(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("generation_routing", result.stderr)
 
     def test_validate_asset_package_rejects_pass_without_visual_acceptance_target(self):
         with tempfile.TemporaryDirectory() as tmp:
