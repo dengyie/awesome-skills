@@ -46,6 +46,8 @@ Fallbacks:
 
 - `external-generated-outputs`
 
+`external-generated-outputs` still uses the generated-route brief-first request path. Its provider request should carry `generation_brief` plus `reference_inputs`, not a free-form generation note.
+
 Generated delivery still requires compare, promotion, and acceptance evidence before final pass claims.
 
 ## Route: `rebuild_downstream`

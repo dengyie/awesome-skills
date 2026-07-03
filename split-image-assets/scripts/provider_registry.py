@@ -61,7 +61,7 @@ PROVIDER_REGISTRY = {
         "provider_role": "generation",
         "execution_mode": "external-manifest",
         "supported_routes": ["generate"],
-        "expected_inputs": ["generation_brief", "provider_manifest"],
+        "expected_inputs": ["generation_brief", "reference_inputs"],
         "expected_outputs": ["candidate_png", "compare_ready_candidate"],
         "production_ready_requires": [
             "transparent generated asset delivery",

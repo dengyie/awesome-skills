@@ -29,6 +29,7 @@ The current package baseline is:
 - provider bridge default provider selection and low-friction result consumption defaults
 - generated-route provider brief and reference-input contract
 - generated candidate provider stage evidence reuse
+- provider-specific bridge request/result hard validation
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -37,6 +38,23 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `provider-specific bridge contract V1`
+
+Closed status: complete
+
+What landed:
+
+- provider request/result validation now checks the selected provider registry entry, not just the generic schema
+- request `expected_outputs` must include provider-required outputs
+- generate-route request inputs are now provider-required for generation providers
+- success/partial provider results now require provider-specific output artifacts
+- `external-generated-outputs` request inputs now align to `generation_brief + reference_inputs`
+
+Verification completed:
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `generated candidate stage evidence V1`
 
@@ -136,6 +154,7 @@ These are the important completed milestones that define the current architectur
 10. provider result default-consumption V1
 11. generated-route provider brief contract V1
 12. generated candidate stage evidence V1
+13. provider-specific bridge contract V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -156,7 +175,7 @@ Any new work should begin by choosing a new bounded milestone on top of the curr
 Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
-   - more explicit provider capability mapping
+   - more explicit provider capability mapping on top of the now-harder bridge contract
    - richer generated candidate lifecycle helpers on top of prepared briefs and provider-stage evidence
    - optional native runner expansion on top of the bridge layer
 

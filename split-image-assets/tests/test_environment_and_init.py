@@ -362,6 +362,108 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             }
             module.validate_provider_request(tmp_path, request)
             module.validate_provider_result(tmp_path, result)
+    def test_provider_contract_rejects_generate_request_missing_provider_required_inputs(self):
+        module = self._load_script_module("provider_contract.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            (tmp_path / "source").mkdir()
+            (tmp_path / "source" / "source_original.png").write_bytes(b"source")
+            request = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "provider_id": "codex-controlled-generation",
+                "provider_role": "generation",
+                "execution_mode": "host-managed",
+                "object_id": "main_object",
+                "object_type": "ui-carrier",
+                "planned_route": "generate",
+                "quality_target": "visual-acceptance-ready",
+                "source_image": "source/source_original.png",
+                "input_refs": {},
+                "expected_outputs": {"candidate_png": True, "compare_ready_candidate": True},
+                "notes": "",
+            }
+            with self.assertRaisesRegex(ValueError, "provider request input_refs are missing provider-required inputs"):
+                module.validate_provider_request(tmp_path, request)
+    def test_provider_contract_rejects_request_expected_outputs_that_drift_from_provider_registry(self):
+        module = self._load_script_module("provider_contract.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            (tmp_path / "source").mkdir()
+            (tmp_path / "source" / "source_original.png").write_bytes(b"source")
+            request = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "provider_id": "grounded-sam-bridge",
+                "provider_role": "segmentation",
+                "execution_mode": "bridge",
+                "object_id": "main_object",
+                "object_type": "ui-carrier",
+                "planned_route": "extract",
+                "quality_target": "visual-acceptance-ready",
+                "source_image": "source/source_original.png",
+                "input_refs": {"source_crop": "_staging/providers/grounded-sam-bridge/main_object/crop.png"},
+                "expected_outputs": {"asset_png": True},
+                "notes": "",
+            }
+            with self.assertRaisesRegex(ValueError, "provider request expected_outputs must include provider-required outputs"):
+                module.validate_provider_request(tmp_path, request)
+    def test_provider_contract_rejects_generation_result_missing_candidate_outputs(self):
+        module = self._load_script_module("provider_contract.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            result = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "provider_id": "codex-controlled-generation",
+                "provider_role": "generation",
+                "execution_mode": "host-managed",
+                "object_id": "main_object",
+                "status": "success",
+                "artifacts": {},
+                "provenance": {
+                    "tool_name": "gpt-image-1",
+                    "tool_role": "generation",
+                    "tool_version": "test",
+                    "execution_mode": "host-managed",
+                },
+                "warnings": [],
+                "production_ready_hint": False,
+                "next_expected_provider": "",
+                "notes": "",
+            }
+            with self.assertRaisesRegex(ValueError, "provider result artifacts must include at least one provider-required output"):
+                module.validate_provider_result(tmp_path, result)
+    def test_provider_contract_rejects_result_provider_role_that_drifts_from_registry(self):
+        module = self._load_script_module("provider_contract.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            (tmp_path / "_staging" / "providers" / "grounded-sam-bridge" / "main_object").mkdir(parents=True)
+            result = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "provider_id": "grounded-sam-bridge",
+                "provider_role": "generation",
+                "execution_mode": "bridge",
+                "object_id": "main_object",
+                "status": "success",
+                "artifacts": {
+                    "asset_png": "_staging/providers/grounded-sam-bridge/main_object/main_object.png",
+                    "source_space_mask": "_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png",
+                },
+                "provenance": {
+                    "tool_name": "Grounded-SAM",
+                    "tool_role": "segmentation",
+                    "tool_version": "external",
+                    "execution_mode": "bridge",
+                },
+                "warnings": [],
+                "production_ready_hint": False,
+                "next_expected_provider": "rembg-bridge",
+                "notes": "",
+            }
+            with self.assertRaisesRegex(ValueError, "provider result provider_role must match provider registry"):
+                module.validate_provider_result(tmp_path, result)
     def test_shared_contract_module_defines_asset_routing_taxonomy(self):
         contract = self._load_script_module("split_image_assets_contract.py")
 

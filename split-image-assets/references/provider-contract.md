@@ -128,6 +128,14 @@ Every provider result should include:
 
 For `external-manifest` providers, `artifacts.provider_manifest` is the canonical bridge output when the upstream result is a multi-object import manifest rather than a single already-normalized asset pair.
 
+Provider request/result manifests are not valid merely because they are shaped like JSON objects. They must also satisfy the selected provider's registry contract:
+
+- `provider_role` and `execution_mode` must match the provider registry entry
+- `planned_route` must be supported by the selected provider
+- request `expected_outputs` must include the provider-required outputs
+- generate-route requests must include the provider-required brief/reference inputs
+- success or partial provider results must include the provider-required output artifacts for that provider class
+
 `provenance` should include:
 
 - `tool_name`

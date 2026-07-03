@@ -148,6 +148,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - this is the route default plus object_type override rule for provider selection
     - allow `plan_manifest.provider_preferences` to override the default only when the preferred provider is valid for the route
     - build provider request manifests with `scripts/prepare_provider_request.py`; `--provider-id` is optional when the default chain is acceptable
+    - provider requests and results must satisfy the selected provider's registry-specific input/output contract, not just the generic JSON schema
     - for `generate` routes, write a package-owned brief first with `scripts/prepare_generation_brief.py`
     - keep provider requests and results under `_staging/providers/<provider-id>/<object-id>/`
     - record provider result manifests with `scripts/record_provider_result.py`
