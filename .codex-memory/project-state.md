@@ -4,12 +4,14 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` planning-first generation-routing V1 is implemented and verified locally. The package now has canonical planning-first docs, `plan_manifest` scaffolding, a formal `generation_routing` gate in docs/contract surfaces, generation capability reporting in preflight, generated-reconstruction metadata wiring, staged validator enforcement for generated-route objects, and route-separated asset-summary support.
+- Current stage: `split-image-assets` documentation and shared-state surfaces are now tighter. The package has an explicit doc authority map, a dedicated `package_state_lib.py` for `asset_summary` and `plan_manifest` helpers, and less risk of drift across import/review/promote/export/validator paths.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests)
+- 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (148 tests)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-07-03: `git diff --check` (passed with only CRLF warnings)
@@ -235,10 +237,10 @@
 - None.
 
 ## Current Focus
-- The current milestone is closed locally. Any next work should be a new milestone on top of the planning-first baseline, such as deeper generated-route provider support, richer planning helpers, or broader fixture migrations.
+- The current consolidation milestone is closed locally. Any next work should be a new bounded milestone, such as validator decomposition, broader fixture migration, or deeper provider/runtime integration.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the shipped planning-first generation-routing V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the planning-first and shared-state-consolidated baseline.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`

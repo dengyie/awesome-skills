@@ -1,8 +1,10 @@
 # TODO
 ## In Progress
 ## Next
+- [ ] Choose the next bounded `split-image-assets` milestone after the doc/architecture consolidation pass. Candidate directions: validator decomposition, broader fixture migration, or deeper provider/runtime integration.
 - [ ] Choose the next bounded `split-image-assets` milestone on top of the planning-first generation-routing V1 baseline. Candidate directions: deeper provider support, richer planning helpers, or broader fixture/package migration.
 ## Done
+- [x] Consolidate `split-image-assets` documentation authority and shared state logic by adding an explicit doc map plus a shared `package_state_lib.py` for `asset_summary` and `plan_manifest` handling.
 - [x] Implement the planning-first generation-routing V1 milestone for `split-image-assets`: package-facing docs, `plan_manifest`/route contract, generation capability reporting, generated-reconstruction validator rules, and regression coverage.
 - [x] Harden `split-image-assets` reconstruction capability and candidate-compare evidence so broken dedicated installs fall back honestly and archived compare manifests remain validator-visible.
 - [x] Commit the staged Round 1-4 `split-image-assets` contract hardening pass.

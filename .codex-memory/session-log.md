@@ -23,6 +23,14 @@
 - Next: Stop this milestone. Open any further work as a new bounded follow-up on top of the planning-first generation-routing baseline.
 - Blockers: None.
 
+## 2026-07-03 4
+- Task: Consolidate the `split-image-assets` documentation surface and shared package-state logic.
+- Actions: Reviewed the package docs and architecture for overlap, then tightened the documentation authority map instead of merging everything into one oversized file. Added clearer reading-order guidance in `docs/superpowers/split-image-assets/README.md` and positioned `docs/usage/split-image-assets.md` explicitly as the operator guide rather than the full contract. Introduced `split-image-assets/scripts/package_state_lib.py` to centralize `asset_summary` computation and `plan_manifest` read/write/object-lookup helpers. Refactored `init_asset_package.py`, `record_quality_review.py`, `import_external_assets.py`, `promote_candidate_asset.py`, `export_asset_manifest.py`, and `validate_asset_package.py` to use the shared helper instead of maintaining local duplicate logic. Expanded regression coverage for the new helper and doc surface.
+- Results: The doc topology is easier to reason about, and the shared-state logic no longer has obvious four-way drift risk around `asset_summary` or `plan_manifest`. The overall architecture remains reasonable, but future work can now focus on narrower hotspots like validator decomposition instead of basic state duplication.
+- Validation: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests OK), `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`), and a production review brief reported no new concrete P0/P1 blockers.
+- Next: Stop this milestone. Any additional cleanup should be a new bounded follow-up milestone.
+- Blockers: None.
+
 ## 2026-06-30
 - Task: Fix the latest `split-image-assets` review findings around acceptance semantics and direct candidate promotion evidence.
 - Actions: Reproduced the two confirmed workflow bugs. Updated `record_quality_review.py` so only affirmative answers can clear approximate/final acceptance gates, split `final_promotion_acceptance` from package-level `final_acceptance`, and blocked `qa.status=pass` unless a final acceptance decision-log entry is affirmative. Updated `validate_asset_package.py` to enforce the same semantics and require promotion acceptance for approximate promoted candidates. Updated `promote_candidate_asset.py` so direct single-candidate promotion writes a minimal compare manifest instead of empty compare evidence. Synced `init_asset_package.py`, workflow/contract docs, and expanded regression coverage.
