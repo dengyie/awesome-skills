@@ -26,6 +26,7 @@ The current package baseline is:
 - explicit `plan_manifest.json` planning surface
 - extraction/generation route separation
 - provider bridge contract, registry, and request/result staging surface
+- provider bridge default provider selection and low-friction result consumption defaults
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -35,17 +36,32 @@ This means the package is no longer primarily a packaging helper with extraction
 
 ## Most Recent Closed Milestone
 
-### `generated-route runtime integration V1`
+### `provider result default-consumption V1`
 
 Closed status: complete
 
 What landed:
 
-- generated-only pass paths can validate honestly without requiring extraction-capable `metadata.capability.production_capable=true`
-- generated-only pass now depends on `metadata.capability.generation.production_ready=true`
-- generated-route confirmation is enforced with object-scoped `metadata.decision_log[]` evidence rather than package-level confirmation alone
-- preflight reporting now includes generated-reconstruction gaps in `missing_roles` and `why_it_matters`
-- package docs and contracts now describe generated-only pass behavior explicitly
+- `consume_provider_result.py` can now omit `--provider-id` when the staged result is unambiguous or the plan-selected provider is the only safe default
+- `consume_provider_result.py` can now omit `--mode` when provider result artifacts expose exactly one consumable path
+- extract-style consumption can now reuse the existing metadata object skeleton for role/layer/composition/semantic fields instead of forcing the operator to restate them
+- ambiguous staged provider results still fail closed and require explicit `--provider-id`
+- package docs and tests now describe the shorter package-owned consume path explicitly
+
+Verification completed:
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+
+### `external-manifest provider consumption V4`
+
+Closed status: complete
+
+What landed:
+
+- `external-professional-outputs` now treats `provider_manifest` as its canonical bridge output
+- `consume_provider_result.py --mode import-manifest` can now load `artifacts.provider_manifest` when `--manifest` is omitted
+- external-manifest provider docs and usage are aligned to that explicit package-owned bridge path
 
 Verification completed:
 
@@ -83,6 +99,7 @@ These are the important completed milestones that define the current architectur
 7. test decomposition V1
 8. generated-route runtime integration V1
 9. provider bridge contract V1
+10. provider result default-consumption V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -103,7 +120,7 @@ Any new work should begin by choosing a new bounded milestone on top of the curr
 Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
-   - better provider-specific runtime contract depth
+   - better provider-specific runtime contract depth on top of the now-shorter consume path
    - more explicit provider capability mapping
    - richer generated candidate lifecycle helpers
    - optional native runner expansion on top of the bridge layer

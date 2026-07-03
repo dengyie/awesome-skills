@@ -28,7 +28,7 @@ Fallback:
 
 - `external-professional-outputs`
 
-When `external-professional-outputs` is selected, the preferred bridge output is a provider-owned import manifest consumed through `consume_provider_result.py --mode import-manifest`.
+When `external-professional-outputs` is selected, the preferred bridge output is a provider-owned import manifest consumed through `consume_provider_result.py --mode import-manifest`. When that provider result is the only staged result for the object, `consume_provider_result.py --object-id <id>` may infer both the provider and `import-manifest` mode.
 
 ## Route: `reconstruct`
 

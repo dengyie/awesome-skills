@@ -61,6 +61,9 @@ The standard first consumer is `consume_provider_result.py`. It may:
 
 - turn extract-style provider results into explicit import flow
 - turn generate-style provider results into staged candidate flow
+- resolve the provider result through explicit `--provider-id`, a single staged result, or the plan-selected default provider when that path is unambiguous
+- infer the consume mode from provider result artifacts when the result exposes exactly one consumable artifact set
+- for extract-style imports, reuse the existing metadata object skeleton for role/layer/composition/semantic fields when those CLI flags are omitted
 
 It still counts as explicit package-owned consumption, not as direct provider-side metadata mutation.
 

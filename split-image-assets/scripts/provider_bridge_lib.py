@@ -59,6 +59,54 @@ def resolve_provider_id(plan_manifest: dict, planned_route: str, object_type: st
     return get_default_provider_chain(planned_route, object_type)[0]
 
 
+def list_staged_result_provider_ids(package_dir: Path, object_id: str) -> list[str]:
+    root = provider_bridge_root(package_dir)
+    if not root.exists():
+        return []
+    provider_ids: list[str] = []
+    for provider_dir in sorted(root.iterdir()):
+        if not provider_dir.is_dir():
+            continue
+        if provider_result_path(package_dir, provider_dir.name, object_id).exists():
+            provider_ids.append(provider_dir.name)
+    return provider_ids
+
+
+def resolve_result_provider_id(package_dir: Path, object_id: str, provider_id: str | None = None) -> str:
+    explicit = provider_id.strip() if isinstance(provider_id, str) and provider_id.strip() else ""
+    if explicit:
+        return explicit
+
+    staged_provider_ids = list_staged_result_provider_ids(package_dir, object_id)
+    if len(staged_provider_ids) == 1:
+        return staged_provider_ids[0]
+
+    plan_manifest = read_plan_manifest(package_dir)
+    preferred = ""
+    plan_object = find_plan_object(plan_manifest, object_id)
+    if isinstance(plan_manifest, dict) and isinstance(plan_object, dict):
+        planned_route = str(plan_object.get("planned_route", "")).strip()
+        object_type = str(plan_object.get("object_type", "")).strip()
+        if planned_route and object_type:
+            preferred = resolve_provider_id(plan_manifest, planned_route, object_type, None)
+
+    if preferred and preferred in staged_provider_ids:
+        return preferred
+
+    if len(staged_provider_ids) > 1:
+        providers = ", ".join(staged_provider_ids)
+        raise ValueError(
+            f"multiple staged provider results exist for {object_id}: {providers}; supply --provider-id"
+        )
+
+    if preferred:
+        return preferred
+
+    raise ValueError(
+        f"cannot resolve provider result for {object_id}; supply --provider-id or stage exactly one provider result"
+    )
+
+
 def build_provider_request(
     package_dir: Path,
     object_id: str,

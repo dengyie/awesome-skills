@@ -437,6 +437,67 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["objects"][0]["mask_source"], "grounded-sam-bridge")
             self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "Grounded-SAM")
+    def test_consume_provider_result_infers_single_provider_and_extract_defaults(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_single_object_metadata(output)
+            provider_dir = output / "_staging" / "providers" / "grounded-sam-bridge" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(provider_dir / "main_object.png")
+            Image.new("L", (4, 3), 255).save(provider_dir / "main_object_mask.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "grounded-sam-bridge",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "asset_png=_staging/providers/grounded-sam-bridge/main_object/main_object.png",
+                    "--artifact",
+                    "source_space_mask=_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png",
+                    "--tool-name",
+                    "Grounded-SAM",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "bridge",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["mask_source"], "grounded-sam-bridge")
+            self.assertEqual(metadata["objects"][0]["role"], "main")
+            self.assertEqual(metadata["objects"][0]["composition_order"], 10)
+            self.assertEqual(metadata["objects"][0]["object_type"], "generic-object")
     def test_consume_provider_result_stages_generated_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -597,6 +658,303 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["objects"][0]["id"], "main_object")
             self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "SAM2")
+    def test_consume_provider_result_infers_single_provider_and_manifest_mode(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            provider_dir = output / "_staging" / "providers" / "external-professional-outputs" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            asset = tmp_path / "tile.png"
+            mask = tmp_path / "tile_mask.png"
+            Image.new("RGBA", (2, 2), (80, 100, 120, 255)).save(asset)
+            Image.new("L", (6, 6), 255).save(mask)
+            manifest_path = provider_dir / "provider_manifest.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "recipe": "grounded-segmentation-matting-repair",
+                        "tool": {
+                            "name": "SAM2",
+                            "role": "segmentation",
+                            "version": "external",
+                        },
+                        "objects": [
+                            {
+                                "object_id": "main_object",
+                                "role": "main",
+                                "layer_kind": "primary-subject",
+                                "composition_order": 10,
+                                "semantic_boundary": "Imported via inferred provider manifest bridge.",
+                                "asset": str(asset),
+                                "mask": str(mask),
+                                "mask_source": "sam2",
+                                "alpha_source": "rembg-refine",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "external-professional-outputs",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "provider_manifest=_staging/providers/external-professional-outputs/main_object/provider_manifest.json",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "external-manifest",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["id"], "main_object")
+            self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "SAM2")
+    def test_consume_provider_result_rejects_ambiguous_staged_provider_results_without_provider_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+
+            bridge_dir = output / "_staging" / "providers" / "grounded-sam-bridge" / "main_object"
+            bridge_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(bridge_dir / "main_object.png")
+            Image.new("L", (6, 6), 255).save(bridge_dir / "main_object_mask.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "grounded-sam-bridge",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "asset_png=_staging/providers/grounded-sam-bridge/main_object/main_object.png",
+                    "--artifact",
+                    "source_space_mask=_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png",
+                    "--tool-name",
+                    "Grounded-SAM",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "bridge",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            external_dir = output / "_staging" / "providers" / "external-professional-outputs" / "main_object"
+            external_dir.mkdir(parents=True, exist_ok=True)
+            manifest_path = external_dir / "provider_manifest.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "recipe": "grounded-segmentation-matting-repair",
+                        "tool": {
+                            "name": "SAM2",
+                            "role": "segmentation",
+                            "version": "external",
+                        },
+                        "objects": [],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "external-professional-outputs",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "provider_manifest=_staging/providers/external-professional-outputs/main_object/provider_manifest.json",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "external-manifest",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("multiple staged provider results exist for main_object", result.stderr)
+    def test_consume_provider_result_prefers_plan_selected_provider_when_multiple_results_exist(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = self._write_generated_plan_manifest(output)
+            plan_manifest["provider_preferences"]["generation_provider_class"] = "external-generated-outputs"
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            codex_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
+            codex_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(codex_dir / "candidate_a.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/codex-controlled-generation/main_object/candidate_a.png",
+                    "--tool-name",
+                    "Codex Gen",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "host",
+                    "--execution-mode",
+                    "host-managed",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            external_dir = output / "_staging" / "providers" / "external-generated-outputs" / "main_object"
+            external_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (0, 255, 0, 255)).save(external_dir / "candidate_b.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "external-generated-outputs",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/external-generated-outputs/main_object/candidate_b.png",
+                    "--tool-name",
+                    "External Gen",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "external-manifest",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate-id",
+                    "preferred-generated-candidate",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            stage_manifest = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "repair_candidates"
+                    / "main_object"
+                    / "preferred-generated-candidate_provider_stage.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(stage_manifest["provider_id"], "external-generated-outputs")
     def test_build_previews_creates_inspection_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

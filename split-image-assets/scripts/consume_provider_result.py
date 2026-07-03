@@ -4,7 +4,51 @@ import shutil
 from pathlib import Path
 
 from import_external_assets import checked_metadata, import_record, load_manifest
-from provider_bridge_lib import load_provider_result
+from provider_bridge_lib import load_provider_result, resolve_result_provider_id
+
+
+def find_metadata_object(metadata: dict, object_id: str) -> dict | None:
+    objects = metadata.get("objects", [])
+    if not isinstance(objects, list):
+        return None
+    for item in objects:
+        if isinstance(item, dict) and item.get("id") == object_id:
+            return item
+    return None
+
+
+def infer_consume_mode(result: dict) -> str:
+    artifacts = result.get("artifacts", {})
+    matches: list[str] = []
+    provider_manifest = artifacts.get("provider_manifest")
+    if isinstance(provider_manifest, str) and provider_manifest.strip():
+        matches.append("import-manifest")
+    asset = artifacts.get("asset_png")
+    mask = artifacts.get("source_space_mask")
+    if isinstance(asset, str) and asset.strip() and isinstance(mask, str) and mask.strip():
+        matches.append("import-extract")
+    candidate_path = artifacts.get("candidate_png") or artifacts.get("compare_ready_candidate")
+    if isinstance(candidate_path, str) and candidate_path.strip():
+        matches.append("stage-candidate")
+    unique_matches = list(dict.fromkeys(matches))
+    if len(unique_matches) == 1:
+        return unique_matches[0]
+    if not unique_matches:
+        raise ValueError("cannot infer consume mode from provider result artifacts")
+    choices = ", ".join(unique_matches)
+    raise ValueError(f"cannot infer consume mode because provider result exposes multiple artifact sets: {choices}")
+
+
+def resolve_import_extract_value(
+    cli_value,
+    metadata_object: dict | None,
+    metadata_key: str,
+):
+    if cli_value not in (None, ""):
+        return cli_value
+    if isinstance(metadata_object, dict):
+        return metadata_object.get(metadata_key)
+    return None
 
 
 def stage_generated_candidate(
@@ -46,18 +90,17 @@ def stage_generated_candidate(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Consume a provider bridge result through an explicit package-owned entrypoint.")
     parser.add_argument("package_dir", help="Asset package directory.")
-    parser.add_argument("--provider-id", required=True)
+    parser.add_argument("--provider-id")
     parser.add_argument("--object-id", required=True)
     parser.add_argument(
         "--mode",
-        required=True,
         choices=["import-extract", "stage-candidate", "import-manifest"],
     )
     parser.add_argument("--role", choices=["main", "secondary", "group", "background", "shadow"])
     parser.add_argument("--layer-kind")
     parser.add_argument("--composition-order", type=int)
     parser.add_argument("--semantic-boundary")
-    parser.add_argument("--object-type", default="generic-object")
+    parser.add_argument("--object-type", default="")
     parser.add_argument("--recipe", default="grounded-segmentation-matting-repair")
     parser.add_argument("--confidence", default="medium", choices=["high", "medium", "low"])
     parser.add_argument("--edge-complexity", default="soft", choices=["hard", "soft", "transparent-reflective"])
@@ -68,13 +111,40 @@ def main() -> int:
 
     package_dir = Path(args.package_dir).resolve()
     metadata = checked_metadata(package_dir, parser)
+    metadata_object = find_metadata_object(metadata, args.object_id)
+    resolved_provider_id = args.provider_id
+    result: dict | None = None
 
-    if args.mode == "import-manifest":
+    if args.mode != "import-manifest" or not args.manifest:
+        try:
+            resolved_provider_id = resolve_result_provider_id(package_dir, args.object_id, args.provider_id)
+        except ValueError as exc:
+            if args.mode == "import-manifest" and args.manifest:
+                resolved_provider_id = args.provider_id
+            else:
+                parser.error(str(exc))
+        if resolved_provider_id:
+            try:
+                result = load_provider_result(package_dir, resolved_provider_id, args.object_id)
+            except ValueError as exc:
+                parser.error(str(exc))
+
+    mode = args.mode
+    if not mode:
+        if result is None:
+            parser.error("--mode is required when provider result cannot be loaded for mode inference")
+        try:
+            mode = infer_consume_mode(result)
+        except ValueError as exc:
+            parser.error(str(exc))
+
+    if mode == "import-manifest":
         manifest_path: Path | None = None
         if args.manifest:
             manifest_path = Path(args.manifest).resolve()
         else:
-            result = load_provider_result(package_dir, args.provider_id, args.object_id)
+            if result is None:
+                parser.error("import-manifest requires a provider result or explicit --manifest")
             artifacts = result.get("artifacts", {})
             provider_manifest = artifacts.get("provider_manifest")
             if not isinstance(provider_manifest, str) or not provider_manifest.strip():
@@ -110,15 +180,25 @@ def main() -> int:
             )
         metadata.setdefault("qa", {})["status"] = "needs-review"
     else:
-        result = load_provider_result(package_dir, args.provider_id, args.object_id)
-        if args.mode == "import-extract":
+        if result is None or not resolved_provider_id:
+            parser.error("provider result is required for this consume mode")
+        if mode == "import-extract":
+            role = resolve_import_extract_value(args.role, metadata_object, "role")
+            layer_kind = resolve_import_extract_value(args.layer_kind, metadata_object, "layer_kind")
+            composition_order = resolve_import_extract_value(
+                args.composition_order, metadata_object, "composition_order"
+            )
+            semantic_boundary = resolve_import_extract_value(
+                args.semantic_boundary, metadata_object, "semantic_boundary"
+            )
+            object_type = resolve_import_extract_value(args.object_type, metadata_object, "object_type")
             missing = [
                 name
                 for name, value in [
-                    ("--role", args.role),
-                    ("--layer-kind", args.layer_kind),
-                    ("--composition-order", args.composition_order),
-                    ("--semantic-boundary", args.semantic_boundary),
+                    ("--role", role),
+                    ("--layer-kind", layer_kind),
+                    ("--composition-order", composition_order),
+                    ("--semantic-boundary", semantic_boundary),
                 ]
                 if value in (None, "")
             ]
@@ -138,15 +218,15 @@ def main() -> int:
                 parser,
                 {
                     "object_id": args.object_id,
-                    "role": args.role,
-                    "layer_kind": args.layer_kind,
-                    "composition_order": args.composition_order,
-                    "semantic_boundary": args.semantic_boundary,
+                    "role": role,
+                    "layer_kind": layer_kind,
+                    "composition_order": composition_order,
+                    "semantic_boundary": semantic_boundary,
                     "asset": str((package_dir / asset).resolve()),
                     "mask": str((package_dir / mask).resolve()),
-                    "mask_source": args.provider_id,
-                    "alpha_source": args.provider_id,
-                    "object_type": args.object_type,
+                    "mask_source": resolved_provider_id,
+                    "alpha_source": resolved_provider_id,
+                    "object_type": object_type or "generic-object",
                 },
                 args.recipe,
                 str(provenance.get("tool_name", "")),
@@ -157,7 +237,7 @@ def main() -> int:
                 args.extraction_method,
             )
             metadata.setdefault("qa", {})["status"] = "needs-review"
-        elif args.mode == "stage-candidate":
+        elif mode == "stage-candidate":
             if not args.candidate_id:
                 parser.error("--candidate-id is required for stage-candidate")
             stage_generated_candidate(package_dir, parser, result, args.object_id, args.candidate_id)
