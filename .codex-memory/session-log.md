@@ -47,6 +47,14 @@
 - Next: Stop this milestone. The natural next bounded milestone is test-module decomposition, followed by deeper generated-route provider/runtime integration.
 - Blockers: None.
 
+## 2026-07-03 7
+- Task: Decompose the `split-image-assets` giant package test file without losing coverage or discovery behavior.
+- Actions: Opened a bounded test-decomposition milestone and split the old `test_skill_package.py` into a shared `skill_package_testlib.py` plus four domain test modules: docs/contract, environment/init, processing scripts, and validation/review. Fixed the import/discovery rough edges created by the split, updated required-file coverage, reran smoke slices, then reran the full `split-image-assets` test suite and package quick validation.
+- Results: The tests now have a clearer structure and much better future maintenance shape. `unittest discover` remains green, and the validator/test hotspot pair is now substantially more manageable than before the last two milestones.
+- Validation: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests OK), `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`), and a production review brief reported no new P0/P1 blockers.
+- Next: Stop this milestone. The natural next bounded milestone is deeper generated-route provider/runtime integration on top of the now-cleaner validator/test architecture.
+- Blockers: None.
+
 ## 2026-06-30
 - Task: Fix the latest `split-image-assets` review findings around acceptance semantics and direct candidate promotion evidence.
 - Actions: Reproduced the two confirmed workflow bugs. Updated `record_quality_review.py` so only affirmative answers can clear approximate/final acceptance gates, split `final_promotion_acceptance` from package-level `final_acceptance`, and blocked `qa.status=pass` unless a final acceptance decision-log entry is affirmative. Updated `validate_asset_package.py` to enforce the same semantics and require promotion acceptance for approximate promoted candidates. Updated `promote_candidate_asset.py` so direct single-candidate promotion writes a minimal compare manifest instead of empty compare evidence. Synced `init_asset_package.py`, workflow/contract docs, and expanded regression coverage.

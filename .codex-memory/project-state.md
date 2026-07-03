@@ -4,12 +4,14 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` validator decomposition V1 is complete locally. The validator now uses a thin entrypoint plus dedicated metadata, object, package-artifact, and shared-helper modules, reducing the main hotspot without changing the CLI or validation contract behavior.
+- Current stage: `split-image-assets` test decomposition V1 is complete locally. The package test suite now uses a shared testlib plus multiple domain modules instead of one giant `test_skill_package.py`, while preserving `unittest discover` behavior and full local verification.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, test decomposition baseline)
+- 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, test decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, validator decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, validator decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests)
@@ -239,10 +241,10 @@
 - None.
 
 ## Current Focus
-- The current validator decomposition milestone is closed locally. Any next work should be a new bounded milestone, most naturally test-module decomposition or deeper provider/runtime integration.
+- The current test decomposition milestone is closed locally. Any next work should be a new bounded milestone, most naturally deeper generated-route provider/runtime integration.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the decomposed-validator baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the decomposed-validator and decomposed-test baseline.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`

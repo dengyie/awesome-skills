@@ -1,9 +1,10 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after validator decomposition. Recommended order: test-module decomposition, then deeper provider/runtime integration.
+- [ ] Choose the next bounded `split-image-assets` milestone after test decomposition. Recommended next step: deeper generated-route provider/runtime integration.
 - [ ] Choose the next bounded `split-image-assets` milestone on top of the planning-first generation-routing V1 baseline. Candidate directions: deeper provider support, richer planning helpers, or broader fixture/package migration.
 ## Done
+- [x] Decompose `split-image-assets/tests/test_skill_package.py` into shared helper plus multiple domain modules while preserving unittest discovery behavior.
 - [x] Decompose `split-image-assets/scripts/validate_asset_package.py` into a thin entrypoint plus domain modules while preserving full package behavior.
 - [x] Consolidate `split-image-assets` documentation authority and shared state logic by adding an explicit doc map plus a shared `package_state_lib.py` for `asset_summary` and `plan_manifest` handling.
 - [x] Implement the planning-first generation-routing V1 milestone for `split-image-assets`: package-facing docs, `plan_manifest`/route contract, generation capability reporting, generated-reconstruction validator rules, and regression coverage.

@@ -35,6 +35,12 @@
 - Impact: The validator is now easier to evolve in bounded pieces, future bugfixes can target narrower modules, and the next architecture step can focus on test decomposition instead of continuing to pile changes into one giant validator file.
 - Related files: `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/scripts/validator_shared.py`, `split-image-assets/scripts/validator_metadata_lib.py`, `split-image-assets/scripts/validator_objects_lib.py`, `split-image-assets/scripts/validator_package_artifacts_lib.py`, `split-image-assets/tests/test_skill_package.py`
 
+## 2026-07-03 - Split Image Assets Tests Now Use A Shared Testlib Plus Domain Modules
+- Decision: Replace the single giant `test_skill_package.py` layout with a shared `skill_package_testlib.py` and multiple domain-specific test modules while preserving `unittest discover` behavior.
+- Rationale: After the validator decomposition, the next largest maintenance hotspot was the monolithic test file. Splitting it by concern reduces future review/debug cost and makes the test suite map more naturally onto the package architecture.
+- Impact: The package test surface is now split into docs/contract tests, environment/init tests, processing-script tests, and validation/review tests. Future milestones can change narrower areas without reopening a 7k-line test file for every edit.
+- Related files: `split-image-assets/tests/skill_package_testlib.py`, `split-image-assets/tests/test_docs_and_contract.py`, `split-image-assets/tests/test_environment_and_init.py`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/tests/test_validation_and_review.py`
+
 ## 2026-06-30 - Split Image Assets Separates Promotion Acceptance From Final Package Acceptance
 - Decision: Split candidate-promotion confirmation from package-level final acceptance by adding `metadata.confirmation.final_promotion_acceptance`, require affirmative final-acceptance decision-log entries before `qa.status=pass`, and make direct single-candidate promotion emit a minimal compare manifest instead of empty compare evidence.
 - Rationale: Review found two workflow-integrity bugs: a negative final acceptance answer could still satisfy the pass gate because gate state and answer content were decoupled, and `promote_candidate_asset.py` could report success while writing compare metadata that the validator would always reject.
