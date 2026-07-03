@@ -650,6 +650,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("segmentation", report)
         self.assertIn("matting", report)
         self.assertIn("reconstruction", report)
+        self.assertIn("generation", report)
         self.assertIn("environment", report)
         self.assertIn("recommended_recipe", report)
         self.assertIn("recommended_next_action", report)
@@ -668,12 +669,16 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             report["recommended_next_action"],
             ["install-or-activate-tools", "external-professional-outputs", "production-capable"],
         )
-        for capability_key in ["segmentation", "matting", "reconstruction"]:
+        for capability_key in ["segmentation", "matting", "reconstruction", "generation"]:
             self.assertIn("installed", report[capability_key])
             self.assertIn("runtime_ready", report[capability_key])
             self.assertIn("production_ready", report[capability_key])
         self.assertIn("path_type", report["reconstruction"])
         self.assertIn("quality_impact", report["reconstruction"])
+        self.assertIn("provider_classes", report["generation"])
+        self.assertIn("codex-controlled-generation", report["generation"]["provider_classes"])
+        self.assertIn("external-generated-outputs", report["generation"]["provider_classes"])
+        self.assertIn("local-model-runtime", report["generation"]["provider_classes"])
         self.assertIn("recommended_next_action_detail", report)
         self.assertIn("recommended_installs", report)
         self.assertIn("missing_roles", report)
@@ -2597,6 +2602,57 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("--confirmation-source", result.stderr)
+
+    def test_record_quality_review_records_generated_reconstruction_fields(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--delivery-class",
+                    "generated-reconstruction",
+                    "--generation-source",
+                    "codex-controlled-generation",
+                    "--generation-model-or-tool",
+                    "gpt-image-1",
+                    "--generation-version",
+                    "test",
+                    "--generation-prompt-or-brief-ref",
+                    "_staging/generation_briefs/main_object.json",
+                    "--generation-reference-input",
+                    "source/source_original.png",
+                    "--review-note",
+                    "Recorded generated reconstruction evidence.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            obj = metadata["objects"][0]
+            self.assertEqual(obj["delivery_class"], "generated-reconstruction")
+            self.assertEqual(obj["generation_source"], "codex-controlled-generation")
+            self.assertEqual(obj["generation_model_or_tool"], "gpt-image-1")
+            self.assertEqual(obj["generation_version"], "test")
+            self.assertEqual(
+                obj["generation_prompt_or_brief_ref"],
+                "_staging/generation_briefs/main_object.json",
+            )
+            self.assertEqual(obj["generation_reference_inputs"], ["source/source_original.png"])
 
     def test_record_quality_review_rejects_confirmation_gate_with_unset_source(self):
         with tempfile.TemporaryDirectory() as tmp:

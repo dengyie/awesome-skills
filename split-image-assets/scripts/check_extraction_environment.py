@@ -81,6 +81,7 @@ TOOL_SPECS = {
     "OpenCV": ["cv2"],
     "Torch": ["torch"],
     "torchvision": ["torchvision"],
+    "Diffusers": ["diffusers"],
     "rembg": ["rembg"],
     "onnxruntime": ["onnxruntime"],
     "SAM2": ["sam2"],
@@ -258,6 +259,49 @@ def build_reconstruction_capability(
     }
 
 
+def build_generation_capability(diffusers_runtime: dict) -> dict:
+    local_runtime_ready = bool(diffusers_runtime["runtime_ready"])
+    quality_impact = (
+        "Local generation tooling is available, but generated delivery is only production-ready when the route can "
+        "produce object-level transparent assets plus durable compare/promotion evidence."
+        if local_runtime_ready
+        else "No local generation runtime was detected. Generated delivery may still proceed through Codex-controlled "
+        "generation or external-generated-outputs, but that path must be recorded explicitly rather than inferred from local installs."
+    )
+    return {
+        "installed": bool(diffusers_runtime["installed"]),
+        "runtime_ready": local_runtime_ready,
+        "production_ready": False,
+        "provider_class": "local-model-runtime" if diffusers_runtime["installed"] else "unset",
+        "transparent_asset_delivery": False,
+        "tooling": {
+            "diffusers": diffusers_runtime,
+        },
+        "provider_classes": {
+            "codex-controlled-generation": {
+                "installed": False,
+                "runtime_ready": False,
+                "production_ready": False,
+                "note": "Host-managed path; not probeable from this local script.",
+            },
+            "external-generated-outputs": {
+                "installed": False,
+                "runtime_ready": False,
+                "production_ready": False,
+                "note": "The package can import externally generated outputs, but production readiness still depends on actual artifacts and evidence.",
+            },
+            "local-model-runtime": {
+                "installed": bool(diffusers_runtime["installed"]),
+                "runtime_ready": local_runtime_ready,
+                "production_ready": False,
+                "module": diffusers_runtime.get("module", "diffusers"),
+                "note": "Local runtime availability alone does not prove transparent object-asset delivery.",
+            },
+        },
+        "quality_impact": quality_impact,
+    }
+
+
 def build_capabilities(tools: dict) -> dict:
     torch_runtime = _probe_torch_runtime()
     onnx_runtime = _probe_runtime("onnxruntime")
@@ -267,6 +311,7 @@ def build_capabilities(tools: dict) -> dict:
     segment_anything_runtime = _probe_runtime("segment_anything")
     iopaint_runtime = _probe_first_runtime(["iopaint", "lama_cleaner"])
     lama_runtime = _probe_first_runtime(["saicinpainting", "lama_cleaner"])
+    diffusers_runtime = _probe_first_runtime(["diffusers"])
 
     segmentation_production_ready = bool(
         torch_runtime["runtime_ready"]
@@ -283,6 +328,7 @@ def build_capabilities(tools: dict) -> dict:
     reconstruction = build_reconstruction_capability(
         torch_runtime, onnx_runtime, iopaint_runtime, lama_runtime
     )
+    generation = build_generation_capability(diffusers_runtime)
     return {
         "segmentation": {
             "installed": any(
@@ -311,6 +357,9 @@ def build_capabilities(tools: dict) -> dict:
         },
         "reconstruction": {
             **reconstruction,
+        },
+        "generation": {
+            **generation,
         },
         "environment": {
             "python": {
@@ -364,9 +413,18 @@ def upstream_roles(capabilities: dict) -> dict:
             "quality_impact": capabilities["reconstruction"]["quality_impact"],
         },
         "packaging_qa": {
-            "recommended_tools": ["split-image-assets scripts"],
-            "available": True,
-            "quality_impact": "Packaging and QA evidence can be produced locally by this skill.",
+        "recommended_tools": ["split-image-assets scripts"],
+        "available": True,
+        "quality_impact": "Packaging and QA evidence can be produced locally by this skill.",
+        },
+        "generated_reconstruction": {
+            "recommended_tools": [
+                "Codex-controlled generation",
+                "external generated outputs",
+                "local diffusers-style runtime with transparent delivery support",
+            ],
+            "available": capabilities["generation"]["production_ready"],
+            "quality_impact": capabilities["generation"]["quality_impact"],
         },
     }
 
@@ -389,6 +447,7 @@ def build_report() -> dict:
         "segmentation": capabilities["segmentation"],
         "matting": capabilities["matting"],
         "reconstruction": capabilities["reconstruction"],
+        "generation": capabilities["generation"],
         "environment": capabilities["environment"],
         "production_capable": production_capable,
         "missing_for_production": missing_for_production,
@@ -446,6 +505,11 @@ def print_text_report(report: dict) -> None:
             f"- {name}: installed={details['installed']} runtime_ready={details['runtime_ready']} "
             f"production_ready={details['production_ready']}"
         )
+    generation = report["generation"]
+    print(
+        f"- generation: installed={generation['installed']} runtime_ready={generation['runtime_ready']} "
+        f"production_ready={generation['production_ready']}"
+    )
     status = "yes" if report["production_capable"] else "no"
     print(f"Production capable: {status}")
     if report["missing_for_production"]:

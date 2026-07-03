@@ -101,12 +101,18 @@ def main() -> int:
         choices=[
             "clean-extraction",
             "approximate-reconstruction",
+            "generated-reconstruction",
             "support-only",
             "draft-candidate",
         ],
         required=True,
     )
     parser.add_argument("--active-reconstruction-method", default="")
+    parser.add_argument("--generation-source", default="")
+    parser.add_argument("--generation-model-or-tool", default="")
+    parser.add_argument("--generation-version", default="")
+    parser.add_argument("--generation-prompt-or-brief-ref", default="")
+    parser.add_argument("--generation-reference-input", action="append", default=[])
     parser.add_argument("--repair-note", required=True)
     parser.add_argument("--selection-reason", required=True)
     args = parser.parse_args()
@@ -160,6 +166,12 @@ def main() -> int:
     if args.delivery_class == "approximate-reconstruction":
         target["reuse_status"] = "approximate-reconstruction"
         target["approximate"] = True
+    if args.delivery_class == "generated-reconstruction":
+        target["generation_source"] = args.generation_source
+        target["generation_model_or_tool"] = args.generation_model_or_tool
+        target["generation_version"] = args.generation_version
+        target["generation_prompt_or_brief_ref"] = args.generation_prompt_or_brief_ref
+        target["generation_reference_inputs"] = list(args.generation_reference_input)
     target["active_reconstruction_method"] = args.active_reconstruction_method
     repair_history = target.setdefault("repair_history", [])
     repair_history.append(

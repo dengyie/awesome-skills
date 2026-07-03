@@ -337,6 +337,13 @@ def build_import_plan(
             "current_asset_revision": str(record.get("current_asset_revision", "initial-import")),
             "active_reconstruction_method": str(record.get("active_reconstruction_method", "")),
             "selected_candidate_id": str(record.get("selected_candidate_id", "")),
+            "generation_source": str(record.get("generation_source", "")),
+            "generation_model_or_tool": str(record.get("generation_model_or_tool", "")),
+            "generation_version": str(record.get("generation_version", "")),
+            "generation_prompt_or_brief_ref": str(record.get("generation_prompt_or_brief_ref", "")),
+            "generation_reference_inputs": list(record.get("generation_reference_inputs", []))
+            if isinstance(record.get("generation_reference_inputs", []), list)
+            else [],
             "repair_history": list(record.get("repair_history", []))
             if isinstance(record.get("repair_history", []), list)
             else [],

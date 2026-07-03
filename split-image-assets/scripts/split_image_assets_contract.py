@@ -52,6 +52,7 @@ ALLOWED_REUSE_STATUSES = {
 ALLOWED_DELIVERY_CLASSES = {
     "clean-extraction",
     "approximate-reconstruction",
+    "generated-reconstruction",
     "support-only",
     "draft-candidate",
 }

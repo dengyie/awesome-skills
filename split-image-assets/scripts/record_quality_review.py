@@ -120,6 +120,10 @@ def has_object_targeted_updates(args: argparse.Namespace) -> bool:
             args.current_asset_revision,
             args.active_reconstruction_method,
             args.selected_candidate_id,
+            args.generation_source,
+            args.generation_model_or_tool,
+            args.generation_version,
+            args.generation_prompt_or_brief_ref,
             args.text_role,
             args.text_render_class,
             args.editability_score,
@@ -393,6 +397,16 @@ def update_object_checks(objects: list[dict], args: argparse.Namespace) -> None:
             item["active_reconstruction_method"] = args.active_reconstruction_method
         if args.selected_candidate_id is not None:
             item["selected_candidate_id"] = args.selected_candidate_id
+        if args.generation_source is not None:
+            item["generation_source"] = args.generation_source
+        if args.generation_model_or_tool is not None:
+            item["generation_model_or_tool"] = args.generation_model_or_tool
+        if args.generation_version is not None:
+            item["generation_version"] = args.generation_version
+        if args.generation_prompt_or_brief_ref is not None:
+            item["generation_prompt_or_brief_ref"] = args.generation_prompt_or_brief_ref
+        if args.generation_reference_input:
+            item["generation_reference_inputs"] = list(args.generation_reference_input)
         if args.repair_history_entry:
             repair_history = item.setdefault("repair_history", [])
             for entry in args.repair_history_entry:
@@ -697,6 +711,11 @@ def main() -> int:
     parser.add_argument("--current-asset-revision")
     parser.add_argument("--active-reconstruction-method")
     parser.add_argument("--selected-candidate-id")
+    parser.add_argument("--generation-source")
+    parser.add_argument("--generation-model-or-tool")
+    parser.add_argument("--generation-version")
+    parser.add_argument("--generation-prompt-or-brief-ref")
+    parser.add_argument("--generation-reference-input", action="append")
     parser.add_argument(
         "--repair-history-entry",
         action="append",
