@@ -28,6 +28,20 @@ If you are still choosing among skills, go back to the [Skill Matrix](skill-matr
 - [Examples](examples.md)
 - [Troubleshooting](troubleshooting.md)
 
+## Read What Where
+
+Use this page as the operator guide.
+
+For deeper details, use the more specialized sources instead of treating this file as the full contract:
+
+- `docs/superpowers/split-image-assets/design.md`: architecture intent and rollout strategy
+- `docs/superpowers/split-image-assets/implementation-plan.md`: active milestone scope
+- `split-image-assets/SKILL.md`: agent-facing workflow entrypoint
+- `split-image-assets/references/workflow.md`: gate and state-machine detail
+- `split-image-assets/references/asset-package-contract.md`: package contract and validator truth surface
+- `split-image-assets/references/pipeline-recipes.md`: route and recipe choice
+- `split-image-assets/references/ui-atomic-split.md`: UI-specific planning
+
 The default production path is professional upstream -> import -> preview -> QA review -> validate -> manifest. This skill is the workflow, packaging, and QA tail of that chain; it is not the upstream segmenter.
 
 The workflow is now planning-first. Before expensive extraction or generation work begins, create and maintain `plan_manifest.json` so the package can record whole-image planning, object routes, attempt budgets, protected-object restrictions, and generated-route reasoning separately from final package state.

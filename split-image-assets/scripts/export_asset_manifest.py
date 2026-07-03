@@ -3,6 +3,8 @@ import json
 import sys
 from pathlib import Path
 
+from package_state_lib import summarize_asset_entries
+
 
 OBJECT_ASSET_ROLES = {"main", "secondary", "group", "background", "shadow"}
 
@@ -104,37 +106,6 @@ def layer_record(package_dir: Path, item: dict, errors: list[str]) -> dict | Non
     }
 
 
-def summarize_layers(layers: list[dict]) -> dict:
-    summary = {
-        "production_ready_assets": 0,
-        "accepted_approximate_reconstructions": 0,
-        "accepted_generated_reconstructions": 0,
-        "draft_candidate_assets": 0,
-        "support_only_layers": 0,
-        "blocked_assets": 0,
-    }
-    for layer in layers:
-        asset_class = layer.get("asset_class")
-        reuse_status = layer.get("reuse_status")
-        if reuse_status == "production-ready" and asset_class == "atomic":
-            summary["production_ready_assets"] += 1
-        elif reuse_status == "accepted-approximate-reconstruction":
-            summary["accepted_approximate_reconstructions"] += 1
-        elif reuse_status == "accepted-generated-reconstruction":
-            summary["accepted_generated_reconstructions"] += 1
-        elif reuse_status == "draft-candidate":
-            summary["draft_candidate_assets"] += 1
-        elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {
-            "grouped-support",
-            "background-support",
-            "preview-reference",
-        }:
-            summary["support_only_layers"] += 1
-        elif reuse_status == "blocked":
-            summary["blocked_assets"] += 1
-    return summary
-
-
 def build_manifest(package_dir: Path, metadata: dict, errors: list[str]) -> dict:
     objects = metadata.get("objects", [])
     if not isinstance(objects, list):
@@ -183,7 +154,7 @@ def build_manifest(package_dir: Path, metadata: dict, errors: list[str]) -> dict
         },
         "qa_status": qa.get("status"),
         "extraction_recipe": pipeline.get("recipe"),
-        "asset_summary": summarize_layers(layers),
+        "asset_summary": summarize_asset_entries(layers),
         "layers": layers,
     }
 

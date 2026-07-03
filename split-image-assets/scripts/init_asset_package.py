@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from package_state_lib import write_plan_manifest
 from split_image_assets_contract import default_confirmation_entry, default_plan_manifest
 
 
@@ -149,10 +150,7 @@ def main() -> int:
         encoding="utf-8",
     )
     plan_manifest = default_plan_manifest(str(source_path), package_name, width, height)
-    (output_path / "plan_manifest.json").write_text(
-        json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    write_plan_manifest(output_path, plan_manifest)
     write_qa_report(output_path / "qa_report.md", package_name)
 
     print(f"Initialized asset package: {output_path}")

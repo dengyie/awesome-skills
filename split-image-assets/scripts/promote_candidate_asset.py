@@ -4,6 +4,8 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
+from package_state_lib import update_asset_summary
+
 
 def read_metadata(package_dir: Path) -> dict:
     return json.loads((package_dir / "metadata.json").read_text(encoding="utf-8"))
@@ -41,39 +43,6 @@ def require_repair_candidate_path(path: Path, package_dir: Path, label: str, par
     expected_root = (package_dir / "_staging" / "repair_candidates").resolve()
     if path != expected_root and expected_root not in path.parents:
         parser.error(f"{label} must be staged under _staging/repair_candidates/: {path}")
-
-
-def update_asset_summary(metadata: dict) -> None:
-    summary = {
-        "production_ready_assets": 0,
-        "accepted_approximate_reconstructions": 0,
-        "accepted_generated_reconstructions": 0,
-        "draft_candidate_assets": 0,
-        "support_only_layers": 0,
-        "blocked_assets": 0,
-    }
-    for item in metadata.get("objects", []):
-        if not isinstance(item, dict):
-            continue
-        asset_class = item.get("asset_class")
-        reuse_status = item.get("reuse_status")
-        if asset_class == "atomic" and reuse_status == "production-ready":
-            summary["production_ready_assets"] += 1
-        elif reuse_status == "accepted-approximate-reconstruction":
-            summary["accepted_approximate_reconstructions"] += 1
-        elif reuse_status == "accepted-generated-reconstruction":
-            summary["accepted_generated_reconstructions"] += 1
-        elif reuse_status == "draft-candidate":
-            summary["draft_candidate_assets"] += 1
-        elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {
-            "grouped-support",
-            "background-support",
-            "preview-reference",
-        }:
-            summary["support_only_layers"] += 1
-        elif reuse_status == "blocked":
-            summary["blocked_assets"] += 1
-    metadata["asset_summary"] = summary
 
 
 def append_qa_report(package_dir: Path, object_id: str, candidate_id: str, selection_reason: str) -> None:

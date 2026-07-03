@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from package_state_lib import find_plan_object, read_plan_manifest
 from split_image_assets_contract import (
     ALLOWED_ASSET_CLASSES,
     ALLOWED_BLOCKING_VALUES,
@@ -197,18 +198,14 @@ def load_metadata(package_dir: Path, errors: list[str]) -> dict:
 
 
 def load_plan_manifest(package_dir: Path, errors: list[str]) -> dict | None:
-    path = package_dir / "plan_manifest.json"
-    if not path.exists():
-        return None
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        return read_plan_manifest(package_dir)
     except json.JSONDecodeError as exc:
         errors.append(f"plan_manifest.json is not valid JSON: {exc}")
         return None
-    if not isinstance(data, dict):
-        errors.append("plan_manifest.json must contain an object")
+    except ValueError as exc:
+        errors.append(str(exc))
         return None
-    return data
 
 
 def validate_required_layout(package_dir: Path, errors: list[str]) -> None:
@@ -626,18 +623,6 @@ def is_generated_delivery_layer(item: dict) -> bool:
     )
 
 
-def plan_manifest_object(plan_manifest: dict | None, object_id: str) -> dict | None:
-    if not isinstance(plan_manifest, dict):
-        return None
-    objects = plan_manifest.get("objects", [])
-    if not isinstance(objects, list):
-        return None
-    for item in objects:
-        if isinstance(item, dict) and item.get("object_id") == object_id:
-            return item
-    return None
-
-
 def decision_answer(entry: dict) -> str:
     for field_name in DECISION_ANSWER_FIELDS:
         value = entry.get(field_name)
@@ -1000,7 +985,7 @@ def validate_objects(
                     f"{object_id}: generated-route objects require plan_manifest.json during staged rollout"
                 )
             else:
-                planned = plan_manifest_object(plan_manifest, str(object_id))
+                planned = find_plan_object(plan_manifest, str(object_id))
                 if planned is None:
                     errors.append(
                         f"{object_id}: generated-route objects require a matching plan_manifest object entry"

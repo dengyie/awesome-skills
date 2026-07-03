@@ -382,6 +382,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             ROOT / "scripts" / "check_extraction_environment.py",
             ROOT / "scripts" / "compare_candidate_assets.py",
             ROOT / "scripts" / "candidate_workflow_lib.py",
+            ROOT / "scripts" / "package_state_lib.py",
             ROOT / "scripts" / "archive_intermediates.py",
             ROOT / "scripts" / "generate_ui_carrier_candidates.py",
             ROOT / "scripts" / "generate_ui_glyph_cleanup_candidates.py",
@@ -410,6 +411,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
         self.assertIn("single documentation entrypoint", readme)
         self.assertIn("Future `split-image-assets` work must converge here first", readme)
+        self.assertIn("Recommended Reading Order", readme)
         self.assertIn("single governing design document", design)
         self.assertIn("single implementation plan", plan)
         self.assertIn("documentation-system migration", migration)
@@ -508,6 +510,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "transparent PNG",
             "mask",
             "background_clean.png",
+            "operator guide",
             "metadata.json",
             "qa_report.md",
             "sprite_sheet_2x2.png",
@@ -553,6 +556,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "progress updates are commentary",
             "candidate promotion",
             "formal approval",
+            "Read What Where",
         ]:
             self.assertIn(expected, usage)
 
@@ -958,10 +962,45 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         )
         self.assertIn("generate", contract.ALLOWED_PLANNED_ROUTES)
         self.assertIn("codex-controlled-generation", contract.ALLOWED_GENERATION_PROVIDER_CLASSES)
-        self.assertEqual(
-            contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["granularity_alignment"],
-            "user-decision",
+
+    def test_package_state_lib_summarizes_asset_entries_consistently(self):
+        module = self._load_script_module("package_state_lib.py")
+        summary = module.summarize_asset_entries(
+            [
+                {"asset_class": "atomic", "reuse_status": "production-ready"},
+                {"asset_class": "candidate", "reuse_status": "draft-candidate"},
+                {"asset_class": "atomic", "reuse_status": "accepted-generated-reconstruction"},
+                {"asset_class": "grouped-support", "reuse_status": "support-only"},
+                {"asset_class": "atomic", "reuse_status": "blocked"},
+            ]
         )
+        self.assertEqual(
+            summary,
+            {
+                "production_ready_assets": 1,
+                "accepted_approximate_reconstructions": 0,
+                "accepted_generated_reconstructions": 1,
+                "draft_candidate_assets": 1,
+                "support_only_layers": 1,
+                "blocked_assets": 1,
+            },
+        )
+
+    def test_package_state_lib_reads_and_finds_plan_manifest_objects(self):
+        module = self._load_script_module("package_state_lib.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            plan_manifest = {
+                "objects": [
+                    {"object_id": "a", "planned_route": "extract"},
+                    {"object_id": "b", "planned_route": "generate"},
+                ]
+            }
+            module.write_plan_manifest(tmp_path, plan_manifest)
+            loaded = module.read_plan_manifest(tmp_path)
+            self.assertEqual(loaded, plan_manifest)
+            self.assertEqual(module.find_plan_object(loaded, "b"), {"object_id": "b", "planned_route": "generate"})
+            self.assertIsNone(module.find_plan_object(loaded, "missing"))
 
     def test_record_quality_review_uses_shared_confirmation_contract(self):
         contract = self._load_script_module("split_image_assets_contract.py")

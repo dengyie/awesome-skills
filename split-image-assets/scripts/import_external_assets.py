@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from package_state_lib import update_asset_summary
 from split_image_assets_contract import (
     ALLOWED_ASSET_CLASSES,
     ALLOWED_DELIVERY_CLASSES,
@@ -199,41 +200,6 @@ def upsert_object(metadata: dict, record: dict) -> None:
     objects.append(record)
 
 
-def summarize_assets(metadata: dict) -> None:
-    summary = {
-        "production_ready_assets": 0,
-        "accepted_approximate_reconstructions": 0,
-        "accepted_generated_reconstructions": 0,
-        "draft_candidate_assets": 0,
-        "support_only_layers": 0,
-        "blocked_assets": 0,
-    }
-    objects = metadata.get("objects", [])
-    if isinstance(objects, list):
-        for item in objects:
-            if not isinstance(item, dict):
-                continue
-            reuse_status = item.get("reuse_status")
-            asset_class = item.get("asset_class")
-            if reuse_status == "production-ready" and asset_class == "atomic":
-                summary["production_ready_assets"] += 1
-            elif reuse_status == "accepted-approximate-reconstruction":
-                summary["accepted_approximate_reconstructions"] += 1
-            elif reuse_status == "accepted-generated-reconstruction":
-                summary["accepted_generated_reconstructions"] += 1
-            elif reuse_status == "draft-candidate":
-                summary["draft_candidate_assets"] += 1
-            elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {
-                "grouped-support",
-                "background-support",
-                "preview-reference",
-            }:
-                summary["support_only_layers"] += 1
-            elif reuse_status == "blocked":
-                summary["blocked_assets"] += 1
-    metadata["asset_summary"] = summary
-
-
 def build_import_plan(
     package_dir: Path,
     metadata: dict,
@@ -366,7 +332,7 @@ def apply_import_plan(package_dir: Path, metadata: dict, plan: dict) -> None:
     configure_pipeline(metadata, plan["recipe"])
     upsert_tool(metadata, plan["tool_name"], plan["tool_role"], plan["tool_version"])
     upsert_object(metadata, plan["object"])
-    summarize_assets(metadata)
+    update_asset_summary(metadata)
 
 
 def import_record(
