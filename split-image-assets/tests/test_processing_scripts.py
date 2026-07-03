@@ -1,4 +1,5 @@
 import pathlib
+import shutil
 import sys
 
 TESTS_DIR = pathlib.Path(__file__).resolve().parent
@@ -1620,6 +1621,156 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertTrue((output / comparisons[0]["compare_artifact_path"]).exists())
             self.assertTrue((output / comparisons[0]["compare_manifest_path"]).exists())
             self.assertEqual(comparisons[0]["compare_criteria"], ["edge cleanliness", "shape fidelity"])
+    def test_compare_candidate_assets_records_provider_stage_evidence_for_generated_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_single_object_metadata(output)
+            self._write_generated_plan_manifest(output)
+            self._write_generation_brief(output)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            provider_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(provider_dir / "candidate_a.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/codex-controlled-generation/main_object/candidate_a.png",
+                    "--tool-name",
+                    "gpt-image-1",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "test-version",
+                    "--execution-mode",
+                    "host-managed",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "stage-candidate",
+                    "--candidate-id",
+                    "candidate-a",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            shutil.copy2(
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-a.png",
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-b.png",
+            )
+            shutil.copy2(
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-a_provider_stage.json",
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-b_provider_stage.json",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/main_object/candidate-a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/main_object/candidate-b.png",
+                    "--compare-note",
+                    "Compare generated candidates with provider evidence.",
+                    "--compare-criterion",
+                    "generated edge fidelity",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            manifest_rel = metadata["objects"][0]["candidate_comparisons"][0]["compare_manifest_path"]
+            manifest = json.loads((output / manifest_rel).read_text(encoding="utf-8"))
+            candidate_record = manifest["candidates"][0]
+            self.assertEqual(
+                candidate_record["provider_stage_manifest_path"],
+                "_staging/repair_candidates/main_object/candidate-a_provider_stage.json",
+            )
+            self.assertEqual(candidate_record["generation_source"], "codex-controlled-generation")
+            self.assertEqual(candidate_record["generation_model_or_tool"], "gpt-image-1")
+            self.assertEqual(candidate_record["generation_version"], "test-version")
+    def test_compare_candidate_assets_rejects_generated_candidates_without_provider_stage_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_single_object_metadata(output)
+            self._write_generated_plan_manifest(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate-b.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/main_object/candidate-a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/main_object/candidate-b.png",
+                    "--compare-note",
+                    "Reject generated compare without provider evidence.",
+                    "--compare-criterion",
+                    "generated edge fidelity",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("generated compare candidates require provider stage evidence", result.stderr)
     def test_compare_candidate_assets_requires_criterion(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2844,6 +2995,20 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 "_staging/generation_briefs/main_object.json",
             )
             self.assertEqual(obj["generation_reference_inputs"], ["source/source_original.png"])
+            compare_manifest = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "repair_candidates"
+                    / "manual-generated-v2_compare.json"
+                ).read_text(encoding="utf-8")
+            )
+            candidate_record = compare_manifest["candidates"][0]
+            self.assertEqual(
+                candidate_record["provider_stage_manifest_path"],
+                "_staging/repair_candidates/main_object/generated-v2_provider_stage.json",
+            )
+            self.assertEqual(candidate_record["generation_source"], "codex-controlled-generation")
     def test_promote_candidate_asset_generated_reconstruction_requires_evidence_when_stage_manifest_is_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

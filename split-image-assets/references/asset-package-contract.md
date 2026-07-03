@@ -478,3 +478,12 @@ Use `scripts/compare_candidate_assets.py` when more than one repair candidate sh
 - `selection_reason`
 
 Multi-candidate promotions should not happen without compare evidence. Compare manifest files are hard evidence, not optional sidecars.
+
+For generated-route candidate comparisons, compare manifests should also carry candidate-level provider-stage evidence such as:
+
+- `provider_stage_manifest_path`
+- `generation_source`
+- `generation_model_or_tool`
+- `generation_version`
+- `generation_prompt_or_brief_ref`
+- `generation_reference_inputs`

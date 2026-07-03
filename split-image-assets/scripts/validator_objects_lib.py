@@ -697,12 +697,16 @@ def validate_objects(
                                                 f"{object_id}: candidate comparison manifest must record candidates with asset_path"
                                             )
                                         else:
+                                            candidate_records_by_id: dict[str, dict] = {}
                                             for manifest_candidate in candidates_block:
                                                 if not isinstance(manifest_candidate, dict):
                                                     errors.append(
                                                         f"{object_id}: candidate comparison manifest candidates must be objects"
                                                     )
                                                     continue
+                                                manifest_candidate_id = manifest_candidate.get("candidate_id")
+                                                if isinstance(manifest_candidate_id, str) and manifest_candidate_id.strip():
+                                                    candidate_records_by_id[manifest_candidate_id] = manifest_candidate
                                                 asset_candidate_path = manifest_candidate.get("asset_path")
                                                 if not isinstance(asset_candidate_path, str) or not asset_candidate_path.strip():
                                                     errors.append(
@@ -716,6 +720,32 @@ def validate_objects(
                                             errors.append(
                                                 f"{object_id}: candidate comparison manifest must record risks"
                                             )
+                                        if generated_delivery and selected_candidate_id:
+                                            generated_candidate_record = candidate_records_by_id.get(selected_candidate_id)
+                                            if not isinstance(generated_candidate_record, dict):
+                                                errors.append(
+                                                    f"{object_id}: generated compare manifest must include the selected candidate record"
+                                                )
+                                            else:
+                                                provider_stage_manifest_path = generated_candidate_record.get(
+                                                    "provider_stage_manifest_path", ""
+                                                )
+                                                if not isinstance(provider_stage_manifest_path, str) or not provider_stage_manifest_path.strip():
+                                                    errors.append(
+                                                        f"{object_id}: generated compare manifest must record provider_stage_manifest_path for the selected candidate"
+                                                    )
+                                                for field_name in GENERATED_EVIDENCE_FIELDS:
+                                                    value = generated_candidate_record.get(field_name)
+                                                    if field_name == "generation_reference_inputs":
+                                                        if not isinstance(value, list) or not value:
+                                                            errors.append(
+                                                                f"{object_id}: generated compare manifest must record generation_reference_inputs for the selected candidate"
+                                                            )
+                                                    else:
+                                                        if not isinstance(value, str) or not value.strip():
+                                                            errors.append(
+                                                                f"{object_id}: generated compare manifest must record {field_name} for the selected candidate"
+                                                            )
                                         score_manifest_path = comparison.get("score_manifest_path", "")
                                         if score_manifest_path:
                                             if not isinstance(score_manifest_path, str):

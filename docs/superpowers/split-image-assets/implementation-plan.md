@@ -30,6 +30,7 @@ The current package baseline is:
 - generated-route provider brief and reference-input contract
 - generated candidate provider stage evidence reuse
 - provider-specific bridge request/result hard validation
+- generated compare manifest evidence propagation
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -38,6 +39,22 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `generated compare evidence V1`
+
+Closed status: complete
+
+What landed:
+
+- generated-route compare manifests now carry provider-stage evidence at the candidate-record level
+- generated compare now fails closed when provider-stage evidence is expected but missing
+- generated direct-promotion compare manifests also preserve that provider-stage evidence
+- validator now checks generated compare manifests for selected-candidate provider-stage evidence instead of accepting image-only compare records
+
+Verification completed:
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider-specific bridge contract V1`
 
@@ -155,6 +172,7 @@ These are the important completed milestones that define the current architectur
 11. generated-route provider brief contract V1
 12. generated candidate stage evidence V1
 13. provider-specific bridge contract V1
+14. generated compare evidence V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -176,7 +194,7 @@ Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
    - more explicit provider capability mapping on top of the now-harder bridge contract
-   - richer generated candidate lifecycle helpers on top of prepared briefs and provider-stage evidence
+   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, and generated compare manifests
    - optional native runner expansion on top of the bridge layer
 
 2. broader fixture and package migration

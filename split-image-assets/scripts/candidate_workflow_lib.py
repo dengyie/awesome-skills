@@ -30,6 +30,19 @@ def write_json(path: Path, data: dict) -> None:
     )
 
 
+def load_provider_stage_manifest(
+    candidate_asset_path: Path,
+    candidate_id: str,
+) -> dict:
+    manifest_path = candidate_asset_path.parent / f"{candidate_id}_provider_stage.json"
+    if not manifest_path.exists():
+        return {}
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("provider stage manifest must contain an object")
+    return data
+
+
 def package_path(
     package_dir: Path,
     value: str,

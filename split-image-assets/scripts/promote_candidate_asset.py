@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
+from candidate_workflow_lib import load_provider_stage_manifest
 from package_state_lib import update_asset_summary
 
 
@@ -59,23 +60,6 @@ def append_qa_report(package_dir: Path, object_id: str, candidate_id: str, selec
     ]
     existing = qa_path.read_text(encoding="utf-8") if qa_path.exists() else ""
     qa_path.write_text(existing.rstrip() + "\n" + "\n".join(lines) + "\n", encoding="utf-8")
-
-
-def load_provider_stage_manifest(
-    package_dir: Path,
-    candidate_asset: Path,
-    candidate_id: str,
-) -> dict:
-    manifest_path = candidate_asset.parent / f"{candidate_id}_provider_stage.json"
-    if not manifest_path.exists():
-        return {}
-    try:
-        data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"provider stage manifest is not valid JSON: {exc}")
-    if not isinstance(data, dict):
-        raise ValueError("provider stage manifest must contain an object")
-    return data
 
 
 def main() -> int:
@@ -153,9 +137,9 @@ def main() -> int:
         shutil.copy2(candidate_mask, destination_mask)
 
     try:
-        provider_stage = load_provider_stage_manifest(package_dir, candidate_asset, args.candidate_id)
-    except ValueError as exc:
-        parser.error(str(exc))
+        provider_stage = load_provider_stage_manifest(candidate_asset, args.candidate_id)
+    except (ValueError, json.JSONDecodeError) as exc:
+        parser.error(f"provider stage manifest is not valid JSON: {exc}")
 
     target["selected_candidate_id"] = args.candidate_id
     target["current_asset_revision"] = args.candidate_id
@@ -254,6 +238,23 @@ def main() -> int:
                 "created_at": now,
             },
         )
+        compare_manifest_data = json.loads((package_dir / compare_manifest_rel).read_text(encoding="utf-8"))
+        if args.delivery_class == "generated-reconstruction" and provider_stage:
+            compare_manifest_data["candidates"][0]["provider_stage_manifest_path"] = str(
+                (candidate_asset.parent / f"{args.candidate_id}_provider_stage.json").relative_to(package_dir)
+            ).replace("\\", "/")
+            for field_name in [
+                "generation_source",
+                "generation_model_or_tool",
+                "generation_version",
+                "generation_prompt_or_brief_ref",
+                "generation_reference_inputs",
+            ]:
+                compare_manifest_data["candidates"][0][field_name] = provider_stage.get(
+                    field_name,
+                    [] if field_name == "generation_reference_inputs" else "",
+                )
+            write_json(package_dir / compare_manifest_rel, compare_manifest_data)
         comparisons.append(
             {
                 "comparison_id": comparison_id,

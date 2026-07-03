@@ -49,6 +49,7 @@ When manual review is needed, report:
 - A mostly black source-space mask is normal when the object is small. Do not judge the layer from `masks/*.png` alone; inspect `assets/*.png` for tight transparent reuse and inspect `*_mask_overlay.png` to verify source alignment.
 - If more than one repair candidate exists, inspect the compare artifact before promotion. If only one candidate exists, record why direct promotion was acceptable.
 - Inspect the compare manifest, not just the compare image. A good compare should record criteria, review focus, risks, and candidate asset paths.
+- For generated candidates, inspect whether the compare manifest also carries provider-stage evidence for the same candidate id instead of reducing the review to image-only comparison.
 
 ## Honesty Rule
 

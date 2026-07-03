@@ -86,6 +86,12 @@ For generated candidate staging, the preferred result-side pattern is:
 - that provider-stage manifest should carry `generation_source`, `generation_model_or_tool`, `generation_version`, `generation_prompt_or_brief_ref`, and `generation_reference_inputs`
 - `promote_candidate_asset.py` may reuse that provider-stage manifest to fill generated-reconstruction evidence instead of requiring those flags to be repeated manually
 
+For generated candidate comparison, the preferred compare-side pattern is:
+
+- `compare_candidate_assets.py` should carry provider-stage evidence into the compare manifest candidate records
+- generated-route compare candidates should not rely on image-only comparison when provider-stage evidence is expected
+- generated delivery that later promotes a selected candidate should keep compare evidence and provider-stage evidence aligned on the same candidate id
+
 ## Provider Request Contract
 
 Every provider request should include:

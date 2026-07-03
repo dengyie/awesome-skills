@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from PIL import Image, ImageDraw
+from candidate_workflow_lib import load_provider_stage_manifest
+from package_state_lib import find_plan_object, read_plan_manifest
 
 
 def read_metadata(package_dir: Path) -> dict:
@@ -48,16 +50,28 @@ def parse_candidate_arg(value: str, parser: argparse.ArgumentParser) -> tuple[st
 
 
 def candidate_records_for_manifest(candidates: list[dict]) -> list[dict]:
-    return [
-        {
+    records = []
+    for item in candidates:
+        record = {
             "candidate_id": item["candidate_id"],
             "asset_path": item["relative_path"],
             "score_manifest_path": item.get("score_manifest_path", ""),
             "scores": item.get("scores"),
             "aggregate_score": item.get("aggregate_score"),
         }
-        for item in candidates
-    ]
+        provider_stage = item.get("provider_stage_manifest", {})
+        if provider_stage:
+            record["provider_stage_manifest_path"] = item.get("provider_stage_manifest_path", "")
+            for field_name in [
+                "generation_source",
+                "generation_model_or_tool",
+                "generation_version",
+                "generation_prompt_or_brief_ref",
+                "generation_reference_inputs",
+            ]:
+                record[field_name] = provider_stage.get(field_name, [] if field_name == "generation_reference_inputs" else "")
+        records.append(record)
+    return records
 
 
 def make_checkerboard(size: tuple[int, int], cell: int = 8) -> Image.Image:
@@ -161,6 +175,11 @@ def main() -> int:
     )
     if target is None:
         parser.error(f"unknown object-id: {args.object_id}")
+    plan_manifest = read_plan_manifest(package_dir)
+    plan_object = find_plan_object(plan_manifest, args.object_id) if isinstance(plan_manifest, dict) else None
+    require_generated_stage_evidence = (
+        isinstance(plan_object, dict) and str(plan_object.get("planned_route", "")).strip() == "generate"
+    )
 
     score_manifest_data = None
     score_by_candidate: dict[str, dict] = {}
@@ -194,6 +213,20 @@ def main() -> int:
         if not asset_path.exists():
             parser.error(f"candidate asset is missing: {asset_path}")
         score_entry = score_by_candidate.get(candidate_id, {})
+        provider_stage_manifest = {}
+        provider_stage_manifest_path = ""
+        try:
+            provider_stage_manifest = load_provider_stage_manifest(asset_path, candidate_id)
+        except ValueError as exc:
+            parser.error(str(exc))
+        if provider_stage_manifest:
+            provider_stage_manifest_path = str(
+                (asset_path.parent / f"{candidate_id}_provider_stage.json").relative_to(package_dir)
+            ).replace("\\", "/")
+        elif require_generated_stage_evidence:
+            parser.error(
+                f"generated compare candidates require provider stage evidence: {candidate_id}"
+            )
         candidates.append(
             {
                 "candidate_id": candidate_id,
@@ -202,6 +235,8 @@ def main() -> int:
                 "score_manifest_path": score_manifest_path_rel,
                 "scores": score_entry.get("scores"),
                 "aggregate_score": score_entry.get("aggregate_score"),
+                "provider_stage_manifest": provider_stage_manifest,
+                "provider_stage_manifest_path": provider_stage_manifest_path,
             }
         )
 
