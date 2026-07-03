@@ -4,7 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` documentation and shared-state surfaces are now tighter. The package has an explicit doc authority map, a dedicated `package_state_lib.py` for `asset_summary` and `plan_manifest` helpers, and less risk of drift across import/review/promote/export/validator paths.
+- Current stage: `split-image-assets` doc/architecture consolidation is complete locally. The package now has a clearer documentation router, a dedicated `package_state_lib.py` for `asset_summary` and `plan_manifest` helpers, and less duplication across import/review/promote/export/validator paths while preserving current behavior.
 
 ## Current Branch
 - `main`

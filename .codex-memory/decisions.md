@@ -23,6 +23,12 @@
 - Impact: `docs/superpowers/split-image-assets/README.md` now acts as a stronger documentation router, `docs/usage/split-image-assets.md` is positioned more clearly as the operator guide, and scripts that mutate/export package state now share `asset_summary` and `plan_manifest` helpers through `package_state_lib.py`.
 - Related files: `docs/superpowers/split-image-assets/README.md`, `docs/usage/split-image-assets.md`, `split-image-assets/scripts/package_state_lib.py`, `split-image-assets/scripts/init_asset_package.py`, `split-image-assets/scripts/record_quality_review.py`, `split-image-assets/scripts/import_external_assets.py`, `split-image-assets/scripts/promote_candidate_asset.py`, `split-image-assets/scripts/export_asset_manifest.py`, `split-image-assets/scripts/validate_asset_package.py`
 
+## 2026-07-03 - Split Image Assets Should Decompose Validator Next, Not Re-merge Docs
+- Decision: Treat validator decomposition as the most valuable next architecture milestone after the shared-state consolidation, and do not spend the next round re-merging the documentation surface.
+- Rationale: The current package architecture is fundamentally sound. The highest remaining maintenance hotspot is still `validate_asset_package.py`, while the documentation surface is now more navigable thanks to clearer authority routing. Further doc merging would yield less value than breaking down validator domains.
+- Impact: Future work should prioritize validator-domain decomposition, then test-module decomposition, and only then revisit deeper generated-route/runtime integration.
+- Related files: `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/tests/test_skill_package.py`, `docs/superpowers/split-image-assets/README.md`
+
 ## 2026-06-30 - Split Image Assets Separates Promotion Acceptance From Final Package Acceptance
 - Decision: Split candidate-promotion confirmation from package-level final acceptance by adding `metadata.confirmation.final_promotion_acceptance`, require affirmative final-acceptance decision-log entries before `qa.status=pass`, and make direct single-candidate promotion emit a minimal compare manifest instead of empty compare evidence.
 - Rationale: Review found two workflow-integrity bugs: a negative final acceptance answer could still satisfy the pass gate because gate state and answer content were decoupled, and `promote_candidate_asset.py` could report success while writing compare metadata that the validator would always reject.

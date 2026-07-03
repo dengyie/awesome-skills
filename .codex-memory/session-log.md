@@ -31,6 +31,14 @@
 - Next: Stop this milestone. Any additional cleanup should be a new bounded follow-up milestone.
 - Blockers: None.
 
+## 2026-07-03 5
+- Task: Finish the local closeout for the `split-image-assets` doc/architecture consolidation milestone.
+- Actions: Re-checked the final worktree after the helper extraction and doc routing cleanup, confirmed the package still passed full `split-image-assets` tests and `quick_validate.py`, and updated repo-native memory so a future session can resume from the post-consolidation baseline instead of the earlier planning-only state.
+- Results: The repository now reflects the closed consolidation milestone in both code and memory. The package remains behaviorally stable while being easier to maintain.
+- Validation: No new code changes beyond memory updates in this closeout step; prior milestone verification remains the authoritative evidence.
+- Next: Open a new milestone only if you want deeper validator decomposition, broader test-module decomposition, or richer generated-route runtime integration.
+- Blockers: None.
+
 ## 2026-06-30
 - Task: Fix the latest `split-image-assets` review findings around acceptance semantics and direct candidate promotion evidence.
 - Actions: Reproduced the two confirmed workflow bugs. Updated `record_quality_review.py` so only affirmative answers can clear approximate/final acceptance gates, split `final_promotion_acceptance` from package-level `final_acceptance`, and blocked `qa.status=pass` unless a final acceptance decision-log entry is affirmative. Updated `validate_asset_package.py` to enforce the same semantics and require promotion acceptance for approximate promoted candidates. Updated `promote_candidate_asset.py` so direct single-candidate promotion writes a minimal compare manifest instead of empty compare evidence. Synced `init_asset_package.py`, workflow/contract docs, and expanded regression coverage.

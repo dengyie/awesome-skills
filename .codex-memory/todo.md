@@ -1,7 +1,7 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after the doc/architecture consolidation pass. Candidate directions: validator decomposition, broader fixture migration, or deeper provider/runtime integration.
+- [ ] Choose the next bounded `split-image-assets` milestone after the doc/architecture consolidation pass. Recommended order: validator decomposition, then test-module decomposition, then deeper provider/runtime integration.
 - [ ] Choose the next bounded `split-image-assets` milestone on top of the planning-first generation-routing V1 baseline. Candidate directions: deeper provider support, richer planning helpers, or broader fixture/package migration.
 ## Done
 - [x] Consolidate `split-image-assets` documentation authority and shared state logic by adding an explicit doc map plus a shared `package_state_lib.py` for `asset_summary` and `plan_manifest` handling.
