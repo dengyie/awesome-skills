@@ -4,12 +4,15 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` is extended with UI-specific repair orchestration and stricter promotion/acceptance semantics. The skill now records a three-tier quality target (`structural-valid`, `usable-draft`, `visual-acceptance-ready`), routes UI-like objects by `object_type`, ships deterministic helper scripts for UI carrier candidate generation, hard-edge glyph cleanup, candidate scoring, and upscale-repair-downscale preparation/finalization, threads score evidence into compare/archive/validation, separates `final_promotion_acceptance` from package-level `final_acceptance`, and prevents negative final-acceptance answers from satisfying pass gates.
+- Current stage: `split-image-assets` planning-first generation-routing V1 is implemented and verified locally. The package now has canonical planning-first docs, `plan_manifest` scaffolding, a formal `generation_routing` gate in docs/contract surfaces, generation capability reporting in preflight, generated-reconstruction metadata wiring, staged validator enforcement for generated-route objects, and route-separated asset-summary support.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (148 tests)
+- 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
+- 2026-07-03: `git diff --check` (passed with only CRLF warnings)
 - 2026-06-30: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (100 tests)
 - 2026-06-30: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-06-27: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (88 tests)
@@ -232,10 +235,10 @@
 - None.
 
 ## Current Focus
-- Support user manual testing of `split-image-assets` using the three-layer workflow plus the new UI repair adapters: object-type routing, UI carrier reconstruction candidates, hard-edge glyph cleanup candidates, candidate scoring, and upscale-repair-downscale. The current real package is `.tmp-split-image-assets\concept-c-workshop-console-sam2-rembg-atomic`; it is structurally valid, `qa.status=needs-review`, and still needs human judgment for approximate reconstruction acceptance and stylistic warning interpretation.
+- The current milestone is closed locally. Any next work should be a new milestone on top of the planning-first baseline, such as deeper generated-route provider support, richer planning helpers, or broader fixture migrations.
 
 ## Next Milestone
-- Manual test representative UI/images with the new UI repair helpers and record whether the `carrier-glyph-pair` / small-asset workflows produce better candidate evidence and promotion discipline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the shipped planning-first generation-routing V1 baseline.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`

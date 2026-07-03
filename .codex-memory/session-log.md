@@ -1,4 +1,28 @@
 # Session Log
+## 2026-07-03
+- Task: Write the new canonical development docs for the next `split-image-assets` milestone before code changes.
+- Actions: Restored project memory and re-read the current canonical `split-image-assets` docs. Replaced the active canonical design and implementation plan under `docs/superpowers/split-image-assets/` so the package now officially targets a planning-first route-control workflow: whole-image planning, `plan_manifest`, a new `generation_routing` gate, formal object routes, generation capability truthfulness, `generated-reconstruction` delivery semantics, object-level budget boundaries, and route-separated final reporting.
+- Results: The repository now has one canonical mother spec for the next code pass instead of carrying the older installer-UX-first milestone as the active line.
+- Validation: Documentation-only change for this step; no package tests or quick validation run yet.
+- Next: Update package-facing docs and then implement the contract/code/test surfaces for planning-first generation routing.
+- Blockers: None.
+
+## 2026-07-03 2
+- Task: Deep-review the new `split-image-assets` canonical planning docs and repair implementation-risk gaps before coding.
+- Actions: Reviewed the new design/plan against the live contract surface and found four rollout hazards: route taxonomy drift, delivery-state migration ambiguity, immediate `plan_manifest` hard-fail risk, and under-specified provider/budget data models. Updated `docs/superpowers/split-image-assets/design.md` to add an explicit compatibility strategy, route mapping table, delivery-state compatibility matrix, staged validator rollout rules, extra planning fields (`attempt_history`, protected-object approval refs), and a generation provider contract. Updated `implementation-plan.md` to add a new Phase 0 for canonical alignment, make Phase 1 explicitly non-breaking, defer broad validator hardening to a later stage, and require legacy-compatible non-generated paths to keep passing during rollout.
+- Results: The canonical docs are now much safer to implement from. They no longer imply that a developer should guess route mappings or globally hard-fail old packages on the first code pass.
+- Validation: Documentation-only change for this step; no package tests or quick validation run yet.
+- Next: Start the code pass from the repaired rollout order: shared contract scaffolding first, then capability/planning surface, then generated-state wiring, then staged validator tightening.
+- Blockers: None.
+
+## 2026-07-03 3
+- Task: Complete the `split-image-assets` planning-first generation-routing V1 milestone.
+- Actions: Implemented the milestone in three code phases. Phase 1 added the planning-first scaffold: package-facing docs, `plan_manifest.json` creation in `init_asset_package.py`, `generation_routing` in the shared confirmation contract, and aligned tests. Phase 2 added generation capability reporting to `check_extraction_environment.py`, generation provider-class reporting, and generated-object metadata write paths through review/import/promotion flows. Phase 3 added staged validator enforcement for generated-route objects, generated evidence checks, legacy-compatible non-generated `plan_manifest` compatibility, route-separated asset summary buckets, and regression coverage for generated-route success/failure paths.
+- Results: `split-image-assets` now has a working planning-first baseline rather than only a design-only direction. Generated reconstruction is a real metadata/validator concept, `plan_manifest` is a package-owned surface, generation capability is reported separately, and the validator distinguishes generated-route hard gates from legacy non-generated compatibility.
+- Validation: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (148 tests OK), `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`), `git diff --check` passed with only CRLF warnings, and a phase-gate production review brief reported no new concrete P0/P1 blockers.
+- Next: Stop this milestone. Open any further work as a new bounded follow-up on top of the planning-first generation-routing baseline.
+- Blockers: None.
+
 ## 2026-06-30
 - Task: Fix the latest `split-image-assets` review findings around acceptance semantics and direct candidate promotion evidence.
 - Actions: Reproduced the two confirmed workflow bugs. Updated `record_quality_review.py` so only affirmative answers can clear approximate/final acceptance gates, split `final_promotion_acceptance` from package-level `final_acceptance`, and blocked `qa.status=pass` unless a final acceptance decision-log entry is affirmative. Updated `validate_asset_package.py` to enforce the same semantics and require promotion acceptance for approximate promoted candidates. Updated `promote_candidate_asset.py` so direct single-candidate promotion writes a minimal compare manifest instead of empty compare evidence. Synced `init_asset_package.py`, workflow/contract docs, and expanded regression coverage.

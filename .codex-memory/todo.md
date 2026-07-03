@@ -1,7 +1,9 @@
 # TODO
 ## In Progress
 ## Next
+- [ ] Choose the next bounded `split-image-assets` milestone on top of the planning-first generation-routing V1 baseline. Candidate directions: deeper provider support, richer planning helpers, or broader fixture/package migration.
 ## Done
+- [x] Implement the planning-first generation-routing V1 milestone for `split-image-assets`: package-facing docs, `plan_manifest`/route contract, generation capability reporting, generated-reconstruction validator rules, and regression coverage.
 - [x] Harden `split-image-assets` reconstruction capability and candidate-compare evidence so broken dedicated installs fall back honestly and archived compare manifests remain validator-visible.
 - [x] Commit the staged Round 1-4 `split-image-assets` contract hardening pass.
 - [x] Validate `split-image-assets` staged Round 1-4 hardening with targeted checks plus full package tests and quick validation.
