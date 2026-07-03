@@ -4,12 +4,14 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` doc/architecture consolidation is complete locally. The package now has a clearer documentation router, a dedicated `package_state_lib.py` for `asset_summary` and `plan_manifest` helpers, and less duplication across import/review/promote/export/validator paths while preserving current behavior.
+- Current stage: `split-image-assets` validator decomposition V1 is complete locally. The validator now uses a thin entrypoint plus dedicated metadata, object, package-artifact, and shared-helper modules, reducing the main hotspot without changing the CLI or validation contract behavior.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, validator decomposition baseline)
+- 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, validator decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (148 tests)
@@ -237,10 +239,10 @@
 - None.
 
 ## Current Focus
-- The current consolidation milestone is closed locally. Any next work should be a new bounded milestone, such as validator decomposition, broader fixture migration, or deeper provider/runtime integration.
+- The current validator decomposition milestone is closed locally. Any next work should be a new bounded milestone, most naturally test-module decomposition or deeper provider/runtime integration.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the planning-first and shared-state-consolidated baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the decomposed-validator baseline.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`

@@ -29,6 +29,12 @@
 - Impact: Future work should prioritize validator-domain decomposition, then test-module decomposition, and only then revisit deeper generated-route/runtime integration.
 - Related files: `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/tests/test_skill_package.py`, `docs/superpowers/split-image-assets/README.md`
 
+## 2026-07-03 - Split Image Assets Validator Now Uses A Thin Entrypoint Plus Domain Modules
+- Decision: Replace the monolithic validator implementation with a thin `validate_asset_package.py` entrypoint that orchestrates domain modules for shared helpers, metadata/pipeline validation, object/routing validation, and package-artifact validation.
+- Rationale: `validate_asset_package.py` had become the clearest architecture hotspot in the package. The goal was to reduce maintenance cost without changing the external CLI or the validation contract that the rest of the package depends on.
+- Impact: The validator is now easier to evolve in bounded pieces, future bugfixes can target narrower modules, and the next architecture step can focus on test decomposition instead of continuing to pile changes into one giant validator file.
+- Related files: `split-image-assets/scripts/validate_asset_package.py`, `split-image-assets/scripts/validator_shared.py`, `split-image-assets/scripts/validator_metadata_lib.py`, `split-image-assets/scripts/validator_objects_lib.py`, `split-image-assets/scripts/validator_package_artifacts_lib.py`, `split-image-assets/tests/test_skill_package.py`
+
 ## 2026-06-30 - Split Image Assets Separates Promotion Acceptance From Final Package Acceptance
 - Decision: Split candidate-promotion confirmation from package-level final acceptance by adding `metadata.confirmation.final_promotion_acceptance`, require affirmative final-acceptance decision-log entries before `qa.status=pass`, and make direct single-candidate promotion emit a minimal compare manifest instead of empty compare evidence.
 - Rationale: Review found two workflow-integrity bugs: a negative final acceptance answer could still satisfy the pass gate because gate state and answer content were decoupled, and `promote_candidate_asset.py` could report success while writing compare metadata that the validator would always reject.
