@@ -92,6 +92,8 @@ For generated candidate comparison, the preferred compare-side pattern is:
 - generated-route compare candidates should not rely on image-only comparison when provider-stage evidence is expected
 - generated delivery that later promotes a selected candidate should keep compare evidence and provider-stage evidence aligned on the same candidate id
 
+When promotion references an existing comparison, the compare manifest candidate record should be treated as the first evidence source for generated candidate asset paths and generated evidence fields before falling back to sibling stage manifests or manual flag repetition.
+
 ## Provider Request Contract
 
 Every provider request should include:

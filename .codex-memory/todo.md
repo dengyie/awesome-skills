@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after generated compare evidence V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after compare-driven promotion orchestration V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` compare-driven promotion orchestration V1: compare-id driven candidate/evidence resolution, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` generated compare evidence V1: generated compare manifest provider-stage evidence, validator enforcement, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider-specific bridge contract V1: registry-backed request/result validation, contract/doc sync, and regression coverage.
 - [x] Close `split-image-assets` generated candidate stage evidence V1: richer stage-candidate provider manifest, generated promotion evidence autofill, docs, canonical plan sync, and regression coverage.

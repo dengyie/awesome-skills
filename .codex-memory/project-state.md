@@ -4,7 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` generated compare evidence V1 is complete locally. Generated compare manifests now carry provider-stage evidence per candidate, and generated delivery validation checks that compare evidence instead of accepting image-only promotion history.
+- Current stage: `split-image-assets` compare-driven promotion orchestration V1 is complete locally. Promotion can now resolve candidate assets and generated evidence from compare manifests when `--comparison-id` is present, reducing manual duplication on the generated route.
 - The canonical `split-image-assets` doc surface has also been re-clustered so `docs/superpowers/split-image-assets/` is the single design/baseline entrypoint, `implementation-plan.md` now reflects the shipped baseline instead of stale checklist phases, and `quick-contract.md` now matches generated-only pass semantics.
 - Bridge-first provider integration V1 is also complete locally. The package now has a standardized provider request/result contract, a provider registry, default route chains, and deterministic bridge request/result scripts under `_staging/providers/`.
 - Provider bridge default-selection V2 is now complete locally. `prepare_provider_request.py` can select the default provider without `--provider-id`, object-type overrides are explicit, and `consume_provider_result.py` is now the canonical explicit consumer for bridge results.
@@ -13,6 +13,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (186 tests, compare-driven promotion orchestration V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, compare-driven promotion orchestration V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (compare-driven promotion orchestration V1 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, compare-driven promotion orchestration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (186 tests, generated compare evidence V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, generated compare evidence V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (generated compare evidence V1 review brief; no new P0/P1 blockers)
@@ -263,6 +267,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Compare-driven promotion orchestration V1 reduces duplication, but provider-specific multi-step compare/promotion orchestration is still manual and remains future work.
 - Generated compare evidence V1 now hardens generated compare manifests, but provider-specific compare/promotion orchestration is still manual and remains future work.
 - Provider-specific bridge contract V1 now hardens the registry boundary, but request/result orchestration across multiple providers is still intentionally manual and remains future work.
 - Generated candidate stage evidence V1 now closes the stage-to-promotion evidence hop, but provider-specific compare/promotion orchestration is still manual and remains future work.
@@ -289,10 +294,10 @@
 - None.
 
 ## Current Focus
-- The generated compare-evidence milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The compare-driven promotion orchestration milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the generated compare evidence V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the compare-driven promotion orchestration V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

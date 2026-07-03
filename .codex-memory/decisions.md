@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Promotion Should Prefer Compare Evidence Before Requiring Candidate Path Or Generated Flags Again
+- Decision: Let `promote_candidate_asset.py` resolve the candidate asset path from compare evidence when `--comparison-id` is provided, and let generated-reconstruction promotion prefer compare-manifest candidate evidence before falling back to provider-stage manifests or explicit flags.
+- Rationale: After compare manifests became strong enough to carry candidate-level provider-stage evidence, promotion was still making the operator restate the candidate asset path and often the same generated evidence again. That duplicated information the workflow already owned and increased the chance of drift between compare and promotion.
+- Alternatives considered: Keep `--candidate-asset` mandatory forever, or read only sibling stage manifests and ignore compare manifests during promotion.
+- Impact: Compare manifests are now a first-class handoff surface into promotion, generated promotion can continue from compare evidence even when the stage manifest is unavailable, and the workflow becomes less repetitive without relaxing evidence requirements.
+- Rollback trigger: If future promotion flows need multiple compare contexts for the same candidate, keep compare-driven promotion but require an explicit compare-manifest selector rather than reverting to path duplication.
+- Related files: `split-image-assets/scripts/promote_candidate_asset.py`, `split-image-assets/references/provider-contract.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-04 - Generated Compare Manifests Must Carry Provider-Stage Evidence For Generated Delivery
 - Decision: Make generated-route compare manifests carry candidate-level provider-stage evidence and make generated delivery validation require that evidence for the selected candidate.
 - Rationale: Earlier milestones ensured generated requests had briefs and generated staged candidates carried provider evidence, but compare remained an image-first surface. That left a gap where a generated delivery could still promote through compare evidence that showed only the image while hiding the provenance chain. Carrying provider-stage evidence into compare manifests closes that gap.

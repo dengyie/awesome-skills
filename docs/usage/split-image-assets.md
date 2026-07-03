@@ -221,6 +221,7 @@ python split-image-assets/scripts/consume_provider_result.py output-package --pr
 python split-image-assets/scripts/consume_provider_result.py output-package --provider-id external-professional-outputs --object-id main_object --mode import-manifest
 python split-image-assets/scripts/consume_provider_result.py output-package --object-id main_object
 python split-image-assets/scripts/consume_provider_result.py output-package --provider-id codex-controlled-generation --object-id main_object --mode stage-candidate --candidate-id generated-v1
+python split-image-assets/scripts/promote_candidate_asset.py output-package --object-id main_object --candidate-id generated-v1 --comparison-id main_object-compare-20260704113000 --delivery-class generated-reconstruction --repair-note "Promote selected generated candidate." --selection-reason "Selected candidate best matches the approved generated compare."
 python split-image-assets/scripts/import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from SAM2 mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets/scripts/build_previews.py output-package
 python split-image-assets/scripts/build_quality_previews.py output-package

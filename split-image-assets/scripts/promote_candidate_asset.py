@@ -62,13 +62,39 @@ def append_qa_report(package_dir: Path, object_id: str, candidate_id: str, selec
     qa_path.write_text(existing.rstrip() + "\n" + "\n".join(lines) + "\n", encoding="utf-8")
 
 
+def load_compare_manifest(package_dir: Path, relative_path: str, parser: argparse.ArgumentParser) -> dict:
+    compare_manifest_path = package_path(package_dir, relative_path, "compare_manifest_path", parser)
+    if not compare_manifest_path.exists():
+        parser.error(f"compare manifest is missing: {relative_path}")
+    try:
+        data = json.loads(compare_manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        parser.error(f"compare manifest is not valid JSON: {exc}")
+    if not isinstance(data, dict):
+        parser.error("compare manifest must contain an object")
+    return data
+
+
+def find_compare_candidate_record(compare_manifest: dict, candidate_id: str) -> dict:
+    candidates = compare_manifest.get("candidates", [])
+    if not isinstance(candidates, list):
+        return {}
+    for item in candidates:
+        if isinstance(item, dict) and item.get("candidate_id") == candidate_id:
+            return item
+    return {}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Promote a staged repair candidate into the package asset inventory."
     )
     parser.add_argument("package_dir", help="Asset package directory.")
     parser.add_argument("--object-id", required=True, help="Object id to promote.")
-    parser.add_argument("--candidate-asset", required=True, help="Package-relative staged candidate asset path.")
+    parser.add_argument(
+        "--candidate-asset",
+        help="Package-relative staged candidate asset path. Optional when --comparison-id can resolve the candidate from compare evidence.",
+    )
     parser.add_argument("--candidate-mask", help="Package-relative staged candidate mask path.")
     parser.add_argument("--candidate-id", required=True, help="Candidate identifier recorded in metadata.")
     parser.add_argument("--comparison-id", help="Existing candidate comparison record id to resolve.")
@@ -104,9 +130,41 @@ def main() -> int:
     if target is None:
         parser.error(f"unknown object-id: {args.object_id}")
 
-    candidate_asset = package_path(
-        package_dir, args.candidate_asset, "candidate asset", parser
-    )
+    comparisons = target.setdefault("candidate_comparisons", [])
+    if not isinstance(comparisons, list):
+        parser.error("target object candidate_comparisons must be a list when present")
+    comparison = None
+    compare_manifest = {}
+    compare_candidate_record = {}
+    if args.comparison_id:
+        comparison = next(
+            (
+                item
+                for item in comparisons
+                if isinstance(item, dict) and item.get("comparison_id") == args.comparison_id
+            ),
+            None,
+        )
+        if comparison is None:
+            parser.error(f"unknown comparison-id: {args.comparison_id}")
+        candidate_ids = comparison.get("candidate_ids", [])
+        if not isinstance(candidate_ids, list) or args.candidate_id not in candidate_ids:
+            parser.error("comparison-id must reference a comparison that includes the selected candidate")
+        compare_manifest_path = comparison.get("compare_manifest_path", "")
+        if not isinstance(compare_manifest_path, str) or not compare_manifest_path.strip():
+            parser.error("comparison-id must reference a comparison with compare_manifest_path")
+        compare_manifest = load_compare_manifest(package_dir, compare_manifest_path, parser)
+        compare_candidate_record = find_compare_candidate_record(compare_manifest, args.candidate_id)
+        if not compare_candidate_record:
+            parser.error("comparison-id compare manifest must include the selected candidate record")
+
+    candidate_asset_value = args.candidate_asset
+    if not candidate_asset_value and compare_candidate_record:
+        candidate_asset_value = str(compare_candidate_record.get("asset_path", "")).strip()
+    if not candidate_asset_value:
+        parser.error("--candidate-asset is required unless --comparison-id resolves the candidate asset from compare evidence")
+
+    candidate_asset = package_path(package_dir, candidate_asset_value, "candidate asset", parser)
     require_repair_candidate_path(candidate_asset, package_dir, "candidate asset", parser)
     if not candidate_asset.exists():
         parser.error(f"candidate asset is missing: {candidate_asset}")
@@ -148,18 +206,38 @@ def main() -> int:
         target["reuse_status"] = "approximate-reconstruction"
         target["approximate"] = True
     if args.delivery_class == "generated-reconstruction":
-        generation_source = args.generation_source or str(provider_stage.get("generation_source", "")).strip()
-        generation_model_or_tool = args.generation_model_or_tool or str(
-            provider_stage.get("generation_model_or_tool", "")
-        ).strip()
-        generation_version = args.generation_version or str(provider_stage.get("generation_version", "")).strip()
-        generation_prompt_or_brief_ref = args.generation_prompt_or_brief_ref or str(
-            provider_stage.get("generation_prompt_or_brief_ref", "")
-        ).strip()
-        generation_reference_inputs = list(args.generation_reference_input) or list(
-            provider_stage.get("generation_reference_inputs", [])
-            if isinstance(provider_stage.get("generation_reference_inputs", []), list)
-            else []
+        generation_source = (
+            args.generation_source
+            or str(compare_candidate_record.get("generation_source", "")).strip()
+            or str(provider_stage.get("generation_source", "")).strip()
+        )
+        generation_model_or_tool = (
+            args.generation_model_or_tool
+            or str(compare_candidate_record.get("generation_model_or_tool", "")).strip()
+            or str(provider_stage.get("generation_model_or_tool", "")).strip()
+        )
+        generation_version = (
+            args.generation_version
+            or str(compare_candidate_record.get("generation_version", "")).strip()
+            or str(provider_stage.get("generation_version", "")).strip()
+        )
+        generation_prompt_or_brief_ref = (
+            args.generation_prompt_or_brief_ref
+            or str(compare_candidate_record.get("generation_prompt_or_brief_ref", "")).strip()
+            or str(provider_stage.get("generation_prompt_or_brief_ref", "")).strip()
+        )
+        generation_reference_inputs = (
+            list(args.generation_reference_input)
+            or list(
+                compare_candidate_record.get("generation_reference_inputs", [])
+                if isinstance(compare_candidate_record.get("generation_reference_inputs", []), list)
+                else []
+            )
+            or list(
+                provider_stage.get("generation_reference_inputs", [])
+                if isinstance(provider_stage.get("generation_reference_inputs", []), list)
+                else []
+            )
         )
         if not generation_source:
             parser.error(
@@ -188,29 +266,13 @@ def main() -> int:
         {
             "candidate_id": args.candidate_id,
             "note": args.repair_note,
-            "candidate_asset": args.candidate_asset,
+            "candidate_asset": candidate_asset_value,
             "candidate_mask": args.candidate_mask or "",
             "selection_reason": args.selection_reason,
             "comparison_id": args.comparison_id or "",
         }
     )
-    comparisons = target.setdefault("candidate_comparisons", [])
-    if not isinstance(comparisons, list):
-        parser.error("target object candidate_comparisons must be a list when present")
     if args.comparison_id:
-        comparison = next(
-            (
-                item
-                for item in comparisons
-                if isinstance(item, dict) and item.get("comparison_id") == args.comparison_id
-            ),
-            None,
-        )
-        if comparison is None:
-            parser.error(f"unknown comparison-id: {args.comparison_id}")
-        candidate_ids = comparison.get("candidate_ids", [])
-        if not isinstance(candidate_ids, list) or args.candidate_id not in candidate_ids:
-            parser.error("comparison-id must reference a comparison that includes the selected candidate")
         comparison["selected_candidate_id"] = args.candidate_id
         comparison["selection_reason"] = args.selection_reason
         comparison["selected_at"] = now
@@ -226,7 +288,7 @@ def main() -> int:
                 "candidates": [
                     {
                         "candidate_id": args.candidate_id,
-                        "asset_path": args.candidate_asset,
+                        "asset_path": candidate_asset_value,
                     }
                 ],
                 "compare_artifact_path": "",
