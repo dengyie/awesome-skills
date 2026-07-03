@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - External-Manifest Providers Should Bridge Through Stored Provider Manifests
+- Decision: Treat `artifacts.provider_manifest` as the canonical bridge output for `external-professional-outputs`, and let `consume_provider_result.py --mode import-manifest` load that manifest when `--manifest` is omitted.
+- Rationale: After provider bridge V2, the remaining friction in the external-manifest path was purely operational: the bridge could record a provider result, but the package-owned consumer still required the operator to repeat the manifest path manually. Closing that gap keeps the bridge-first contract narrow and practical without giving provider scripts direct metadata ownership.
+- Alternatives considered: Keep `--manifest` mandatory for every import-manifest consumption, or let provider result scripts import directly into the package and mutate metadata.
+- Impact: `external-professional-outputs` now exposes a single canonical bridge artifact, bridge consumers can resolve it deterministically from `_staging/providers/.../provider_result.json`, docs and usage examples now point at the shorter command path, and future provider/runtime work can build on the full request -> result -> consumer loop instead of inventing external-manifest exceptions.
+- Rollback trigger: If future providers need multiple competing import manifests per object, the consumer may need an explicit selector again rather than a single implicit `provider_manifest` artifact.
+- Related files: `split-image-assets/scripts/provider_registry.py`, `split-image-assets/scripts/consume_provider_result.py`, `split-image-assets/references/provider-contract.md`, `split-image-assets/references/default-route-chains.md`, `split-image-assets/SKILL.md`, `docs/usage/split-image-assets.md`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-04 - Provider Bridge Should Resolve Defaults Automatically But Consume Results Explicitly
 - Decision: Allow `prepare_provider_request.py` to omit `--provider-id` and resolve through route default plus object-type override, while keeping provider result consumption explicit through a dedicated `consume_provider_result.py` entrypoint instead of direct metadata mutation.
 - Rationale: After bridge-first V1, agents still had to hand-choose provider ids and manually splice provider results into the package workflow. The next highest-value improvement was to lower ordinary operator burden without weakening the ownership boundary between staging artifacts and final package truth.

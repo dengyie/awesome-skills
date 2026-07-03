@@ -64,6 +64,11 @@ The standard first consumer is `consume_provider_result.py`. It may:
 
 It still counts as explicit package-owned consumption, not as direct provider-side metadata mutation.
 
+For `external-manifest` providers, the preferred pattern is:
+
+- provider result records `artifacts.provider_manifest`
+- `consume_provider_result.py --mode import-manifest` reads that manifest directly when `--manifest` is omitted
+
 ## Provider Request Contract
 
 Every provider request should include:
@@ -103,6 +108,8 @@ Every provider result should include:
 - `notes`
 
 `artifacts` should use package-relative paths only.
+
+For `external-manifest` providers, `artifacts.provider_manifest` is the canonical bridge output when the upstream result is a multi-object import manifest rather than a single already-normalized asset pair.
 
 `provenance` should include:
 

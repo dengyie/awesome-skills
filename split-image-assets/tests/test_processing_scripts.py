@@ -504,6 +504,99 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     / "generated-v1.png"
                 ).exists()
             )
+    def test_consume_provider_result_uses_provider_manifest_when_manifest_flag_is_omitted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            provider_dir = output / "_staging" / "providers" / "external-professional-outputs" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            asset = tmp_path / "tile.png"
+            mask = tmp_path / "tile_mask.png"
+            Image.new("RGBA", (2, 2), (80, 100, 120, 255)).save(asset)
+            Image.new("L", (6, 6), 255).save(mask)
+            manifest_path = provider_dir / "provider_manifest.json"
+            manifest_path.write_text(
+                json.dumps(
+                    {
+                        "recipe": "grounded-segmentation-matting-repair",
+                        "tool": {
+                            "name": "SAM2",
+                            "role": "segmentation",
+                            "version": "external",
+                        },
+                        "objects": [
+                            {
+                                "object_id": "main_object",
+                                "role": "main",
+                                "layer_kind": "primary-subject",
+                                "composition_order": 10,
+                                "semantic_boundary": "Imported via provider manifest bridge.",
+                                "asset": str(asset),
+                                "mask": str(mask),
+                                "mask_source": "sam2",
+                                "alpha_source": "rembg-refine",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "external-professional-outputs",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "provider_manifest=_staging/providers/external-professional-outputs/main_object/provider_manifest.json",
+                    "--tool-name",
+                    "SAM2",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "external-manifest",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "external-professional-outputs",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "import-manifest",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["id"], "main_object")
+            self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "SAM2")
     def test_build_previews_creates_inspection_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

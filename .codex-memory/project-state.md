@@ -4,7 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` generated-route runtime integration V1 is complete locally. Generated-only pass paths now validate honestly without requiring extraction capability, generated-route confirmation is enforced with object-scoped decision evidence, and preflight reporting now exposes generated-reconstruction gaps alongside extraction gaps.
+- Current stage: `split-image-assets` external-manifest provider consumption V4 is complete locally. `consume_provider_result.py --mode import-manifest` now accepts an omitted `--manifest` when the provider result already records `artifacts.provider_manifest`, which closes the `external-professional-outputs` bridge path without giving provider scripts metadata ownership.
 - The canonical `split-image-assets` doc surface has also been re-clustered so `docs/superpowers/split-image-assets/` is the single design/baseline entrypoint, `implementation-plan.md` now reflects the shipped baseline instead of stale checklist phases, and `quick-contract.md` now matches generated-only pass semantics.
 - Bridge-first provider integration V1 is also complete locally. The package now has a standardized provider request/result contract, a provider registry, default route chains, and deterministic bridge request/result scripts under `_staging/providers/`.
 - Provider bridge default-selection V2 is now complete locally. `prepare_provider_request.py` can select the default provider without `--provider-id`, object-type overrides are explicit, and `consume_provider_result.py` is now the canonical explicit consumer for bridge results.
@@ -13,6 +13,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (169 tests, external-manifest provider consumption V4)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, external-manifest provider consumption V4)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (external-manifest provider consumption V4 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, external-manifest provider consumption V4)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (165 tests, provider bridge default-selection V2)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider bridge default-selection V2)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (provider bridge default-selection V2 review brief; no new P0/P1 blockers)
@@ -239,6 +243,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Provider bridge V4 closes the external-manifest consumption hop, but it still intentionally supports only a narrow provider surface; broader native runner support and multi-step orchestration remain out of scope.
 - Provider bridge V1 standardizes request/result staging and default route chains, but it does not yet execute broad native upstream runtimes itself; most real provider execution still depends on bridge, external-manifest, or host-managed flows.
 - Provider bridge V2 now supports default provider selection and explicit result consumption, but provider-result consumption is still narrow by design: it currently handles explicit import or staged-candidate paths rather than generalized multi-step orchestration.
 - Generated-route pass now depends on object-scoped `generation_routing` decision evidence in `metadata.decision_log[]`; older generated fixtures or hand-authored packages that only set package-level `metadata.confirmation.generation_routing` must be migrated before validation passes.
@@ -259,10 +264,10 @@
 - None.
 
 ## Current Focus
-- The provider bridge default-selection milestone is complete locally on top of the generated-route baseline. The next most natural follow-up is deeper provider/runtime support on top of the bridge layer rather than more contract-only expansion.
+- The provider-manifest bridge consumption milestone is complete locally on top of the generated-route and provider-default-selection baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the generated-route runtime integration baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the external-manifest provider consumption V4 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

@@ -70,9 +70,19 @@ def main() -> int:
     metadata = checked_metadata(package_dir, parser)
 
     if args.mode == "import-manifest":
-        if not args.manifest:
-            parser.error("--manifest is required for import-manifest")
-        manifest = load_manifest(Path(args.manifest).resolve(), parser)
+        manifest_path: Path | None = None
+        if args.manifest:
+            manifest_path = Path(args.manifest).resolve()
+        else:
+            result = load_provider_result(package_dir, args.provider_id, args.object_id)
+            artifacts = result.get("artifacts", {})
+            provider_manifest = artifacts.get("provider_manifest")
+            if not isinstance(provider_manifest, str) or not provider_manifest.strip():
+                parser.error(
+                    "import-manifest requires --manifest or provider result artifacts.provider_manifest"
+                )
+            manifest_path = (package_dir / provider_manifest).resolve()
+        manifest = load_manifest(manifest_path, parser)
         subprocess_parser = parser
         tool = manifest.get("tool", {})
         if not isinstance(tool, dict):

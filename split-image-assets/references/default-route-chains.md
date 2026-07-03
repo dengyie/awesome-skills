@@ -28,6 +28,8 @@ Fallback:
 
 - `external-professional-outputs`
 
+When `external-professional-outputs` is selected, the preferred bridge output is a provider-owned import manifest consumed through `consume_provider_result.py --mode import-manifest`.
+
 ## Route: `reconstruct`
 
 Default chain:

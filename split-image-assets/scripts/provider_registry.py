@@ -37,7 +37,7 @@ PROVIDER_REGISTRY = {
         "execution_mode": "external-manifest",
         "supported_routes": ["extract", "reconstruct"],
         "expected_inputs": ["provider_manifest"],
-        "expected_outputs": ["asset_png", "source_space_mask"],
+        "expected_outputs": ["provider_manifest"],
         "production_ready_requires": [
             "importable external provenance",
             "package-owned copied artifacts",

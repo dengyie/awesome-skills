@@ -153,6 +153,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - do not let provider bridge scripts write `metadata.json` directly; final package truth still changes only through explicit consumers
     - treat the provider bridge layer as the standard path between planning and import/compare/promotion
     - consume provider results through `scripts/consume_provider_result.py` when the result should enter import or staged-candidate flow
+    - for external-manifest providers, prefer `artifacts.provider_manifest` plus `consume_provider_result.py --mode import-manifest`
 13. Analyze the source image before extraction:
     - visual hierarchy from background to foreground
     - main object
