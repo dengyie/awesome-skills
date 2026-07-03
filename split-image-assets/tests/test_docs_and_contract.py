@@ -37,7 +37,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             ROOT / "scripts" / "provider_contract.py",
             ROOT / "scripts" / "provider_registry.py",
             ROOT / "scripts" / "provider_bridge_lib.py",
+            ROOT / "scripts" / "generation_brief_lib.py",
             ROOT / "scripts" / "prepare_provider_request.py",
+            ROOT / "scripts" / "prepare_generation_brief.py",
             ROOT / "scripts" / "consume_provider_result.py",
             ROOT / "scripts" / "record_provider_result.py",
             ROOT / "scripts" / "archive_intermediates.py",
@@ -168,6 +170,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertIn("default provider chain", skill_text)
         self.assertIn("object_type override", skill_text)
         self.assertIn("prepare_provider_request.py", skill_text)
+        self.assertIn("prepare_generation_brief.py", skill_text)
         self.assertIn("consume_provider_result.py", skill_text)
         self.assertIn("record_provider_result.py", skill_text)
         self.assertIn("do not let provider bridge scripts write `metadata.json` directly", skill_text)
@@ -227,6 +230,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "prepare_provider_request.py",
             "consume_provider_result.py",
             "record_provider_result.py",
+            "prepare_generation_brief.py",
             "provider bridge",
             "_staging/providers/",
             "object_type override",

@@ -170,6 +170,8 @@ If pause is not allowed, continue with the documented fallback and record the ra
 5. Create or refresh `plan_manifest.json` and run `generation_routing`.
 6. Select the default provider chain for each resolved route, then apply any explicit `object_type` override, and write bridge request manifests under `_staging/providers/`.
    - `prepare_provider_request.py` may omit `--provider-id` when the default chain should be used
+   - `generate` routes should first create `_staging/generation_briefs/<object-id>.json` and `_staging/generation_briefs/<object-id>_reference_inputs.json` through `prepare_generation_brief.py`
+   - `prepare_provider_request.py` should fail closed for generate routes when those package-owned brief artifacts are missing
 7. Use a `pilot_object` when the composition is dense or high-risk.
 8. Extract, reconstruct, generate, or import assets according to the planned object routes and provider results.
    - provider results remain staging-only until explicit consumers such as `consume_provider_result.py`, compare, promotion, or review adapters use them

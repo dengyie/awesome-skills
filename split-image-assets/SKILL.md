@@ -148,6 +148,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - this is the route default plus object_type override rule for provider selection
     - allow `plan_manifest.provider_preferences` to override the default only when the preferred provider is valid for the route
     - build provider request manifests with `scripts/prepare_provider_request.py`; `--provider-id` is optional when the default chain is acceptable
+    - for `generate` routes, write a package-owned brief first with `scripts/prepare_generation_brief.py`
     - keep provider requests and results under `_staging/providers/<provider-id>/<object-id>/`
     - record provider result manifests with `scripts/record_provider_result.py`
     - do not let provider bridge scripts write `metadata.json` directly; final package truth still changes only through explicit consumers
@@ -217,6 +218,8 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 `scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
 
 `scripts/prepare_provider_request.py`, `scripts/record_provider_result.py`, `scripts/consume_provider_result.py`, and the provider bridge helpers standardize how planned object routes talk to upstream providers. Use them to normalize provider requests/results into `_staging/providers/<provider-id>/<object-id>/` before import, compare, or promotion. This bridge layer should come before broad native-runner expansion.
+
+`scripts/prepare_generation_brief.py` is the package-owned helper for generate routes. It writes `_staging/generation_briefs/<object-id>.json` plus `_staging/generation_briefs/<object-id>_reference_inputs.json`, and `prepare_provider_request.py` should fail closed for generate routes when those inputs do not exist yet.
 
 `scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It checks optional module presence, runtime readiness, and production-ready capability for segmentation, matting, reconstruction, generation, and environment support. It does not install anything. For reconstruction, runtime support such as `torch` or `onnxruntime` is not enough by itself; only a dedicated reconstruction tool path should count as `production_ready=true`. For generation, raw image generation availability is not enough by itself; the provider must support object-level constrained generation plus transparent asset delivery before it can count as `production_ready=true`.
 

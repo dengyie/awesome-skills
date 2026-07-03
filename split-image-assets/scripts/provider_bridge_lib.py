@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from generation_brief_lib import generation_brief_path, generation_reference_inputs_path
 from package_state_lib import find_plan_object, read_plan_manifest
 from provider_contract import (
     PROVIDER_REQUEST_SCHEMA_VERSION,
@@ -107,6 +108,25 @@ def resolve_result_provider_id(package_dir: Path, object_id: str, provider_id: s
     )
 
 
+def _augment_generate_input_refs(package_dir: Path, object_id: str, input_refs: dict[str, str]) -> dict[str, str]:
+    augmented = dict(input_refs)
+    if "generation_brief" not in augmented:
+        brief_path = generation_brief_path(package_dir, object_id)
+        if not brief_path.exists():
+            raise ValueError(
+                f"generate route requires a prepared generation brief for {object_id}; run prepare_generation_brief.py first"
+            )
+        augmented["generation_brief"] = str(brief_path.relative_to(package_dir)).replace("\\", "/")
+    if "reference_inputs" not in augmented:
+        reference_path = generation_reference_inputs_path(package_dir, object_id)
+        if not reference_path.exists():
+            raise ValueError(
+                f"generate route requires a prepared reference-input manifest for {object_id}; run prepare_generation_brief.py first"
+            )
+        augmented["reference_inputs"] = str(reference_path.relative_to(package_dir)).replace("\\", "/")
+    return augmented
+
+
 def build_provider_request(
     package_dir: Path,
     object_id: str,
@@ -130,6 +150,9 @@ def build_provider_request(
         raise ValueError(
             f"provider {selected_provider_id} does not support planned route: {planned_route}"
         )
+    normalized_input_refs = dict(input_refs or {})
+    if planned_route == "generate":
+        normalized_input_refs = _augment_generate_input_refs(package_dir, object_id, normalized_input_refs)
     source = metadata.get("source", {})
     quality_target = plan_manifest.get("quality_target", {})
     request = {
@@ -143,7 +166,7 @@ def build_provider_request(
         "planned_route": planned_route,
         "quality_target": str(quality_target.get("tier", "")).strip(),
         "source_image": str(source.get("path", "")).strip(),
-        "input_refs": input_refs or {},
+        "input_refs": normalized_input_refs,
         "expected_outputs": {
             output_name: True for output_name in provider_spec["expected_outputs"]
         },

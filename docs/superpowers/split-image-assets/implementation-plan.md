@@ -27,6 +27,7 @@ The current package baseline is:
 - extraction/generation route separation
 - provider bridge contract, registry, and request/result staging surface
 - provider bridge default provider selection and low-friction result consumption defaults
+- generated-route provider brief and reference-input contract
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -35,6 +36,22 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `generated-route provider brief contract V1`
+
+Closed status: complete
+
+What landed:
+
+- `prepare_generation_brief.py` now writes package-owned generation briefs plus reference-input manifests under `_staging/generation_briefs/`
+- generate-route provider requests now fail closed until those package-owned brief artifacts exist
+- `prepare_provider_request.py` auto-attaches `generation_brief` and `reference_inputs` for generate routes once the brief is prepared
+- package docs and tests now describe the generated-route bridge input contract explicitly
+
+Verification completed:
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider result default-consumption V1`
 
@@ -100,6 +117,7 @@ These are the important completed milestones that define the current architectur
 8. generated-route runtime integration V1
 9. provider bridge contract V1
 10. provider result default-consumption V1
+11. generated-route provider brief contract V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -120,9 +138,8 @@ Any new work should begin by choosing a new bounded milestone on top of the curr
 Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
-   - better provider-specific runtime contract depth on top of the now-shorter consume path
    - more explicit provider capability mapping
-   - richer generated candidate lifecycle helpers
+   - richer generated candidate lifecycle helpers on top of prepared generation briefs
    - optional native runner expansion on top of the bridge layer
 
 2. broader fixture and package migration

@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after provider result default-consumption V1. Candidate directions: deeper provider/runtime support on top of the lower-friction bridge loop, richer planning helpers, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after generated-route provider brief contract V1. Candidate directions: deeper provider/runtime support on top of the brief-first bridge loop, richer generated candidate lifecycle helpers, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` generated-route provider brief contract V1: package-owned generation brief helper, generate-route request gate, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider result default-consumption V1: inferred provider/mode consume path, metadata-object extract defaults, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` external-manifest provider consumption V4: canonical `provider_manifest` bridge output, implicit import-manifest consumption, docs, memory, and regression coverage.
 - [x] Implement `split-image-assets` provider bridge default-selection V2: optional default provider selection, object-type override path, explicit provider result consumer, docs, and regression coverage.

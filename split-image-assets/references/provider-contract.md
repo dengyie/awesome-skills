@@ -72,6 +72,13 @@ For `external-manifest` providers, the preferred pattern is:
 - provider result records `artifacts.provider_manifest`
 - `consume_provider_result.py --mode import-manifest` reads that manifest directly when `--manifest` is omitted
 
+For `generate` routes, the preferred request-side pattern is:
+
+- write `_staging/generation_briefs/<object-id>.json` through `prepare_generation_brief.py`
+- write `_staging/generation_briefs/<object-id>_reference_inputs.json` beside it
+- let `prepare_provider_request.py` auto-attach those files as `input_refs.generation_brief` and `input_refs.reference_inputs`
+- do not allow a generate-route provider request to proceed when those package-owned inputs are missing
+
 ## Provider Request Contract
 
 Every provider request should include:

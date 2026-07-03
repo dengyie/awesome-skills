@@ -214,6 +214,7 @@ For asset value routing, also record per-object `value_scoring`, `decision_routi
 ```bash
 python split-image-assets/scripts/check_extraction_environment.py
 python split-image-assets/scripts/init_asset_package.py source.png output-package
+python split-image-assets/scripts/prepare_generation_brief.py output-package --object-id main_object --reference-input source/source_original.png
 python split-image-assets/scripts/prepare_provider_request.py output-package --object-id main_object --input-ref source_crop=_staging/planning/main_object_crop.png --input-ref rough_mask=_staging/planning/main_object_mask.png
 python split-image-assets/scripts/record_provider_result.py output-package --provider-id grounded-sam-bridge --object-id main_object --status success --artifact asset_png=_staging/providers/grounded-sam-bridge/main_object/main_object.png --artifact source_space_mask=_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png --tool-name Grounded-SAM --tool-role segmentation --tool-version external --execution-mode bridge --next-expected-provider rembg-bridge
 python split-image-assets/scripts/consume_provider_result.py output-package --provider-id grounded-sam-bridge --object-id main_object --mode import-extract --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject imported from provider result"

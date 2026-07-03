@@ -28,6 +28,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             planning_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(planning_dir / "main_object_crop.png")
             Image.new("L", (4, 3), 255).save(planning_dir / "main_object_mask.png")
+            self._write_generation_brief(output)
             metadata_before = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
 
             result = subprocess.run(
@@ -73,6 +74,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
             )
+            self._write_generation_brief(output)
 
             result = subprocess.run(
                 [
@@ -170,6 +172,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._write_generation_brief(output)
 
             result = subprocess.run(
                 [
@@ -196,6 +199,173 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 ).read_text(encoding="utf-8")
             )
             self.assertEqual(request["provider_id"], "external-generated-outputs")
+    def test_prepare_generation_brief_writes_brief_and_reference_inputs_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            planning_dir = output / "_staging" / "planning"
+            planning_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(planning_dir / "main_object_crop.png")
+            Image.new("L", (4, 3), 255).save(planning_dir / "main_object_mask.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_generation_brief.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--reference-input",
+                    "source/source_original.png",
+                    "--style-constraint",
+                    "match existing dashboard palette",
+                    "--must-keep",
+                    "outer silhouette",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            brief = json.loads((output / payload["generation_brief_path"]).read_text(encoding="utf-8"))
+            references = json.loads((output / payload["reference_inputs_path"]).read_text(encoding="utf-8"))
+            self.assertEqual(brief["object_id"], "main_object")
+            self.assertEqual(brief["source_crop"], "_staging/planning/main_object_crop.png")
+            self.assertEqual(brief["rough_mask"], "_staging/planning/main_object_mask.png")
+            self.assertIn("match existing dashboard palette", brief["style_constraints"])
+            self.assertEqual(references["reference_inputs"], ["source/source_original.png"])
+    def test_prepare_generation_brief_rejects_non_generate_plan_object(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {"generation_provider_class": "unset"},
+                "objects": [
+                    {
+                        "object_id": "main_object",
+                        "object_type": "ui-carrier",
+                        "planned_route": "extract",
+                    }
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_generation_brief.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("planned_route=generate", result.stderr)
+    def test_prepare_provider_request_rejects_generate_route_without_prepared_brief(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["object_type"] = "ui-carrier"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("prepare_generation_brief.py", result.stderr)
+    def test_prepare_provider_request_auto_includes_generation_brief_inputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["object_type"] = "ui-carrier"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generation_brief(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            request = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "providers"
+                    / "codex-controlled-generation"
+                    / "main_object"
+                    / "request.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                request["input_refs"]["generation_brief"],
+                "_staging/generation_briefs/main_object.json",
+            )
+            self.assertEqual(
+                request["input_refs"]["reference_inputs"],
+                "_staging/generation_briefs/main_object_reference_inputs.json",
+            )
     def test_prepare_provider_request_prefers_segmentation_provider_from_plan_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

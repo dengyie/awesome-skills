@@ -352,3 +352,44 @@ class SplitImageAssetsTestBase(unittest.TestCase):
             encoding="utf-8",
         )
         return plan_manifest
+    def _write_generation_brief(
+        self,
+        output: pathlib.Path,
+        object_id: str = "main_object",
+        object_type: str = "ui-carrier",
+        reference_inputs: list[str] | None = None,
+    ) -> tuple[pathlib.Path, pathlib.Path]:
+        brief_dir = output / "_staging" / "generation_briefs"
+        brief_dir.mkdir(parents=True, exist_ok=True)
+        brief_path = brief_dir / f"{object_id}.json"
+        reference_path = brief_dir / f"{object_id}_reference_inputs.json"
+        brief = {
+            "object_id": object_id,
+            "object_type": object_type,
+            "source_crop": "",
+            "rough_localization": "",
+            "rough_mask": "",
+            "neighbor_context": "",
+            "style_constraints": [],
+            "must_keep": [],
+            "must_avoid": [],
+            "target_transparency": "tight-transparent-png",
+            "intended_delivery_class": "generated-reconstruction",
+            "why_not_extract": "Hidden pixels are missing.",
+            "why_not_reconstruct": "Local reconstruction would stay too approximate.",
+            "why_generate": "Constrained generation is the cleaner truthful route.",
+            "risk_note": "Needs explicit generated-delivery evidence.",
+        }
+        reference_manifest = {
+            "object_id": object_id,
+            "reference_inputs": list(reference_inputs or ["source/source_original.png"]),
+        }
+        brief_path.write_text(
+            json.dumps(brief, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        reference_path.write_text(
+            json.dumps(reference_manifest, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return brief_path, reference_path
