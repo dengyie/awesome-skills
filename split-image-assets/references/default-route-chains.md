@@ -74,3 +74,5 @@ This is a two-step rule:
 
 1. route default
 2. object-type override when explicitly defined
+
+`prepare_provider_request.py` should be able to use this rule without requiring an explicit `--provider-id` on every invocation.

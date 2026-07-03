@@ -58,6 +58,103 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(request["input_refs"]["source_crop"], "_staging/planning/main_object_crop.png")
             metadata_after = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata_after, metadata_before)
+    def test_prepare_provider_request_selects_default_provider_when_omitted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["object_type"] = "ui-carrier"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            request = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "providers"
+                    / "codex-controlled-generation"
+                    / "main_object"
+                    / "request.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(request["provider_id"], "codex-controlled-generation")
+    def test_prepare_provider_request_applies_object_type_override_when_omitted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {"generation_provider_class": "unset"},
+                "objects": [
+                    {
+                        "object_id": "main_object",
+                        "object_type": "photo-object-matte",
+                        "planned_route": "extract",
+                    }
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            request = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "providers"
+                    / "external-professional-outputs"
+                    / "main_object"
+                    / "request.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(request["provider_id"], "external-professional-outputs")
     def test_record_provider_result_writes_bridge_result_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -111,6 +208,143 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(provider_result["provenance"]["tool_name"], "Grounded-SAM")
             metadata_after = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata_after, metadata_before)
+    def test_consume_provider_result_imports_extract_asset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            provider_dir = output / "_staging" / "providers" / "grounded-sam-bridge" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(provider_dir / "main_object.png")
+            Image.new("L", (4, 3), 255).save(provider_dir / "main_object_mask.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "grounded-sam-bridge",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "asset_png=_staging/providers/grounded-sam-bridge/main_object/main_object.png",
+                    "--artifact",
+                    "source_space_mask=_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png",
+                    "--tool-name",
+                    "Grounded-SAM",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "bridge",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "grounded-sam-bridge",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "import-extract",
+                    "--role",
+                    "main",
+                    "--layer-kind",
+                    "primary-subject",
+                    "--composition-order",
+                    "10",
+                    "--semantic-boundary",
+                    "Imported from provider bridge result.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["mask_source"], "grounded-sam-bridge")
+            self.assertEqual(metadata["extraction_pipeline"]["tools"][0]["name"], "Grounded-SAM")
+    def test_consume_provider_result_stages_generated_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            provider_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(provider_dir / "candidate.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/codex-controlled-generation/main_object/candidate.png",
+                    "--tool-name",
+                    "gpt-image-1",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "host-managed",
+                    "--execution-mode",
+                    "host-managed",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "stage-candidate",
+                    "--candidate-id",
+                    "generated-v1",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(
+                (
+                    output
+                    / "_staging"
+                    / "repair_candidates"
+                    / "main_object"
+                    / "generated-v1.png"
+                ).exists()
+            )
     def test_build_previews_creates_inspection_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

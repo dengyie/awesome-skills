@@ -22,7 +22,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Write a provider bridge request manifest for one object.")
     parser.add_argument("package_dir", help="Asset package directory.")
     parser.add_argument("--object-id", required=True)
-    parser.add_argument("--provider-id", required=True)
+    parser.add_argument("--provider-id")
     parser.add_argument("--input-ref", action="append", default=[])
     parser.add_argument("--note", default="")
     args = parser.parse_args()

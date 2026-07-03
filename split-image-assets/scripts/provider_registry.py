@@ -90,11 +90,3 @@ def get_default_provider_chain(planned_route: str, object_type: str) -> list[str
     if override is not None:
         return list(override)
     return get_default_route_chain(route)
-
-
-def get_default_provider_chain(planned_route: str, object_type: str) -> list[str]:
-    route = str(planned_route).strip()
-    obj_type = str(object_type).strip()
-    if (route, obj_type) in OBJECT_TYPE_PROVIDER_OVERRIDES:
-        return list(OBJECT_TYPE_PROVIDER_OVERRIDES[(route, obj_type)])
-    return get_default_route_chain(route)

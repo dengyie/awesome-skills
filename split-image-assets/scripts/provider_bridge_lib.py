@@ -8,7 +8,7 @@ from provider_contract import (
     validate_provider_request,
     validate_provider_result,
 )
-from provider_registry import get_provider_spec
+from provider_registry import get_default_provider_chain, get_provider_spec
 
 
 def provider_bridge_root(package_dir: Path) -> Path:
@@ -35,7 +35,7 @@ def _load_metadata(package_dir: Path) -> dict:
 def build_provider_request(
     package_dir: Path,
     object_id: str,
-    provider_id: str,
+    provider_id: str | None = None,
     *,
     input_refs: dict[str, str] | None = None,
     notes: str = "",
@@ -47,11 +47,13 @@ def build_provider_request(
     plan_object = find_plan_object(plan_manifest, object_id)
     if plan_object is None:
         raise ValueError(f"plan_manifest.json is missing object_id: {object_id}")
-    provider_spec = get_provider_spec(provider_id)
     planned_route = str(plan_object.get("planned_route", "")).strip()
+    object_type = str(plan_object.get("object_type", "")).strip()
+    selected_provider_id = provider_id or get_default_provider_chain(planned_route, object_type)[0]
+    provider_spec = get_provider_spec(selected_provider_id)
     if planned_route not in provider_spec["supported_routes"]:
         raise ValueError(
-            f"provider {provider_id} does not support planned route: {planned_route}"
+            f"provider {selected_provider_id} does not support planned route: {planned_route}"
         )
     source = metadata.get("source", {})
     quality_target = plan_manifest.get("quality_target", {})
@@ -62,7 +64,7 @@ def build_provider_request(
         "provider_role": provider_spec["provider_role"],
         "execution_mode": provider_spec["execution_mode"],
         "object_id": object_id,
-        "object_type": str(plan_object.get("object_type", "")).strip(),
+        "object_type": object_type,
         "planned_route": planned_route,
         "quality_target": str(quality_target.get("tier", "")).strip(),
         "source_image": str(source.get("path", "")).strip(),

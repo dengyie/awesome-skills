@@ -169,9 +169,10 @@ If pause is not allowed, continue with the documented fallback and record the ra
 4. Run `granularity_alignment`.
 5. Create or refresh `plan_manifest.json` and run `generation_routing`.
 6. Select the default provider chain for each resolved route, then apply any explicit `object_type` override, and write bridge request manifests under `_staging/providers/`.
+   - `prepare_provider_request.py` may omit `--provider-id` when the default chain should be used
 7. Use a `pilot_object` when the composition is dense or high-risk.
 8. Extract, reconstruct, generate, or import assets according to the planned object routes and provider results.
-   - provider results remain staging-only until explicit consumers such as import, compare, promotion, or review adapters use them
+   - provider results remain staging-only until explicit consumers such as `consume_provider_result.py`, compare, promotion, or review adapters use them
 9. If needed, resolve `approximate_reconstruction`.
 10. Build previews, quality previews, audits, and QA evidence.
 11. Validate structure and export the manifest.

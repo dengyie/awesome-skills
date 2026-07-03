@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after provider bridge contract V1. Candidate directions: deeper provider/runtime support, richer planning helpers, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after provider bridge default-selection V2. Candidate directions: deeper provider/runtime support, richer planning helpers, or broader fixture/package migration.
 ## Done
+- [x] Implement `split-image-assets` provider bridge default-selection V2: optional default provider selection, object-type override path, explicit provider result consumer, docs, and regression coverage.
 - [x] Implement `split-image-assets` provider bridge contract V1: provider request/result schemas, provider registry, default route chains, deterministic bridge request/result scripts, docs, and regression coverage.
 - [x] Finish `split-image-assets` generated-route runtime integration V1: generated-only pass gate, object-scoped generation confirmation, generation-aware preflight messaging, docs, and regression coverage.
 - [x] Decompose `split-image-assets/tests/test_skill_package.py` into shared helper plus multiple domain modules while preserving unittest discovery behavior.

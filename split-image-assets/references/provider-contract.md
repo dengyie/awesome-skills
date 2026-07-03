@@ -57,6 +57,13 @@ Additional provider-owned artifacts may live beside `request.json` and `result.j
 
 Bridge request/result manifests are staging-only artifacts. They must not write `metadata.json` directly. Final package truth must still be updated only through explicit consumers such as import, compare, promotion, or review adapters.
 
+The standard first consumer is `consume_provider_result.py`. It may:
+
+- turn extract-style provider results into explicit import flow
+- turn generate-style provider results into staged candidate flow
+
+It still counts as explicit package-owned consumption, not as direct provider-side metadata mutation.
+
 ## Provider Request Contract
 
 Every provider request should include:

@@ -146,11 +146,12 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - use `references/default-route-chains.md`
     - choose the route default first, then apply any explicit `object_type` override
     - this is the route default plus object_type override rule for provider selection
-    - build provider request manifests with `scripts/prepare_provider_request.py`
+    - build provider request manifests with `scripts/prepare_provider_request.py`; `--provider-id` is optional when the default chain is acceptable
     - keep provider requests and results under `_staging/providers/<provider-id>/<object-id>/`
     - record provider result manifests with `scripts/record_provider_result.py`
     - do not let provider bridge scripts write `metadata.json` directly; final package truth still changes only through explicit consumers
     - treat the provider bridge layer as the standard path between planning and import/compare/promotion
+    - consume provider results through `scripts/consume_provider_result.py` when the result should enter import or staged-candidate flow
 13. Analyze the source image before extraction:
     - visual hierarchy from background to foreground
     - main object
@@ -212,7 +213,7 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 
 `scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
 
-`scripts/prepare_provider_request.py`, `scripts/record_provider_result.py`, and the provider bridge helpers standardize how planned object routes talk to upstream providers. Use them to normalize provider requests/results into `_staging/providers/<provider-id>/<object-id>/` before import, compare, or promotion. This bridge layer should come before broad native-runner expansion.
+`scripts/prepare_provider_request.py`, `scripts/record_provider_result.py`, `scripts/consume_provider_result.py`, and the provider bridge helpers standardize how planned object routes talk to upstream providers. Use them to normalize provider requests/results into `_staging/providers/<provider-id>/<object-id>/` before import, compare, or promotion. This bridge layer should come before broad native-runner expansion.
 
 `scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It checks optional module presence, runtime readiness, and production-ready capability for segmentation, matting, reconstruction, generation, and environment support. It does not install anything. For reconstruction, runtime support such as `torch` or `onnxruntime` is not enough by itself; only a dedicated reconstruction tool path should count as `production_ready=true`. For generation, raw image generation availability is not enough by itself; the provider must support object-level constrained generation plus transparent asset delivery before it can count as `production_ready=true`.
 
@@ -378,6 +379,7 @@ At minimum report:
 - extraction pipeline recipe, stages, upstream tools, and quality gates
 - planned object routes and route reasoning for generated candidates
 - provider requests/results written to `_staging/providers/`
+- provider result consumer path used
 - primary segmenter, matting tool, and helper tools
 - generation provider class and whether it is production-ready
 - asset_class/reuse_status policy used for this run

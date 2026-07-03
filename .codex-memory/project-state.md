@@ -7,11 +7,15 @@
 - Current stage: `split-image-assets` generated-route runtime integration V1 is complete locally. Generated-only pass paths now validate honestly without requiring extraction capability, generated-route confirmation is enforced with object-scoped decision evidence, and preflight reporting now exposes generated-reconstruction gaps alongside extraction gaps.
 - The canonical `split-image-assets` doc surface has also been re-clustered so `docs/superpowers/split-image-assets/` is the single design/baseline entrypoint, `implementation-plan.md` now reflects the shipped baseline instead of stale checklist phases, and `quick-contract.md` now matches generated-only pass semantics.
 - Bridge-first provider integration V1 is also complete locally. The package now has a standardized provider request/result contract, a provider registry, default route chains, and deterministic bridge request/result scripts under `_staging/providers/`.
+- Provider bridge default-selection V2 is now complete locally. `prepare_provider_request.py` can select the default provider without `--provider-id`, object-type overrides are explicit, and `consume_provider_result.py` is now the canonical explicit consumer for bridge results.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (165 tests, provider bridge default-selection V2)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider bridge default-selection V2)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (provider bridge default-selection V2 review brief; no new P0/P1 blockers)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (160 tests, provider bridge contract V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider bridge contract V1)
 - 2026-07-04: `python -m unittest split-image-assets.tests.test_docs_and_contract -v` (15 docs/contract tests, doc consolidation baseline)
@@ -236,6 +240,7 @@
 
 ## Active Risks
 - Provider bridge V1 standardizes request/result staging and default route chains, but it does not yet execute broad native upstream runtimes itself; most real provider execution still depends on bridge, external-manifest, or host-managed flows.
+- Provider bridge V2 now supports default provider selection and explicit result consumption, but provider-result consumption is still narrow by design: it currently handles explicit import or staged-candidate paths rather than generalized multi-step orchestration.
 - Generated-route pass now depends on object-scoped `generation_routing` decision evidence in `metadata.decision_log[]`; older generated fixtures or hand-authored packages that only set package-level `metadata.confirmation.generation_routing` must be migrated before validation passes.
 - `metadata.capability.production_capable` now acts as the extraction-capable pass gate only for non-generated reusable layers; generated-only pass paths must instead carry `metadata.capability.generation.production_ready=true` plus generated-route evidence.
 - `split-image-assets` now requires `metadata.quality_target.tier=visual-acceptance-ready` before `qa.status=pass`; older fixtures or hand-authored packages that only recorded capability and decision acceptance must be updated.
@@ -254,7 +259,7 @@
 - None.
 
 ## Current Focus
-- The provider bridge contract milestone is complete locally on top of the generated-route baseline. The next most natural follow-up is deeper provider/runtime support on top of the bridge layer rather than more contract-only expansion.
+- The provider bridge default-selection milestone is complete locally on top of the generated-route baseline. The next most natural follow-up is deeper provider/runtime support on top of the bridge layer rather than more contract-only expansion.
 
 ## Next Milestone
 - No active next milestone. Resume only after choosing a new bounded follow-up on top of the generated-route runtime integration baseline.
@@ -272,6 +277,7 @@
 - `split-image-assets/scripts/provider_bridge_lib.py`
 - `split-image-assets/scripts/prepare_provider_request.py`
 - `split-image-assets/scripts/record_provider_result.py`
+- `split-image-assets/scripts/consume_provider_result.py`
 - `split-image-assets/scripts/generate_ui_carrier_candidates.py`
 - `split-image-assets/scripts/generate_ui_glyph_cleanup_candidates.py`
 - `split-image-assets/scripts/score_candidate_assets.py`
