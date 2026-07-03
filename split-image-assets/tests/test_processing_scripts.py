@@ -155,6 +155,165 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 ).read_text(encoding="utf-8")
             )
             self.assertEqual(request["provider_id"], "external-professional-outputs")
+    def test_prepare_provider_request_prefers_generation_provider_from_plan_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = self._write_generated_plan_manifest(output)
+            plan_manifest["provider_preferences"]["generation_provider_class"] = "external-generated-outputs"
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            request = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "providers"
+                    / "external-generated-outputs"
+                    / "main_object"
+                    / "request.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(request["provider_id"], "external-generated-outputs")
+    def test_prepare_provider_request_prefers_segmentation_provider_from_plan_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {
+                    "generation_provider_class": "unset",
+                    "segmentation_provider_class": "external-professional-outputs",
+                },
+                "objects": [
+                    {
+                        "object_id": "main_object",
+                        "object_type": "ui-carrier",
+                        "planned_route": "extract",
+                    }
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            request = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "providers"
+                    / "external-professional-outputs"
+                    / "main_object"
+                    / "request.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(request["provider_id"], "external-professional-outputs")
+    def test_prepare_provider_request_falls_back_when_preference_is_unsupported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {
+                    "generation_provider_class": "unset",
+                    "segmentation_provider_class": "codex-controlled-generation",
+                },
+                "objects": [
+                    {
+                        "object_id": "main_object",
+                        "object_type": "ui-carrier",
+                        "planned_route": "extract",
+                    }
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            request = json.loads(
+                (
+                    output
+                    / "_staging"
+                    / "providers"
+                    / "grounded-sam-bridge"
+                    / "main_object"
+                    / "request.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(request["provider_id"], "grounded-sam-bridge")
     def test_record_provider_result_writes_bridge_result_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

@@ -149,4 +149,5 @@ Selection rule:
 
 - first choose the route default
 - then apply `object_type` override when one is explicitly defined
+- then allow `plan_manifest.provider_preferences` to override the default only when the preferred provider is valid for the route
 - if no override exists, keep the route default

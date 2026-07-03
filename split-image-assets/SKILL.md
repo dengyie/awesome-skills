@@ -146,6 +146,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - use `references/default-route-chains.md`
     - choose the route default first, then apply any explicit `object_type` override
     - this is the route default plus object_type override rule for provider selection
+    - allow `plan_manifest.provider_preferences` to override the default only when the preferred provider is valid for the route
     - build provider request manifests with `scripts/prepare_provider_request.py`; `--provider-id` is optional when the default chain is acceptable
     - keep provider requests and results under `_staging/providers/<provider-id>/<object-id>/`
     - record provider result manifests with `scripts/record_provider_result.py`

@@ -76,3 +76,5 @@ This is a two-step rule:
 2. object-type override when explicitly defined
 
 `prepare_provider_request.py` should be able to use this rule without requiring an explicit `--provider-id` on every invocation.
+
+When `plan_manifest.provider_preferences` names a valid provider for the route, that preference may override the default selection. Invalid or route-incompatible preferences should fall back to the normal default chain instead of failing the workflow.

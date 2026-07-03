@@ -32,6 +32,33 @@ def _load_metadata(package_dir: Path) -> dict:
     return json.loads(metadata_path.read_text(encoding="utf-8"))
 
 
+def _preferred_provider_id(plan_manifest: dict, planned_route: str) -> str:
+    preferences = plan_manifest.get("provider_preferences", {})
+    if not isinstance(preferences, dict):
+        return ""
+    if planned_route == "generate":
+        candidate = preferences.get("generation_provider_class", "")
+    else:
+        candidate = preferences.get("segmentation_provider_class", "")
+    return candidate.strip() if isinstance(candidate, str) else ""
+
+
+def resolve_provider_id(plan_manifest: dict, planned_route: str, object_type: str, provider_id: str | None) -> str:
+    explicit = provider_id.strip() if isinstance(provider_id, str) and provider_id.strip() else ""
+    if explicit:
+        return explicit
+    preferred = _preferred_provider_id(plan_manifest, planned_route)
+    if preferred:
+        try:
+            preferred_spec = get_provider_spec(preferred)
+        except ValueError:
+            preferred = ""
+        else:
+            if planned_route in preferred_spec["supported_routes"]:
+                return preferred
+    return get_default_provider_chain(planned_route, object_type)[0]
+
+
 def build_provider_request(
     package_dir: Path,
     object_id: str,
@@ -49,7 +76,7 @@ def build_provider_request(
         raise ValueError(f"plan_manifest.json is missing object_id: {object_id}")
     planned_route = str(plan_object.get("planned_route", "")).strip()
     object_type = str(plan_object.get("object_type", "")).strip()
-    selected_provider_id = provider_id or get_default_provider_chain(planned_route, object_type)[0]
+    selected_provider_id = resolve_provider_id(plan_manifest, planned_route, object_type, provider_id)
     provider_spec = get_provider_spec(selected_provider_id)
     if planned_route not in provider_spec["supported_routes"]:
         raise ValueError(
