@@ -5,11 +5,13 @@
 
 ## Current Phase
 - Current stage: `split-image-assets` generated-route runtime integration V1 is complete locally. Generated-only pass paths now validate honestly without requiring extraction capability, generated-route confirmation is enforced with object-scoped decision evidence, and preflight reporting now exposes generated-reconstruction gaps alongside extraction gaps.
+- The canonical `split-image-assets` doc surface has also been re-clustered so `docs/superpowers/split-image-assets/` is the single design/baseline entrypoint, `implementation-plan.md` now reflects the shipped baseline instead of stale checklist phases, and `quick-contract.md` now matches generated-only pass semantics.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-07-04: `python -m unittest split-image-assets.tests.test_docs_and_contract -v` (15 docs/contract tests, doc consolidation baseline)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (156 tests, generated-route runtime integration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, generated-route runtime integration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (review brief only; no new concrete P0/P1 findings)
@@ -248,12 +250,16 @@
 - None.
 
 ## Current Focus
-- The generated-route runtime integration milestone is closed locally. Any next work should be a new bounded follow-up, most naturally deeper generated-route provider support or broader fixture/package migration.
+- The generated-route runtime integration milestone is closed locally, and the canonical doc surface is now clustered around `docs/superpowers/split-image-assets/`. Any next work should be a new bounded follow-up, most naturally deeper generated-route provider support or broader fixture/package migration.
 
 ## Next Milestone
 - No active next milestone. Resume only after choosing a new bounded follow-up on top of the generated-route runtime integration baseline.
 
 ## Key Artifacts
+- `docs/superpowers/split-image-assets/README.md`
+- `docs/superpowers/split-image-assets/design.md`
+- `docs/superpowers/split-image-assets/implementation-plan.md`
+- `docs/superpowers/split-image-assets/migration.md`
 - `split-image-assets/SKILL.md`
 - `split-image-assets/scripts/init_asset_package.py`
 - `split-image-assets/scripts/check_extraction_environment.py`
@@ -278,10 +284,7 @@
 - `split-image-assets/tests/test_skill_package.py`
 - `split-image-assets/external_manifest_examples/sam2_rembg_manifest.json`
 - `docs/usage/split-image-assets.md`
-- `docs/superpowers/specs/2026-06-23-split-image-assets-pipeline-refactor-design.md`
 - `.codex-memory/handoffs/2026-06-24-split-image-assets-test-handoff.md`
-- `docs/superpowers/specs/2026-06-23-split-image-assets-design.md`
-- `docs/superpowers/plans/2026-06-23-split-image-assets.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v29-resource-atomicity-plan.md`
 - `zero-to-website-design/references/resource-atomicity.md`
 - `docs/dev/2026-06-20-zero-to-website-design-v28-visual-asset-repair-design.md`

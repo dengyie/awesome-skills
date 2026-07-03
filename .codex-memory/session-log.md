@@ -1,4 +1,12 @@
 # Session Log
+## 2026-07-04 2
+- Task: Consolidate the active `split-image-assets` development docs so the package has one obvious current entrypoint instead of a mix of live rules and stale milestone text.
+- Actions: Re-read the canonical design, runtime workflow docs, usage guide, contract surfaces, and project memory. Rewrote `docs/superpowers/split-image-assets/implementation-plan.md` from an old milestone checklist into a current shipped-baseline document with latest closed milestone plus next bounded milestone candidates. Strengthened `docs/superpowers/split-image-assets/README.md` with an explicit authority matrix. Updated `references/quick-contract.md` to match generated-only pass semantics, updated the usage guide wording to point at the new implementation baseline, and cleaned `project-state.md` so split-image-assets key artifacts now point at the canonical directory instead of old dated plan/spec files.
+- Results: The `split-image-assets` doc surface is now more tightly clustered. Readers can find the design authority, current baseline, short contract, full contract, and operator guide without stumbling into stale split-image-assets milestone history first.
+- Validation: `python -m unittest split-image-assets.tests.test_docs_and_contract -v` (15 tests OK), `python -m unittest discover split-image-assets\tests -v` (156 tests OK), and `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`).
+- Next: Stop this doc-consolidation pass. Any further work should be a new bounded milestone on top of the consolidated canonical surface.
+- Blockers: None.
+
 ## 2026-07-04
 - Task: Close the next `split-image-assets` P0/P1 gap by making generated-route delivery self-consistent.
 - Actions: Restored repo memory and reopened the bounded milestone as generated-route runtime integration V1. Added failing regressions for generated-only pass, object-scoped generation-routing evidence, and generation-aware preflight messaging. Implemented shared route-aware pass helpers in `validator_shared.py`, relaxed the metadata pass gate so extraction capability is only required when non-generated reusable layers are still claimed, enforced object-scoped `generation_routing` decision-log evidence per generated object, aligned `record_quality_review.py` to the same rule, updated preflight `missing_roles` / `why_it_matters` reporting for generated-reconstruction gaps, and synced the package docs to the new rule.

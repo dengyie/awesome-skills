@@ -152,7 +152,10 @@ For this design:
 
 - contract-hardening behavior remains required baseline
 - installer UX ideas may still be reused where they help capability truthfulness
-- the active milestone is planning-first route control and generated-reconstruction discipline
+- planning-first route control and generated-reconstruction discipline are the delivered baseline
+- no new active milestone is open until a new bounded follow-up is explicitly chosen
+
+This means the canonical design remains planning-first, but the implementation line should now be read through the shipped-baseline model in `implementation-plan.md` rather than through an in-flight milestone checklist.
 
 ## Non-Goals
 

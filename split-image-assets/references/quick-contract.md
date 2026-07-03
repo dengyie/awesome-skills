@@ -31,10 +31,14 @@ Use this file as the short package contract view. Read this first when you need 
 
 ## Package Truth Rules
 
-- `qa.status=pass` requires a production-capable path.
+- `qa.status=pass` requires an honest production-capable path.
+- non-generated reusable layers require extraction-capable `metadata.capability.production_capable=true`.
+- generated-only pass paths require `metadata.capability.generation.production_ready=true` plus object-scoped generation-routing evidence.
+- generated-only pass paths also require generated-object promotion or acceptance evidence; generation capability and route confirmation alone are not enough.
 - `qa.status=pass` requires `quality_target.tier=visual-acceptance-ready`.
 - `qa.status=pass` requires passing required object checks and the necessary confirmation state.
 - Approximate or reconstructed layers must stay explicitly approximate.
+- generated-reconstruction must stay explicitly generated and must not masquerade as clean extraction.
 - Draft-only packages must stay draft-honest.
 
 ## Honest Counting

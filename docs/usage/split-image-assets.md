@@ -35,7 +35,7 @@ Use this page as the operator guide.
 For deeper details, use the more specialized sources instead of treating this file as the full contract:
 
 - `docs/superpowers/split-image-assets/design.md`: architecture intent and rollout strategy
-- `docs/superpowers/split-image-assets/implementation-plan.md`: active milestone scope
+- `docs/superpowers/split-image-assets/implementation-plan.md`: current shipped baseline and next bounded milestone candidates
 - `split-image-assets/SKILL.md`: agent-facing workflow entrypoint
 - `split-image-assets/references/workflow.md`: gate and state-machine detail
 - `split-image-assets/references/asset-package-contract.md`: package contract and validator truth surface

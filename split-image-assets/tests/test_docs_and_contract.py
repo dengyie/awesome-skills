@@ -67,6 +67,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertIn("single governing design document", design)
         self.assertIn("single implementation plan", plan)
         self.assertIn("documentation-system migration", migration)
+        self.assertIn("delivered baseline", design)
+        self.assertIn("no new active milestone is open", design)
+        self.assertIn("current implementation baseline", plan)
 
         retired = [
             REPO / "docs" / "superpowers" / "specs" / "2026-06-23-split-image-assets-design.md",
@@ -91,6 +94,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "editability-first",
             "formal state surfaces",
             "qa.status=pass",
+            "generated-only pass",
+            "promotion or acceptance evidence",
             "production-ready assets",
             "draft candidate assets",
             "support-only layers",
