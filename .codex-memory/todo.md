@@ -1,9 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after test decomposition. Recommended next step: deeper generated-route provider/runtime integration.
-- [ ] Choose the next bounded `split-image-assets` milestone on top of the planning-first generation-routing V1 baseline. Candidate directions: deeper provider support, richer planning helpers, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after generated-route runtime integration V1. Candidate directions: deeper provider support, richer planning helpers, or broader fixture/package migration.
 ## Done
+- [x] Finish `split-image-assets` generated-route runtime integration V1: generated-only pass gate, object-scoped generation confirmation, generation-aware preflight messaging, docs, and regression coverage.
 - [x] Decompose `split-image-assets/tests/test_skill_package.py` into shared helper plus multiple domain modules while preserving unittest discovery behavior.
 - [x] Decompose `split-image-assets/scripts/validate_asset_package.py` into a thin entrypoint plus domain modules while preserving full package behavior.
 - [x] Consolidate `split-image-assets` documentation authority and shared state logic by adding an explicit doc map plus a shared `package_state_lib.py` for `asset_summary` and `plan_manifest` handling.

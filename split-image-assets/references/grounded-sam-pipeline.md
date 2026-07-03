@@ -103,7 +103,7 @@ python split-image-assets/scripts/import_external_assets.py output-package --obj
 
 Promotion from draft candidate to production-ready requires:
 
-- `metadata.capability.production_capable=true`
+- extraction-capable `metadata.capability.production_capable=true`
 - mask overlay preview inspected
 - alpha inspection preview inspected
 - background residue check passed

@@ -19,6 +19,7 @@ from split_image_assets_contract import (
 )
 from validator_shared import (
     APPROXIMATE_RECONSTRUCTION_ACCEPTANCE_STAGES,
+    GENERATION_ROUTING_CONFIRMATION_STAGES,
     GENERATED_EVIDENCE_FIELDS,
     OBJECT_ASSET_ROLES,
     PASS_READY_REUSE_STATUSES,
@@ -28,6 +29,7 @@ from validator_shared import (
     has_alpha,
     has_carrier_layer,
     has_glyph_layer,
+    has_object_scoped_affirmative_decision,
     has_text_routing_confirmation,
     image_mode,
     image_size,
@@ -214,6 +216,14 @@ def validate_objects(
             elif generation_routing.get("source") not in NON_DEFAULT_CONFIRMATION_SOURCES:
                 errors.append(
                     f"{object_id}: metadata.confirmation.generation_routing must come from explicit-user-confirmed or inferred-from-user"
+                )
+            if not has_object_scoped_affirmative_decision(
+                decision_log,
+                GENERATION_ROUTING_CONFIRMATION_STAGES,
+                str(object_id),
+            ):
+                errors.append(
+                    f"{object_id}: generated-route delivery requires object-scoped generation_routing decision_log evidence"
                 )
             if not isinstance(generation_capability, dict):
                 errors.append(

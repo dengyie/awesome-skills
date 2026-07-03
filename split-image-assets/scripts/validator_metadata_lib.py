@@ -25,6 +25,7 @@ from validator_shared import (
     REQUIRED_PIPELINE_STAGES,
     decision_answer,
     has_affirmative_decision,
+    package_requires_extraction_capability_for_pass,
 )
 
 
@@ -242,10 +243,15 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
     qa_status_for_capability = qa_for_capability.get("status") if isinstance(qa_for_capability, dict) else None
     if qa_status_for_capability == "pass" and user_choice == "unset":
         errors.append("metadata.capability.user_choice must not stay unset when qa.status=pass")
-    if qa_status_for_capability == "pass" and production_capable is not True:
+    if (
+        qa_status_for_capability == "pass"
+        and package_requires_extraction_capability_for_pass(metadata)
+        and production_capable is not True
+    ):
         errors.append(
-            "qa.status pass requires metadata.capability.production_capable=true; "
-            "draft-packaging-only or unrecorded tooling preflight must remain needs-review"
+            "qa.status pass requires extraction-capable metadata.capability.production_capable=true "
+            "whenever non-generated reusable layers are claimed; draft-packaging-only or unrecorded "
+            "tooling preflight must remain needs-review"
         )
     tooling_confirmation = confirmation.get("tooling_preflight", {}) if isinstance(confirmation, dict) else {}
     if capability.get("user_choice") != "unset":

@@ -35,6 +35,7 @@ from split_image_assets_contract import (
     default_confirmation_entry,
     default_object_routing_fields,
 )
+from validator_shared import package_requires_extraction_capability_for_pass
 from validate_asset_package import collect_validation_errors
 
 
@@ -548,7 +549,11 @@ def reusable_layers_ready_for_pass(metadata: dict) -> bool:
 
 def capability_allows_pass(metadata: dict) -> bool:
     capability = metadata.get("capability")
-    return isinstance(capability, dict) and capability.get("production_capable") is True
+    if not isinstance(capability, dict):
+        return False
+    if not package_requires_extraction_capability_for_pass(metadata):
+        return True
+    return capability.get("production_capable") is True
 
 
 def decision_answer(entry: dict) -> str:
@@ -798,7 +803,10 @@ def main() -> int:
     if args.qa_status == "pass" and not all_required_checks_pass(metadata):
         parser.error("cannot set qa-status pass until every required object quality check is pass")
     if args.qa_status == "pass" and not capability_allows_pass(metadata):
-        parser.error("cannot set qa-status pass until metadata.capability.production_capable is true")
+        parser.error(
+            "cannot set qa-status pass until extraction-capable metadata.capability.production_capable "
+            "is true for non-generated reusable layers"
+        )
     quality_target = metadata.get("quality_target", {})
     if args.qa_status == "pass" and (
         not isinstance(quality_target, dict)

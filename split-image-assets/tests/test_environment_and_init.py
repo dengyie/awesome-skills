@@ -100,6 +100,20 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertEqual(reconstruction["path_type"], "manual-redraw-only")
         self.assertTrue(reconstruction["installed"])
         self.assertIn("not runtime-ready", reconstruction["quality_impact"])
+    def test_generation_capability_affects_missing_roles_and_messages(self):
+        module = self._load_check_environment_module()
+        capabilities = {
+            "segmentation": {"production_ready": True},
+            "matting": {"production_ready": True},
+            "reconstruction": {"production_ready": True, "path_type": "dedicated-tool"},
+            "generation": {"production_ready": False},
+            "environment": {"torch": {"runtime_ready": True}},
+        }
+
+        self.assertIn("generated-reconstruction", module.missing_roles(capabilities))
+        self.assertTrue(
+            any("generated" in message.lower() for message in module.why_it_matters(capabilities))
+        )
     def test_init_asset_package_creates_standard_layout(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

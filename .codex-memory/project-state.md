@@ -4,12 +4,15 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
-- Current stage: `split-image-assets` test decomposition V1 is complete locally. The package test suite now uses a shared testlib plus multiple domain modules instead of one giant `test_skill_package.py`, while preserving `unittest discover` behavior and full local verification.
+- Current stage: `split-image-assets` generated-route runtime integration V1 is complete locally. Generated-only pass paths now validate honestly without requiring extraction capability, generated-route confirmation is enforced with object-scoped decision evidence, and preflight reporting now exposes generated-reconstruction gaps alongside extraction gaps.
 
 ## Current Branch
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (156 tests, generated-route runtime integration V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, generated-route runtime integration V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (review brief only; no new concrete P0/P1 findings)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, test decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, test decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, test decomposition baseline)
@@ -227,6 +230,8 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Generated-route pass now depends on object-scoped `generation_routing` decision evidence in `metadata.decision_log[]`; older generated fixtures or hand-authored packages that only set package-level `metadata.confirmation.generation_routing` must be migrated before validation passes.
+- `metadata.capability.production_capable` now acts as the extraction-capable pass gate only for non-generated reusable layers; generated-only pass paths must instead carry `metadata.capability.generation.production_ready=true` plus generated-route evidence.
 - `split-image-assets` now requires `metadata.quality_target.tier=visual-acceptance-ready` before `qa.status=pass`; older fixtures or hand-authored packages that only recorded capability and decision acceptance must be updated.
 - `split-image-assets` now requires `object_type` on UI/logo/support-style assets and will reject UI-like packages that still leave those layers as `generic-object`.
 - `split-image-assets` visual quality audit is warning-only by design; it highlights hard alpha, edge-touching assets, oversized masks, and support-layer misclassification, but final visual acceptance still requires preview inspection and user/manual review.
@@ -243,10 +248,10 @@
 - None.
 
 ## Current Focus
-- The current test decomposition milestone is closed locally. Any next work should be a new bounded milestone, most naturally deeper generated-route provider/runtime integration.
+- The generated-route runtime integration milestone is closed locally. Any next work should be a new bounded follow-up, most naturally deeper generated-route provider support or broader fixture/package migration.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the decomposed-validator and decomposed-test baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the generated-route runtime integration baseline.
 
 ## Key Artifacts
 - `split-image-assets/SKILL.md`

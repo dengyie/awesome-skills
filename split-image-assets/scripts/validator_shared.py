@@ -89,6 +89,11 @@ TEXT_ROUTING_CONFIRMATION_STAGES = {
     "text-routing",
     "text-routing-confirmation",
 }
+GENERATION_ROUTING_CONFIRMATION_STAGES = {
+    "generation-routing",
+    "generation-routing-gate",
+    "generation_routing",
+}
 TEXT_ROUTING_CONFIRMATION_MARKERS = {
     "rebuild downstream",
     "visual asset",
@@ -145,6 +150,32 @@ def has_affirmative_decision(decision_log: list[dict], stages: set[str]) -> bool
         and is_affirmative_answer(decision_answer(entry))
         for entry in decision_log
     )
+
+
+def has_object_scoped_affirmative_decision(
+    decision_log: list[dict],
+    stages: set[str],
+    object_id: str,
+    allow_legacy_unscoped: bool = False,
+) -> bool:
+    normalized_object_id = object_id.strip().lower()
+    if not normalized_object_id:
+        return False
+    for entry in decision_log:
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("stage", "")).strip() not in stages:
+            continue
+        if not is_affirmative_answer(decision_answer(entry)):
+            continue
+        entry_object_id = str(entry.get("object_id", "")).strip().lower()
+        if entry_object_id:
+            if entry_object_id == normalized_object_id:
+                return True
+            continue
+        if allow_legacy_unscoped:
+            return True
+    return False
 
 
 def confirmation_satisfies_promotion(metadata: dict, key: str) -> bool:
@@ -327,6 +358,23 @@ def is_placeholder_only_rebuild(item: dict) -> bool:
     )
 
 
+def package_requires_extraction_capability_for_pass(metadata: dict) -> bool:
+    objects = metadata.get("objects", [])
+    if not isinstance(objects, list):
+        return True
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        if item.get("asset_class") not in {"atomic", "candidate"}:
+            continue
+        if item.get("reuse_status") not in PASS_READY_REUSE_STATUSES:
+            continue
+        if is_generated_delivery_layer(item):
+            continue
+        return True
+    return False
+
+
 def has_text_routing_confirmation(item: dict, decision_log: list[dict], allow_legacy_unscoped: bool = False) -> bool:
     object_id = str(item.get("id", "")).strip().lower()
     for entry in decision_log:
@@ -392,4 +440,3 @@ def require_preview_path(
     path = rel_path(package_dir, value, errors, label)
     if path is not None and not path.exists():
         errors.append(f"{label} file is missing: {value}")
-

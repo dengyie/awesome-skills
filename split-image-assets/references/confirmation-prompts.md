@@ -127,6 +127,7 @@ Prompt body:
 - Effect on metadata:
   - update `plan_manifest.json`
   - update `metadata.confirmation.generation_routing`
+  - append an object-scoped `metadata.decision_log[]` entry for the generated object branch
   - append `metadata.decision_log[]`
 
 Prompt body:

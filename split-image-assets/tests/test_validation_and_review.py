@@ -2857,6 +2857,20 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
             metadata["confirmation"]["generation_routing"]["status"] = "confirmed"
             metadata["confirmation"]["generation_routing"]["source"] = "explicit-user-confirmed"
+            metadata["decision_log"].append(
+                {
+                    "stage": "generation-routing",
+                    "pause_category": "user-decision",
+                    "question": "Route main_object through generated reconstruction?",
+                    "recommended_answer": "yes",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Use generated reconstruction for the promoted object asset.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                    "object_id": "main_object",
+                }
+            )
             metadata["capability"]["generation"] = {
                 "provider_class": "codex-controlled-generation",
                 "installed": True,
@@ -2925,6 +2939,55 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("metadata.capability.generation", result.stderr)
+    def test_validate_asset_package_rejects_generated_delivery_without_object_scoped_generation_routing_decision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_ready_validation_package(output)
+            obj = metadata["objects"][0]
+            obj["delivery_class"] = "generated-reconstruction"
+            obj["reuse_status"] = "accepted-generated-reconstruction"
+            obj["generation_source"] = "codex-controlled-generation"
+            obj["generation_model_or_tool"] = "gpt-image-1"
+            obj["generation_version"] = "test"
+            obj["generation_prompt_or_brief_ref"] = "_staging/generation_briefs/main_object.json"
+            obj["generation_reference_inputs"] = ["source/source_original.png"]
+            obj["manual_review_confirmed"] = True
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["generation_routing"]["status"] = "confirmed"
+            metadata["confirmation"]["generation_routing"]["source"] = "explicit-user-confirmed"
+            metadata["capability"]["generation"] = {
+                "provider_class": "codex-controlled-generation",
+                "installed": True,
+                "runtime_ready": True,
+                "production_ready": True,
+                "notes": "Fixture generated route capability.",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generated_plan_manifest(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("object-scoped generation_routing decision_log", result.stderr)
     def test_validate_asset_package_rejects_generated_delivery_with_pending_generation_routing(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2974,6 +3037,70 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("generation_routing", result.stderr)
+    def test_validate_asset_package_allows_generated_only_pass_without_extraction_production_capability(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_ready_validation_package(output)
+            obj = metadata["objects"][0]
+            obj["delivery_class"] = "generated-reconstruction"
+            obj["reuse_status"] = "accepted-generated-reconstruction"
+            obj["generation_source"] = "codex-controlled-generation"
+            obj["generation_model_or_tool"] = "gpt-image-1"
+            obj["generation_version"] = "test"
+            obj["generation_prompt_or_brief_ref"] = "_staging/generation_briefs/main_object.json"
+            obj["generation_reference_inputs"] = ["source/source_original.png"]
+            obj["manual_review_confirmed"] = True
+            metadata["capability"]["production_capable"] = False
+            metadata["capability"]["notes"] = "Generated delivery is the approved production path for this object."
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["generation_routing"]["status"] = "confirmed"
+            metadata["confirmation"]["generation_routing"]["source"] = "explicit-user-confirmed"
+            metadata["decision_log"].append(
+                {
+                    "stage": "generation-routing",
+                    "pause_category": "user-decision",
+                    "question": "Route main_object through generated reconstruction?",
+                    "recommended_answer": "yes",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Use generated reconstruction for the promoted object asset.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                    "object_id": "main_object",
+                }
+            )
+            metadata["capability"]["generation"] = {
+                "provider_class": "codex-controlled-generation",
+                "installed": True,
+                "runtime_ready": True,
+                "production_ready": True,
+                "notes": "Fixture generated route capability.",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generated_plan_manifest(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
     def test_validate_asset_package_rejects_pass_without_visual_acceptance_target(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -4024,6 +4151,72 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("production_capable=true", result.stderr)
+    def test_record_quality_review_allows_generated_only_pass_without_extraction_production_capability(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_ready_validation_package(output)
+            obj = metadata["objects"][0]
+            obj["delivery_class"] = "generated-reconstruction"
+            obj["reuse_status"] = "accepted-generated-reconstruction"
+            obj["generation_source"] = "codex-controlled-generation"
+            obj["generation_model_or_tool"] = "gpt-image-1"
+            obj["generation_version"] = "test"
+            obj["generation_prompt_or_brief_ref"] = "_staging/generation_briefs/main_object.json"
+            obj["generation_reference_inputs"] = ["source/source_original.png"]
+            obj["manual_review_confirmed"] = True
+            metadata["qa"]["status"] = "needs-review"
+            metadata["capability"]["production_capable"] = False
+            metadata["capability"]["notes"] = "Generated delivery is the approved production path for this object."
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["generation_routing"]["status"] = "confirmed"
+            metadata["confirmation"]["generation_routing"]["source"] = "explicit-user-confirmed"
+            metadata["decision_log"].append(
+                {
+                    "stage": "generation-routing",
+                    "pause_category": "user-decision",
+                    "question": "Route main_object through generated reconstruction?",
+                    "recommended_answer": "yes",
+                    "recorded_answer": "yes",
+                    "decision_effect": "Use generated reconstruction for the promoted object asset.",
+                    "decision_source": "explicit-user-confirmed",
+                    "evidence_ref": "",
+                    "blocking": "true",
+                    "object_id": "main_object",
+                }
+            )
+            metadata["capability"]["generation"] = {
+                "provider_class": "codex-controlled-generation",
+                "installed": True,
+                "runtime_ready": True,
+                "production_ready": True,
+                "notes": "Fixture generated route capability.",
+            }
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generated_plan_manifest(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--qa-status",
+                    "pass",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
     def test_validate_asset_package_blocks_pass_when_capability_choice_is_unset(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

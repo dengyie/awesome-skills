@@ -236,7 +236,7 @@ Record the quality target that governed the run. `metadata.quality_target.tier` 
 
 For UI and dense compositions, do not batch-extract the full image before granularity scope is explicitly confirmed or clearly derivable from prior user instructions. Record the high-signal subset strategy, text handling, carrier/glyph policy, background expectation, and layer independence inside `metadata.granularity`.
 
-Record the tooling preflight decision that governed the run. `metadata.capability` is required so future agents can see whether the run was production-capable, what upstream roles/tools were missing, which user choice was made, and why missing tools affect quality. `qa.status=pass` requires `metadata.capability.production_capable=true`; draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked`.
+Record the tooling preflight decision that governed the run. `metadata.capability` is required so future agents can see whether the run was production-capable, what upstream roles/tools were missing, which user choice was made, and why missing tools affect quality. `qa.status=pass` requires extraction-capable `metadata.capability.production_capable=true` whenever the package still claims non-generated reusable layers. Generated-only pass paths must instead carry `metadata.capability.generation.production_ready=true` plus object-scoped generation-routing evidence. Draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked`.
 
 Draft-only packages must not look production-complete. Mark unreviewed cutouts as draft candidates, mark plates and `background_clean` as support-only when appropriate, and report production-ready assets separately from draft candidate assets and support-only layers.
 
@@ -279,7 +279,7 @@ Use these formal confirmation gates instead of vague “ask when needed” behav
   - Trigger: an object falls into the ambiguous `2/4` generate band, a protected object would otherwise route to `generate`, or a route switch would materially change the delivery truth class.
   - Ask: “Should this object continue on extraction/reconstruction, or switch to generated-reconstruction candidate flow?”
   - Recommended answer: `generate` only when source recovery is weak, the object is reconstruction-like, and the package can remain explicit about generated delivery.
-  - Metadata effect: update `plan_manifest.json`, `metadata.confirmation.generation_routing`, and record a formal decision-log entry.
+  - Metadata effect: update `plan_manifest.json`, `metadata.confirmation.generation_routing`, and record an object-scoped formal decision-log entry for every generated-route object.
 - `Approximate Reconstruction Acceptance Gate`
   - Pause category: `user-decision`
   - Trigger: background/carrier repair requires inferred pixels or manual redraw.

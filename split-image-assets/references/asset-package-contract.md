@@ -93,7 +93,7 @@ For UI or dense compositions, `granularity` must also record:
 - `background_expectation`: `exact-recovery`, `approximate-accepted`, or `unset`
 - `layer_independence`: `static-reuse`, `animation-ready`, or `unset`
 
-`capability` records the tooling preflight result before extraction. `production_capable` is true only when mature upstream extraction capability or equivalent professional external evidence is available. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
+`capability` records the tooling preflight result before extraction. `production_capable` is the extraction-capable flag for non-generated reusable layers. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
 
 `quality_target` records which target tier the run is aiming at:
 
@@ -111,7 +111,7 @@ The preflight report should also expose:
 
 For reconstruction, runtime support such as `torch` or `onnxruntime` is not enough by itself to claim `production_ready`. Treat `manual_redraw_path` as a human acceptance path, not as automatic production capability.
 
-`qa.status=pass` requires `capability.production_capable: true`. Draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked` until production-capable upstream evidence or professional external outputs are recorded.
+`qa.status=pass` requires `capability.production_capable: true` whenever the package still claims non-generated reusable layers. Generated-only pass paths may keep `capability.production_capable: false`, but they must record `capability.generation.production_ready: true` and object-scoped generation-routing acceptance for every generated-route object. Draft-only or unrecorded tooling preflight must stay `needs-review` or `blocked`.
 
 `decision_log` records confirmation-driven workflow decisions that materially affect reuse, editability, localization, reconstruction acceptance, or final delivery claims. Each entry must include:
 

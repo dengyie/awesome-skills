@@ -189,4 +189,4 @@ Background clean plates and support plates produced by inpainting, manual paint,
 
 For reconstruction specifically, do not treat `torch` or `onnxruntime` as a sufficient condition for `production-capable`. They are environment support, not a dedicated reconstruction path.
 
-`qa.status=pass` requires `metadata.capability.production_capable=true`. Draft-only or unrecorded tooling preflight cannot support `pass`.
+`qa.status=pass` requires extraction-capable `metadata.capability.production_capable=true` for non-generated reusable layers. Generated-only pass paths instead require `metadata.capability.generation.production_ready=true` plus object-scoped generation-routing evidence. Draft-only or unrecorded tooling preflight cannot support `pass`.

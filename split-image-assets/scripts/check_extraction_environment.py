@@ -166,6 +166,8 @@ def missing_roles(capabilities: dict) -> list[str]:
         roles.append("matting")
     if not capabilities["reconstruction"]["production_ready"]:
         roles.append("reconstruction")
+    if not capabilities["generation"]["production_ready"]:
+        roles.append("generated-reconstruction")
     # preserve order, remove duplicates
     return list(dict.fromkeys(roles))
 
@@ -194,6 +196,10 @@ def why_it_matters(capabilities: dict) -> list[str]:
     if not capabilities["reconstruction"]["production_ready"]:
         messages.append(
             "Missing dedicated reconstruction tooling means carrier/background repair stays manual or approximate and should not be treated as automatic production output."
+        )
+    if not capabilities["generation"]["production_ready"]:
+        messages.append(
+            "Missing generated-reconstruction capability means high-cost objects cannot truthfully route to generated transparent delivery and may need stronger extraction, reconstruction, or external generated outputs."
         )
     return messages
 
@@ -466,6 +472,11 @@ def build_report() -> dict:
                 "Dedicated reconstruction tooling is missing; manual redraw required or approximate reconstruction only."
                 if capabilities["reconstruction"]["path_type"] == "manual-redraw-only"
                 else "Dedicated reconstruction tooling is available before claiming production extraction."
+            )
+            + (
+                " Generated-reconstruction is not production-ready yet, so plan routes that would otherwise divert to generate still need external generated outputs or a host-managed generation provider."
+                if not capabilities["generation"]["production_ready"]
+                else " A generated-reconstruction provider is also production-ready for objects that planning routes to generate."
             )
         ),
         "preflight_tooling_recommendation_gate": {

@@ -186,7 +186,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "record_quality_review.py",
             "archive_intermediates.py",
             "export_asset_manifest.py",
-            "`qa.status=pass` requires `metadata.capability.production_capable=true`",
+            "`qa.status=pass` requires extraction-capable",
             "plan_manifest.json",
             "Generation Routing Gate",
             "generated-reconstruction",

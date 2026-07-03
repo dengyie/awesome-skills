@@ -245,7 +245,7 @@ Large plates, approximate `background_clean`, screenshot-level support layers, a
 
 Use `pass` only when reusable assets, masks, metadata, previews, and background repair are acceptable. Use `needs-review` when edge quality, AI-assisted regions, object roles, or background repair need manual review. Use `blocked` when required files are missing or the package cannot be reused safely.
 
-`qa.status=pass` requires `metadata.capability.production_capable=true`. Keep draft-only or unrecorded tooling-preflight packages `needs-review` or `blocked` unless production-capable upstream evidence or external professional outputs are recorded.
+`qa.status=pass` requires extraction-capable `metadata.capability.production_capable=true` whenever the package still claims non-generated reusable layers. Generated-only pass paths instead require `metadata.capability.generation.production_ready=true` plus object-scoped generation-routing evidence. Keep draft-only or unrecorded tooling-preflight packages `needs-review` or `blocked` unless the relevant production-capable route is recorded honestly.
 `qa.status=pass` also requires `metadata.quality_target.tier=visual-acceptance-ready`.
 
 Use `needs-review` or `blocked` when the background is only a reconstructed approximation, when core layers are missing, or when the result is mostly rectangular crops.
