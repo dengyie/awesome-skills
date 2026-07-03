@@ -484,6 +484,12 @@ def all_required_checks_pass(metadata: dict) -> bool:
 
 
 def reusable_layers_ready_for_pass(metadata: dict) -> bool:
+    accepted_reuse_statuses = {
+        "production-ready",
+        "approximate-reconstruction",
+        "accepted-approximate-reconstruction",
+        "accepted-generated-reconstruction",
+    }
     objects = metadata.get("objects", [])
     if not isinstance(objects, list) or not objects:
         return False
@@ -492,7 +498,7 @@ def reusable_layers_ready_for_pass(metadata: dict) -> bool:
             return False
         asset_class = item.get("asset_class")
         reuse_status = item.get("reuse_status")
-        if asset_class in {"atomic", "candidate"} and reuse_status != "production-ready":
+        if asset_class in {"atomic", "candidate"} and reuse_status not in accepted_reuse_statuses:
             return False
     return True
 
@@ -525,6 +531,8 @@ def has_affirmative_decision(metadata: dict, stages: set[str]) -> bool:
 def update_asset_summary(metadata: dict) -> None:
     summary = {
         "production_ready_assets": 0,
+        "accepted_approximate_reconstructions": 0,
+        "accepted_generated_reconstructions": 0,
         "draft_candidate_assets": 0,
         "support_only_layers": 0,
         "blocked_assets": 0,
@@ -538,6 +546,10 @@ def update_asset_summary(metadata: dict) -> None:
             reuse_status = item.get("reuse_status")
             if asset_class == "atomic" and reuse_status == "production-ready":
                 summary["production_ready_assets"] += 1
+            elif reuse_status == "accepted-approximate-reconstruction":
+                summary["accepted_approximate_reconstructions"] += 1
+            elif reuse_status == "accepted-generated-reconstruction":
+                summary["accepted_generated_reconstructions"] += 1
             elif reuse_status == "draft-candidate":
                 summary["draft_candidate_assets"] += 1
             elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {
@@ -783,7 +795,9 @@ def main() -> int:
             "cannot set qa-status pass until metadata.quality_target.tier is visual-acceptance-ready"
         )
     if args.qa_status == "pass" and not reusable_layers_ready_for_pass(metadata):
-        parser.error("cannot set qa-status pass until reusable layers are reuse_status=production-ready")
+        parser.error(
+            "cannot set qa-status pass until reusable layers are pass-eligible reuse_status values"
+        )
     if args.qa_status == "pass":
         decision_log = metadata.get("decision_log", [])
         if not isinstance(decision_log, list) or not decision_log:

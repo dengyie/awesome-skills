@@ -240,6 +240,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "notes": "",
             "evidence_ref": "",
         }
+        Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(
+            output / "assets" / "main_object_transparent.png"
+        )
+        Image.new("L", (4, 3), 255).save(output / "masks" / "mask_main.png")
         previews_dir = output / "previews"
         Image.new("RGBA", (4, 3), (240, 240, 240, 255)).save(
             previews_dir / "main_object_whitebg.png"
@@ -278,6 +282,83 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             encoding="utf-8",
         )
         return metadata
+
+    def _write_generated_plan_manifest(
+        self,
+        output: pathlib.Path,
+        object_id: str = "main_object",
+        protected_approval_required: bool = False,
+        protected_approval_ref: str = "",
+    ) -> dict:
+        plan_manifest = {
+            "schema_version": "1.0",
+            "package_name": "fixture",
+            "source": {
+                "path": "source/source_original.png",
+                "width": 4,
+                "height": 3,
+            },
+            "quality_target": {
+                "tier": "visual-acceptance-ready",
+                "notes": "Generated route fixture.",
+            },
+            "planning_status": {
+                "status": "completed",
+                "notes": "Fixture planning complete.",
+            },
+            "route_policy": {
+                "planning_required": True,
+                "generation_routing_gate": "confirmed",
+                "plan_manifest_rollout_stage": "phase3-test",
+                "notes": "",
+            },
+            "provider_preferences": {
+                "generation_provider_class": "codex-controlled-generation",
+                "segmentation_provider_class": "unset",
+            },
+            "objects": [
+                {
+                    "object_id": object_id,
+                    "object_type": "ui-carrier",
+                    "planned_route": "generate",
+                    "route_signals": {
+                        "recoverability_low": True,
+                        "object_is_reconstruction_like": True,
+                        "quality_target_high": True,
+                        "segmentation_cost_unfavorable": True,
+                    },
+                    "route_score": 4,
+                    "route_reason": "Fixture object is generation-routed.",
+                    "needs_user_confirmation": False,
+                    "attempt_budget": 1,
+                    "attempts_used": 1,
+                    "attempt_history": ["pilot generated candidate"],
+                    "token_budget_hint": "low",
+                    "pilot_group": "fixture-group",
+                    "promotion_requirement": "object approval required",
+                    "protected_policy": "none" if not protected_approval_required else "primary-brand-logo",
+                    "protected_approval_required": protected_approval_required,
+                    "protected_approval_ref": protected_approval_ref,
+                    "why_not_extract": "Hidden pixels are missing.",
+                    "why_not_reconstruct": "Local reconstruction would stay too approximate.",
+                    "why_generate": "Constrained generation is the cleaner truthful route.",
+                    "risk_note": "Needs explicit generated-delivery evidence.",
+                }
+            ],
+            "batch_groups": [],
+            "summary": {
+                "planned_extract": 0,
+                "planned_reconstruct": 0,
+                "planned_generate": 1,
+                "planned_rebuild_downstream": 0,
+                "planned_support_only": 0,
+            },
+        }
+        (output / "plan_manifest.json").write_text(
+            json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return plan_manifest
 
     def test_required_skill_files_are_present(self):
         required_paths = [
@@ -829,6 +910,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["audit"], {})
             self.assertEqual(metadata["qa"]["status"], "needs-review")
             self.assertEqual(metadata["asset_summary"]["production_ready_assets"], 0)
+            self.assertEqual(metadata["asset_summary"]["accepted_approximate_reconstructions"], 0)
+            self.assertEqual(metadata["asset_summary"]["accepted_generated_reconstructions"], 0)
             self.assertEqual(metadata["asset_summary"]["draft_candidate_assets"], 0)
             self.assertEqual(metadata["asset_summary"]["support_only_layers"], 0)
             self.assertNotIn("final_promotion_acceptance", metadata["confirmation"])
@@ -4160,6 +4243,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             }
             metadata["asset_summary"] = {
                 "production_ready_assets": 2,
+                "accepted_approximate_reconstructions": 0,
+                "accepted_generated_reconstructions": 0,
                 "draft_candidate_assets": 0,
                 "support_only_layers": 1,
                 "blocked_assets": 0,
@@ -4620,6 +4705,8 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(manifest["layers"][0]["asset_class"], "atomic")
             self.assertEqual(manifest["layers"][0]["reuse_status"], "production-ready")
             self.assertEqual(manifest["asset_summary"]["production_ready_assets"], 2)
+            self.assertEqual(manifest["asset_summary"]["accepted_approximate_reconstructions"], 0)
+            self.assertEqual(manifest["asset_summary"]["accepted_generated_reconstructions"], 0)
             self.assertEqual(manifest["asset_summary"]["draft_candidate_assets"], 0)
             self.assertEqual(manifest["asset_summary"]["support_only_layers"], 0)
 
@@ -5535,6 +5622,112 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(validate_result.returncode, 0, validate_result.stderr)
+
+    def test_validate_asset_package_allows_legacy_non_generated_package_without_plan_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_ready_validation_package(output)
+            (output / "plan_manifest.json").unlink()
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validate_asset_package_rejects_generated_delivery_without_plan_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_ready_validation_package(output)
+            obj = metadata["objects"][0]
+            obj["delivery_class"] = "generated-reconstruction"
+            obj["reuse_status"] = "accepted-generated-reconstruction"
+            obj["generation_source"] = "codex-controlled-generation"
+            obj["generation_model_or_tool"] = "gpt-image-1"
+            obj["generation_version"] = "test"
+            obj["generation_prompt_or_brief_ref"] = "_staging/generation_briefs/main_object.json"
+            obj["generation_reference_inputs"] = ["source/source_original.png"]
+            obj["manual_review_confirmed"] = True
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            (output / "plan_manifest.json").unlink()
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("plan_manifest.json", result.stderr)
+
+    def test_validate_asset_package_accepts_generated_delivery_with_plan_manifest_and_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(source)
+            output = tmp_path / "package"
+
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_ready_validation_package(output)
+            obj = metadata["objects"][0]
+            obj["delivery_class"] = "generated-reconstruction"
+            obj["reuse_status"] = "accepted-generated-reconstruction"
+            obj["generation_source"] = "codex-controlled-generation"
+            obj["generation_model_or_tool"] = "gpt-image-1"
+            obj["generation_version"] = "test"
+            obj["generation_prompt_or_brief_ref"] = "_staging/generation_briefs/main_object.json"
+            obj["generation_reference_inputs"] = ["source/source_original.png"]
+            obj["manual_review_confirmed"] = True
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generated_plan_manifest(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_validate_asset_package_rejects_pass_without_visual_acceptance_target(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -48,6 +48,8 @@ ALLOWED_REUSE_STATUSES = {
     "support-only",
     "blocked",
     "approximate-reconstruction",
+    "accepted-approximate-reconstruction",
+    "accepted-generated-reconstruction",
 }
 ALLOWED_DELIVERY_CLASSES = {
     "clean-extraction",

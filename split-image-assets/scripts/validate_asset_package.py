@@ -59,7 +59,7 @@ ALLOWED_ROOT_DIRECTORIES = {
     "_staging",
     "_archive_intermediate",
 }
-ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json"}
+ALLOWED_ROOT_FILES = {"metadata.json", "qa_report.md", "asset_manifest.json", "plan_manifest.json"}
 RECONSTRUCTION_MARKERS = {"reconstruct", "reconstructed", "reconstruction", "inpaint", "clean plate"}
 HELPER_ONLY_MARKERS = {"pillow", "opencv", "skimage", "threshold"}
 REQUIRED_DECISION_FIELDS = {
@@ -76,6 +76,8 @@ REQUIRED_NONEMPTY_DECISION_FIELDS = REQUIRED_DECISION_FIELDS - {"evidence_ref"}
 DECISION_ANSWER_FIELDS = ("recorded_answer", "user_answer")
 REQUIRED_ASSET_SUMMARY_FIELDS = {
     "production_ready_assets",
+    "accepted_approximate_reconstructions",
+    "accepted_generated_reconstructions",
     "draft_candidate_assets",
     "support_only_layers",
     "blocked_assets",
@@ -121,6 +123,19 @@ TEXT_ROUTING_CONFIRMATION_MARKERS = {
     "visual asset",
     "text-like object",
     "fidelity-critical",
+}
+PASS_READY_REUSE_STATUSES = {
+    "production-ready",
+    "approximate-reconstruction",
+    "accepted-approximate-reconstruction",
+    "accepted-generated-reconstruction",
+}
+GENERATED_EVIDENCE_FIELDS = {
+    "generation_source",
+    "generation_model_or_tool",
+    "generation_version",
+    "generation_prompt_or_brief_ref",
+    "generation_reference_inputs",
 }
 
 
@@ -178,6 +193,21 @@ def load_metadata(package_dir: Path, errors: list[str]) -> dict:
     except json.JSONDecodeError as exc:
         errors.append(f"metadata.json is not valid JSON: {exc}")
         return {}
+
+
+def load_plan_manifest(package_dir: Path, errors: list[str]) -> dict | None:
+    path = package_dir / "plan_manifest.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        errors.append(f"plan_manifest.json is not valid JSON: {exc}")
+        return None
+    if not isinstance(data, dict):
+        errors.append("plan_manifest.json must contain an object")
+        return None
+    return data
 
 
 def validate_required_layout(package_dir: Path, errors: list[str]) -> None:
@@ -576,6 +606,33 @@ def is_reconstructed_or_approximate_layer(item: dict) -> bool:
     return any(marker in text for marker in RECONSTRUCTION_MARKERS)
 
 
+def is_generated_delivery_layer(item: dict) -> bool:
+    if item.get("delivery_class") == "generated-reconstruction":
+        return True
+    if item.get("reuse_status") == "accepted-generated-reconstruction":
+        return True
+    return any(
+        isinstance(item.get(field_name), str) and str(item.get(field_name)).strip()
+        for field_name in [
+            "generation_source",
+            "generation_model_or_tool",
+            "generation_prompt_or_brief_ref",
+        ]
+    )
+
+
+def plan_manifest_object(plan_manifest: dict | None, object_id: str) -> dict | None:
+    if not isinstance(plan_manifest, dict):
+        return None
+    objects = plan_manifest.get("objects", [])
+    if not isinstance(objects, list):
+        return None
+    for item in objects:
+        if isinstance(item, dict) and item.get("object_id") == object_id:
+            return item
+    return None
+
+
 def decision_answer(entry: dict) -> str:
     for field_name in DECISION_ANSWER_FIELDS:
         value = entry.get(field_name)
@@ -732,7 +789,11 @@ def validate_source(package_dir: Path, metadata: dict, errors: list[str]) -> tup
 
 
 def validate_objects(
-    package_dir: Path, metadata: dict, source_size: tuple[int, int] | None, errors: list[str]
+    package_dir: Path,
+    metadata: dict,
+    source_size: tuple[int, int] | None,
+    errors: list[str],
+    plan_manifest: dict | None = None,
 ) -> None:
     objects = metadata.get("objects", [])
     if not isinstance(objects, list):
@@ -880,12 +941,85 @@ def validate_objects(
         if (
             qa_status == "pass"
             and asset_class in {"atomic", "candidate"}
-            and reuse_status != "production-ready"
+            and reuse_status not in PASS_READY_REUSE_STATUSES
         ):
             errors.append(
                 f"{object_id}: qa.status pass requires atomic reusable layers to be "
-                "reuse_status=production-ready"
+                "pass-eligible reuse_status values"
             )
+        generated_delivery = is_generated_delivery_layer(item)
+        if generated_delivery:
+            if plan_manifest is None:
+                errors.append(
+                    f"{object_id}: generated-route objects require plan_manifest.json during staged rollout"
+                )
+            else:
+                planned = plan_manifest_object(plan_manifest, str(object_id))
+                if planned is None:
+                    errors.append(
+                        f"{object_id}: generated-route objects require a matching plan_manifest object entry"
+                    )
+                else:
+                    if planned.get("planned_route") != "generate":
+                        errors.append(
+                            f"{object_id}: generated-route objects must use planned_route=generate in plan_manifest.json"
+                        )
+                    for field_name in [
+                        "why_not_extract",
+                        "why_not_reconstruct",
+                        "why_generate",
+                        "risk_note",
+                    ]:
+                        value = planned.get(field_name)
+                        if not isinstance(value, str) or not value.strip():
+                            errors.append(
+                                f"{object_id}: plan_manifest.{field_name} is required for generated-route objects"
+                            )
+                    if planned.get("protected_approval_required") is True:
+                        approval_ref = planned.get("protected_approval_ref")
+                        if not isinstance(approval_ref, str) or not approval_ref.strip():
+                            errors.append(
+                                f"{object_id}: protected generated-route objects require protected_approval_ref in plan_manifest.json"
+                            )
+                    attempt_budget = planned.get("attempt_budget")
+                    attempts_used = planned.get("attempts_used")
+                    if isinstance(attempt_budget, int) and isinstance(attempts_used, int) and attempts_used > attempt_budget:
+                        attempt_history = planned.get("attempt_history", [])
+                        if not isinstance(attempt_history, list) or not attempt_history:
+                            errors.append(
+                                f"{object_id}: plan_manifest must record attempt_history when attempts_used exceeds attempt_budget"
+                            )
+            for field_name in GENERATED_EVIDENCE_FIELDS:
+                value = item.get(field_name)
+                if field_name == "generation_reference_inputs":
+                    if not isinstance(value, list) or not value or not all(
+                        isinstance(entry, str) and entry.strip() for entry in value
+                    ):
+                        errors.append(
+                            f"{object_id}: {field_name} must be a non-empty list for generated delivery"
+                        )
+                else:
+                    if not isinstance(value, str) or not value.strip():
+                        errors.append(
+                            f"{object_id}: {field_name} is required for generated delivery"
+                        )
+            if delivery_class != "generated-reconstruction":
+                errors.append(
+                    f"{object_id}: generated-route objects must use delivery_class=generated-reconstruction"
+                )
+            if reuse_status == "accepted-generated-reconstruction":
+                if not promotion_confirmation_satisfied(metadata):
+                    errors.append(
+                        f"{object_id}: accepted generated delivery requires metadata.confirmation.candidate_promotion to be confirmed"
+                    )
+                if qa_status == "pass" and item.get("manual_review_confirmed") is not True:
+                    errors.append(
+                        f"{object_id}: generated reconstructed layers cannot support qa.status pass without manual_review_confirmed=true"
+                    )
+            if qa_status == "pass" and reuse_status != "accepted-generated-reconstruction":
+                errors.append(
+                    f"{object_id}: generated delivery requires reuse_status=accepted-generated-reconstruction before qa.status pass"
+                )
         composition_order = item.get("composition_order")
         if not isinstance(composition_order, int):
             errors.append(f"{object_id}: composition_order is required for layer stacking")
@@ -944,6 +1078,17 @@ def validate_objects(
                 errors.append(
                     f"{object_id}: approximate or reconstructed layers must not use reuse_status=production-ready"
                 )
+            if (
+                qa_status == "pass"
+                and asset_class in {"atomic", "candidate"}
+                and reuse_status not in {
+                    "approximate-reconstruction",
+                    "accepted-approximate-reconstruction",
+                }
+            ):
+                errors.append(
+                    f"{object_id}: approximate reconstructed layers require a pass-eligible approximate reuse_status before qa.status pass"
+                )
             if str(item.get("selected_candidate_id", "")).strip():
                 accepted = any(
                     isinstance(entry, dict)
@@ -980,6 +1125,20 @@ def validate_objects(
         if reuse_status == "approximate-reconstruction" and delivery_class != "approximate-reconstruction":
             errors.append(
                 f"{object_id}: reuse_status=approximate-reconstruction requires delivery_class=approximate-reconstruction"
+            )
+        if (
+            reuse_status == "accepted-approximate-reconstruction"
+            and delivery_class != "approximate-reconstruction"
+        ):
+            errors.append(
+                f"{object_id}: reuse_status=accepted-approximate-reconstruction requires delivery_class=approximate-reconstruction"
+            )
+        if (
+            reuse_status == "accepted-generated-reconstruction"
+            and delivery_class != "generated-reconstruction"
+        ):
+            errors.append(
+                f"{object_id}: reuse_status=accepted-generated-reconstruction requires delivery_class=generated-reconstruction"
             )
         text_semantics = item.get(
             "text_semantics",
@@ -1484,11 +1643,12 @@ def collect_validation_errors(package_dir: Path, metadata: dict | None = None) -
         return errors
 
     candidate_metadata = metadata if isinstance(metadata, dict) else load_metadata(package_dir, errors)
+    plan_manifest = load_plan_manifest(package_dir, errors)
     validate_required_layout(package_dir, errors)
     validate_metadata_fields(candidate_metadata, errors)
     validate_extraction_pipeline(candidate_metadata, errors)
     source_size = validate_source(package_dir, candidate_metadata, errors)
-    validate_objects(package_dir, candidate_metadata, source_size, errors)
+    validate_objects(package_dir, candidate_metadata, source_size, errors, plan_manifest=plan_manifest)
     validate_previews(package_dir, candidate_metadata, errors)
     validate_qa_report(package_dir, errors)
     return errors

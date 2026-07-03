@@ -60,6 +60,8 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
         "objects": [],
         "asset_summary": {
             "production_ready_assets": 0,
+            "accepted_approximate_reconstructions": 0,
+            "accepted_generated_reconstructions": 0,
             "draft_candidate_assets": 0,
             "support_only_layers": 0,
             "blocked_assets": 0,

@@ -107,6 +107,8 @@ def layer_record(package_dir: Path, item: dict, errors: list[str]) -> dict | Non
 def summarize_layers(layers: list[dict]) -> dict:
     summary = {
         "production_ready_assets": 0,
+        "accepted_approximate_reconstructions": 0,
+        "accepted_generated_reconstructions": 0,
         "draft_candidate_assets": 0,
         "support_only_layers": 0,
         "blocked_assets": 0,
@@ -116,6 +118,10 @@ def summarize_layers(layers: list[dict]) -> dict:
         reuse_status = layer.get("reuse_status")
         if reuse_status == "production-ready" and asset_class == "atomic":
             summary["production_ready_assets"] += 1
+        elif reuse_status == "accepted-approximate-reconstruction":
+            summary["accepted_approximate_reconstructions"] += 1
+        elif reuse_status == "accepted-generated-reconstruction":
+            summary["accepted_generated_reconstructions"] += 1
         elif reuse_status == "draft-candidate":
             summary["draft_candidate_assets"] += 1
         elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {

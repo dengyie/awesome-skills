@@ -46,6 +46,8 @@ def require_repair_candidate_path(path: Path, package_dir: Path, label: str, par
 def update_asset_summary(metadata: dict) -> None:
     summary = {
         "production_ready_assets": 0,
+        "accepted_approximate_reconstructions": 0,
+        "accepted_generated_reconstructions": 0,
         "draft_candidate_assets": 0,
         "support_only_layers": 0,
         "blocked_assets": 0,
@@ -57,6 +59,10 @@ def update_asset_summary(metadata: dict) -> None:
         reuse_status = item.get("reuse_status")
         if asset_class == "atomic" and reuse_status == "production-ready":
             summary["production_ready_assets"] += 1
+        elif reuse_status == "accepted-approximate-reconstruction":
+            summary["accepted_approximate_reconstructions"] += 1
+        elif reuse_status == "accepted-generated-reconstruction":
+            summary["accepted_generated_reconstructions"] += 1
         elif reuse_status == "draft-candidate":
             summary["draft_candidate_assets"] += 1
         elif reuse_status in {"support-only", "approximate-reconstruction"} or asset_class in {

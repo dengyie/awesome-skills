@@ -71,6 +71,8 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `audit`
 - `objects`
 - `asset_summary.production_ready_assets`
+- `asset_summary.accepted_approximate_reconstructions`
+- `asset_summary.accepted_generated_reconstructions`
 - `asset_summary.draft_candidate_assets`
 - `asset_summary.support_only_layers`
 - `asset_summary.blocked_assets`
