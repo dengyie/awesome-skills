@@ -9,6 +9,108 @@ from skill_package_testlib import Image, REPO, ROOT, SplitImageAssetsTestBase, j
 
 
 class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
+    def test_prepare_provider_request_writes_bridge_request_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["object_type"] = "ui-carrier"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            planning_dir = output / "_staging" / "planning"
+            planning_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(planning_dir / "main_object_crop.png")
+            Image.new("L", (4, 3), 255).save(planning_dir / "main_object_mask.png")
+            metadata_before = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--input-ref",
+                    "source_crop=_staging/planning/main_object_crop.png",
+                    "--input-ref",
+                    "rough_mask=_staging/planning/main_object_mask.png",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            request_path = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object" / "request.json"
+            self.assertTrue(request_path.exists())
+            request = json.loads(request_path.read_text(encoding="utf-8"))
+            self.assertEqual(request["provider_id"], "codex-controlled-generation")
+            self.assertEqual(request["planned_route"], "generate")
+            self.assertEqual(request["input_refs"]["source_crop"], "_staging/planning/main_object_crop.png")
+            metadata_after = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata_after, metadata_before)
+    def test_record_provider_result_writes_bridge_result_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            provider_dir = output / "_staging" / "providers" / "grounded-sam-bridge" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(provider_dir / "main_object.png")
+            Image.new("L", (4, 3), 255).save(provider_dir / "main_object_mask.png")
+            metadata_before = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "grounded-sam-bridge",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "asset_png=_staging/providers/grounded-sam-bridge/main_object/main_object.png",
+                    "--artifact",
+                    "source_space_mask=_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png",
+                    "--tool-name",
+                    "Grounded-SAM",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "bridge",
+                    "--next-expected-provider",
+                    "rembg-bridge",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result_path = output / "_staging" / "providers" / "grounded-sam-bridge" / "main_object" / "result.json"
+            self.assertTrue(result_path.exists())
+            provider_result = json.loads(result_path.read_text(encoding="utf-8"))
+            self.assertEqual(provider_result["status"], "success")
+            self.assertEqual(provider_result["provenance"]["tool_name"], "Grounded-SAM")
+            metadata_after = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata_after, metadata_before)
     def test_build_previews_creates_inspection_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

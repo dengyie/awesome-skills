@@ -111,6 +111,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
    - record the decision in `metadata.capability`, `metadata.confirmation.tooling_preflight`, and `metadata.decision_log[]`
    - do not continue into extraction until this decision is recorded
 5. Read `references/pipeline-recipes.md` and `references/grounded-sam-pipeline.md` and select an extraction recipe before extraction.
+   - read `references/default-route-chains.md` when route planning needs a default provider chain
 6. Run the Granularity Alignment Gate before cutting pixels:
    - module-level, component-level, atomic-layer, or production-editable reconstruction
    - high-signal subset or full-image batch strategy
@@ -141,7 +142,16 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - `2/4` route signals require a one-question `user-decision` stop
     - `0-1/4` route signals continue on the non-generation path
     - missing segmentation tooling alone must not justify a generated delivery path
-12. Analyze the source image before extraction:
+12. Choose the default provider chain for the resolved route before broad upstream execution:
+    - use `references/default-route-chains.md`
+    - choose the route default first, then apply any explicit `object_type` override
+    - this is the route default plus object_type override rule for provider selection
+    - build provider request manifests with `scripts/prepare_provider_request.py`
+    - keep provider requests and results under `_staging/providers/<provider-id>/<object-id>/`
+    - record provider result manifests with `scripts/record_provider_result.py`
+    - do not let provider bridge scripts write `metadata.json` directly; final package truth still changes only through explicit consumers
+    - treat the provider bridge layer as the standard path between planning and import/compare/promotion
+13. Analyze the source image before extraction:
     - visual hierarchy from background to foreground
     - main object
     - secondary objects
@@ -150,17 +160,17 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
    - complex edges
    - transparent, reflective, fuzzy, smoky, or low-contrast regions
    - recommended split plan
-13. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
-14. When the split plan has an ambiguous decision point, an uncertain text-like preservation choice, or a subjective reuse boundary, run the appropriate confirmation gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
+14. When UI elements combine a carrier shape and a symbol, split them as tile/badge/panel background plus foreground glyph/symbol when independent reuse or clean edge review matters.
+15. When the split plan has an ambiguous decision point, an uncertain text-like preservation choice, or a subjective reuse boundary, run the appropriate confirmation gate before extracting. Read `references/confirmation-prompts.md` for grill-me style prompt templates.
    - only real user decisions, genuine external blockers, and formal approvals may pause execution
    - if prior instructions already settle the branch, record the evidence-backed decision instead of asking again
    - ordinary progress updates remain commentary and do not pause execution
-15. Read `references/quick-contract.md` for the short contract view, then `references/asset-package-contract.md` when you need the full package contract. Update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
+16. Read `references/quick-contract.md` for the short contract view, then `references/asset-package-contract.md` when you need the full package contract. Update `metadata.json` with the visual hierarchy, recommended split plan, `extraction_pipeline`, and object inventory.
    - record `metadata.granularity.mode`, `metadata.granularity.user_confirmed`, and `metadata.granularity.notes`
    - for UI or dense compositions, also record `metadata.granularity.scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, and `layer_independence`
    - record per-object `value_scoring`, `decision_routing`, `rebuild_intent`, and `text_semantics`
    - record object `asset_class` and `reuse_status` so draft candidates, support layers, and production-ready atomic assets cannot be confused
-16. Produce or collect reusable assets:
+17. Produce or collect reusable assets:
     - transparent PNGs for individual objects
     - source-space masks
     - cleaned background
@@ -170,9 +180,9 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
    - for small assets under roughly 128 px, prefer `scripts/upscale_repair_downscale.py` before final cleanup when quality matters
    - use `scripts/score_candidate_assets.py` before compare when candidate count or quality variance is high
     - for generated-route objects, create a package-owned generation brief before generation begins and keep generated output in candidate state until compare/promotion/acceptance evidence exists
-17. Put external model outputs, candidate masks, refinement files, temporary manifests, and generation briefs in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
+18. Put external model outputs, candidate masks, refinement files, temporary manifests, generation briefs, and provider bridge request/result manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
    - use `scripts/archive_intermediates.py` when you want a deterministic archive step
-18. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
+19. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
    - professional upstream
    - `scripts/import_external_assets.py`
    - `scripts/build_previews.py`
@@ -180,17 +190,17 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
    - `scripts/record_quality_review.py`
    - `scripts/validate_asset_package.py`
    - `scripts/export_asset_manifest.py`
-19. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
-20. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, formal gate decisions, and manual QA status after inspection instead of hand-editing JSON.
+20. Record per-layer segmentation quality evidence: semantic boundary, mask source, alpha source, edge checks, background residue checks, and reuse readiness.
+21. Use `scripts/record_quality_review.py` to record semantic analysis, quality gates, object quality checks, formal gate decisions, and manual QA status after inspection instead of hand-editing JSON.
    - use formal gate writes only for real decision/approval state
    - keep commentary and review progress out of `metadata.decision_log[]` and `metadata.confirmation`
-21. Build inspection previews with `scripts/build_previews.py`.
-22. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
-23. Run `scripts/audit_visual_quality.py` for warning-only checks such as hard alpha edges, loose crops, large masks, and support plates miscounted as atomic assets.
-24. Read `references/qa-standards.md` and inspect the package.
-25. Validate structure with `scripts/validate_asset_package.py`.
-26. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
-27. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
+22. Build inspection previews with `scripts/build_previews.py`.
+23. Build segmentation-quality previews with `scripts/build_quality_previews.py`.
+24. Run `scripts/audit_visual_quality.py` for warning-only checks such as hard alpha edges, loose crops, large masks, and support plates miscounted as atomic assets.
+25. Read `references/qa-standards.md` and inspect the package.
+26. Validate structure with `scripts/validate_asset_package.py`.
+27. Export a downstream layer manifest with `scripts/export_asset_manifest.py` after validation.
+28. Read `references/manual-review.md` before assigning `pass`, `needs-review`, or `blocked`.
 
 ## Script Boundaries
 
@@ -201,6 +211,8 @@ Use external image tools, AI image editing, manual editing, or user-provided cut
 Pillow, OpenCV, and skimage are not primary segmenters for production splitting. Use them for alpha compositing, PNG writing, source-space mask persistence, repair/refinement helpers, preview generation, metadata, and manifest packaging. Do not silently downgrade a production request to bbox or coordinate crops when the mature segmenter path is missing.
 
 `scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
+
+`scripts/prepare_provider_request.py`, `scripts/record_provider_result.py`, and the provider bridge helpers standardize how planned object routes talk to upstream providers. Use them to normalize provider requests/results into `_staging/providers/<provider-id>/<object-id>/` before import, compare, or promotion. This bridge layer should come before broad native-runner expansion.
 
 `scripts/check_extraction_environment.py` is the preflight tooling recommendation gate. It checks optional module presence, runtime readiness, and production-ready capability for segmentation, matting, reconstruction, generation, and environment support. It does not install anything. For reconstruction, runtime support such as `torch` or `onnxruntime` is not enough by itself; only a dedicated reconstruction tool path should count as `production_ready=true`. For generation, raw image generation availability is not enough by itself; the provider must support object-level constrained generation plus transparent asset delivery before it can count as `production_ready=true`.
 
@@ -334,6 +346,8 @@ Record formal gate outcomes in `metadata.decision_log[]` with `stage`, `pause_ca
 
 - Read `references/workflow.md` for the full staged workflow.
 - Read `references/pipeline-recipes.md` before choosing or documenting the extraction path.
+- Read `references/default-route-chains.md` before selecting the default provider chain for a resolved route.
+- Read `references/provider-contract.md` when you need the provider bridge request/result contract.
 - Read `references/grounded-sam-pipeline.md` before accepting or running professional upstream outputs.
 - Read `references/ui-atomic-split.md` before planning complex UI, dashboard, badge, tile/glyph, or control-heavy images.
 - Read `references/quick-contract.md` for the short package contract view.
@@ -349,6 +363,7 @@ At minimum report:
 - package path
 - source image
 - plan manifest path
+- provider chain summary
 - tooling preflight result
 - production_capable: true/false
 - generation capability result
@@ -362,6 +377,7 @@ At minimum report:
 - visual hierarchy and recommended split plan
 - extraction pipeline recipe, stages, upstream tools, and quality gates
 - planned object routes and route reasoning for generated candidates
+- provider requests/results written to `_staging/providers/`
 - primary segmenter, matting tool, and helper tools
 - generation provider class and whether it is production-ready
 - asset_class/reuse_status policy used for this run

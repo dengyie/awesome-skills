@@ -232,6 +232,35 @@ Every object must resolve to one of:
 - `rebuild_downstream`
 - `support_only`
 
+Object-route execution should pass through a provider bridge layer before broad native-runner expansion.
+
+That bridge layer standardizes:
+
+- provider request manifests
+- provider result manifests
+- default route-to-provider chains
+- `_staging/providers/<provider-id>/<object-id>/` as the execution-adapter surface
+
+This lets the package normalize external-manifest, host-managed, and future native providers through one execution contract.
+
+### Bridge-First V1 Constraints
+
+The first bridge-first milestone is intentionally narrow.
+
+Committed V1 provider ids:
+
+- `external-professional-outputs`
+- `external-generated-outputs`
+- `codex-controlled-generation`
+- `grounded-sam-bridge`
+
+The default selection rule is:
+
+1. choose the route default provider chain
+2. apply an explicit `object_type` override when one exists
+
+The bridge layer is staging-only. Provider requests and provider results must not write `metadata.json` directly. Final package truth continues to change only through explicit consumers such as import, compare, promotion, or review adapters.
+
 ### 4. Quality Adjudication
 
 The workflow must continue to separate:

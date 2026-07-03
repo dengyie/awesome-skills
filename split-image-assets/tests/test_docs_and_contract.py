@@ -17,6 +17,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             ROOT / "references" / "pipeline-recipes.md",
             ROOT / "references" / "quick-contract.md",
             ROOT / "references" / "asset-package-contract.md",
+            ROOT / "references" / "provider-contract.md",
+            ROOT / "references" / "default-route-chains.md",
             ROOT / "references" / "qa-standards.md",
             ROOT / "references" / "manual-review.md",
             ROOT / "references" / "confirmation-prompts.md",
@@ -32,6 +34,11 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             ROOT / "scripts" / "compare_candidate_assets.py",
             ROOT / "scripts" / "candidate_workflow_lib.py",
             ROOT / "scripts" / "package_state_lib.py",
+            ROOT / "scripts" / "provider_contract.py",
+            ROOT / "scripts" / "provider_registry.py",
+            ROOT / "scripts" / "provider_bridge_lib.py",
+            ROOT / "scripts" / "prepare_provider_request.py",
+            ROOT / "scripts" / "record_provider_result.py",
             ROOT / "scripts" / "archive_intermediates.py",
             ROOT / "scripts" / "generate_ui_carrier_candidates.py",
             ROOT / "scripts" / "generate_ui_glyph_cleanup_candidates.py",
@@ -96,11 +103,30 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "qa.status=pass",
             "generated-only pass",
             "promotion or acceptance evidence",
+            "generated-reconstruction",
             "production-ready assets",
             "draft candidate assets",
             "support-only layers",
         ]:
             self.assertIn(expected, quick_contract)
+    def test_provider_docs_encode_bridge_first_v1_scope_guards(self):
+        provider_contract = (ROOT / "references" / "provider-contract.md").read_text(
+            encoding="utf-8"
+        )
+        default_chains = (ROOT / "references" / "default-route-chains.md").read_text(
+            encoding="utf-8"
+        )
+
+        for expected in [
+            "external-professional-outputs",
+            "external-generated-outputs",
+            "codex-controlled-generation",
+            "grounded-sam-bridge",
+            "must not write `metadata.json` directly",
+            "route default",
+            "object_type` override",
+        ]:
+            self.assertIn(expected, provider_contract + "\n" + default_chains)
     def test_skill_frontmatter_and_core_rules_are_present(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         match = re.match(r"---\n(.*?)\n---", skill_text, re.DOTALL)
@@ -138,6 +164,11 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertIn("WHOLE-IMAGE PLANNING BEFORE EXPENSIVE OBJECT WORK", skill_text)
         self.assertIn("GENERATION ROUTING GATE", skill_text)
         self.assertIn("plan_manifest.json", skill_text)
+        self.assertIn("default provider chain", skill_text)
+        self.assertIn("object_type override", skill_text)
+        self.assertIn("prepare_provider_request.py", skill_text)
+        self.assertIn("record_provider_result.py", skill_text)
+        self.assertIn("do not let provider bridge scripts write `metadata.json` directly", skill_text)
         self.assertIn("generated-reconstruction", skill_text)
         self.assertIn("structural-valid", skill_text)
         self.assertIn("usable-draft", skill_text)
@@ -191,6 +222,12 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "record_quality_review.py",
             "archive_intermediates.py",
             "export_asset_manifest.py",
+            "prepare_provider_request.py",
+            "record_provider_result.py",
+            "provider bridge",
+            "_staging/providers/",
+            "object_type override",
+            "must not write `metadata.json` directly",
             "`qa.status=pass` requires extraction-capable",
             "plan_manifest.json",
             "Generation Routing Gate",

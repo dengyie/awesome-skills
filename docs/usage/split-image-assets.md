@@ -39,6 +39,8 @@ For deeper details, use the more specialized sources instead of treating this fi
 - `split-image-assets/SKILL.md`: agent-facing workflow entrypoint
 - `split-image-assets/references/workflow.md`: gate and state-machine detail
 - `split-image-assets/references/asset-package-contract.md`: package contract and validator truth surface
+- `split-image-assets/references/provider-contract.md`: provider bridge request/result contract
+- `split-image-assets/references/default-route-chains.md`: default provider chains per route
 - `split-image-assets/references/pipeline-recipes.md`: route and recipe choice
 - `split-image-assets/references/ui-atomic-split.md`: UI-specific planning
 
@@ -129,6 +131,8 @@ Default threshold policy:
 
 Do not route to `generate` merely because local segmentation tooling is missing.
 
+After route planning, choose the default provider chain for that route, then apply any explicit `object_type` override; this is the route default plus object_type override rule for provider selection. Write provider bridge request manifests into `_staging/providers/<provider-id>/<object-id>/`. V1 intentionally keeps the active provider surface narrow to `external-professional-outputs`, `external-generated-outputs`, `codex-controlled-generation`, and `grounded-sam-bridge`. The bridge layer comes before broad native-runner expansion: it standardizes what the skill asks of upstream providers and what they must return, and its request/result scripts must not write `metadata.json` directly.
+
 Also classify each target object before choosing the repair path:
 
 - `ui-carrier`
@@ -210,6 +214,8 @@ For asset value routing, also record per-object `value_scoring`, `decision_routi
 ```bash
 python split-image-assets/scripts/check_extraction_environment.py
 python split-image-assets/scripts/init_asset_package.py source.png output-package
+python split-image-assets/scripts/prepare_provider_request.py output-package --object-id main_object --provider-id grounded-sam-bridge --input-ref source_crop=_staging/planning/main_object_crop.png --input-ref rough_mask=_staging/planning/main_object_mask.png
+python split-image-assets/scripts/record_provider_result.py output-package --provider-id grounded-sam-bridge --object-id main_object --status success --artifact asset_png=_staging/providers/grounded-sam-bridge/main_object/main_object.png --artifact source_space_mask=_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png --tool-name Grounded-SAM --tool-role segmentation --tool-version external --execution-mode bridge --next-expected-provider rembg-bridge
 python split-image-assets/scripts/import_external_assets.py output-package --object-id main_object --role main --layer-kind primary-subject --composition-order 10 --semantic-boundary "Main subject from SAM2 mask" --asset main.png --mask mask_main.png --mask-source sam2 --alpha-source rembg --tool-name SAM2 --tool-role segmentation --tool-version external
 python split-image-assets/scripts/build_previews.py output-package
 python split-image-assets/scripts/build_quality_previews.py output-package

@@ -25,6 +25,7 @@ The current package baseline is:
 - planning-first workflow
 - explicit `plan_manifest.json` planning surface
 - extraction/generation route separation
+- provider bridge contract, registry, and request/result staging surface
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -51,6 +52,24 @@ Verification completed:
 - `python -m unittest discover split-image-assets\tests -v`
 - `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
+### `provider bridge contract V1`
+
+Closed status: complete
+
+What landed:
+
+- standard provider request/result contract modules
+- provider registry and default route chains
+- `_staging/providers/<provider-id>/<object-id>/` as the standard bridge staging layout
+- deterministic request/result writer scripts for bridge-first upstream execution
+- package docs and tests aligned to the provider bridge model
+- V1 scope guards: 4 active provider ids only, route default plus object-type override selection, and no direct metadata mutation from provider bridge scripts
+
+Verification completed:
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+
 ## Delivered Milestone Ladder
 
 These are the important completed milestones that define the current architecture:
@@ -63,6 +82,7 @@ These are the important completed milestones that define the current architectur
 6. validator decomposition V1
 7. test decomposition V1
 8. generated-route runtime integration V1
+9. provider bridge contract V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -86,6 +106,7 @@ Choose only one as the next bounded milestone:
    - better provider-specific runtime contract depth
    - more explicit provider capability mapping
    - richer generated candidate lifecycle helpers
+   - optional native runner expansion on top of the bridge layer
 
 2. broader fixture and package migration
    - update older generated fixtures that still rely on package-level `generation_routing`
@@ -128,6 +149,12 @@ Use this ownership model when changing the package:
 
 - `split-image-assets/references/asset-package-contract.md`
   - full validator-facing package contract
+
+- `split-image-assets/references/provider-contract.md`
+  - provider bridge request/result contract
+
+- `split-image-assets/references/default-route-chains.md`
+  - route default plus object-type override selection rules
 
 - `docs/usage/split-image-assets.md`
   - operator guide

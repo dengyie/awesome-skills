@@ -64,6 +64,8 @@ Use this order to avoid reading the same rule from three places:
 4. package references by topic:
    - `references/workflow.md`: state machine and gate runbook
    - `references/asset-package-contract.md`: package contract and validator truth surface
+   - `references/provider-contract.md`: upstream provider bridge request/result contract
+   - `references/default-route-chains.md`: default provider chains for each planned route
    - `references/pipeline-recipes.md`: route and recipe selection
    - `references/ui-atomic-split.md`: UI-specific planning and routing
    - `references/qa-standards.md`: review and quality criteria
@@ -78,6 +80,8 @@ The package-local runtime surface still lives in:
 
 - `split-image-assets/SKILL.md`
 - `split-image-assets/references/workflow.md`
+- `split-image-assets/references/provider-contract.md`
+- `split-image-assets/references/default-route-chains.md`
 - `split-image-assets/references/confirmation-prompts.md`
 - `split-image-assets/references/asset-package-contract.md`
 

@@ -35,6 +35,13 @@ asset-package/
   _archive_intermediate/
 ```
 
+Provider bridge request/result manifests should normally live under:
+
+```text
+_staging/providers/<provider-id>/<object-id>/request.json
+_staging/providers/<provider-id>/<object-id>/result.json
+```
+
 Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, and so on. Record the exact inventory in `metadata.json`. The underscored directories are for active external outputs and retained intermediate evidence; the formal package root should not contain ad hoc folders such as `external-sam-assets/` or temporary manifests.
 
 ## Metadata Fields
@@ -82,6 +89,9 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 `analysis.visual_hierarchy` must name the semantic layer stack from background to foreground. `analysis.recommended_split_plan` must describe the reusable layer boundaries. Rectangular crop plans do not satisfy this field unless each rectangle is only a tight bbox around a semantic mask.
 
 `plan_manifest.json` is a separate planning surface. It is not a duplicate of `metadata.json`. Use it to record whole-image planning, object route intent, attempt budgets, protected-object approval requirements, and generation-route reasoning before expensive extraction or generation begins.
+
+The provider bridge layer is a separate execution-adapter surface. It is not a replacement for `metadata.json` or `plan_manifest.json`. Use it to standardize upstream provider requests and results before import, compare, promotion, or validation.
+Provider bridge scripts must not mutate `metadata.json` directly. Requests and results stay in staging until an explicit consumer promotes them into package truth.
 
 `granularity` records the agreed split scope for the run. Use values such as `module`, `component`, `atomic-layer`, `production-editable`, or `draft`. `user_confirmed` records whether the user explicitly aligned on that granularity, and `notes` captures any nuance such as live text rebuild or approximate background acceptance.
 
@@ -316,6 +326,31 @@ Generation capability is not `production_ready` unless the provider can support:
 - durable evidence suitable for compare, promotion, and reporting
 
 Missing segmentation tooling alone must not be used as the reason to claim a generated delivery path.
+
+## Provider Bridge Contract
+
+Provider request/result manifests should use package-relative paths only and should stay inside `_staging/providers/` while active.
+
+Provider requests should capture:
+
+- provider identity
+- provider role
+- execution mode
+- object identity
+- planned route
+- quality target
+- source and input refs
+- expected outputs
+
+Provider results should capture:
+
+- provider identity
+- result status
+- package-relative artifacts
+- structured provenance
+- warnings
+- whether the provider believes the result is production-ready
+- the next expected provider when the chain continues
 
 ## Generated-Reconstruction Contract
 

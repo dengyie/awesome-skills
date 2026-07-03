@@ -293,6 +293,75 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(loaded, plan_manifest)
             self.assertEqual(module.find_plan_object(loaded, "b"), {"object_id": "b", "planned_route": "generate"})
             self.assertIsNone(module.find_plan_object(loaded, "missing"))
+    def test_provider_registry_exposes_default_route_chains(self):
+        module = self._load_script_module("provider_registry.py")
+        self.assertEqual(
+            module.get_default_route_chain("extract"),
+            ["grounded-sam-bridge"],
+        )
+        self.assertEqual(
+            module.get_default_route_chain("generate"),
+            ["codex-controlled-generation"],
+        )
+        self.assertEqual(
+            module.get_provider_spec("external-generated-outputs")["execution_mode"],
+            "external-manifest",
+        )
+        self.assertEqual(
+            module.get_default_provider_chain("extract", "photo-object-matte"),
+            ["external-professional-outputs"],
+        )
+        self.assertEqual(
+            module.get_default_provider_chain("extract", "ui-carrier"),
+            ["grounded-sam-bridge"],
+        )
+    def test_provider_contract_validates_request_and_result(self):
+        module = self._load_script_module("provider_contract.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            (tmp_path / "source").mkdir()
+            (tmp_path / "_staging" / "providers" / "grounded-sam-bridge" / "main_object").mkdir(parents=True)
+            (tmp_path / "source" / "source_original.png").write_bytes(b"source")
+            request = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "provider_id": "grounded-sam-bridge",
+                "provider_role": "segmentation",
+                "execution_mode": "bridge",
+                "object_id": "main_object",
+                "object_type": "ui-carrier",
+                "planned_route": "extract",
+                "quality_target": "visual-acceptance-ready",
+                "source_image": "source/source_original.png",
+                "input_refs": {"source_crop": "_staging/providers/grounded-sam-bridge/main_object/crop.png"},
+                "expected_outputs": {"asset_png": True, "source_space_mask": True},
+                "notes": "",
+            }
+            result = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "provider_id": "grounded-sam-bridge",
+                "provider_role": "segmentation",
+                "execution_mode": "bridge",
+                "object_id": "main_object",
+                "status": "success",
+                "artifacts": {
+                    "asset_png": "_staging/providers/grounded-sam-bridge/main_object/main_object.png",
+                    "source_space_mask": "_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png",
+                },
+                "provenance": {
+                    "tool_name": "Grounded-SAM",
+                    "tool_role": "segmentation",
+                    "tool_version": "external",
+                    "execution_mode": "bridge",
+                },
+                "warnings": [],
+                "production_ready_hint": False,
+                "next_expected_provider": "rembg-bridge",
+                "notes": "",
+            }
+            module.validate_provider_request(tmp_path, request)
+            module.validate_provider_result(tmp_path, result)
     def test_shared_contract_module_defines_asset_routing_taxonomy(self):
         contract = self._load_script_module("split_image_assets_contract.py")
 
