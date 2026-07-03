@@ -12,6 +12,8 @@
 ## Last Verified
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, test decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, test decomposition baseline)
+- 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, test decomposition baseline)
+- 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, test decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests, validator decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, validator decomposition baseline)
 - 2026-07-03: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (152 tests)

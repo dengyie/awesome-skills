@@ -55,6 +55,14 @@
 - Next: Stop this milestone. The natural next bounded milestone is deeper generated-route provider/runtime integration on top of the now-cleaner validator/test architecture.
 - Blockers: None.
 
+## 2026-07-03 8
+- Task: Close out the local state after `split-image-assets` test decomposition.
+- Actions: Re-checked the worktree after the test split, confirmed the package remained verification-green, and refreshed repo-native memory so the next session starts from the decomposed-validator and decomposed-test baseline rather than the old hotspot-heavy shape.
+- Results: The repository now records the completed test decomposition milestone alongside the earlier validator and documentation consolidation work.
+- Validation: No additional code-path changes in this closeout step; the existing full test and quick-validate results remain the authoritative evidence.
+- Next: Open a new bounded milestone only if you want deeper generated-route provider/runtime integration.
+- Blockers: None.
+
 ## 2026-06-30
 - Task: Fix the latest `split-image-assets` review findings around acceptance semantics and direct candidate promotion evidence.
 - Actions: Reproduced the two confirmed workflow bugs. Updated `record_quality_review.py` so only affirmative answers can clear approximate/final acceptance gates, split `final_promotion_acceptance` from package-level `final_acceptance`, and blocked `qa.status=pass` unless a final acceptance decision-log entry is affirmative. Updated `validate_asset_package.py` to enforce the same semantics and require promotion acceptance for approximate promoted candidates. Updated `promote_candidate_asset.py` so direct single-candidate promotion writes a minimal compare manifest instead of empty compare evidence. Synced `init_asset_package.py`, workflow/contract docs, and expanded regression coverage.
