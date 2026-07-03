@@ -38,10 +38,13 @@ For each planned layer, record:
 - `semantic_boundary`
 - `asset_class`: `atomic`, `grouped-support`, `background-support`, `preview-reference`, or `candidate`
 - `reuse_status`: `production-ready`, `draft-candidate`, `support-only`, or `blocked`
+- `planned_route`: `extract`, `reconstruct`, `generate`, `rebuild_downstream`, or `support_only`
 - `decision`: `extract_asset`, `rebuild_downstream`, `support_only`, or `requires_user_confirmation`
 - `notes`
 
 Use `requires_user_confirmation` only when ambiguity is real and the branch would materially change reuse boundaries, editability, approximation truthfulness, or final claims.
+
+`planned_route` is the planning-time taxonomy stored in `plan_manifest.json`. `decision` remains the current execution-state reflection used in `metadata.json` during rollout.
 
 For UI or dense compositions, the package-level `granularity` block should also record:
 

@@ -30,6 +30,8 @@ If you are still choosing among skills, go back to the [Skill Matrix](skill-matr
 
 The default production path is professional upstream -> import -> preview -> QA review -> validate -> manifest. This skill is the workflow, packaging, and QA tail of that chain; it is not the upstream segmenter.
 
+The workflow is now planning-first. Before expensive extraction or generation work begins, create and maintain `plan_manifest.json` so the package can record whole-image planning, object routes, attempt budgets, protected-object restrictions, and generated-route reasoning separately from final package state.
+
 Before extraction, always declare the quality target tier:
 
 - `structural-valid`
@@ -70,6 +72,8 @@ If mature segmentation/matting tools are unavailable and no external masks or cu
 
 For reconstruction, do not treat `torch` or `onnxruntime` as enough to claim a production reconstruction path. Without a dedicated reconstruction tool, the honest fallback is `manual redraw required` or `approximate reconstruction only`.
 
+Generation capability should be reported separately from segmentation capability. It should distinguish `installed`, `runtime_ready`, and `production_ready`, and it is not `production_ready` unless the provider can support object-level constrained generation plus transparent object-asset delivery.
+
 The preflight report should explicitly call out:
 
 - `missing_roles`
@@ -87,6 +91,29 @@ Missing upstream role examples:
 Also align split granularity before cutting pixels: module-level, component-level, atomic-layer, or production-editable reconstruction; text as image assets or live downstream text; exact background recovery or approximate `background_clean.png`; animation-ready layers or static reuse.
 
 Run asset value scoring before extraction. Use an editability-first default: ordinary text, button labels, numeric values, and form values should normally stay out of raster export and route to `rebuild_downstream`. Logo wordmarks, decorative text, and other visual-fidelity-critical text may still route to `extract_asset`. When a text-like object is visually complex and ambiguous, route it to `requires_user_confirmation` instead of silently extracting it.
+
+Then run object-route planning in `plan_manifest.json`. Use the planning routes:
+
+- `extract`
+- `reconstruct`
+- `generate`
+- `rebuild_downstream`
+- `support_only`
+
+For generated-route planning, evaluate the four lightweight route signals:
+
+- `recoverability_low`
+- `object_is_reconstruction_like`
+- `quality_target_high`
+- `segmentation_cost_unfavorable`
+
+Default threshold policy:
+
+- `3/4`: recommend `generate`
+- `2/4`: stop for `Generation Routing Gate`
+- `0-1/4`: continue on the non-generation path
+
+Do not route to `generate` merely because local segmentation tooling is missing.
 
 Also classify each target object before choosing the repair path:
 
@@ -106,6 +133,7 @@ Treat these as formal gates:
 
 - `Preflight Tooling Recommendation Gate`
 - `Granularity Alignment Gate`
+- `Generation Routing Gate`
 - `Pilot Object Gate`
 - `Approximate Reconstruction Acceptance Gate`
 - `Final Acceptance Gate`
@@ -145,6 +173,7 @@ asset-package/
   assets/background_clean.png
   masks/mask_main.png
   previews/sprite_sheet_2x2.png
+  plan_manifest.json
   asset_manifest.json
   metadata.json
   qa_report.md
@@ -157,6 +186,8 @@ It should also record `granularity.mode`, `granularity.user_confirmed`, `granula
 Formal gate metadata should use `recorded_answer`, `pause_category`, `decision_source`, `evidence_ref`, and `blocking`. `inferred-from-user` is only valid when that evidence can be cited, and `agent-defaulted` must not satisfy a formal gate.
 It should also record `quality_target.tier`, `quality_target.notes`, and per-object `object_type` so later agents can see whether the package is only structurally valid, a usable draft, or ready for visual acceptance.
 For asset value routing, also record per-object `value_scoring`, `decision_routing`, `rebuild_intent`, and `text_semantics`. This keeps text-like objects auditable when they are rebuilt downstream instead of exported as image assets.
+
+`plan_manifest.json` is the planning-time route surface. Use it for `planned_route`, route signals, attempt budgets, protected-object approval requirements, and generated-route reasoning. Keep final package state in `metadata.json`; do not collapse the two files into one vague surface.
 
 `assets/*.png` are reusable transparent layers. `masks/*.png` are source-space QA masks aligned to the original image, so a small object may appear as a small white region on a mostly black mask. Put active external model outputs, candidate masks, and temporary manifests in `_staging/`; move retained evidence to `_archive_intermediate/` before final validation.
 
@@ -183,9 +214,13 @@ python split-image-assets/scripts/export_asset_manifest.py output-package
 
 Each object should declare `asset_class` and `reuse_status`. Use `atomic` + `production-ready` only after review promotion, `candidate` + `draft-candidate` for imported or unreviewed cutouts, and support classes/statuses for grouped plates, background clean plates, preview references, and UI chrome. Draft-only packages must report `not production reusable`.
 
+Generated delivery is a distinct truth class. Use `generated-reconstruction` only when the package also carries route reasoning, provider/tool identity, brief reference, compare evidence, promotion approval, and selection rationale.
+
 Final summaries should separate:
 
 - production-ready assets
+- accepted approximate reconstructions
+- accepted generated reconstructions
 - draft candidate assets
 - support-only layers
 - blocked assets

@@ -73,6 +73,26 @@ If pause is not allowed, continue with the documented fallback and record the ra
   - if the image is straightforward and the split is clearly derivable, continue with the recorded rationale instead of asking again
   - ordinary editable text-like objects should continue on the `rebuild_downstream` path unless the recorded policy or later evidence explicitly upgrades them to visual assets
 
+### `generation_routing`
+
+- Formal gate name: Generation Routing Gate
+- Default state: `Running`
+- Pause allowed: yes
+- Allowed stop class: `user-decision`
+- Stop state: `AwaitingDecision`
+- Minimum evidence before stop:
+  - whole-image planning has started
+  - at least one object has been classified with a candidate route
+  - route signals have been evaluated for `recoverability_low`, `object_is_reconstruction_like`, `quality_target_high`, and `segmentation_cost_unfavorable`
+- Stop only when:
+  - an object hits the ambiguous `2/4` band
+  - a protected object would otherwise route to `generate`
+  - a route switch would materially change downstream truth claims
+- Continue behavior when pause is not allowed:
+  - if the route is clearly `0-1/4`, continue on the non-generation path
+  - if the route is clearly `3/4` and no protected-object policy blocks it, record the route intent and continue to object-level generation setup
+  - do not justify `generate` only because segmentation tooling is missing
+
 ### `pilot_object`
 
 - Formal gate name: Pilot Object Gate
@@ -147,12 +167,13 @@ If pause is not allowed, continue with the documented fallback and record the ra
 2. Run `tooling_preflight`.
 3. Select recipe and analyze semantic layers.
 4. Run `granularity_alignment`.
-5. Use a `pilot_object` when the composition is dense or high-risk.
-6. Extract or import assets and masks.
-7. If needed, resolve `approximate_reconstruction`.
-8. Build previews, quality previews, audits, and QA evidence.
-9. Validate structure and export the manifest.
-10. Request `final_acceptance` and `candidate_promotion` only when the evidence actually supports those approval gates.
+5. Create or refresh `plan_manifest.json` and run `generation_routing`.
+6. Use a `pilot_object` when the composition is dense or high-risk.
+7. Extract, reconstruct, generate, or import assets according to the planned object routes.
+8. If needed, resolve `approximate_reconstruction`.
+9. Build previews, quality previews, audits, and QA evidence.
+10. Validate structure and export the manifest.
+11. Request `final_acceptance` and `candidate_promotion` only when the evidence actually supports those approval gates.
 
 ## Stop Hygiene
 

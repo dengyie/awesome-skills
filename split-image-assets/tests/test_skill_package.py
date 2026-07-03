@@ -397,6 +397,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         self.assertIn("STAGE INTERMEDIATES", skill_text)
         self.assertIn("tile", skill_text)
         self.assertIn("glyph", skill_text)
+        self.assertIn("WHOLE-IMAGE PLANNING BEFORE EXPENSIVE OBJECT WORK", skill_text)
+        self.assertIn("GENERATION ROUTING GATE", skill_text)
+        self.assertIn("plan_manifest.json", skill_text)
+        self.assertIn("generated-reconstruction", skill_text)
         self.assertIn("structural-valid", skill_text)
         self.assertIn("usable-draft", skill_text)
         self.assertIn("visual-acceptance-ready", skill_text)
@@ -451,6 +455,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "archive_intermediates.py",
             "export_asset_manifest.py",
             "`qa.status=pass` requires `metadata.capability.production_capable=true`",
+            "plan_manifest.json",
+            "Generation Routing Gate",
+            "generated-reconstruction",
+            "accepted generated reconstructions",
             "asset_class",
             "reuse_status",
             "production-ready assets",
@@ -497,6 +505,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
 
         for expected in [
             "Granularity Alignment Gate",
+            "Generation Routing Gate",
             "Pilot Object Gate",
             "Approximate Reconstruction Acceptance Gate",
             "Final Acceptance Gate",
@@ -517,6 +526,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             [
                 "tooling_preflight",
                 "granularity_alignment",
+                "generation_routing",
                 "pilot_object",
                 "approximate_reconstruction",
                 "final_acceptance",
@@ -537,6 +547,10 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "rebuild_downstream",
             "requires_user_confirmation",
             "support_only",
+            "planned_route",
+            "extract",
+            "reconstruct",
+            "generate",
         ]:
             self.assertIn(expected, ui_atomic_split)
 
@@ -603,6 +617,7 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
         for expected in [
             "Preflight Tooling Recommendation Gate",
             "Granularity Alignment Gate",
+            "Generation Routing Gate",
             "Pilot Object Gate",
             "Approximate Reconstruction Acceptance Gate",
             "Final Acceptance Gate",
@@ -721,7 +736,9 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertTrue((output / "previews").is_dir())
             self.assertTrue((output / "_staging").is_dir())
             self.assertTrue((output / "_archive_intermediate").is_dir())
+            self.assertTrue((output / "plan_manifest.json").exists())
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["package_name"], "fixture")
             self.assertEqual(metadata["source"]["width"], 4)
             self.assertEqual(metadata["source"]["height"], 3)
@@ -759,6 +776,13 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
                         "evidence_ref": "",
                     },
                     "granularity_alignment": {
+                        "status": "pending",
+                        "source": "unset",
+                        "pause_category": "user-decision",
+                        "notes": "",
+                        "evidence_ref": "",
+                    },
+                    "generation_routing": {
                         "status": "pending",
                         "source": "unset",
                         "pause_category": "user-decision",
@@ -803,6 +827,12 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             self.assertEqual(metadata["asset_summary"]["draft_candidate_assets"], 0)
             self.assertEqual(metadata["asset_summary"]["support_only_layers"], 0)
             self.assertNotIn("final_promotion_acceptance", metadata["confirmation"])
+            self.assertEqual(plan_manifest["package_name"], "fixture")
+            self.assertEqual(plan_manifest["planning_status"]["status"], "pending")
+            self.assertEqual(plan_manifest["route_policy"]["generation_routing_gate"], "pending")
+            self.assertTrue(plan_manifest["route_policy"]["planning_required"])
+            self.assertEqual(plan_manifest["provider_preferences"]["generation_provider_class"], "unset")
+            self.assertEqual(plan_manifest["summary"]["planned_generate"], 0)
             self.assertIn(
                 "Final status: needs-review",
                 (output / "qa_report.md").read_text(encoding="utf-8"),
@@ -824,9 +854,15 @@ class SplitImageAssetsPackageTests(unittest.TestCase):
             "user-decision",
         )
         self.assertEqual(
+            contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["generation_routing"],
+            "user-decision",
+        )
+        self.assertEqual(
             contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["tooling_preflight"],
             "external-blocker",
         )
+        self.assertIn("generate", contract.ALLOWED_PLANNED_ROUTES)
+        self.assertIn("codex-controlled-generation", contract.ALLOWED_GENERATION_PROVIDER_CLASSES)
         self.assertEqual(
             contract.DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION["granularity_alignment"],
             "user-decision",

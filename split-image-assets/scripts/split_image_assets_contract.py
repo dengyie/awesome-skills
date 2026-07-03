@@ -100,9 +100,29 @@ ALLOWED_QUALITY_TARGET_TIERS = {
     "usable-draft",
     "visual-acceptance-ready",
 }
+ALLOWED_PLANNED_ROUTES = {
+    "extract",
+    "reconstruct",
+    "generate",
+    "rebuild_downstream",
+    "support_only",
+}
+ROUTE_SIGNAL_KEYS = (
+    "recoverability_low",
+    "object_is_reconstruction_like",
+    "quality_target_high",
+    "segmentation_cost_unfavorable",
+)
+ALLOWED_GENERATION_PROVIDER_CLASSES = {
+    "unset",
+    "codex-controlled-generation",
+    "external-generated-outputs",
+    "local-model-runtime",
+}
 REQUIRED_CONFIRMATION_KEYS = {
     "tooling_preflight",
     "granularity_alignment",
+    "generation_routing",
     "pilot_object",
     "approximate_reconstruction",
     "final_acceptance",
@@ -113,6 +133,9 @@ STAGE_TO_CONFIRMATION_KEY = {
     "tooling_preflight": "tooling_preflight",
     "granularity-alignment": "granularity_alignment",
     "granularity_alignment": "granularity_alignment",
+    "generation-routing": "generation_routing",
+    "generation-routing-gate": "generation_routing",
+    "generation_routing": "generation_routing",
     "pilot-object": "pilot_object",
     "pilot-object-gate": "pilot_object",
     "pilot_object": "pilot_object",
@@ -130,6 +153,7 @@ STAGE_TO_CONFIRMATION_KEY = {
 DEFAULT_PAUSE_CATEGORY_BY_CONFIRMATION = {
     "tooling_preflight": "external-blocker",
     "granularity_alignment": "user-decision",
+    "generation_routing": "user-decision",
     "pilot_object": "formal-approval",
     "approximate_reconstruction": "user-decision",
     "final_acceptance": "formal-approval",
@@ -171,4 +195,64 @@ def default_object_routing_fields() -> dict:
             "text_role": "non-text",
             "text_render_class": "non-text",
         },
+    }
+
+
+def default_plan_manifest(source_path: str, package_name: str, width: int, height: int) -> dict:
+    return {
+        "schema_version": "1.0",
+        "package_name": package_name,
+        "source": {
+            "path": "source/source_original.png",
+            "original_path": source_path,
+            "width": width,
+            "height": height,
+        },
+        "quality_target": {
+            "tier": "structural-valid",
+            "notes": "",
+        },
+        "planning_status": {
+            "status": "pending",
+            "notes": "Whole-image planning has not been completed yet.",
+        },
+        "route_policy": {
+            "planning_required": True,
+            "generation_routing_gate": "pending",
+            "plan_manifest_rollout_stage": "phase1-scaffold",
+            "notes": "",
+        },
+        "provider_preferences": {
+            "generation_provider_class": "unset",
+            "segmentation_provider_class": "unset",
+        },
+        "objects": [],
+        "batch_groups": [],
+        "summary": {
+            "planned_extract": 0,
+            "planned_reconstruct": 0,
+            "planned_generate": 0,
+            "planned_rebuild_downstream": 0,
+            "planned_support_only": 0,
+        },
+    }
+
+
+def default_generation_brief(object_id: str = "", object_type: str = "generic-object") -> dict:
+    return {
+        "object_id": object_id,
+        "object_type": object_type,
+        "source_crop": "",
+        "rough_localization": "",
+        "rough_mask": "",
+        "neighbor_context": "",
+        "style_constraints": [],
+        "must_keep": [],
+        "must_avoid": [],
+        "target_transparency": "tight-transparent-png",
+        "intended_delivery_class": "generated-reconstruction",
+        "why_not_extract": "",
+        "why_not_reconstruct": "",
+        "why_generate": "",
+        "risk_note": "",
     }

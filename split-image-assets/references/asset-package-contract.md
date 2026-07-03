@@ -27,6 +27,7 @@ asset-package/
     main_object_alpha_inspection.png
     overview_decomposition.png
     sprite_sheet_2x2.png
+  plan_manifest.json
   asset_manifest.json
   metadata.json
   qa_report.md
@@ -77,6 +78,8 @@ Object counts vary. Prefer `main_object`, then `secondary_01`, `secondary_02`, a
 - `qa.status`
 
 `analysis.visual_hierarchy` must name the semantic layer stack from background to foreground. `analysis.recommended_split_plan` must describe the reusable layer boundaries. Rectangular crop plans do not satisfy this field unless each rectangle is only a tight bbox around a semantic mask.
+
+`plan_manifest.json` is a separate planning surface. It is not a duplicate of `metadata.json`. Use it to record whole-image planning, object route intent, attempt budgets, protected-object approval requirements, and generation-route reasoning before expensive extraction or generation begins.
 
 `granularity` records the agreed split scope for the run. Use values such as `module`, `component`, `atomic-layer`, `production-editable`, or `draft`. `user_confirmed` records whether the user explicitly aligned on that granularity, and `notes` captures any nuance such as live text rebuild or approximate background acceptance.
 
@@ -134,6 +137,7 @@ If prior user instructions or existing metadata already answer the question, rec
 
 - `tooling_preflight`
 - `granularity_alignment`
+- `generation_routing`
 - `pilot_object`
 - `approximate_reconstruction`
 - `final_acceptance`
@@ -203,6 +207,23 @@ Each object should include:
 - `manual_review_confirmed` when a crop-only or estimated layer is manually approved for production reuse
 - `approximate` and `reconstruction_provenance` when a layer was reconstructed, inpainted, or approximated rather than extracted exactly
 
+Planning-time route data belongs primarily in `plan_manifest.json`, not in long-lived object state inside `metadata.json`. During rollout, `plan_manifest` uses the planning routes:
+
+- `extract`
+- `reconstruct`
+- `generate`
+- `rebuild_downstream`
+- `support_only`
+
+Current execution-state routing in `metadata.json` still uses:
+
+- `extract_asset`
+- `rebuild_downstream`
+- `requires_user_confirmation`
+- `support_only`
+
+Do not silently overwrite `decision_routing.final_action` with raw planning route strings.
+
 Use `asset_summary` to keep final counts honest. Production asset counts should only include `asset_class: atomic` plus `reuse_status: production-ready`. Draft-only runs should normally report `production_ready_assets: 0` even when many candidate PNGs exist.
 
 The routing metadata should follow these allowed values:
@@ -215,6 +236,102 @@ The routing metadata should follow these allowed values:
 Use `rebuild_downstream` for ordinary editable text-like content. Use `extract_asset` for visually fidelity-critical text such as logo wordmarks or decorative text. Use `requires_user_confirmation` for ambiguous high-complexity text-like objects that cannot be safely auto-routed.
 
 For UI-like assets, `object_type` must not stay `generic-object`. The workflow should make routing visible to future agents and reviewers.
+
+## Plan Manifest Contract
+
+`plan_manifest.json` is the planning-time route truth surface. It should exist before formal extraction or generation work begins, even if it initially contains only a partial inventory.
+
+At minimum, `plan_manifest.json` should include:
+
+- `schema_version`
+- `package_name`
+- `source.path`
+- `source.width`
+- `source.height`
+- `quality_target.tier`
+- `planning_status.status`
+- `route_policy.planning_required`
+- `route_policy.generation_routing_gate`
+- `provider_preferences.generation_provider_class`
+- `objects`
+- `summary`
+
+Each planned object entry should be able to record:
+
+- `object_id`
+- `object_type`
+- `planned_route`
+- `route_signals.recoverability_low`
+- `route_signals.object_is_reconstruction_like`
+- `route_signals.quality_target_high`
+- `route_signals.segmentation_cost_unfavorable`
+- `route_score`
+- `route_reason`
+- `needs_user_confirmation`
+- `attempt_budget`
+- `attempts_used`
+- `attempt_history`
+- `token_budget_hint`
+- `pilot_group`
+- `promotion_requirement`
+- `protected_policy`
+- `protected_approval_required`
+- `protected_approval_ref`
+
+For planned `generate` objects, also record:
+
+- `why_not_extract`
+- `why_not_reconstruct`
+- `why_generate`
+- `risk_note`
+
+During rollout, validator enforcement for missing `plan_manifest` should be staged:
+
+1. the file may exist without global hard enforcement
+2. generated-route objects become the first hard-enforced path
+3. broader enforcement may expand only after fixtures and helpers are migrated
+
+## Generation Capability Contract
+
+Tooling preflight should report generation capability separately from segmentation capability.
+
+Generation capability should use:
+
+- `installed`
+- `runtime_ready`
+- `production_ready`
+
+Recognized provider classes should include:
+
+- `codex-controlled-generation`
+- `external-generated-outputs`
+- `local-model-runtime`
+
+Generation capability is not `production_ready` unless the provider can support:
+
+- object-level reference-constrained generation
+- transparent object-asset delivery
+- durable evidence suitable for compare, promotion, and reporting
+
+Missing segmentation tooling alone must not be used as the reason to claim a generated delivery path.
+
+## Generated-Reconstruction Contract
+
+`generated-reconstruction` is a distinct delivery truth class from both clean extraction and approximate reconstruction.
+
+During rollout, it should be introduced as a coordinated contract migration across shared constants, review writing, validation, summary counting, and downstream manifest export.
+
+Generated-route evidence should eventually include:
+
+- `generation_source`
+- `model_or_tool`
+- `version`
+- `prompt_or_brief_ref`
+- `reference_inputs`
+- `candidate_id`
+- `compare_evidence`
+- `promotion_acceptance`
+- `selection_reason`
 
 ## Pipeline Contract
 

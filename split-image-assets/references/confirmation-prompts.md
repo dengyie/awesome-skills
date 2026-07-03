@@ -33,6 +33,7 @@ These are the only retained allowed-stop templates:
 | --- | --- | --- | --- |
 | `tooling_preflight` | Preflight Tooling Recommendation Gate | `external-blocker` | `AwaitingExternalBlocker` |
 | `granularity_alignment` | Granularity Alignment Gate | `user-decision` | `AwaitingDecision` |
+| `generation_routing` | Generation Routing Gate | `user-decision` | `AwaitingDecision` |
 | `pilot_object` | Pilot Object Gate | `formal-approval` | `AwaitingApproval` |
 | `approximate_reconstruction` | Approximate Reconstruction Acceptance Gate | `user-decision` | `AwaitingDecision` |
 | `final_acceptance` | Final Acceptance Gate | `formal-approval` | `AwaitingApproval` |
@@ -113,6 +114,32 @@ Prompt body:
   - `atomic-layer`: better reuse, recolor, animation, and inspection
   - `production-editable`: strongest downstream rebuild path, more scope up front
 - `What I Will Do After Confirmation`: Record the chosen split policy and continue extraction without reopening the same branch later.
+
+### `generation_routing`
+
+- Formal gate name: Generation Routing Gate
+- Stop class: `user-decision`
+- State: `AwaitingDecision`
+- Stop condition:
+  - a planned object sits in the ambiguous generate band, a protected object would otherwise route to `generate`, or the route switch would materially change delivery truth claims
+- Recommended answer style:
+  - choose one route for the named object: `extract`, `reconstruct`, `generate`, `rebuild_downstream`, or `support_only`
+- Effect on metadata:
+  - update `plan_manifest.json`
+  - update `metadata.confirmation.generation_routing`
+  - append `metadata.decision_log[]`
+
+Prompt body:
+
+- `Why This Needs a Human`: This object is at the boundary where the workflow could either keep trying extraction or switch to a different delivery truth class.
+- `Recommendation`: Prefer `generate` only when the object is reconstruction-like, source recovery is weak, and the package can remain honest about generated delivery.
+- `Options and Impact`:
+  - `extract`: preserve extraction semantics, but may cost more cleanup effort
+  - `reconstruct`: stay source-constrained, but accept approximate repair discipline
+  - `generate`: move to generated-reconstruction candidate flow with stricter evidence and approval
+  - `rebuild_downstream`: avoid raster work for rebuildable content
+  - `support_only`: keep the object as support or context, not a production atomic asset
+- `What I Will Do After Confirmation`: Record the chosen route, keep the package truthful about that route, and continue only with the evidence path that matches it.
 
 ### `pilot_object`
 

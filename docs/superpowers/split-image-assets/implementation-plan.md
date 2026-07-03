@@ -1,220 +1,263 @@
 # Split Image Assets Unified Implementation Plan
 
-Date: 2026-06-30
-Status: Canonical implementation plan for the current `split-image-assets` installer UX line
+Date: 2026-07-03
+Status: Canonical implementation plan for the current `split-image-assets` planning-first route-control line
 Design source: `docs/superpowers/split-image-assets/design.md`
 
 ## Authority
 
-This is the single implementation plan for the current `split-image-assets` installer UX redesign.
+This is the single implementation plan for the current `split-image-assets` milestone.
 
-It replaces the prior canonical milestone that focused on contract unification and maintainability hardening as the active execution plan for this package line.
+It replaces the prior installer-UX-first implementation plan as the active execution plan for this package line.
 
 All future development on this line should execute from this plan unless a newer canonical plan explicitly replaces it.
 
 ## Prior Milestone Disposition
 
-The prior contract-hardening milestone is no longer the active execution target.
+The prior contract-hardening line remains preserved baseline behavior.
 
-For this plan, treat it as:
+The prior installer UX line is no longer the active execution target for this plan. Treat it as backlog unless a concrete blocker requires reopening part of it.
 
-- preserved baseline behavior that installer UX work must not violate
-- backlog for any remaining cleanup that is not a direct blocker
-- re-openable only when a concrete installer UX task proves that an older contract-hardening gap still blocks truthful behavior
-
-This avoids running two active canonical milestones in parallel.
+This avoids running multiple canonical milestones in parallel.
 
 ## Execution Contract
 
 ```text
-Milestone：split-image-assets isolated installer UX V1
-目标：让用户优先通过隔离环境获得 recommended 级安装体验，并让 installer、runtime preflight、docs、tests 使用同一套 capability 语言
-P0/P1 范围：
-- P0：建立 container-first、docker-compatible 的默认安装路径
-- P0：统一 doctor / install / verify / runtime preflight 的 capability model
-- P0：默认推荐必须清楚落到 recommended，而不是 host-global 环境污染
-- P1：提供 venv fallback
-- P1：支持 mac-apple-silicon 主路径与 linux-cuda 次路径
-- P1：补 explain surface、docs、tests 和 runtime wording 闭环
-不做的 P2/P3：
-- 模型权重全自动下载编排
-- GUI installer
-- Windows 首发支持
-- 完整升级 / 卸载 / 迁移系统
-- 所有第三方 provider 的精细自动编排
-- 脱离本 skill 的通用安装器产品化
-Manual-required：
-- 用户机器上的真实容器运行时安装与授权
-- 任何真实外部容器镜像拉取限制
-- 任何需要人工确认的系统级依赖安装
-阶段上限：3
-阶段拆分：
-- 阶段 1：Shared capability model and doctor/verify surface
-- 阶段 2：Container-first install path
-- 阶段 3：Runtime integration, docs, and tests
-验收标准：
-- 用户可以先运行 doctor 得到清晰推荐
-- 默认 mode 为 container，默认 preset 为 recommended
-- 容器可用时不默认污染用户 host Python
-- install 后 verify 能给出清晰 tier 与 next step
-- runtime preflight 能引用同一套 installer capability 语言
-- docs 与脚本 contract 一致，关键测试通过
-停止条件：
-- 当前 milestone 的 P0/P1 完成并通过必要验证
-- 阶段数量达到上限
-- 同一 P0/P1 阻断连续 3 次修复后仍无法通过
-- 关键外部依赖缺失导致当前环境无法完成本 milestone 验收
+Milestone: split-image-assets planning-first generation-routing V1
+Goal: add whole-image planning, object-route control, and generated-reconstruction truth surfaces so the package can divert bad extraction candidates early without weakening delivery honesty
+P0/P1 scope:
+- P0: canonical planning-first docs and workflow language
+- P0: plan-manifest contract and route taxonomy
+- P0: generation-routing gate and route-signal rules
+- P0: generated-reconstruction delivery/evidence contract
+- P0: validator enforcement for generated-reconstruction truth claims
+- P1: generation capability reporting integrated into preflight
+- P1: object-level budget and retry boundary rules
+- P1: final reporting split for extraction / approximate reconstruction / generated reconstruction
+Out-of-scope P2/P3:
+- building a built-in segmentation runtime
+- building a built-in general image-generation runtime
+- whole-image redraw workflows
+- automatic multi-round generation optimization
+- GUI review or planning tools
+- broad installer UX expansion unless directly required for generation capability truthfulness
+Manual-required:
+- real external segmentation runtimes
+- real external generation runtimes
+- user approvals for protected objects and generated-object promotions
+Phase limit: 4
+Phase split:
+- Phase 0: canonical alignment and migration tables
+- Phase 1: non-breaking planning and capability scaffolding
+- Phase 2: generated-reconstruction state and review wiring
+- Phase 3: staged validator tightening, reporting, and regression closure
+Acceptance criteria:
+- the package documents whole-image planning as a hard precondition
+- object routes are explicit and auditable
+- generated-reconstruction has its own delivery and evidence contract
+- preflight reports generation capability using the same readiness vocabulary
+- validator rejects generated-delivery drift and silent route dishonesty
+- final reporting separates extraction, approximate reconstruction, generated reconstruction, draft candidates, support-only layers, and blocked objects
+Stop conditions:
+- current P0/P1 scope is complete and verified
+- a concrete blocker requires a new canonical milestone
+- the phase budget is exhausted without a truthful path to finish the same milestone
 ```
 
 ## Current Diagnosis
 
-This milestone is driven by five concrete issues:
+This milestone is driven by six concrete issues:
 
-1. `check_extraction_environment.py` detects missing capability, but it is not a coherent installer experience
-2. the package lacks a clear product surface for setup: users cannot reliably answer “what should I run next”
-3. the default recommendation does not yet protect users from host-environment pollution strongly enough
-4. docs, runtime preflight, and future installer commands would currently drift unless they share one capability model
-5. the package has no canonical container-first path even though isolation is now a user-confirmed requirement
+1. there is no hard whole-image planning surface before expensive object work begins
+2. route choice between extraction, reconstruction, generation, rebuild, and support is still under-specified
+3. generation is not yet represented as a formal delivery route with its own truth contract
+4. missing segmentation capability could still tempt an agent into an untruthful generation fallback
+5. object-level attempt budgets and route-switch confirmations are not yet first-class
+6. final reporting still lacks a route-separated delivery summary
 
 ## Phase Strategy
 
-This plan treats installer UX, runtime language, docs, and tests as one bounded delivery loop. The milestone should not fragment into “just docs” or “just scripts.”
+This milestone should land in four bounded phases. The goal is not to rewrite the package in one step, but to establish route-planning truth surfaces first and then wire enforcement behind them.
 
-### Phase 1: Shared Capability Model And Doctor/Verify Surface
+### Phase 0: Canonical Alignment And Migration Tables
 
-**Phase goal:** establish one environment truth model and expose it through clean read-only user surfaces.
-
-**Corresponding P0/P1:**
-
-- P0 shared capability language
-- P0 recommendation clarity
-- P1 profile and preset resolution
-
-**Expected deliverables:**
-
-- a shared package-local capability model or probe library
-- profile detection for `mac-apple-silicon` and `linux-cuda`
-- runtime mode detection for Docker-compatible container paths and `venv`
-- clear tier mapping for `draft`, `recommended`, and `production`
-- a `doctor` entrypoint with action-first output
-- a `verify` entrypoint with post-install readiness output
-
-**Required behavior:**
-
-- `doctor` does not mutate the environment
-- `verify` distinguishes `installed`, `runtime_ready`, and `production_ready`
-- output leads with conclusion, current tier, and recommended next command
-- Python mismatch is surfaced before a long dependency list
-
-**Verification:**
-
-- focused tests for profile detection
-- focused tests for mode routing
-- focused tests for tier classification
-- command output contract tests for `doctor` and `verify`
-
-### Phase 2: Container-First Install Path
-
-**Phase goal:** make isolated setup the default success path.
+**Phase goal:** remove migration ambiguity before code changes begin.
 
 **Corresponding P0/P1:**
 
-- P0 container-first default
-- P0 Docker-compatible routing
-- P1 venv fallback
+- P0 canonical docs
+- P0 route taxonomy
+- P0 generated-reconstruction semantics
 
 **Expected deliverables:**
 
-- an `install` entrypoint
-- Docker-compatible runtime detection and routing for:
-  - `docker`
-  - `podman`
-  - `colima`-compatible Docker CLI path
-- default resolution to `container + recommended`
-- explicit `venv` fallback when container runtime is unavailable or declined
-- isolated environment conventions for:
-  - working directory mounts
-  - output directory mounts
-  - cache/model directory mounts
-  - wrapper or launch conventions
+- updated canonical `design.md`
+- updated canonical `implementation-plan.md`
+- explicit route-mapping tables between `planned_route` and current `decision_routing`
+- explicit compatibility matrix for `delivery_class`, `reuse_status`, and pass semantics
+- explicit generation provider-class contract
+- explicit staged rollout policy for `plan_manifest`
 
 **Required behavior:**
 
-- `install` must not default to host-global Python mutation
-- container mode should be chosen automatically when available
-- fallback to `venv` should be explicit and honest
-- install stages should record `installed`, `skipped`, `failed`, and `manual_step_required`
-- `install` should trigger `verify` automatically after setup work
+- canonical docs no longer leave route mapping to implementation-time inference
+- canonical docs no longer leave status migration to implementation-time inference
+- rollout-sensitive rules are marked as staged instead of implied to be immediate
 
 **Verification:**
 
-- container availability routing tests
-- default resolution tests
-- fallback routing tests
-- stage result contract tests
+- docs review for migration completeness
 
-### Phase 3: Runtime Integration, Docs, And Tests
+### Phase 1: Non-Breaking Planning And Capability Scaffolding
 
-**Phase goal:** make runtime preflight, package docs, and tests converge on the installer UX.
+**Phase goal:** add planning and generation-capability surfaces without breaking the current metadata-first baseline.
 
 **Corresponding P0/P1:**
 
-- P0 runtime and installer language unification
-- P1 docs and test closure
-- P1 explain surface
+- P0 plan-manifest contract
+- P0 generation-routing gate rules
+- P1 generation capability reporting
 
 **Expected deliverables:**
 
-- an `explain` entrypoint for preset, profile, component, and why-not-production guidance
-- runtime preflight wording aligned to the new installer surfaces
-- `split-image-assets/SKILL.md` aligned to the new install path
-- `split-image-assets/references/workflow.md` aligned to the new install path
-- `split-image-assets/references/pipeline-recipes.md` aligned to the new install path
-- `docs/usage/split-image-assets.md` aligned enough to present the new onboarding path honestly
-- regression tests that cover command contracts and docs alignment
+- package-local planning helpers or manifest schema support
+- initializer support for planning-state placeholders where needed
+- preflight updates in `check_extraction_environment.py`
+- route-signal vocabulary for:
+  - `recoverability_low`
+  - `object_is_reconstruction_like`
+  - `quality_target_high`
+  - `segmentation_cost_unfavorable`
+- generation capability output using:
+  - `installed`
+  - `runtime_ready`
+  - `production_ready`
+- provider-class reporting for:
+  - `codex-controlled-generation`
+  - `external-generated-outputs`
+  - `local-model-runtime`
+- shared contract additions for planning and generation enums
 
 **Required behavior:**
 
-- runtime preflight should recommend `doctor`, `install`, or `verify` rather than only dumping missing tools
-- docs must describe `container` as the default mode
-- docs must describe `recommended` as the default preset
-- `explain` must answer why `recommended` is default and why a system is not `production`
+- this phase remains non-breaking for existing non-generated packages
+- no route may silently claim generation-readiness from raw imagegen availability alone
+- generation `production_ready` requires transparent object-asset support
+- route-to-generate cannot be justified only by missing segmentation tools
+- `plan_manifest` support exists before validator hard enforcement widens
 
 **Verification:**
 
-- command output contract tests for `explain`
-- docs sync tests
-- runtime wording tests
-- final package review against milestone diff
+- targeted tests for capability output
+- targeted tests for route-signal mappings
+- targeted tests proving non-generated legacy-compatible packages do not regress only because planning scaffolding exists
+
+### Phase 2: Generated-Reconstruction State And Review Wiring
+
+**Phase goal:** wire generated-delivery semantics through mutable package state before broad validator tightening.
+
+**Corresponding P0/P1:**
+
+- P0 generated-reconstruction evidence contract
+- P0 generated delivery semantics
+- P1 budget and retry boundaries
+
+**Expected deliverables:**
+
+- review/update support for generated-object confirmation and promotion
+- compare/promotion alignment for generated candidates where needed
+- coordinated contract updates for:
+  - `delivery_class=generated-reconstruction`
+  - generated-specific reuse status
+  - budget-related attempt tracking
+- metadata/reporting alignment for object-level generated approvals
+
+**Required behavior:**
+
+- new generated statuses must not land in only one layer
+- contract constants, review-writer pass gates, validator pass gates, and summary logic must be migrated together
+- generated objects cannot pass through package-level final acceptance alone
+- generated objects require compare evidence and object-level promotion approval
+- missing generation evidence blocks generated delivery claims
+- generated assets cannot collapse into plain `production-ready` extraction semantics
+
+**Verification:**
+
+- targeted review-writer tests
+- targeted compare/promotion tests where generated flows touch them
+- targeted contract-surface tests for synchronized new statuses
+
+### Phase 3: Staged Validator Tightening, Reporting, And Regression Closure
+
+**Phase goal:** tighten validator behavior in a staged way and close reporting/tests/docs around the new route model.
+
+**Corresponding P0/P1:**
+
+- P1 final reporting split
+- P1 package-facing closure
+- P1 regression depth
+
+**Expected deliverables:**
+
+- staged validator tightening:
+  - generated-route `plan_manifest` requirement
+  - generated evidence completeness requirement
+  - protected-object approval requirement
+  - budget-overrun honesty requirement
+  - later broader `plan_manifest` rollout only if migration coverage is ready
+- final reporting split in package outputs and docs
+- regression coverage for:
+  - plan-manifest requirement
+  - generation capability truthfulness
+  - protected-object routing
+  - generated evidence completeness
+  - budget overrun behavior
+  - route-separated final reporting
+- final quick validation and package test pass
+
+**Required behavior:**
+
+- package-facing docs must not describe generation as an informal fallback
+- final reporting must separate route classes clearly
+- tests must fail on missing route or generated-delivery evidence
+- validator widening beyond generated-route objects must only happen if fixtures and helpers already cover the migration path
+
+**Verification:**
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ## Detailed Task List
 
+## Phase 0 Tasks
+
+- [ ] Add route-mapping tables to the canonical docs.
+- [ ] Add a delivery-state compatibility matrix to the canonical docs.
+- [ ] Add generation provider-class definitions to the canonical docs.
+- [ ] Add staged `plan_manifest` rollout rules to the canonical docs.
+
 ## Phase 1 Tasks
 
-- [ ] Extract or introduce a shared capability model beneath current environment detection.
-- [ ] Define canonical profile, mode, preset, and readiness fields.
-- [ ] Refactor `check_extraction_environment.py` to consume shared capability logic or clearly hand off to it.
-- [ ] Add `doctor` with action-first output.
-- [ ] Add `verify` with post-install readiness output.
-- [ ] Add tests for tier mapping, profile detection, and output contract behavior.
+- [ ] Introduce or formalize a `plan_manifest` surface.
+- [ ] Add generation capability reporting to `check_extraction_environment.py`.
+- [ ] Add route-signal and route-threshold definitions to the shared contract layer.
+- [ ] Add budget-related planning fields, attempt tracking, and route-reason requirements.
+- [ ] Keep this phase non-breaking for existing non-generated fixtures.
 
 ## Phase 2 Tasks
 
-- [ ] Add an `install` entrypoint that defaults to `container + recommended`.
-- [ ] Add Docker-compatible runtime routing for `docker`, `podman`, and compatible `colima` paths.
-- [ ] Define isolated mount, cache, and wrapper conventions.
-- [ ] Add explicit `venv` fallback routing without making it the default experience.
-- [ ] Add stage-result reporting and automatic verify handoff.
-- [ ] Add tests for routing, fallback, and stage-result contracts.
+- [ ] Extend review/update flows to record generated-object acceptance and promotion.
+- [ ] Coordinate generated delivery/reuse statuses across contract, review writer, validator, and summary logic.
+- [ ] Enforce protected-object restrictions and required route justification.
+- [ ] Ensure generated routes cannot be justified by missing segmentation capability alone.
 
 ## Phase 3 Tasks
 
-- [ ] Add `explain` for preset, profile, component, and why-not-production guidance.
-- [ ] Update runtime preflight wording to route users into installer UX.
-- [ ] Update package-facing docs to reflect container-first onboarding.
-- [ ] Add docs and command contract tests.
-- [ ] Run production-code-quality-review on the milestone diff.
-- [ ] Fix any remaining P0/P1 blockers before closure.
+- [ ] Tighten validator rules first for generated-route objects, then only later widen if migration coverage is ready.
+- [ ] Add final reporting split for clean extraction, approximate reconstruction, generated reconstruction, draft candidates, support-only layers, and blocked objects.
+- [ ] Expand tests for planning, capability, generated evidence, and budget boundaries.
+- [ ] Run full package validation and quick validation.
+- [ ] Review for wording drift across package docs.
 
 ## File Ownership Map
 
@@ -223,92 +266,81 @@ This plan treats installer UX, runtime language, docs, and tests as one bounded 
 - `docs/superpowers/split-image-assets/design.md`
 - `docs/superpowers/split-image-assets/implementation-plan.md`
 
-These define the installer UX authority and milestone order.
+These define the active design intent and milestone order.
 
-### Skill and package docs
+### Package-facing docs
 
 - `split-image-assets/SKILL.md`
 - `split-image-assets/references/workflow.md`
 - `split-image-assets/references/pipeline-recipes.md`
-- `docs/usage/split-image-assets.md`
-
-These are the primary package-facing docs for the current active line and must not drift into a separate installation story.
-
-Conditionally touched only when installer UX work reveals direct wording drift or broken references:
-
-- `split-image-assets/references/confirmation-prompts.md`
+- `split-image-assets/references/ui-atomic-split.md`
 - `split-image-assets/references/asset-package-contract.md`
+- `split-image-assets/references/confirmation-prompts.md`
+- `docs/usage/split-image-assets.md`
 
 ### Code ownership hotspots
 
 - `split-image-assets/scripts/check_extraction_environment.py`
-- new shared capability helpers
-- new installer UX entrypoints:
-  - `doctor`
-  - `install`
-  - `verify`
-  - `explain`
-- supporting runtime-mode and routing helpers
-
-Conditionally touched only when installer UX work exposes a real blocker in preserved baseline behavior:
-
 - `split-image-assets/scripts/init_asset_package.py`
 - `split-image-assets/scripts/record_quality_review.py`
 - `split-image-assets/scripts/validate_asset_package.py`
+- shared contract helpers under `split-image-assets/scripts/`
+
+Conditionally touched only if required for clean route integration:
+
+- `split-image-assets/scripts/import_external_assets.py`
+- `split-image-assets/scripts/promote_candidate_asset.py`
+- `split-image-assets/scripts/compare_candidate_assets.py`
+- `split-image-assets/scripts/export_asset_manifest.py`
 
 ### Test ownership hotspots
 
 - `split-image-assets/tests/test_skill_package.py`
-- any extracted installer-focused test modules created during this milestone
+- any extracted route-planning or generated-delivery focused modules created during this milestone
 
 ## Verification Order
 
-Use this order unless a narrower faster check is clearly sufficient for the current phase:
+Use this order unless a smaller targeted loop is clearly enough for the current phase:
 
-1. targeted unit or contract tests for the changed installer surface
+1. targeted tests for the changed route or validator surface
 2. broader `split-image-assets` regression
-3. production-code-quality-review on the milestone diff
+3. package quick validation
 
-Do not claim closure from docs alone when command output, preflight wording, or routing behavior still disagree.
+When changing rollout-sensitive surfaces, add one more rule:
+
+4. prove at least one legacy-compatible non-generated path still passes unless the phase intentionally migrates it
+
+Do not claim closure from docs alone when the validator or tests still disagree.
 
 ## Review Gate
 
-Each phase must end with a production-code-quality-review pass using the local `production-code-quality-review` skill.
+Before milestone closure:
 
-The report must call out:
+- review package-facing docs for wording drift
+- review validator and review-writer changes for truth-surface consistency
+- ensure tests cover both honest pass paths and honest failure paths
 
-- severe issues
-- medium issues
-- non-blocking suggestions
-- security risk
-- stability risk
-- maintainability risk
-- test coverage
-- quality score
-- pass status
-
-P0/P1 blockers must be fixed in the same phase before proceeding.
+P0/P1 blockers must be fixed before the milestone is treated as complete.
 
 ## Backlog
 
-These are valid future items but are not part of the current milestone unless they become direct P0/P1 blockers:
+These are valid future items but are not part of the current milestone unless they become direct blockers:
 
-- automated model weight acquisition and caching orchestration
-- Windows profile support
-- full upgrade / uninstall / migration lifecycle
-- richer container image publishing strategy
-- repo-wide shared installer abstractions for other skills
-- GUI onboarding
+- built-in generation adapters beyond capability truth surfaces
+- richer pilot-template automation
+- more granular token accounting per object
+- GUI planning or compare surfaces
+- reopening the installer UX line as a separate canonical milestone
 
 ## Done Definition
 
 This milestone is done only when:
 
-1. installer UX has a canonical container-first design
-2. `doctor`, `install`, `verify`, and runtime preflight share one capability language
-3. `recommended` is the default recommendation
-4. container mode is the default path when available
-5. `venv` exists as a bounded fallback
-6. package docs reflect the new onboarding model
-7. tests verify command and doc contract behavior
-8. the milestone review has no remaining P0/P1 blockers
+1. planning-first routing is the canonical package story
+2. `plan_manifest` is a formal workflow surface
+3. `generate` is a formal object route with capability, brief, and evidence rules
+4. generated outputs have explicit generated-reconstruction delivery semantics
+5. validator and tests reject generated-route dishonesty
+6. object-level budget overruns force confirmation
+7. final reporting separates route classes clearly
+8. rollout-sensitive changes do not silently break legacy-compatible non-generated packages without an explicit migration phase

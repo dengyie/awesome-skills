@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from split_image_assets_contract import default_confirmation_entry
+from split_image_assets_contract import default_confirmation_entry, default_plan_manifest
 
 
 def build_metadata(source_path: Path, package_name: str, width: int, height: int) -> dict:
@@ -45,6 +45,7 @@ def build_metadata(source_path: Path, package_name: str, width: int, height: int
         "confirmation": {
             "tooling_preflight": default_confirmation_entry("tooling_preflight"),
             "granularity_alignment": default_confirmation_entry("granularity_alignment"),
+            "generation_routing": default_confirmation_entry("generation_routing"),
             "pilot_object": default_confirmation_entry("pilot_object"),
             "approximate_reconstruction": default_confirmation_entry("approximate_reconstruction"),
             "final_acceptance": default_confirmation_entry("final_acceptance"),
@@ -136,6 +137,11 @@ def main() -> int:
     metadata = build_metadata(source_path, package_name, width, height)
     metadata_path.write_text(
         json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    plan_manifest = default_plan_manifest(str(source_path), package_name, width, height)
+    (output_path / "plan_manifest.json").write_text(
+        json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     write_qa_report(output_path / "qa_report.md", package_name)

@@ -661,6 +661,7 @@ def main() -> int:
             {
                 "tooling_preflight",
                 "granularity_alignment",
+                "generation_routing",
                 "pilot_object",
                 "approximate_reconstruction",
                 "final_acceptance",

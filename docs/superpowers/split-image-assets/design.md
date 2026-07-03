@@ -1,674 +1,656 @@
-# Split Image Assets Unified Agent-First Design
+# Split Image Assets Unified Planning-First Design
 
-Date: 2026-06-30
+Date: 2026-07-03
 Status: Canonical design for ongoing `split-image-assets` development
 Target package: `split-image-assets`
 
 ## Authority
 
-This is the single governing design document for the current `split-image-assets` refactor line.
+This is the single governing design document for the current `split-image-assets` line.
 
-It supersedes all earlier split-image-assets design docs that previously lived under dated `docs/superpowers/specs/` paths.
+It replaces the prior installer-UX-first canonical design as the active authority for this package.
 
 If a lower-level doc, package reference, script default, or test expectation conflicts with this document, this document wins and the implementation should be brought back into alignment.
 
 ## Goal
 
-Refactor `split-image-assets` into an agent-first asset-splitting workflow with three properties:
+Refactor `split-image-assets` into a planning-first asset workflow with five properties:
 
-1. execution continues by default
-2. raster extraction only happens when the object has real visual asset value
-3. formal state, metadata, tooling, and tests all enforce the same truth claims
+1. the workflow plans the whole image before spending extraction or generation effort
+2. each object is routed explicitly to the cheapest truthful path
+3. generation is a first-class but tightly constrained workflow path, not a silent fallback
+4. generated outputs may be delivered only under explicit generated-reconstruction semantics
+5. package metadata, validator rules, compare evidence, and final reporting all enforce the same truth claims
 
-This redesign now also includes a fourth property:
-
-4. installation and runtime setup should default to an isolated, container-first path that maps cleanly into the same capability model used by the workflow itself
-
-This is not a new image-processing capability project. It is a workflow-control, contract, and maintainability redesign for the existing package.
+This is not a new segmentation engine project. It is a workflow-control, contract, and product-truth redesign for the existing package.
 
 ## Problem Statement
 
 `split-image-assets` is already strong on package rigor:
 
-- it has a concrete package contract
 - it distinguishes structural validation from visual quality
 - it records formal review state in metadata
-- it has deterministic preview, audit, validation, and manifest tooling
-- it has broad regression coverage
+- it has deterministic preview, audit, validation, compare, promotion, and manifest tooling
+- it has strong honesty rules around approximate reconstruction
+- it already treats professional upstream extraction as the normal production path
 
 However, the current package still has four systemic problems.
 
-### 1. Control-flow intent is still too easy to misuse
+### 1. It spends effort too late
 
-Future agents can still stop in the wrong place:
+The workflow still lets an agent spend segmentation, cleanup, compare, and review effort before a whole-image plan decides which objects are even worth extracting.
 
-- to report progress
-- because a stage is named a gate
-- because confidence is imperfect
-- because a question could be asked even though prior instructions already answer it
+This causes:
 
-### 2. Extraction intent is still too extraction-centric
+- avoidable token waste
+- repeated failed cleanup loops
+- extraction work on objects that should have been rebuilt or generated
 
-Text-like and rebuildable UI content can still be treated as raster-first unless the agent actively corrects for it. The package needs an explicit editability-first scoring and routing layer before extraction.
+### 2. It does not yet formalize generation as a constrained route
 
-### 3. Contract implementation is too concentrated
+The package already knows how to remain honest about approximate reconstruction, but it does not yet define a formal object route for cases where continued extraction is economically or visually inferior to constrained generation.
 
-The main validator, quality-review writer, and test suite have become large, concentrated contract hubs. The code works, but the maintenance surface is now too easy to drift:
+Without that route:
 
-- schema and taxonomy are duplicated across writer and validator
-- multiple policy families are enforced in a few heavy modules
-- tests rely on a single giant file and single giant class
+- agents keep pushing segmentation too far
+- generated fixes would be under-specified
+- users cannot see early enough when the task changed from extraction to reconstruction
 
-This makes future contract changes expensive and increases the chance of green tests hiding local drift.
+### 3. It still mixes route planning and final asset state too loosely
 
-### 4. Installation experience is still too raw and environment-coupled
+`metadata.json` is currently the main truth surface, but the package does not yet separate:
 
-The package currently knows how to detect missing upstream capability, but not how to give users a clean, low-risk path to obtain that capability.
+- whole-image route planning
+- object-level generation constraints
+- final package state
 
-Current failure modes:
+This makes the workflow harder to audit and easier to drift.
 
-- users are shown missing-package lists instead of a clear install path
-- the package does not distinguish installer UX from runtime preflight clearly enough
-- there is no canonical `draft` versus `recommended` versus `production` installation story
-- users can easily pollute their host Python while trying to satisfy recommended tooling
-- platform-specific reality such as Apple Silicon, Linux CUDA, Docker compatibility, or fallback paths is not surfaced as a first-class design concern
+### 4. It lacks an explicit budget and escalation model for expensive objects
 
-The result is that the package is strong at honesty after setup, but weak at helping a user reach a good setup safely.
+The current workflow can still keep trying one object too many times without a formal object-level attempt budget and route-switch confirmation boundary.
 
 ## User-Confirmed Requirements
 
 The design is based on these explicit decisions from the current thread:
 
-1. default to conservative continuous execution
-2. only three hard event classes may pause execution
-3. medium/high-risk semantic divergence may pause execution only by becoming a justified `user-decision` stop, not a fourth stop class
-4. progress updates are commentary, not confirmation gates
-5. the exit pattern should behave like `grill-me`: explain why a human is needed, recommend a path, and explain impact
-6. asset splitting should be editability-first
-7. ordinary text, button labels, numeric values, and form values should not become raster assets by default
-8. logo wordmarks, decorative text, and fidelity-critical text may still become raster assets
-9. ambiguous high-complexity text-like objects should route to `requires_user_confirmation`
-10. when an object is not exported as an image asset, the package should still keep a text/object placeholder record for downstream or manual rebuild
-11. development should be guided by a single total design document and a single aligned implementation plan
-12. installation should avoid polluting the user's environment whenever practical
-13. the default installation path should be container-first
-14. the runtime abstraction should be Docker-compatible rather than Docker-only
-15. the default installation target should be `recommended`, not merely the weakest runnable draft path
-16. `mac-apple-silicon` should be the primary supported path, with `linux-cuda` as the secondary path
+1. the workflow should start with whole-image planning
+2. route planning should aggressively divert bad extraction candidates before they burn too much token budget
+3. generation must be triggered by combined judgment, not by visual difficulty alone
+4. the combined trigger should use four lightweight route signals:
+   - `recoverability_low`
+   - `object_is_reconstruction_like`
+   - `quality_target_high`
+   - `segmentation_cost_unfavorable`
+5. default route thresholds should be:
+   - `3/4`: recommend `generate`
+   - `2/4`: require user confirmation
+   - `0-1/4`: continue non-generation path
+6. `generate` must be a distinct route from `reconstruct`
+7. `generate` outputs must not silently claim clean extraction semantics
+8. `generate` outputs may be deliverable, but only under explicit generated-reconstruction labeling
+9. route-to-generate must not be caused merely by missing local segmentation tooling
+10. objects routed to `generate` must record why extraction and reconstruction were not chosen
+11. `generate` should default to object-level reference-constrained generation, not free redraw
+12. the workflow may skip formal extraction for high-confidence generate objects after planning, but only after an object-level confirmation
+13. every generate object must have a generation brief before generation begins
+14. generate should default to two candidates and one generation round
+15. failed generate attempts must not auto-loop; the workflow must branch explicitly
+16. the package should support pilot-first reuse for batches of similar objects
+17. object-level attempt budgets must be explicit, and budget overruns must force confirmation
+18. ordinary UI text should default to `rebuild_downstream`
+19. large background or support plates should default to `support_only` or approximate support delivery, not atomic asset promotion
+20. the default workflow must forbid whole-image redraw followed by re-cutting
+21. generation must have its own capability gate
+22. generation capability must distinguish `installed`, `runtime_ready`, and `production_ready`
+23. generation `production_ready` requires object-level transparent asset delivery, not just ordinary image generation
+24. final reporting must separate clean extraction, approximate reconstruction, generated reconstruction, draft candidates, support-only layers, and blocked objects
+25. `generated-reconstruction` must have a stronger evidence package than ordinary approximate reconstruction
 
 ## Scope
 
-This section defines the active scope for the current installer UX line, not the full historical scope of every earlier `split-image-assets` refactor.
-
 In scope for the current active line:
 
+- `docs/superpowers/split-image-assets/design.md`
+- `docs/superpowers/split-image-assets/implementation-plan.md`
 - `split-image-assets/SKILL.md`
 - `split-image-assets/references/workflow.md`
 - `split-image-assets/references/pipeline-recipes.md`
+- `split-image-assets/references/ui-atomic-split.md`
+- `split-image-assets/references/asset-package-contract.md`
+- `split-image-assets/references/confirmation-prompts.md`
 - `docs/usage/split-image-assets.md`
 - `split-image-assets/scripts/check_extraction_environment.py`
-- new package-local capability helpers
-- new package-local installer and verification entrypoints
-- `split-image-assets/tests/test_skill_package.py`
-- docs/tests/runtime wording changes required to keep installer UX and preflight language aligned
-
-Conditionally in scope only if installer UX work exposes drift that must be corrected for honesty:
-
-- `split-image-assets/references/confirmation-prompts.md`
-- `split-image-assets/references/asset-package-contract.md`
 - `split-image-assets/scripts/init_asset_package.py`
 - `split-image-assets/scripts/record_quality_review.py`
 - `split-image-assets/scripts/validate_asset_package.py`
+- package-local planning and generation-routing helpers
+- tests needed to enforce the new route contract
+
+Conditionally in scope only when required for truthful alignment:
+
+- `split-image-assets/scripts/import_external_assets.py`
+- `split-image-assets/scripts/promote_candidate_asset.py`
+- `split-image-assets/scripts/compare_candidate_assets.py`
+- `split-image-assets/scripts/export_asset_manifest.py`
 
 Out of scope:
 
-- changing segmentation or matting engines
-- building OCR or full text understanding
-- inventing a repo-wide shared interaction framework for unrelated skills
-- adding new upstream model integrations as part of this redesign
-- rewriting package semantics unrelated to stop/continue behavior, asset routing, or contract maintainability
-- building a general-purpose environment manager for unrelated skills
+- turning this package into a built-in segmentation model host
+- turning this package into a free-form image-generation product
+- allowing generated results to masquerade as clean extraction
+- whole-image redraw workflows as the default decomposition strategy
+- relaxing existing honesty gates around approximate reconstruction
 
 ## Active-Line Disposition
 
-The earlier contract-hardening line remains part of the package baseline, but it is not the active milestone now.
+The earlier contract-hardening line remains preserved baseline behavior.
 
-Its status for the purpose of this document is:
+The earlier installer UX line remains useful backlog, but it is not the active milestone now.
 
-- canonical stop taxonomy, asset-routing semantics, and validator/writer truth rules remain required baseline constraints
-- installer UX work must preserve those constraints
-- unfinished or future contract-hardening cleanups are backlog unless they become direct blockers for the current installer UX milestone
+For this design:
 
-This means the current active line is installer UX V1, while the earlier contract-hardening work is treated as preserved baseline plus backlog, not as a parallel active milestone.
+- contract-hardening behavior remains required baseline
+- installer UX ideas may still be reused where they help capability truthfulness
+- the active milestone is planning-first route control and generated-reconstruction discipline
 
 ## Non-Goals
 
 This redesign should not:
 
 - reduce the skill to a casual prompt
-- turn every uncertainty into a stop
-- allow `agent-defaulted` to satisfy real gates
-- hide approximate assets inside production-ready claims
-- export editable ordinary text as raster assets by default
-- keep adding policy to monolithic modules without creating clearer ownership boundaries
-- default to installing recommended tooling directly into the user's host Python when an isolated path is available
-- pretend that package import success alone proves runtime or production readiness
+- hide route ambiguity inside informal commentary
+- let missing segmentation tooling silently trigger generation
+- let generated outputs satisfy `production-ready` extraction semantics
+- allow repeated object retries without budget control
+- default to whole-image redraw and post-cut extraction
+- promote generated objects from package-level final acceptance alone
 
 ## Design Principles
 
-1. Continue by default.
-2. Commentary is never control flow.
-3. A semantic pause reason must map to a formal stop class.
-4. Editability dominates unless fidelity clearly requires pixels.
-5. Formal state must be durable, narrow, and auditable.
-6. Contract rules should have a single code source where practical.
-7. Tests should verify exact contract mappings, not just nearby wording.
-8. Architecture should reduce drift risk, not merely pass current fixtures.
-9. Installation should be isolated by default.
-10. Installer output should be action-first rather than dependency-list-first.
+1. Plan the whole image before spending expensive work.
+2. Route each object to the cheapest truthful path.
+3. Generation is allowed only as a constrained, auditable route.
+4. Commentary is never a route decision.
+5. Object-level truth claims must stay object-level.
+6. Attempt budgets define agent autonomy boundaries.
+7. Batch reuse is allowed only after a pilot proves the route.
+8. Generated delivery must stay visibly different from extraction delivery.
 
-## Installer UX Architecture
+## Workflow Architecture
 
-Installation is part of the package contract, not just a README appendix.
+The workflow now has four major layers:
 
-The installer UX should answer four user questions quickly:
+1. capability preparation
+2. whole-image planning
+3. object-route execution
+4. quality adjudication
 
-1. what profile am I on
-2. what capability tier do I have now
-3. what is the recommended safe install path
-4. what command should I run next
+### 1. Capability Preparation
 
-### Core Principles
+The workflow must inspect both:
 
-#### `container-first`
+- segmentation capability
+- generation capability
 
-The default installation path should prefer an isolated runtime over host-environment mutation.
-
-That means:
-
-- prefer containerized setup when a compatible container runtime exists
-- treat host-`venv` as a fallback, not the main product path
-- never assume that modifying the user's global Python is acceptable
-
-#### `docker-compatible`
-
-The design should target a Docker-compatible runtime contract rather than a single vendor implementation.
-
-Valid container runtime paths may include:
-
-- `docker`
-- `podman`
-- `colima` plus Docker-compatible CLI behavior
-
-The design should express runtime capability as a compatibility class, not a branding choice.
-
-#### `recommended-by-default`
-
-The default installation target should be `recommended`.
-
-The package still supports:
-
-- `draft`
-- `recommended`
-- `production`
-
-But the default story should not stop at “lowest possible success.” It should optimize for the best capability-to-friction tradeoff for typical users.
-
-#### Shared capability language
-
-Installer UX, verification, runtime preflight, and docs must all use the same vocabulary for:
-
-- profiles
-- presets
-- runtime mode
-- readiness tiers
-- missing components
-- next-step recommendations
-
-The package should not let `doctor`, `install`, `verify`, and runtime preflight each invent separate language for the same environment state.
-
-#### Action-first output
-
-Installer-related commands must lead with:
-
-- the conclusion
-- the current tier
-- the recommended next command
-
-They must not force the user to infer next steps from a long missing-package list.
-
-### Runtime Modes
-
-The package supports two runtime modes:
-
-- `container`
-- `venv`
-
-Default routing rules:
-
-- use `container` when a Docker-compatible runtime is available
-- recommend `venv` only when container mode is unavailable or explicitly declined
-
-### Platform Profiles
-
-The installer UX must reason in named profiles.
-
-Primary profile:
-
-- `mac-apple-silicon`
-
-Secondary profile:
-
-- `linux-cuda`
-
-These profiles are not just labels for docs. They should affect:
-
-- recommended preset resolution
-- runtime recommendations
-- dependency hints
-- verification expectations
-
-### Capability Presets
-
-The installer UX must reason in named presets.
-
-#### `draft`
-
-Purpose:
-
-- package structure, import, preview, QA, and validation
-- external-professional-output workflows
-
-This preset does not promise mature local segmentation, matting, or reconstruction.
-
-#### `recommended`
-
-Purpose:
-
-- best default value path for most users
-- local segmentation workflow with mature enough capability to be useful without requiring the heaviest possible stack discipline
-
-This is the default preset.
-
-#### `production`
-
-Purpose:
-
-- closest path to the package's `production-capable` claim
-- stricter runtime and role-readiness requirements
-
-This preset is not defined merely by more installed packages. It is defined by verified component readiness across the required upstream roles.
-
-### Default Resolution
-
-If the user does not specify a mode, profile, or preset:
-
-- detect the profile
-- prefer `container`
-- default to `recommended`
-
-Typical resolved targets:
-
-- `mac-apple-silicon + container + recommended`
-- `linux-cuda + container + recommended`
-
-### Command Surface
-
-The installer UX should expose four primary entrypoints:
-
-- `doctor`
-- `install`
-- `verify`
-- `explain`
-
-#### `doctor`
-
-Responsibilities:
-
-- detect platform profile
-- detect runtime mode availability
-- evaluate Python and environment suitability
-- report current capability tier
-- report what is missing for `recommended` and `production`
-- provide a single recommended next command
-
-`doctor` should not mutate the environment.
-
-#### `install`
-
-Responsibilities:
-
-- resolve or accept explicit profile, preset, and runtime mode
-- create isolated setup artifacts for the chosen path
-- install or prepare components in a staged, explainable sequence
-- record what was installed, skipped, failed, or deferred to manual/container runtime setup
-- invoke `verify` at the end
-
-`install` should prioritize container mode first and only recommend `venv` fallback when container mode is not available or not desired.
-
-#### `verify`
-
-Responsibilities:
-
-- re-evaluate the environment after installation
-- confirm import readiness and runtime readiness
-- classify the resulting tier honestly
-- describe what the user can do now
-- describe what still blocks `production`
-
-`verify` must enforce the distinction between:
+Each capability surface must distinguish:
 
 - `installed`
 - `runtime_ready`
 - `production_ready`
 
-#### `explain`
+Generation capability must not be treated as `production_ready` unless it can support:
 
-Responsibilities:
+- recognized generation source
+- object-level constrained generation
+- transparent deliverable assets
+- traceable candidate evidence
 
-- explain why a preset or runtime mode is recommended
-- explain why a current environment is not `production`
-- explain component roles such as why `rembg` is fallback-only or why dedicated reconstruction still matters
+### 2. Whole-Image Planning
 
-This keeps explanation out of the main install path while still making the system understandable.
+Before extraction or generation begins, the workflow must create a package-owned `plan_manifest`.
 
-### Shared Capability Model
+The plan stage decides:
 
-The package should use one shared capability model across installer UX and runtime preflight.
+- which objects are worth raster effort at all
+- which route each object should follow
+- which objects can share a pilot/template workflow
+- what the attempt budget is for each object
 
-At minimum it should encode:
+No formal extraction, reconstruction, or generation should begin before this plan exists.
 
-- runtime mode availability
-- container runtime availability details
-- profile detection
-- preset target
-- component states
-- upstream role readiness
-- capability tier
+### 3. Object-Route Execution
 
-Each component should support at least:
+Every object must resolve to one of:
 
-- `installed`
-- `runtime_ready`
-- `production_ready`
+- `extract`
+- `reconstruct`
+- `generate`
+- `rebuild_downstream`
+- `support_only`
 
-The design must state clearly:
+### 4. Quality Adjudication
 
-- installation success does not guarantee runtime readiness
-- runtime readiness does not guarantee production readiness
+The workflow must continue to separate:
 
-This distinction is especially important for:
+- structural validation
+- visual audit warnings
+- object-level promotion approval
+- package-level final acceptance
 
-- `torch`
-- `SAM2`
-- `GroundingDINO`
-- matting tools
-- dedicated reconstruction tools
+Generation does not bypass these layers. It must integrate into them.
 
-### Relationship To Runtime Preflight
+## Compatibility Strategy
 
-Runtime preflight should no longer act as the primary installation UX.
+This redesign is not allowed to create two competing truth surfaces during rollout.
 
-Instead:
+The package already has stable metadata, validator, and review-writer behavior. The planning-first route model must therefore land through an explicit compatibility strategy rather than an abrupt semantic replacement.
 
-- installer UX becomes the primary entry surface for setup
-- runtime preflight becomes a runtime truth-check and routing surface
-- when preflight finds missing capability, it should route users toward `doctor`, `install`, or `verify` instead of only listing raw missing tools
+Three compatibility surfaces must be kept explicit during implementation:
 
-The runtime preflight should still remain authoritative for claim-level honesty, but it should no longer carry the full burden of teaching users how to reach a good environment.
+1. route compatibility
+2. delivery-state compatibility
+3. validator rollout compatibility
 
-## Canonical Execution Contract
+### Route Compatibility
 
-The package uses conservative continuous execution.
+The new planning-first route taxonomy is:
 
-That means:
+- `extract`
+- `reconstruct`
+- `generate`
+- `rebuild_downstream`
+- `support_only`
 
-- the default state is `Running`
-- the agent gathers evidence before escalating
-- the workflow only exits when a human answer is required to preserve truth or claim level
-- progress summaries remain commentary
-- low-risk uncertainty stays inside execution
-
-Every allowed exit must include:
-
-- `Why This Needs a Human`
-- `Recommendation`
-- `Options and Impact`
-- `What I Will Do After Confirmation`
-
-## State Machine
-
-The only execution states are:
-
-- `Running`
-- `AwaitingDecision`
-- `AwaitingExternalBlocker`
-- `AwaitingApproval`
-- `Completed`
-
-### `Running`
-
-Use for:
-
-- intake
-- environment inspection
-- recipe selection when already implied
-- split planning
-- asset value scoring
-- import or packaging
-- preview and audit generation
-- metadata updates
-- validation
-- manifest export
-- progress reporting
-
-### `AwaitingDecision`
-
-Use only when a real human choice is required and different answers materially change package semantics.
-
-### `AwaitingExternalBlocker`
-
-Use only when execution cannot honestly continue because tooling, upstream outputs, credentials, files, or another external prerequisite are missing.
-
-### `AwaitingApproval`
-
-Use only when evidence is sufficient and a formal approval changes claim level or revision state.
-
-### `Completed`
-
-Use only when the current run has reached a real terminal outcome.
-
-## Stop Taxonomy
-
-There are only three stop classes:
-
-- `user-decision`
-- `external-blocker`
-- `formal-approval`
-
-Medium/high-risk semantic divergence is not a fourth class. It is a trigger rule that may justify a `user-decision` stop when current evidence and prior instructions do not resolve the branch honestly.
-
-## Gate Taxonomy
-
-The following gates are the normalized execution taxonomy for this package.
-
-| Gate | Stop class | State | Meaning |
-| --- | --- | --- | --- |
-| `tooling_preflight` | `external-blocker` | `AwaitingExternalBlocker` | choose or unblock a production-capable path |
-| `granularity_alignment` | `user-decision` | `AwaitingDecision` | settle split scope and downstream rebuild boundaries |
-| `pilot_object` | `formal-approval` | `AwaitingApproval` | approve widening a dense/high-risk batch |
-| `approximate_reconstruction` | `user-decision` | `AwaitingDecision` | accept or reject an approximate visual truth claim |
-| `final_acceptance` | `formal-approval` | `AwaitingApproval` | approve final package claim level |
-| `candidate_promotion` | `formal-approval` | `AwaitingApproval` | replace the current owned revision |
-
-### Gate Rules
-
-#### `tooling_preflight`
-
-- must stop only when no user-backed production path exists
-- may continue when prior instructions already choose `install-or-activate-tools`, `external-professional-outputs`, or `draft-packaging-only`
-
-#### `granularity_alignment`
-
-- must stop only when different split choices materially change reuse boundaries or rebuild expectations
-- may continue when existing user intent already settles granularity, text handling, carrier/glyph policy, background expectation, and layer independence
-
-#### `pilot_object`
-
-- must stop only when widening the batch without approval would materially increase cleanup cost or semantic drift
-- may continue with `not-required` only when supported by prior instructions or clear recorded policy
-
-#### `approximate_reconstruction`
-
-- must stop only when accepting approximation changes truthfulness or downstream use
-- may continue without stopping when prior instructions already allow approximation and the asset remains explicitly approximate
-- this gate is a `user-decision`, not a `formal-approval`
-
-#### `final_acceptance`
-
-- must stop only when the package is otherwise ready and a pass claim still needs formal acceptance
-- must not be used just to announce completion
-
-#### `candidate_promotion`
-
-- must stop only when the current revision is about to change without an already approved policy covering that promotion
-- must not silently promote a staged candidate
-
-## Asset Value Scoring Contract
-
-Asset value scoring runs before extraction.
-
-The question is not “can this be extracted?” The question is “should this object exist as a raster asset at all?”
-
-### Scoring Axes
-
-Each object may carry:
-
-- `value_scoring.editability_score`
-- `value_scoring.visual_complexity_score`
-- `value_scoring.asset_value_score`
-- `value_scoring.scoring_reason`
-
-### Text-Like Classification
-
-Each object may carry:
-
-- `text_semantics.text_role`
-- `text_semantics.text_render_class`
-
-Allowed `text_role` values:
-
-- `plain-text`
-- `button-label`
-- `numeric-value`
-- `form-value`
-- `logo-wordmark`
-- `decorative-text`
-- `non-text`
-
-Allowed `text_render_class` values:
-
-- `editable`
-- `styled-editable`
-- `visual-fidelity-critical`
-- `non-text`
-
-### Routing Outcomes
-
-Each object must resolve to one of:
+The current package-owned routing taxonomy already stored in object metadata is:
 
 - `extract_asset`
 - `rebuild_downstream`
 - `requires_user_confirmation`
 - `support_only`
 
-### Routing Rules
+The new route taxonomy is therefore a planning taxonomy first, not an immediate replacement for every existing object-state field.
 
-- ordinary text, button labels, numeric values, and form values default to `rebuild_downstream`
-- logo wordmarks, decorative text, and fidelity-critical text may default to `extract_asset`
-- ambiguous high-complexity text-like objects route to `requires_user_confirmation`
-- `requires_user_confirmation` is a `user-decision` stop only when ambiguity is real and unresolved
-- `rebuild_downstream` objects do not export a production raster asset, but they still keep a placeholder/object record in metadata
+#### Mapping Rule
 
-## Formal State Surfaces
+During rollout:
 
-`metadata.decision_log[]` and `metadata.confirmation` are formal-state surfaces.
+| `planned_route` | Current object-state expectation |
+| --- | --- |
+| `extract` | `decision_routing.final_action=extract_asset` |
+| `reconstruct` | `decision_routing.final_action=extract_asset` plus explicit reconstruction-oriented delivery fields |
+| `generate` | `decision_routing.final_action=extract_asset` only after generated-object approval; before that, the route remains a planning-state truth and must not be mistaken for ordinary extraction |
+| `rebuild_downstream` | `decision_routing.final_action=rebuild_downstream` |
+| `support_only` | `decision_routing.final_action=support_only` |
 
-They exist to record:
+`requires_user_confirmation` remains a current object-state action, not a long-lived planning route. In the new model it is the unresolved execution result of a planning branch, not one of the five target routes.
 
-- real gate decisions
-- real approval outcomes
-- real evidence-backed inferred user intent
+This means:
 
-They must not contain:
+- `planned_route` lives primarily in `plan_manifest`
+- `decision_routing` remains the current execution-state reflection inside `metadata.json`
+- implementation must not silently replace `decision_routing.final_action` with raw `planned_route` strings until the broader contract is intentionally migrated
 
-- progress updates
-- routine commentary
-- stage-complete notes
-- “still working” status
-- agent guesswork
+### Delivery-State Compatibility
 
-Object-specific semantic divergence must stay object-scoped in evidence and confirmation effects. One object's accepted path must not implicitly satisfy another object's branch.
+The package already has live `delivery_class`, `reuse_status`, and `qa.status` semantics.
 
-## Truthfulness Rules
+The new planning-first design adds generated-delivery truthfulness, but it must not break all existing pass gates in one step.
 
-- `qa.status=pass` requires a production-capable path, valid final acceptance, and passing required checks
-- approximate or reconstructed layers must remain explicitly approximate
-- `delivery_class=approximate-reconstruction` must stay visible when approximation is involved
-- approximate layers must not be reported as `production-ready`
-- draft-only runs must remain draft-honest
+#### Compatibility Matrix
+
+During rollout, use this matrix:
+
+| Visual truth class | `delivery_class` | `reuse_status` | Pass-supporting meaning |
+| --- | --- | --- | --- |
+| clean extracted asset | `clean-extraction` | `production-ready` | existing clean extraction path |
+| accepted approximate repair | `approximate-reconstruction` | `accepted-approximate-reconstruction` (target) or temporary legacy-compatible approximation state during migration | accepted non-clean extraction |
+| accepted generated object | `generated-reconstruction` | `accepted-generated-reconstruction` | accepted generated delivery, never plain clean extraction |
+| staged candidate | `draft-candidate` | `draft-candidate` | non-final candidate only |
+| support layer | `support-only` | `support-only` | non-atomic support delivery |
+
+#### Migration Rule
+
+The implementation must not introduce new generated or approximation statuses without also updating:
+
+- the shared contract constants
+- review-writer pass gates
+- validator pass gates
+- asset summary counting
+- downstream manifest export rules
+
+Until those five surfaces are aligned, a new status is only a design target, not a shippable code change.
+
+### Validator Rollout Compatibility
+
+`plan_manifest` is a hard design target, but validator rollout must be staged.
+
+The package currently has many metadata-first fixtures and real packages. Immediate global hard-failure on missing `plan_manifest` would create avoidable breakage.
+
+#### Required Rollout Stages
+
+1. `plan_manifest` exists as a formal surface and may be generated by helpers.
+2. `generate` route objects require `plan_manifest`.
+3. new packages created after the rollout require `plan_manifest`.
+4. only after migration coverage is ready may validator rules consider broader universal enforcement.
+
+This staged rollout is mandatory. Do not make `plan_manifest` an unconditional global validator hard-failure in the first code pass.
+
+## Canonical Gates
+
+The package continues to use conservative continuous execution.
+
+The default state is `Running`. Stops are still limited to:
+
+- `user-decision`
+- `external-blocker`
+- `formal-approval`
+
+The normalized gates now include one new formal gate:
+
+| Gate | Stop class | State | Meaning |
+| --- | --- | --- | --- |
+| `tooling_preflight` | `external-blocker` | `AwaitingExternalBlocker` | choose or unblock a truthful capability path |
+| `granularity_alignment` | `user-decision` | `AwaitingDecision` | settle split scope and downstream rebuild boundaries |
+| `generation_routing` | `user-decision` | `AwaitingDecision` | settle object routes when the generate threshold is ambiguous |
+| `pilot_object` | `formal-approval` | `AwaitingApproval` | approve widening a dense or high-cost batch |
+| `approximate_reconstruction` | `user-decision` | `AwaitingDecision` | accept or reject approximate visual truth claims |
+| `candidate_promotion` | `formal-approval` | `AwaitingApproval` | replace the current owned object revision |
+| `final_acceptance` | `formal-approval` | `AwaitingApproval` | approve final package claim level |
+
+### `generation_routing`
+
+This is the new planning-era gate.
+
+It is triggered when:
+
+- an object scores `2/4` on the generate route signals
+- a route switch would materially change downstream truth claims
+- the object falls into a protected class and requires explicit user permission
+
+It should not be used when:
+
+- the route is already obvious from the plan rules
+- the object scores `0-1/4` or `3/4` and no protected-object policy blocks progress
+
+## Plan Manifest Contract
+
+The package now requires a pre-execution planning surface separate from `metadata.json`.
+
+`plan_manifest` is the route-planning truth surface.
+
+It should record, at minimum, for each object:
+
+- `object_id`
+- `object_type`
+- `planned_route`
+- `route_signals`
+- `route_score`
+- `route_reason`
+- `needs_user_confirmation`
+- `quality_target`
+- `attempt_budget`
+- `token_budget_hint`
+- `pilot_group`
+- `promotion_requirement`
+- `attempts_used`
+- `attempt_history`
+- `protected_policy`
+- `protected_approval_required`
+- `protected_approval_ref`
+
+For `generate` objects, it must also record:
+
+- `why_not_extract`
+- `why_not_reconstruct`
+- `why_generate`
+- `risk_note`
+
+`attempt_budget` and `token_budget_hint` are not enough by themselves for validator-visible honesty. The plan surface must also be able to show whether the object stayed within budget, exceeded budget, or switched routes after confirmation.
+
+`metadata.json` remains the final package-state surface. It must not absorb the entire planning surface.
+
+## Generation Brief Contract
+
+Every object routed to `generate` must have a package-owned generation brief before generation begins.
+
+The brief should record at minimum:
+
+- `object_id`
+- `object_type`
+- `source_crop`
+- `rough_localization`
+- `rough_mask`
+- `neighbor_context`
+- `style_constraints`
+- `must_keep`
+- `must_avoid`
+- `target_transparency`
+- `intended_delivery_class`
+- `why_not_extract`
+- `why_not_reconstruct`
+- `why_generate`
+- `risk_note`
+
+The default generation target for reusable objects is a tight transparent PNG.
+
+Whole-image redraw followed by object recutting is prohibited as the default route.
+
+## Generation Provider Contract
+
+Generation capability must use named provider classes rather than vague tool presence.
+
+At minimum, the design recognizes these provider classes:
+
+- `codex-controlled-generation`
+- `external-generated-outputs`
+- `local-model-runtime`
+
+These provider classes are execution-source classes, not quality promises by themselves.
+
+### Provider Readiness Rule
+
+Each provider class must still be evaluated as:
+
+- `installed`
+- `runtime_ready`
+- `production_ready`
+
+`production_ready` requires all of:
+
+- recognized provider class
+- object-level constrained generation workflow
+- transparent asset delivery path
+- durable evidence capture suitable for compare, promotion, and final reporting
+
+Raw image generation availability is not enough.
+
+## Route Decision Model
+
+### Generate Route Signals
+
+The package must use four lightweight signals:
+
+- `recoverability_low`
+- `object_is_reconstruction_like`
+- `quality_target_high`
+- `segmentation_cost_unfavorable`
+
+Default routing thresholds:
+
+- `3/4`: recommend `generate`
+- `2/4`: require user confirmation
+- `0-1/4`: continue non-generation path
+
+### Protected Objects
+
+These objects must not route to `generate` by default without explicit permission:
+
+- primary brand logos
+- highly recognizable hero mascots or hero illustrations
+- legally or brand-sensitive identity marks
+- objects that must remain faithful to original source pixels
+
+The plan surface must record both the protected-object classification and the approval reference when the route is overridden.
+
+### Default Non-Generate Rules
+
+- ordinary text, labels, values, and button copy default to `rebuild_downstream`
+- large background plates, support plates, and contextual repair surfaces default to `support_only` or approximate support delivery
+- `generate` must not be chosen merely because segmentation tooling is unavailable
+
+## Reconstruct Versus Generate
+
+The package must distinguish these routes formally:
+
+- `reconstruct`: still primarily constrained by recoverable source structure
+- `generate`: source-informed but no longer a pure extraction or local repair task
+
+These are not the same truth class and must not share the same final delivery labels.
+
+## Candidate, Budget, And Retry Policy
+
+For generated routes:
+
+- default to one generation round
+- default to two candidates
+- do not auto-loop retries
+
+If generation does not succeed:
+
+1. `leave-needs-review`
+2. `retry-generate`
+3. `fallback-to-reconstruct`
+
+Object-level attempt budgets must be recorded in `plan_manifest`.
+
+When an object exceeds its budget:
+
+- the agent must not silently continue
+- the agent must not silently change route
+- the workflow must return to explicit confirmation
+
+Validator-visible budget honesty depends on recorded attempt use. Budget fields without attempt-use tracking are insufficient.
+
+## Batch Reuse Model
+
+When many objects share the same route shape, the package may use:
+
+- one pilot object
+- one full pilot brief
+- sibling delta briefs
+- a shared batch compare context
+
+However:
+
+- every object still needs its own candidate identity
+- every object still needs its own selection reason
+- every object still needs its own promotion approval
+
+Batch reuse is an execution optimization, not a truth-surface shortcut.
+
+## Delivery Semantics
+
+The package must keep generated delivery visibly separate from extraction delivery.
+
+### Delivery Classes
+
+The package must distinguish:
+
+- `clean-extraction`
+- `approximate-reconstruction`
+- `generated-reconstruction`
+
+### Reuse Status
+
+The package must distinguish:
+
+- `production-ready`
+- `accepted-approximate-reconstruction`
+- `accepted-generated-reconstruction`
+
+Generated objects must never be reported as plain `production-ready` extraction assets.
+
+Implementation note: introducing `accepted-approximate-reconstruction` or `accepted-generated-reconstruction` in code is a coordinated contract migration, not a doc-only rename. These statuses must not land piecemeal.
+
+## Generated-Reconstruction Evidence Contract
+
+Generated delivery is allowed only with a stronger evidence surface.
+
+For any object delivered as `generated-reconstruction`, the package must retain:
+
+- `generation_source`
+- `model_or_tool`
+- `version`
+- `prompt_or_brief_ref`
+- `reference_inputs`
+- `candidate_id`
+- `compare_evidence`
+- `promotion_acceptance`
+- `selection_reason`
+
+This evidence is not optional documentation. It is part of the formal truth surface.
+
+## Promotion And Acceptance Rules
+
+Generated objects must pass through:
+
+1. object-level compare
+2. object-level promotion approval
+3. package-level final acceptance
+
+Package-level final acceptance must not silently imply that a generated object was accepted.
+
+Generated objects must be approved object-by-object before the package may claim final delivery.
+
+## Validator Requirements
+
+The validator must enforce at least the following:
+
+- staged rollout for `plan_manifest`:
+  - missing `plan_manifest` is initially a hard failure only for generated-route objects
+  - broader enforcement is allowed only after helper, fixture, and migration coverage exist
+- `generate` objects must record route reasoning fields
+- generated delivery must use `delivery_class=generated-reconstruction`
+- accepted generated delivery must use generated-specific reuse semantics
+- generated delivery must retain its evidence contract
+- missing segmentation capability must not by itself justify a generated delivery claim
+- protected objects must not reach generated delivery without explicit permission evidence
+- budget overrun paths must not look like ordinary successful first-path completion
+
+The validator should continue to check truthfulness, not aesthetics.
+
+## Final Reporting Contract
+
+Final reporting must separate:
+
+- `clean extracted assets`
+- `accepted approximate reconstructions`
+- `accepted generated reconstructions`
+- `draft candidates`
+- `support-only layers`
+- `blocked / needs-review objects`
+
+This reporting split is required because one package may now contain truthful outputs from multiple route classes.
 
 ## Architecture Requirements
 
-The next implementation phase should not keep piling contract logic into the existing hotspots. The design requires the following code-shape changes.
+The next implementation phase should favor small, explicit ownership surfaces:
 
-### 1. Shared Contract Source
-
-Move shared enums, gate mappings, confirmation defaults, and other repeated taxonomy data into a single package-local contract module consumed by:
-
-- `record_quality_review.py`
-- `validate_asset_package.py`
-- tests that check exact mappings
-
-### 2. Validator Decomposition
-
-Split validator responsibilities into package-local domains, at minimum:
-
-- metadata contract validation
-- object routing and asset-policy validation
-- preview and filesystem validation
-- candidate comparison and promotion evidence validation
-
-### 3. Review Writer Decomposition
-
-Separate:
-
-- CLI argument parsing
-- metadata mutation helpers
-- confirmation/decision writing
-- object routing updates
-- QA report append logic
-
-### 4. Test Decomposition
-
-Break the giant package test file into domain-focused modules over time:
-
-- docs and contract wording
-- package init and write-path behavior
-- validator contract enforcement
-- candidate workflow behavior
-- end-to-end acceptance flows
-
-This does not need to be one big-bang rewrite, but the target architecture should be clear before adding more policy.
+1. shared route and delivery enums in a package-local contract module
+2. plan-manifest helpers separated from final metadata mutation helpers
+3. generation-capability logic separated from segmentation-capability logic but expressed in the same capability vocabulary
+4. validator decomposition so generated-delivery checks do not become ad hoc branches
+5. tests grouped around route planning, generated delivery, and budget control
 
 ## Success Criteria
 
 The redesign is successful when all of the following are true:
 
-1. there is one canonical design doc and one canonical implementation plan
-2. package docs all express the same stop/continue contract
-3. asset routing is editability-first and auditable
-4. `approximate_reconstruction` is treated consistently as a `user-decision` gate
-5. writer and validator no longer own conflicting copies of the same contract data
-6. tests fail on exact contract drift, not only broad wording drift
-7. future work can be phased without reopening design intent
+1. the canonical design and implementation plan both describe planning-first routing
+2. the package cannot silently begin expensive extraction before whole-image planning
+3. `generate` is a formal route with its own gate, capability model, brief, and evidence package
+4. generated outputs can be delivered honestly without pretending to be extraction
+5. budget overruns force confirmation instead of silent retries
+6. batch reuse lowers cost without weakening object-level truth claims
+7. tests and validator rules fail on generated-route contract drift

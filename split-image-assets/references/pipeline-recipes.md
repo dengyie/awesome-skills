@@ -24,7 +24,11 @@ Also think in object types before choosing tools:
 
 Before choosing a recipe, run `scripts/check_extraction_environment.py` or otherwise confirm the upstream capability. The preflight report must distinguish installed tooling from runtime-ready and production-ready capability across `segmentation`, `matting`, `reconstruction`, and `environment`, and it should explicitly report `recommended_installs`, `missing_roles`, and `why_it_matters`. If local SAM2/Grounded-SAM/rembg/BiRefNet/RMBG-style tooling is unavailable and the user has not provided external assets, run the Preflight Tooling Recommendation Gate: recommend `install-or-activate-tools`, ask for `external-professional-outputs`, or record that the user chose `draft-packaging-only`.
 
+Whole-image planning happens before expensive object work. Use `plan_manifest.json` to decide whether each object should route to `extract`, `reconstruct`, `generate`, `rebuild_downstream`, or `support_only` before burning segmentation or generation effort.
+
 Do not use Pillow, OpenCV, or skimage as the primary production segmenter. They are suitable for alpha compositing, PNG persistence, source-space mask expansion, preview generation, simple repair helpers, and metadata packaging. If the mature segmenter path is unavailable, ask the user for installation, external outputs, or draft-only packaging instead of silently falling back to coordinate crops.
+
+Likewise, do not route an object to `generate` merely because segmentation tooling is missing. Generated delivery is a distinct truth class and should only be used when object planning and generation capability both support it honestly.
 
 Recipes do not create new stop classes. Stop behavior still comes from the canonical gate taxonomy in `workflow.md`.
 
