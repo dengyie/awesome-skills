@@ -283,6 +283,8 @@ For high-risk repairs, stage candidates in `_staging/repair_candidates/`, compar
 
 When staged candidates exist, run `describe_candidate_work_items.py` to write `_staging/repair_candidates/candidate_work_items.json`. It will tell you whether candidate stage is still empty, whether compare evidence is needed, whether a candidate selection is still pending after compare, whether a candidate is ready for promotion, or whether candidate work is already complete.
 
+When a comparison record already contains `selected_candidate_id` and `selection_reason`, `promote_candidate_asset.py --comparison-id ...` can now reuse those values instead of forcing them to be repeated. If either one is still missing from the comparison evidence, promotion should continue to fail closed.
+
 Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.

@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Compare Evidence Should Own Promotion Defaults Once It Already Records The Answer
+- Decision: Let `promote_candidate_asset.py --comparison-id ...` reuse `selected_candidate_id` and `selection_reason` from the comparison record when those values are already present there, while still failing closed if comparison evidence has not recorded them yet.
+- Rationale: After candidate work-item status V1, the remaining high-friction point was that promotion still often asked the operator to repeat facts that compare evidence already owned. Reusing those values lowers operator burden without weakening honesty because the workflow still requires explicit selection evidence before promotion can proceed.
+- Alternatives considered: Keep promotion fully repetitive forever, or jump directly to automatic compare winner selection.
+- Impact: Promotion can now continue more directly from approved compare evidence, candidate work-item recommended commands are shorter when compare already records the answer, and future orchestration work can build on a cleaner compare-to-promote handoff.
+- Rollback trigger: If later workflows need multiple competing promotion intents per comparison, keep compare-owned defaults but require an explicit selector for those advanced cases instead of reverting to manual repetition everywhere.
+- Related files: `split-image-assets/scripts/promote_candidate_asset.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/SKILL.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-04 - Candidate Stage Should Have Its Own Package-Owned Next-Step Summary
 - Decision: Add `describe_candidate_work_items.py` plus shared candidate-stage status logic so the package writes `_staging/repair_candidates/candidate_work_items.json` with each object's staged candidate state and recommended next action.
 - Rationale: After provider work-item status V1, the workflow was still asking the operator to inspect staged candidates, compare evidence, and promotion state manually. A candidate-stage summary reduces that burden without inventing a new lifecycle truth model because it reuses existing staged candidate files, `candidate_comparisons[]`, `selected_candidate_id`, and `current_asset_revision`.

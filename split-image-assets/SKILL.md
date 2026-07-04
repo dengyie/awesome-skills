@@ -249,6 +249,8 @@ The capability report distinguishes module-installed from runtime-ready from pro
 
 `scripts/promote_candidate_asset.py` is the deterministic promotion helper for high-risk repairs. Use it when `_staging/repair_candidates/` contains multiple staged candidate assets and one should become the current package-owned asset without hand-editing `metadata.json`. Candidate promotion should come from `_staging/repair_candidates/`, not an arbitrary package path.
 
+When compare evidence already records `selected_candidate_id` and `selection_reason`, `scripts/promote_candidate_asset.py --comparison-id ...` may reuse those values instead of requiring them to be repeated manually. Missing compare-side selection evidence must still fail closed.
+
 `scripts/describe_candidate_work_items.py` is the candidate-stage explainer. Use it to write `_staging/repair_candidates/candidate_work_items.json` so each object records whether candidate stage is still empty, compare evidence is needed, candidate selection is still pending, promotion is ready, or candidate work is already complete.
 
 ## Pipeline Quality Rule

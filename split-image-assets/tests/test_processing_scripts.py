@@ -1052,6 +1052,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["next_action"], "promote-selected-candidate")
             self.assertEqual(entry["comparison_selected_candidate_id"], "candidate-a")
             self.assertIn("--comparison-id cmp-1", entry["recommended_command"])
+            self.assertNotIn("--candidate-id", entry["recommended_command"])
+            self.assertNotIn("--selection-reason", entry["recommended_command"])
     def test_describe_candidate_work_items_awaits_candidate_selection_after_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -3973,6 +3975,274 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(result.returncode, 0, result.stderr)
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-a")
+    def test_promote_candidate_asset_uses_selected_candidate_from_comparison_record(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
+            Image.new("RGBA", (4, 4), (0, 0, 255, 255)).save(candidate_dir / "candidate_b.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/candidate_b.png",
+                    "--compare-note",
+                    "Compare candidate shapes.",
+                    "--compare-criterion",
+                    "shape fidelity",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata_path = output / "metadata.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata["objects"][0]["candidate_comparisons"][0]["selected_candidate_id"] = "candidate-b"
+            metadata["objects"][0]["candidate_comparisons"][0]["selection_reason"] = "Candidate B has the cleaner final silhouette."
+            metadata_path.write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Promote the selected compare candidate.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            obj = metadata["objects"][0]
+            self.assertEqual(obj["selected_candidate_id"], "candidate-b")
+            self.assertEqual(obj["candidate_comparisons"][0]["selection_reason"], "Candidate B has the cleaner final silhouette.")
+    def test_promote_candidate_asset_uses_selection_reason_from_comparison_record(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--compare-note",
+                    "Single-candidate compare for direct promotion.",
+                    "--compare-criterion",
+                    "single viable candidate",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata_path = output / "metadata.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata["objects"][0]["candidate_comparisons"][0]["selected_candidate_id"] = "candidate-a"
+            metadata["objects"][0]["candidate_comparisons"][0]["selection_reason"] = "Only viable candidate in the compare set."
+            metadata_path.write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Promote single compare candidate.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            qa_report = (output / "qa_report.md").read_text(encoding="utf-8")
+            self.assertIn("Selection reason: Only viable candidate in the compare set.", qa_report)
+    def test_promote_candidate_asset_requires_selected_candidate_when_comparison_has_multiple_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
+            Image.new("RGBA", (4, 4), (0, 0, 255, 255)).save(candidate_dir / "candidate_b.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--candidate",
+                    "candidate-b=_staging/repair_candidates/candidate_b.png",
+                    "--compare-note",
+                    "Compare candidate shapes.",
+                    "--compare-criterion",
+                    "shape fidelity",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Reject implicit multi-candidate promotion.",
+                    "--selection-reason",
+                    "A choice is required first.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--candidate-id is required when --comparison-id references multiple candidates", result.stderr)
+    def test_promote_candidate_asset_requires_selection_reason_when_comparison_record_has_none(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--compare-note",
+                    "Single-candidate compare for direct promotion.",
+                    "--compare-criterion",
+                    "single viable candidate",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata_path = output / "metadata.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata["objects"][0]["candidate_comparisons"][0]["selected_candidate_id"] = "candidate-a"
+            metadata_path.write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Reject promotion without rationale.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--selection-reason is required unless --comparison-id references a comparison with selection_reason", result.stderr)
     def test_promote_candidate_asset_generated_reconstruction_uses_provider_stage_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

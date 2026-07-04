@@ -66,14 +66,20 @@ def _recommended_promote_command(
         parts.extend(["--comparison-id", comparison_id])
     else:
         parts.extend(["--candidate-id", candidate_id, "--candidate-asset", candidate_asset_path])
-    if candidate_id and comparison_id:
-        parts.extend(["--candidate-id", candidate_id])
-    parts.extend(
-        [
-            "--selection-reason",
-            f"\"{selection_reason or 'Explain why this candidate should become the current revision.'}\"",
-        ]
-    )
+    if not comparison_id:
+        parts.extend(
+            [
+                "--selection-reason",
+                "\"Explain why this candidate should become the current revision.\"",
+            ]
+        )
+    elif not selection_reason:
+        parts.extend(
+            [
+                "--selection-reason",
+                "\"Explain why the selected compare candidate should become the current revision.\"",
+            ]
+        )
     return " ".join(parts)
 
 

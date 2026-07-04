@@ -116,7 +116,7 @@ def main() -> int:
     parser.add_argument("--generation-prompt-or-brief-ref", default="")
     parser.add_argument("--generation-reference-input", action="append", default=[])
     parser.add_argument("--repair-note", required=True)
-    parser.add_argument("--selection-reason", required=True)
+    parser.add_argument("--selection-reason", default="")
     args = parser.parse_args()
 
     package_dir = Path(args.package_dir).resolve()
@@ -160,7 +160,10 @@ def main() -> int:
         ):
             parser.error("comparison-id must reference a comparison with candidate_ids")
         if not candidate_id_value:
-            if len(candidate_ids) == 1:
+            comparison_selected_candidate_id = str(comparison.get("selected_candidate_id", "")).strip()
+            if comparison_selected_candidate_id:
+                candidate_id_value = comparison_selected_candidate_id
+            elif len(candidate_ids) == 1:
                 candidate_id_value = candidate_ids[0]
             else:
                 parser.error("--candidate-id is required when --comparison-id references multiple candidates")
@@ -172,6 +175,14 @@ def main() -> int:
 
     if not candidate_id_value:
         parser.error("--candidate-id is required unless --comparison-id resolves exactly one candidate")
+
+    selection_reason_value = args.selection_reason.strip()
+    if not selection_reason_value and comparison is not None:
+        selection_reason_value = str(comparison.get("selection_reason", "")).strip()
+    if not selection_reason_value:
+        parser.error(
+            "--selection-reason is required unless --comparison-id references a comparison with selection_reason"
+        )
 
     candidate_asset_value = args.candidate_asset
     if not candidate_asset_value and compare_candidate_record:
@@ -283,13 +294,13 @@ def main() -> int:
             "note": args.repair_note,
             "candidate_asset": candidate_asset_value,
             "candidate_mask": args.candidate_mask or "",
-            "selection_reason": args.selection_reason,
+            "selection_reason": selection_reason_value,
             "comparison_id": args.comparison_id or "",
         }
     )
     if args.comparison_id:
         comparison["selected_candidate_id"] = candidate_id_value
-        comparison["selection_reason"] = args.selection_reason
+        comparison["selection_reason"] = selection_reason_value
         comparison["selected_at"] = now
     else:
         comparison_id = f"manual-{candidate_id_value}"
@@ -352,13 +363,13 @@ def main() -> int:
                 "risks": [],
                 "score_manifest_path": "",
                 "selected_candidate_id": candidate_id_value,
-                "selection_reason": args.selection_reason,
+                "selection_reason": selection_reason_value,
                 "created_at": now,
             }
         )
     update_asset_summary(metadata)
     write_metadata(package_dir, metadata)
-    append_qa_report(package_dir, args.object_id, candidate_id_value, args.selection_reason)
+    append_qa_report(package_dir, args.object_id, candidate_id_value, selection_reason_value)
     print(f"Promoted candidate {candidate_id_value} for {args.object_id}")
     return 0
 

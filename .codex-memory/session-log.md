@@ -711,3 +711,9 @@
 - Results: The package now writes `_staging/repair_candidates/candidate_work_items.json` so each object has an explicit next candidate-stage step. Full package validation passed with 207 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the candidate work-item status milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 11:20
+- Task: Complete `split-image-assets` compare-selected promotion defaults V1.
+- Actions: Updated `promote_candidate_asset.py` so compare-owned `selected_candidate_id` and `selection_reason` can satisfy promotion defaults; synchronized candidate work-item recommended commands to omit repeated compare-owned inputs; updated usage/skill/baseline docs and project memory; expanded regression coverage for success and fail-closed promotion cases.
+- Results: Promotion can now continue directly from compare evidence when compare already records both the selected candidate and the selection rationale. Full package validation passed with 211 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the compare-selected promotion defaults milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.
