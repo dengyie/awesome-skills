@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` provider-aware candidate lifecycle next steps V1 is complete locally. `describe_candidate_work_items.py` now surfaces staged candidate provider ids and provider-stage manifest paths, and it explicitly flags mixed-provider candidate pools before compare.
 - Current stage: `split-image-assets` single-candidate promotion decision path V1 is complete locally. The approval adapter and compare-to-promotion adapter can now both handle the direct single-candidate path when no compare evidence exists yet but exactly one staged candidate is present.
 - Current stage: `split-image-assets` promotion decision defaults V1 is complete locally. `apply_candidate_promotion_decision.py` now infers `delivery_class` from planned-route or current object delivery truth in common cases and generates a deterministic default `repair_note`, so the yes-path command is shorter without weakening fail-closed behavior.
 - Current stage: `split-image-assets` compare-to-promotion orchestration V1 is complete locally. `apply_candidate_promotion_decision.py` now records a yes/no candidate-promotion decision from compare evidence and, for `yes`, continues directly into promotion through the existing runtime guard.
@@ -23,6 +24,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (227 tests, provider-aware candidate lifecycle next steps V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider-aware candidate lifecycle next steps V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (provider-aware candidate lifecycle next steps V1 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, provider-aware candidate lifecycle next steps V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (222 tests, single-candidate promotion decision path V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, single-candidate promotion decision path V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (single-candidate promotion decision path V1 review brief; no new P0/P1 blockers)
@@ -327,6 +332,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Provider-aware candidate lifecycle next steps V1 makes candidate pools less opaque, but it still does not automatically choose between providers; mixed-provider pools still require explicit compare or a human choice.
 - Single-candidate promotion decision path V1 removes one more manual step, but it still intentionally refuses multi-candidate no-compare situations; a human or a compare step must still choose the winner first.
 - Promotion decision defaults V1 lowers more command burden, but delivery-class inference still intentionally fails closed when the package truth is ambiguous; the adapter is not allowed to guess.
 - Compare-to-promotion orchestration V1 lowers command count, but it still depends on explicit yes/no user-backed approval inputs and does not choose winners automatically for multi-candidate compares.
@@ -366,10 +372,10 @@
 - None.
 
 ## Current Focus
-- The single-candidate promotion decision path milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The provider-aware candidate lifecycle next steps milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the single-candidate promotion decision path V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the provider-aware candidate lifecycle next steps V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

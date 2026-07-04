@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Candidate Lifecycle Next-Step Reporting Should Surface Provider Identity Before Compare
+- Decision: Extend `describe_candidate_work_items.py` so it reports staged candidate provider ids and provider-stage manifest paths, and explicitly calls out mixed-provider candidate pools before compare begins.
+- Rationale: The provider bridge and generated compare layers already knew provider identity, but the candidate lifecycle explainer still reduced staged candidates to plain PNGs. That made the next-step surface lose important provenance exactly where mixed-provider candidate pools become risky. Surfacing provider identity there keeps the lifecycle story aligned end to end.
+- Alternatives considered: Leave provider identity visible only in provider-stage manifests and later compare evidence, or jump directly to a provider-specific orchestration runner.
+- Impact: Operators can now see when a candidate pool is mixed before they compare or promote, and future provider-specific orchestration can build on a clearer lifecycle state instead of rediscovering provider provenance from scattered manifests.
+- Rollback trigger: If later workflows move provider-aware candidate handling into a larger orchestrator, preserve this provenance visibility there rather than hiding provider identity again.
+- Related files: `split-image-assets/scripts/candidate_workflow_lib.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `docs/usage/split-image-assets.md`, `split-image-assets/SKILL.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-04 - Single Staged Candidates Should Not Need Fake Compare Evidence To Reach Approval And Promotion
 - Decision: Let `record_candidate_promotion_approval.py` and `apply_candidate_promotion_decision.py` support the direct single-candidate path when exactly one staged repair candidate exists and no compare evidence exists yet.
 - Rationale: The candidate work-item helper was already steering the operator toward an approval-and-promotion path for the single-candidate case, but the adapter stack still required compare evidence first. Supporting the direct path removes that mismatch while still failing closed for multi-candidate no-compare situations.

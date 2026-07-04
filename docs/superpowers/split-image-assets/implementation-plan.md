@@ -54,6 +54,21 @@ This means the package is no longer primarily a packaging helper with extraction
 
 ## Most Recent Closed Milestone
 
+### `provider-aware candidate lifecycle next steps V1`
+
+Closed status: complete
+
+What landed:
+
+- `describe_candidate_work_items.py` now surfaces staged candidate provider ids and provider-stage manifest paths
+- mixed-provider staged candidate pools now say so explicitly before compare instead of staying provider-blind
+- candidate lifecycle next-step reporting now carries more of the same provider evidence that later compare/promotion paths depend on
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+
 ### `single-candidate promotion decision path V1`
 
 Closed status: complete

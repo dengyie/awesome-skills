@@ -753,3 +753,9 @@
 - Results: The direct single-candidate path now works through the same approval and promotion contracts without requiring a synthetic compare step. Full package validation passed with 222 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the single-candidate promotion decision path milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 17:55
+- Task: Complete `split-image-assets` provider-aware candidate lifecycle next steps V1.
+- Actions: Extended `describe_candidate_work_items.py` to surface staged candidate provider ids and provider-stage manifest paths; added explicit mixed-provider candidate-pool next-step messaging; synchronized usage/skill/baseline docs and project memory; expanded regression coverage for provider-aware candidate lifecycle reporting.
+- Results: Candidate lifecycle next-step reporting now carries provider provenance earlier, before compare begins. Full package validation passed with 227 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the provider-aware candidate lifecycle next steps milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.

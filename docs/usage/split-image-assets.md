@@ -284,6 +284,8 @@ For high-risk repairs, stage candidates in `_staging/repair_candidates/`, compar
 
 When staged candidates exist, run `describe_candidate_work_items.py` to write `_staging/repair_candidates/candidate_work_items.json`. It will tell you whether candidate stage is still empty, whether compare evidence is needed, whether a candidate selection is still pending after compare, whether a candidate is ready for promotion, or whether candidate work is already complete.
 
+That report should also surface candidate provider ids when provider-stage manifests exist. If a staged candidate pool mixes providers, the next-step detail should say so explicitly before you run compare.
+
 When a comparison record already contains `selected_candidate_id` and `selection_reason`, `promote_candidate_asset.py --comparison-id ...` can now reuse those values instead of forcing them to be repeated. If either one is still missing from the comparison evidence, promotion should continue to fail closed.
 
 `describe_candidate_work_items.py` now also distinguishes between “candidate is selected” and “candidate promotion approval has been recorded.” If compare already chose a candidate but `metadata.confirmation.candidate_promotion` is still pending, the helper should recommend a `record_quality_review.py` formal-approval step before it recommends `promote_candidate_asset.py`.
@@ -297,6 +299,8 @@ If you want one deterministic command that both records the yes/no decision and,
 That adapter can now infer `delivery_class` from the planned route or current object delivery state in common cases, and it can generate a default `repair_note`. If the route truth is not strong enough, it should still fail closed and require an explicit `--delivery-class`.
 
 If no compare evidence exists yet but the object has exactly one staged candidate, the same approval adapter and decision adapter can now use that direct single-candidate path. If more than one staged candidate exists, they must still stop and require an explicit compare or winner selection first.
+
+`describe_candidate_work_items.py` should now also show candidate provider ids when provider-stage manifests exist. If a staged candidate pool mixes providers, its next-step detail should say that explicitly before compare starts.
 
 Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.
 

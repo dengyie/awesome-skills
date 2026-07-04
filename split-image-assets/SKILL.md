@@ -255,6 +255,8 @@ When compare evidence already records `selected_candidate_id` and `selection_rea
 
 When compare evidence already selects a candidate but `metadata.confirmation.candidate_promotion` is still pending, `scripts/describe_candidate_work_items.py` should recommend the low-burden promotion-decision adapter before it recommends `promote_candidate_asset.py`.
 
+That candidate-stage explainer should also surface staged candidate provider identities and flag mixed-provider candidate pools before compare, so generated-route repair work does not become provider-blind again.
+
 `scripts/record_candidate_promotion_approval.py` is the low-burden approval adapter for that handoff. Use it when compare evidence already owns the selected candidate or the compare set contains exactly one candidate, and you want to record the `candidate_promotion` gate without manually reconstructing the full `record_quality_review.py` decision payload.
 
 `scripts/apply_candidate_promotion_decision.py` is the next-step orchestration adapter for that handoff. Use it when you want one deterministic command to record a yes/no candidate-promotion decision and, for `yes`, continue directly into `promote_candidate_asset.py`.
@@ -262,6 +264,8 @@ When compare evidence already selects a candidate but `metadata.confirmation.can
 When route evidence is already clear, `scripts/apply_candidate_promotion_decision.py` may infer `delivery_class` from the planned route or current object delivery state, and it may generate a deterministic default `repair_note`. If the route truth is not strong enough, it must still fail closed and require an explicit `--delivery-class`.
 
 When no compare evidence exists yet but exactly one staged candidate exists, both `scripts/record_candidate_promotion_approval.py` and `scripts/apply_candidate_promotion_decision.py` may use that direct single-candidate path instead of forcing a synthetic compare step. Multi-candidate no-compare situations must still fail closed.
+
+`scripts/describe_candidate_work_items.py` should also surface staged candidate provider identities and explicitly flag mixed-provider candidate pools before compare, so generated-route candidate work does not become provider-blind again.
 
 `scripts/promote_candidate_asset.py` should also fail closed until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required` from a real user-backed source. The helper and the runtime guard should agree.
 

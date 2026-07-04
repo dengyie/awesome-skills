@@ -6,7 +6,7 @@ from candidate_workflow_lib import (
     candidate_work_item_status_path,
     candidate_delivery_class_for_route,
     default_promotion_repair_note,
-    list_staged_candidate_assets,
+    list_staged_candidate_records,
     package_relative,
     read_metadata,
     write_json,
@@ -14,7 +14,7 @@ from candidate_workflow_lib import (
 from package_state_lib import find_plan_object, read_plan_manifest
 
 
-def _recommended_compare_command(package_dir: Path, object_id: str, candidates: list[tuple[str, Path]]) -> str:
+def _recommended_compare_command(package_dir: Path, object_id: str, candidates: list[dict]) -> str:
     package_arg = str(package_dir).replace("\\", "/")
     parts = [
         "python",
@@ -23,8 +23,8 @@ def _recommended_compare_command(package_dir: Path, object_id: str, candidates: 
         "--object-id",
         object_id,
     ]
-    for candidate_id, path in candidates:
-        parts.extend(["--candidate", f"{candidate_id}={package_relative(package_dir, path)}"])
+    for record in candidates:
+        parts.extend(["--candidate", f"{record['candidate_id']}={record['relative_asset_path']}"])
     parts.extend(["--compare-criterion", "<criterion>"])
     return " ".join(parts)
 
@@ -125,8 +125,17 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
         plan_object = find_plan_object(plan_manifest, current_object_id)
         planned_route = str(plan_object.get("planned_route", "")).strip() if isinstance(plan_object, dict) else ""
         recommended_delivery_class = candidate_delivery_class_for_route(planned_route)
-        candidates = list_staged_candidate_assets(package_dir, current_object_id)
-        candidate_ids = [candidate_id for candidate_id, _ in candidates]
+        candidates = list_staged_candidate_records(package_dir, current_object_id)
+        candidate_ids = [record["candidate_id"] for record in candidates]
+        candidate_provider_ids = sorted(
+            {
+                provider_id
+                for provider_id in (
+                    str(record.get("provider_id", "")).strip() for record in candidates
+                )
+                if provider_id
+            }
+        )
         comparisons = item.get("candidate_comparisons", [])
         latest_comparison = comparisons[-1] if isinstance(comparisons, list) and comparisons else {}
         latest_comparison_id = (
@@ -189,6 +198,10 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
             next_action_detail = (
                 "Multiple staged candidates exist and no comparison evidence has been recorded yet."
             )
+            if len(candidate_provider_ids) > 1:
+                next_action_detail = (
+                    "Multiple staged candidates exist across different provider ids and no comparison evidence has been recorded yet."
+                )
             recommended_command = _recommended_compare_command(package_dir, current_object_id, candidates)
         elif len(candidates) > 1 and latest_comparison_id and not comparison_selected_candidate_id:
             next_action = "await-candidate-selection"
@@ -213,9 +226,9 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
             if not candidate_asset_path and candidate_id:
                 candidate_asset_path = next(
                     (
-                        package_relative(package_dir, path)
-                        for staged_candidate_id, path in candidates
-                        if staged_candidate_id == candidate_id
+                        str(record.get("relative_asset_path", "")).strip()
+                        for record in candidates
+                        if record.get("candidate_id") == candidate_id
                     ),
                     "",
                 )
@@ -257,7 +270,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         package_dir,
                         current_object_id,
                         candidate_id=candidate_ids[0],
-                        candidate_asset_path=package_relative(package_dir, candidates[0][1]),
+                        candidate_asset_path=str(candidates[0].get("relative_asset_path", "")).strip(),
                         comparison_id="",
                         delivery_class=recommended_delivery_class,
                         selection_reason="",
@@ -281,6 +294,12 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 "planned_route": planned_route,
                 "staged_candidate_count": len(candidates),
                 "candidate_ids": candidate_ids,
+                "candidate_provider_ids": candidate_provider_ids,
+                "candidate_provider_stage_manifest_paths": [
+                    str(record.get("provider_stage_manifest_path", "")).strip()
+                    for record in candidates
+                    if str(record.get("provider_stage_manifest_path", "")).strip()
+                ],
                 "latest_comparison_id": latest_comparison_id,
                 "comparison_selected_candidate_id": comparison_selected_candidate_id,
                 "comparison_selection_reason": comparison_selection_reason,

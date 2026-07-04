@@ -224,6 +224,30 @@ def list_staged_candidate_assets(package_dir: Path, object_id: str) -> list[tupl
     return candidates
 
 
+def list_staged_candidate_records(package_dir: Path, object_id: str) -> list[dict]:
+    records: list[dict] = []
+    for candidate_id, asset_path in list_staged_candidate_assets(package_dir, object_id):
+        provider_stage_path = asset_path.parent / f"{candidate_id}_provider_stage.json"
+        provider_stage = {}
+        provider_id = ""
+        if provider_stage_path.exists():
+            provider_stage = load_provider_stage_manifest(asset_path, candidate_id)
+            provider_id = str(provider_stage.get("provider_id", "")).strip()
+        records.append(
+            {
+                "candidate_id": candidate_id,
+                "asset_path": asset_path,
+                "relative_asset_path": package_relative(package_dir, asset_path),
+                "provider_stage_manifest_path": package_relative(package_dir, provider_stage_path)
+                if provider_stage_path.exists()
+                else "",
+                "provider_id": provider_id,
+                "provider_stage_manifest": provider_stage,
+            }
+        )
+    return records
+
+
 def component_count(mask: Image.Image, threshold: int = 32) -> int:
     width, height = mask.size
     pixels = mask.load()

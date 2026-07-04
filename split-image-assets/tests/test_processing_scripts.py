@@ -973,6 +973,83 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             entry = json.loads(result.stdout)["objects"][0]
             self.assertEqual(entry["next_action"], "compare-candidates")
             self.assertIn("compare_candidate_assets.py", entry["recommended_command"])
+    def test_describe_candidate_work_items_reports_provider_ids_for_staged_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            (candidate_dir / "candidate-a_provider_stage.json").write_text(
+                json.dumps({"provider_id": "codex-controlled-generation"}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["candidate_provider_ids"], ["codex-controlled-generation"])
+            self.assertTrue(
+                entry["candidate_provider_stage_manifest_paths"][0].endswith("candidate-a_provider_stage.json")
+            )
+    def test_describe_candidate_work_items_flags_mixed_provider_candidate_pool(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 3), (0, 255, 0, 255)).save(candidate_dir / "candidate-b.png")
+            (candidate_dir / "candidate-a_provider_stage.json").write_text(
+                json.dumps({"provider_id": "codex-controlled-generation"}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            (candidate_dir / "candidate-b_provider_stage.json").write_text(
+                json.dumps({"provider_id": "external-generated-outputs"}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "compare-candidates")
+            self.assertEqual(
+                entry["candidate_provider_ids"],
+                ["codex-controlled-generation", "external-generated-outputs"],
+            )
+            self.assertIn("different provider ids", entry["next_action_detail"])
     def test_describe_candidate_work_items_recommends_promote_single_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
