@@ -843,6 +843,12 @@
 - Results: Known task states are now centrally registered and validated, and the callers no longer duplicate task goal/default metadata. Full package validation passed with 244 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 06:35
+- Task: Complete `split-image-assets` shared task registry versioning V1.
+- Actions: Added `task_registry_reference` beside `task_registry_version` and `task_registry_key`; updated the shared-task reference and focused tests; propagated the richer identity surface through shared helpers and real work-item outputs.
+- Results: Shared task outputs now carry a fuller registry identity envelope, so downstream consumers can resolve not only which registered task they see, but also which registry surface defined it. Full package validation passed with 244 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.
 ## 2026-07-05 06:05
 - Task: Complete `split-image-assets` shared task registry identity V1.
 - Actions: Added `task_registry_version` and `task_registry_key` to the shared task contract and helper outputs; extended the shared-task reference accordingly; expanded focused tests so helper, provider work items, and candidate work items all expose the identity surface.

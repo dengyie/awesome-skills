@@ -46,6 +46,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertEqual(task["task_protocol_version"], contract.SHARED_TASK_PROTOCOL_VERSION)
         self.assertEqual(task["task_contract_reference"], contract.SHARED_TASK_CONTRACT_REFERENCE)
         self.assertEqual(task["task_registry_version"], contract.SHARED_TASK_REGISTRY_VERSION)
+        self.assertEqual(task["task_registry_reference"], contract.SHARED_TASK_REGISTRY_REFERENCE)
         self.assertEqual(task["task_registry_key"], "candidate-lifecycle.await-candidate-selection")
     def test_work_item_schema_lib_rejects_invalid_task_protocol(self):
         module = self._load_script_module("work_item_schema_lib.py")
@@ -116,6 +117,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             task_state="consume-provider-result",
         )
         self.assertEqual(registration["task_registry_version"], contract.SHARED_TASK_REGISTRY_VERSION)
+        self.assertEqual(registration["task_registry_reference"], contract.SHARED_TASK_REGISTRY_REFERENCE)
         self.assertEqual(registration["task_registry_key"], "provider-bridge.consume-provider-result")
         self.assertEqual(registration["task_goal"], "consume-provider-result")
         self.assertEqual(registration["default_variant_id"], "consume-provider-result")
@@ -841,6 +843,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["recommended_task"]["task_state"], "prepare-generation-brief")
             self.assertEqual(entry["recommended_task"]["default_variant_id"], "prepare-generation-brief")
             self.assertEqual(entry["recommended_task"]["task_protocol_version"], "1.0")
+            self.assertEqual(
+                entry["recommended_task"]["task_registry_reference"],
+                "split-image-assets/scripts/work_item_schema_contract.py",
+            )
             self.assertEqual(entry["recommended_task"]["task_registry_key"], "provider-bridge.prepare-generation-brief")
     def test_describe_provider_work_items_recommends_prepare_provider_request_after_brief(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1377,6 +1383,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(
                 entry["recommended_task"]["task_contract_reference"],
                 "split-image-assets/references/shared-task-contract.md",
+            )
+            self.assertEqual(
+                entry["recommended_task"]["task_registry_reference"],
+                "split-image-assets/scripts/work_item_schema_contract.py",
             )
             self.assertEqual(
                 entry["recommended_task"]["task_registry_key"],
@@ -2400,6 +2410,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["recommended_task"]["task_goal"], "record-compare-winner")
             self.assertEqual(entry["recommended_task"]["default_variant_id"], "selection-only")
             self.assertEqual(entry["recommended_task"]["task_protocol_version"], "1.0")
+            self.assertEqual(
+                entry["recommended_task"]["task_registry_reference"],
+                "split-image-assets/scripts/work_item_schema_contract.py",
+            )
             self.assertEqual(
                 entry["recommended_task"]["task_registry_key"],
                 "candidate-lifecycle.await-candidate-selection",

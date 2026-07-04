@@ -60,6 +60,8 @@ That task object should include:
 - `variants[]`
 - `task_protocol_version`
 - `task_contract_reference`
+- `task_registry_version`
+- `task_registry_reference`
 
 `recommended_task.variants[]` should mirror the same variant objects already emitted in `recommended_command_variants[]`.
 
@@ -82,6 +84,7 @@ Current protocol identity:
 - `task_protocol_version`: `1.0`
 - `task_contract_reference`: `split-image-assets/references/shared-task-contract.md`
 - `task_registry_version`: `1.0`
+- `task_registry_reference`: `split-image-assets/scripts/work_item_schema_contract.py`
 
 Each registered task should also expose a stable `task_registry_key`, for example:
 

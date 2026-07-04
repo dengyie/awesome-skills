@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Registered Tasks Should Also Expose Registry Reference So Identity Is Self-Describing
+- Decision: Extend shared task outputs with `task_registry_reference` alongside `task_registry_version` and `task_registry_key`.
+- Rationale: After adding explicit registry keys and versions, downstream consumers could identify a task instance but still had to know where that registry lived out-of-band. Adding the registry reference closes that gap and keeps the identity surface self-describing.
+- Alternatives considered: Keep only key+version, or wait until a broader schema-registry layer exists.
+- Impact: Shared task outputs now carry the full lightweight identity triple: key, version, and registry reference. Downstream tools can resolve the authoritative source without guessing.
+- Rollback trigger: If a future external schema registry supersedes this local reference, preserve the same identity semantics there rather than dropping the reference dimension.
+- Related files: `split-image-assets/scripts/work_item_schema_contract.py`, `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/references/shared-task-contract.md`, `split-image-assets/tests/test_docs_and_contract.py`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-05 - Registered Tasks Should Expose Stable Registry Identity In The Output Surface
 - Decision: Extend the shared task registry and helper outputs so `recommended_task` carries `task_registry_key` and `task_registry_version`, and `lookup_registered_task(...)` returns the same identity data.
 - Rationale: After introducing a shared task registry, downstream consumers could infer that a task came from the registry, but they still had no explicit stable identity field to key off. Adding registry identity closes that gap without broadening the protocol much further.

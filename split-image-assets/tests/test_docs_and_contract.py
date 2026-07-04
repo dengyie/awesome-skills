@@ -163,6 +163,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "task_contract_reference",
             "1.0",
             "task_registry_version",
+            "task_registry_reference",
             "task_registry_key",
             "provider-bridge.prepare-generation-brief",
         ]:

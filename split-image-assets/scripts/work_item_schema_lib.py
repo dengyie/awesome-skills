@@ -5,6 +5,7 @@ from work_item_schema_contract import (
     ALLOWED_TASK_TYPES,
     SHARED_TASK_CONTRACT_REFERENCE,
     SHARED_TASK_PROTOCOL_VERSION,
+    SHARED_TASK_REGISTRY_REFERENCE,
     SHARED_TASK_REGISTRY_VERSION,
     TASK_REGISTRY,
 )
@@ -144,6 +145,7 @@ def build_recommended_task(
         "task_protocol_version": SHARED_TASK_PROTOCOL_VERSION,
         "task_contract_reference": SHARED_TASK_CONTRACT_REFERENCE,
         "task_registry_version": SHARED_TASK_REGISTRY_VERSION,
+        "task_registry_reference": SHARED_TASK_REGISTRY_REFERENCE,
         "task_registry_key": registry_key,
         "task_type": task_type_value,
         "task_phase": task_phase_value,
@@ -220,6 +222,7 @@ def lookup_registered_task(
         "task_phase": task_phase_value,
         "task_state": task_state_value,
         "task_registry_version": SHARED_TASK_REGISTRY_VERSION,
+        "task_registry_reference": SHARED_TASK_REGISTRY_REFERENCE,
         "task_registry_key": str(registration["registry_key"]),
         "task_goal": str(registration["task_goal"]),
         "default_variant_id": str(registration["default_variant_id"]),
