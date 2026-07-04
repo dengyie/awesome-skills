@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Registered Task Bundle Assembly Should Be Shared Too, Not Repeated In Each Caller
+- Decision: Add and use `build_registered_task_bundle(...)` so callers stop wiring `lookup_registered_task(...)` and `build_recommendation_bundle(...)` together by hand.
+- Rationale: After the registry and bundle helpers both existed, callers still repeated the glue logic that combined them. That left one more place where a caller could drift from the shared task protocol. A small wrapper closes that gap and keeps registry-driven bundle assembly consistent.
+- Alternatives considered: Keep each caller composing registry lookup and bundle construction manually, or jump directly to a larger execution-oriented task API.
+- Impact: Candidate and provider work-item builders now share one more layer of construction logic, and the registry-aware bundle path becomes the default way to assemble known task recommendations.
+- Rollback trigger: If a future engine replaces these work-item builders entirely, preserve the registry-aware bundle semantics there rather than scattering the composition logic back into each caller.
+- Related files: `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Registered Tasks Should Also Expose Registry Reference So Identity Is Self-Describing
 - Decision: Extend shared task outputs with `task_registry_reference` alongside `task_registry_version` and `task_registry_key`.
 - Rationale: After adding explicit registry keys and versions, downstream consumers could identify a task instance but still had to know where that registry lived out-of-band. Adding the registry reference closes that gap and keeps the identity surface self-describing.

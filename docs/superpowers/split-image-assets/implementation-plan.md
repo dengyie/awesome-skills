@@ -88,6 +88,7 @@ What landed:
 - the shared bundle helper now enforces that the compatibility/default command stays aligned with the default variant path
 - provider consume-result recommendations now keep the inferred `--mode` on the compatibility command so the shared bundle consistency rule holds in real outputs
 - later follow-up work may continue to move task-goal/default-variant semantics into a shared registry so callers stop repeating those values
+- later follow-up work may also route registered task bundle assembly itself through one shared helper so callers stop repeating lookup-plus-bundle wiring
 
 Verification completed:
 

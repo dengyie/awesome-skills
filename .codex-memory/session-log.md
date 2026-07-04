@@ -849,6 +849,12 @@
 - Results: Shared task outputs now carry a fuller registry identity envelope, so downstream consumers can resolve not only which registered task they see, but also which registry surface defined it. Full package validation passed with 244 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 07:10
+- Task: Complete `split-image-assets` registered task bundle helper V1.
+- Actions: Added `build_registered_task_bundle(...)` to the shared helper; switched candidate and provider callers from manual registry-lookup-plus-bundle composition to the shared wrapper; expanded focused tests to cover registered bundle construction and reran full validation after fixing the provider consume-result default-command mismatch.
+- Results: Registry-aware bundle assembly is now centralized in one helper instead of repeated in each caller. Full package validation passed with 245 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.
 ## 2026-07-05 06:05
 - Task: Complete `split-image-assets` shared task registry identity V1.
 - Actions: Added `task_registry_version` and `task_registry_key` to the shared task contract and helper outputs; extended the shared-task reference accordingly; expanded focused tests so helper, provider work items, and candidate work items all expose the identity surface.

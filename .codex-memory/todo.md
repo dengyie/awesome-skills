@@ -3,6 +3,7 @@
 ## Next
 - [ ] Choose the next bounded `split-image-assets` milestone after provider-aware candidate lifecycle next steps V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` registered task bundle helper V1: shared registry-aware bundle helper, caller migration, focused bundle tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` shared task registry versioning V1: registry identity/reference fields, helper propagation, focused identity tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` shared task registry identity V1: registry key/version fields, helper propagation, focused protocol identity tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` shared task registry V1: registered task metadata, caller migration, focused registry tests, canonical plan sync, and regression coverage.
