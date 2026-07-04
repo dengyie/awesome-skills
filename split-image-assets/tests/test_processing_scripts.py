@@ -1168,6 +1168,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "created_at": "2026-07-04T00:00:00Z",
                 }
             ]
+            metadata["objects"][0]["delivery_class"] = ""
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -1190,7 +1191,6 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["candidate_promotion_status"], "pending")
             self.assertIn("apply_candidate_promotion_decision.py", entry["recommended_command"])
             self.assertIn("--comparison-id cmp-1", entry["recommended_command"])
-            self.assertIn("--delivery-class generated-reconstruction", entry["recommended_command"])
     def test_record_candidate_promotion_approval_records_confirmed_gate_from_selected_comparison(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1217,6 +1217,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "created_at": "2026-07-04T00:00:00Z",
                 }
             ]
+            metadata["objects"][0]["delivery_class"] = ""
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -1273,6 +1274,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "created_at": "2026-07-04T00:00:00Z",
                 }
             ]
+            metadata["objects"][0]["delivery_class"] = ""
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -1330,6 +1332,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "created_at": "2026-07-04T00:00:00Z",
                 }
             ]
+            metadata["objects"][0]["delivery_class"] = ""
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -1411,10 +1414,6 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "Only viable candidate in the compare set.",
                     "--evidence-ref",
                     "chat:promotion-approved",
-                    "--delivery-class",
-                    "clean-extraction",
-                    "--repair-note",
-                    "Promote the selected compare candidate.",
                 ],
                 text=True,
                 capture_output=True,
@@ -1424,6 +1423,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(result.returncode, 0, result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["decision_answer"], "yes")
+            self.assertEqual(payload["delivery_class"], "clean-extraction")
+            self.assertIn("Promote candidate-a", payload["repair_note"])
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["confirmation"]["candidate_promotion"]["status"], "confirmed")
             self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-a")
@@ -1514,6 +1515,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "created_at": "2026-07-04T00:00:00Z",
                 }
             ]
+            metadata["objects"][0]["delivery_class"] = ""
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
@@ -1532,8 +1534,6 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "yes",
                     "--evidence-ref",
                     "chat:promotion-approved",
-                    "--repair-note",
-                    "Promote the selected compare candidate.",
                 ],
                 text=True,
                 capture_output=True,
@@ -1541,7 +1541,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
 
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("--delivery-class is required when --decision-answer is yes", result.stderr)
+            self.assertIn("planned route cannot infer one", result.stderr)
     def test_describe_candidate_work_items_awaits_candidate_selection_after_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

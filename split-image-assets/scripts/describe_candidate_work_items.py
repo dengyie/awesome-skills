@@ -4,25 +4,14 @@ from pathlib import Path
 
 from candidate_workflow_lib import (
     candidate_work_item_status_path,
+    candidate_delivery_class_for_route,
+    default_promotion_repair_note,
     list_staged_candidate_assets,
     package_relative,
     read_metadata,
     write_json,
 )
 from package_state_lib import find_plan_object, read_plan_manifest
-
-
-def candidate_delivery_class_for_route(planned_route: str) -> str:
-    route = str(planned_route).strip()
-    if route == "generate":
-        return "generated-reconstruction"
-    if route == "reconstruct":
-        return "approximate-reconstruction"
-    if route == "extract":
-        return "clean-extraction"
-    if route in {"support_only", "rebuild_downstream"}:
-        return "support-only"
-    return "draft-candidate"
 
 
 def _recommended_compare_command(package_dir: Path, object_id: str, candidates: list[tuple[str, Path]]) -> str:
@@ -109,10 +98,6 @@ def _recommended_promotion_approval_command(
             "explicit-user-confirmed",
             "--evidence-ref",
             "<approval-evidence-ref>",
-            "--delivery-class",
-            delivery_class,
-            "--repair-note",
-            "\"Promote selected candidate.\"",
         ]
     )
     return " ".join(parts)

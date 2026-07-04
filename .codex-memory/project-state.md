@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` promotion decision defaults V1 is complete locally. `apply_candidate_promotion_decision.py` now infers `delivery_class` from planned-route or current object delivery truth in common cases and generates a deterministic default `repair_note`, so the yes-path command is shorter without weakening fail-closed behavior.
 - Current stage: `split-image-assets` compare-to-promotion orchestration V1 is complete locally. `apply_candidate_promotion_decision.py` now records a yes/no candidate-promotion decision from compare evidence and, for `yes`, continues directly into promotion through the existing runtime guard.
 - Current stage: `split-image-assets` candidate promotion approval auto-record V1 is complete locally. `record_candidate_promotion_approval.py` now records `candidate_promotion` approval from compare evidence with a low-burden adapter, and `describe_candidate_work_items.py` recommends that adapter directly.
 - Current stage: `split-image-assets` promotion approval runtime guard V1 is complete locally. `promote_candidate_asset.py` now refuses candidate promotion until `metadata.confirmation.candidate_promotion` is `confirmed` or explicitly `not-required`, so the runtime path now matches the earlier approval-aware helper state.
@@ -21,6 +22,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (222 tests, promotion decision defaults V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, promotion decision defaults V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (promotion decision defaults V1 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, promotion decision defaults V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (222 tests, compare-to-promotion orchestration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, compare-to-promotion orchestration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (compare-to-promotion orchestration V1 review brief; no new P0/P1 blockers)
@@ -317,6 +322,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Promotion decision defaults V1 lowers more command burden, but delivery-class inference still intentionally fails closed when the package truth is ambiguous; the adapter is not allowed to guess.
 - Compare-to-promotion orchestration V1 lowers command count, but it still depends on explicit yes/no user-backed approval inputs and does not choose winners automatically for multi-candidate compares.
 - Candidate promotion approval auto-record V1 lowers command burden, but it still depends on compare evidence being structurally sound; it does not decide winners automatically for multi-candidate compares.
 - Promotion approval runtime guard V1 closes the direct bypass path, but the workflow still depends on explicit user-backed approval recording through `record_quality_review.py`; there is no automatic approval generator.
@@ -354,10 +360,10 @@
 - None.
 
 ## Current Focus
-- The compare-to-promotion orchestration milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The promotion decision defaults milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the compare-to-promotion orchestration V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the promotion decision defaults V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

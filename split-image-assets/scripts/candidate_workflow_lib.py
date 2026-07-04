@@ -94,6 +94,27 @@ def candidate_work_item_status_path(package_dir: Path) -> Path:
     return repair_candidate_root(package_dir) / "candidate_work_items.json"
 
 
+def candidate_delivery_class_for_route(planned_route: str) -> str:
+    route = str(planned_route).strip()
+    if route == "generate":
+        return "generated-reconstruction"
+    if route == "reconstruct":
+        return "approximate-reconstruction"
+    if route == "extract":
+        return "clean-extraction"
+    if route in {"support_only", "rebuild_downstream"}:
+        return "support-only"
+    return ""
+
+
+def default_promotion_repair_note(candidate_id: str, comparison_id: str = "") -> str:
+    candidate = str(candidate_id).strip() or "candidate"
+    comparison = str(comparison_id).strip()
+    if comparison:
+        return f"Promote {candidate} after compare approval ({comparison})."
+    return f"Promote {candidate} after approval."
+
+
 def ensure_upscale_work_dir(package_dir: Path, object_id: str) -> Path:
     path = package_dir / "_staging" / "upscale_work" / object_id
     path.mkdir(parents=True, exist_ok=True)

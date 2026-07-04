@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Promotion Decision Adapters May Infer Delivery Class And Repair Note From Existing Package Truth
+- Decision: Let `apply_candidate_promotion_decision.py` infer `delivery_class` from planned-route or current object delivery truth when that inference is deterministic, and generate a default `repair_note` when one is not supplied.
+- Rationale: After compare-to-promotion orchestration V1, the remaining command burden on the happy path was mostly repeated mechanical fields. The package already knows enough in common cases to fill those safely. Adding these defaults lowers friction without weakening honesty because the adapter still fails closed when route truth is ambiguous.
+- Alternatives considered: Keep `delivery_class` and `repair_note` mandatory forever, or let the adapter guess from weaker signals such as candidate naming alone.
+- Impact: The common approval-and-promote command is shorter, candidate work-item recommendations are cleaner, and the adapter still preserves explicit operator intervention when package truth is not strong enough to infer the correct delivery class.
+- Rollback trigger: If later workflows find that current-object `delivery_class` is too weak a fallback in practice, narrow inference to planned-route-only rather than removing the entire defaults path.
+- Related files: `split-image-assets/scripts/apply_candidate_promotion_decision.py`, `split-image-assets/scripts/candidate_workflow_lib.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `docs/usage/split-image-assets.md`, `split-image-assets/SKILL.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-04 - Compare Approval Recording And Promotion Can Share A Single Deterministic Adapter
 - Decision: Add `apply_candidate_promotion_decision.py` so a yes/no promotion decision from compare evidence can record approval and, for `yes`, continue directly into `promote_candidate_asset.py`.
 - Rationale: After candidate promotion approval auto-record V1, the workflow still required two separate commands for the common “approve and promote” path. A thin adapter lowers that burden without weakening evidence rules because it still relies on compare evidence, writes approval through the existing review contract, and then passes through the runtime guard.

@@ -741,3 +741,9 @@
 - Results: Compare evidence can now flow through one deterministic approval-and-promote adapter while still respecting the existing approval runtime guard and compare evidence requirements. Full package validation passed with 222 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the compare-to-promotion orchestration milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 16:45
+- Task: Complete `split-image-assets` promotion decision defaults V1.
+- Actions: Extended `apply_candidate_promotion_decision.py` to infer `delivery_class` from planned-route or current object delivery truth and to generate a deterministic default `repair_note`; updated candidate work-item recommended commands plus docs and implementation baseline; expanded regression coverage for inferred-default success and fail-closed ambiguous cases.
+- Results: The compare-to-promotion adapter now needs fewer repeated arguments on the common path while still failing closed when delivery truth cannot be inferred safely. Full package validation passed with 222 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the promotion decision defaults milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.

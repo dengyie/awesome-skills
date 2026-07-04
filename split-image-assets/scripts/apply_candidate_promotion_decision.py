@@ -4,6 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+from candidate_workflow_lib import candidate_delivery_class_for_route, default_promotion_repair_note
+from package_state_lib import find_plan_object, read_plan_manifest
+
 
 def run_command(command: list[str], parser: argparse.ArgumentParser, label: str) -> dict:
     result = subprocess.run(
@@ -21,6 +24,25 @@ def run_command(command: list[str], parser: argparse.ArgumentParser, label: str)
         return json.loads(stdout)
     except json.JSONDecodeError:
         return {"stdout": stdout}
+
+
+def infer_delivery_class(package_dir: Path, object_id: str) -> str:
+    metadata_path = package_dir / "metadata.json"
+    if metadata_path.exists():
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        objects = metadata.get("objects", [])
+        if isinstance(objects, list):
+            for item in objects:
+                if isinstance(item, dict) and item.get("id") == object_id:
+                    current_delivery_class = str(item.get("delivery_class", "")).strip()
+                    if current_delivery_class and current_delivery_class != "draft-candidate":
+                        return current_delivery_class
+    plan_manifest = read_plan_manifest(package_dir)
+    plan_object = find_plan_object(plan_manifest, object_id)
+    if not isinstance(plan_object, dict):
+        return ""
+    planned_route = str(plan_object.get("planned_route", "")).strip()
+    return candidate_delivery_class_for_route(planned_route)
 
 
 def main() -> int:
@@ -91,10 +113,15 @@ def main() -> int:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         return 0
 
-    if not args.delivery_class:
-        parser.error("--delivery-class is required when --decision-answer is yes")
-    if not args.repair_note.strip():
-        parser.error("--repair-note is required when --decision-answer is yes")
+    delivery_class = args.delivery_class or infer_delivery_class(package_dir, args.object_id)
+    if not delivery_class:
+        parser.error(
+            "--delivery-class is required when --decision-answer is yes and the planned route cannot infer one"
+        )
+    repair_note = args.repair_note.strip() or default_promotion_repair_note(
+        str(approval_payload.get("candidate_id", "")).strip(),
+        str(approval_payload.get("comparison_id", "")).strip(),
+    )
 
     promote_command = [
         sys.executable,
@@ -103,9 +130,9 @@ def main() -> int:
         "--object-id",
         args.object_id,
         "--delivery-class",
-        args.delivery_class,
+        delivery_class,
         "--repair-note",
-        args.repair_note,
+        repair_note,
     ]
     if args.comparison_id:
         promote_command.extend(["--comparison-id", args.comparison_id])
@@ -124,6 +151,8 @@ def main() -> int:
 
     promotion_payload = run_command(promote_command, parser, "promote_candidate_asset.py")
     payload["promotion"] = promotion_payload or {"status": "promoted"}
+    payload["delivery_class"] = delivery_class
+    payload["repair_note"] = repair_note
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     return 0
 
