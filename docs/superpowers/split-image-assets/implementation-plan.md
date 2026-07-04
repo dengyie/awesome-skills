@@ -36,6 +36,7 @@ The current package baseline is:
 - provider-aware generated compare selection
 - provider-plan explanation helper
 - provider work-item status helper
+- candidate work-item status helper
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -44,6 +45,22 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `candidate work-item status V1`
+
+Closed status: complete
+
+What landed:
+
+- `describe_candidate_work_items.py` now writes `_staging/repair_candidates/candidate_work_items.json`
+- candidate work items now explain whether candidate stage is empty, compare evidence is needed, a selection is still pending, a candidate is ready for promotion, or candidate work is already complete
+- candidate work-item status reuses the existing compare/promotion metadata model instead of inventing a second candidate lifecycle surface
+- package docs and tests now describe the candidate work-item status step explicitly
+
+Verification completed:
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider work-item status V1`
 
@@ -263,6 +280,7 @@ These are the important completed milestones that define the current architectur
 17. provider-aware generated compare selection V1
 18. provider-plan explanation V1
 19. provider work-item status V1
+20. candidate work-item status V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -284,7 +302,7 @@ Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
    - more explicit provider capability mapping on top of the now-harder bridge contract
-   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, provider-aware generated compare selection, provider-plan summaries, and provider work-item status
+   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, provider-aware generated compare selection, provider-plan summaries, provider work-item status, and candidate work-item status
    - optional native runner expansion on top of the bridge layer
 
 2. broader fixture and package migration

@@ -1,0 +1,259 @@
+import argparse
+import json
+from pathlib import Path
+
+from candidate_workflow_lib import (
+    candidate_work_item_status_path,
+    list_staged_candidate_assets,
+    package_relative,
+    read_metadata,
+    write_json,
+)
+from package_state_lib import find_plan_object, read_plan_manifest
+
+
+def candidate_delivery_class_for_route(planned_route: str) -> str:
+    route = str(planned_route).strip()
+    if route == "generate":
+        return "generated-reconstruction"
+    if route == "reconstruct":
+        return "approximate-reconstruction"
+    if route == "extract":
+        return "clean-extraction"
+    if route in {"support_only", "rebuild_downstream"}:
+        return "support-only"
+    return "draft-candidate"
+
+
+def _recommended_compare_command(package_dir: Path, object_id: str, candidates: list[tuple[str, Path]]) -> str:
+    package_arg = str(package_dir).replace("\\", "/")
+    parts = [
+        "python",
+        "split-image-assets/scripts/compare_candidate_assets.py",
+        package_arg,
+        "--object-id",
+        object_id,
+    ]
+    for candidate_id, path in candidates:
+        parts.extend(["--candidate", f"{candidate_id}={package_relative(package_dir, path)}"])
+    parts.extend(["--compare-criterion", "<criterion>"])
+    return " ".join(parts)
+
+
+def _recommended_promote_command(
+    package_dir: Path,
+    object_id: str,
+    *,
+    candidate_id: str,
+    candidate_asset_path: str,
+    comparison_id: str,
+    delivery_class: str,
+    selection_reason: str,
+) -> str:
+    package_arg = str(package_dir).replace("\\", "/")
+    parts = [
+        "python",
+        "split-image-assets/scripts/promote_candidate_asset.py",
+        package_arg,
+        "--object-id",
+        object_id,
+        "--delivery-class",
+        delivery_class,
+        "--repair-note",
+        "\"Promote selected candidate.\"",
+    ]
+    if comparison_id:
+        parts.extend(["--comparison-id", comparison_id])
+    else:
+        parts.extend(["--candidate-id", candidate_id, "--candidate-asset", candidate_asset_path])
+    if candidate_id and comparison_id:
+        parts.extend(["--candidate-id", candidate_id])
+    parts.extend(
+        [
+            "--selection-reason",
+            f"\"{selection_reason or 'Explain why this candidate should become the current revision.'}\"",
+        ]
+    )
+    return " ".join(parts)
+
+
+def build_candidate_work_item_status(package_dir: Path, object_id: str | None = None) -> dict:
+    metadata = read_metadata(package_dir)
+    plan_manifest = read_plan_manifest(package_dir)
+    requested_object_id = object_id.strip() if isinstance(object_id, str) and object_id.strip() else ""
+    work_items: list[dict] = []
+
+    objects = metadata.get("objects", [])
+    if not isinstance(objects, list):
+        raise ValueError("metadata.json objects must be a list")
+
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        current_object_id = str(item.get("id", "")).strip()
+        if not current_object_id:
+            continue
+        if requested_object_id and current_object_id != requested_object_id:
+            continue
+
+        plan_object = find_plan_object(plan_manifest, current_object_id)
+        planned_route = str(plan_object.get("planned_route", "")).strip() if isinstance(plan_object, dict) else ""
+        recommended_delivery_class = candidate_delivery_class_for_route(planned_route)
+        candidates = list_staged_candidate_assets(package_dir, current_object_id)
+        candidate_ids = [candidate_id for candidate_id, _ in candidates]
+        comparisons = item.get("candidate_comparisons", [])
+        latest_comparison = comparisons[-1] if isinstance(comparisons, list) and comparisons else {}
+        latest_comparison_id = (
+            str(latest_comparison.get("comparison_id", "")).strip()
+            if isinstance(latest_comparison, dict)
+            else ""
+        )
+        selected_candidate_id = (
+            str(item.get("selected_candidate_id", "")).strip()
+            if isinstance(item.get("selected_candidate_id", ""), str)
+            else ""
+        )
+        promoted_revision = str(item.get("current_asset_revision", "")).strip()
+        comparison_selected_candidate_id = (
+            str(latest_comparison.get("selected_candidate_id", "")).strip()
+            if isinstance(latest_comparison, dict)
+            else ""
+        )
+        comparison_selection_reason = (
+            str(latest_comparison.get("selection_reason", "")).strip()
+            if isinstance(latest_comparison, dict)
+            else ""
+        )
+
+        next_action = "no-candidate-work-required"
+        next_action_detail = "No candidate-stage action is currently required."
+        recommended_command = ""
+
+        if selected_candidate_id and promoted_revision == selected_candidate_id:
+            next_action = "no-candidate-work-required"
+            next_action_detail = "A candidate has already been promoted as the current revision."
+        elif not candidates:
+            next_action = "candidate-stage-empty"
+            next_action_detail = (
+                "No staged repair candidates are present for this object yet."
+            )
+        elif len(candidates) > 1 and not latest_comparison_id:
+            next_action = "compare-candidates"
+            next_action_detail = (
+                "Multiple staged candidates exist and no comparison evidence has been recorded yet."
+            )
+            recommended_command = _recommended_compare_command(package_dir, current_object_id, candidates)
+        elif len(candidates) > 1 and latest_comparison_id and not comparison_selected_candidate_id:
+            next_action = "await-candidate-selection"
+            next_action_detail = (
+                "Comparison evidence exists, but no selected candidate has been recorded for the latest comparison."
+            )
+        else:
+            candidate_id = comparison_selected_candidate_id or (candidate_ids[0] if len(candidate_ids) == 1 else "")
+            candidate_asset_path = ""
+            if latest_comparison_id and isinstance(latest_comparison, dict):
+                compare_candidate_ids = latest_comparison.get("candidate_ids", [])
+                if isinstance(compare_candidate_ids, list) and candidate_id and candidate_id in compare_candidate_ids:
+                    compare_manifest_path = str(latest_comparison.get("compare_manifest_path", "")).strip()
+                    if compare_manifest_path:
+                        compare_manifest = json.loads(
+                            (package_dir / compare_manifest_path).read_text(encoding="utf-8")
+                        )
+                        for entry in compare_manifest.get("candidates", []):
+                            if isinstance(entry, dict) and entry.get("candidate_id") == candidate_id:
+                                candidate_asset_path = str(entry.get("asset_path", "")).strip()
+                                break
+            if not candidate_asset_path and candidate_id:
+                candidate_asset_path = next(
+                    (
+                        package_relative(package_dir, path)
+                        for staged_candidate_id, path in candidates
+                        if staged_candidate_id == candidate_id
+                    ),
+                    "",
+                )
+
+            if latest_comparison_id and candidate_id:
+                next_action = "promote-selected-candidate"
+                next_action_detail = (
+                    "Comparison evidence is present and a candidate can be promoted from the latest comparison."
+                )
+                recommended_command = _recommended_promote_command(
+                    package_dir,
+                    current_object_id,
+                    candidate_id=candidate_id,
+                    candidate_asset_path=candidate_asset_path,
+                    comparison_id=latest_comparison_id,
+                    delivery_class=recommended_delivery_class,
+                    selection_reason=comparison_selection_reason,
+                )
+            elif len(candidates) == 1:
+                next_action = "promote-single-candidate"
+                next_action_detail = (
+                    "Exactly one staged candidate exists, so direct promotion is available without a multi-candidate comparison."
+                )
+                recommended_command = _recommended_promote_command(
+                    package_dir,
+                    current_object_id,
+                    candidate_id=candidate_ids[0],
+                    candidate_asset_path=package_relative(package_dir, candidates[0][1]),
+                    comparison_id="",
+                    delivery_class=recommended_delivery_class,
+                    selection_reason="",
+                )
+
+        work_items.append(
+            {
+                "object_id": current_object_id,
+                "planned_route": planned_route,
+                "staged_candidate_count": len(candidates),
+                "candidate_ids": candidate_ids,
+                "latest_comparison_id": latest_comparison_id,
+                "comparison_selected_candidate_id": comparison_selected_candidate_id,
+                "comparison_selection_reason": comparison_selection_reason,
+                "selected_candidate_id": selected_candidate_id,
+                "current_asset_revision": promoted_revision,
+                "recommended_delivery_class": recommended_delivery_class,
+                "next_action": next_action,
+                "next_action_detail": next_action_detail,
+                "recommended_command": recommended_command,
+            }
+        )
+
+    if requested_object_id and not work_items:
+        raise ValueError(f"metadata.json is missing object id: {requested_object_id}")
+
+    return {
+        "schema_version": "1.0",
+        "package_name": str(metadata.get("package_name", "")).strip(),
+        "objects": work_items,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Write candidate work-item status for staged repair candidates and comparison evidence."
+    )
+    parser.add_argument("package_dir", help="Asset package directory.")
+    parser.add_argument("--object-id", help="Optional object id filter.", default="")
+    args = parser.parse_args()
+
+    try:
+        package_dir = Path(args.package_dir).resolve()
+        status = build_candidate_work_item_status(package_dir, args.object_id)
+        path = candidate_work_item_status_path(package_dir)
+        write_json(path, status)
+    except ValueError as exc:
+        parser.error(str(exc))
+
+    payload = {
+        "candidate_work_items_path": package_relative(package_dir, path),
+        "object_count": len(status["objects"]),
+        "objects": status["objects"],
+    }
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

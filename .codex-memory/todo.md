@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after provider work-item status V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after candidate work-item status V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` candidate work-item status V1: package-owned candidate work-item summary, shared candidate-stage status logic, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider work-item status V1: package-owned provider work-item summary, shared next-action logic, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider-plan explanation V1: package-owned provider-plan summary, shared provider selection reasoning, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider-aware generated compare selection V1: multi-provider generated compare selection, provider identity propagation, docs, canonical plan sync, and regression coverage.

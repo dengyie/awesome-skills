@@ -894,6 +894,245 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["next_action"], "no-provider-run-required")
             self.assertEqual(entry["selected_provider_id"], "")
             self.assertEqual(entry["recommended_command"], "")
+    def test_describe_candidate_work_items_reports_candidate_stage_empty(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["candidate_work_items_path"], "_staging/repair_candidates/candidate_work_items.json")
+            self.assertEqual(payload["objects"][0]["next_action"], "candidate-stage-empty")
+    def test_describe_candidate_work_items_recommends_compare_for_multiple_candidates_without_comparison(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 3), (0, 255, 0, 255)).save(candidate_dir / "candidate-b.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "compare-candidates")
+            self.assertIn("compare_candidate_assets.py", entry["recommended_command"])
+    def test_describe_candidate_work_items_recommends_promote_single_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "promote-single-candidate")
+            self.assertEqual(entry["recommended_delivery_class"], "generated-reconstruction")
+            self.assertIn("promote_candidate_asset.py", entry["recommended_command"])
+    def test_describe_candidate_work_items_recommends_promote_selected_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            candidate_path = candidate_dir / "candidate-a.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_path)
+            compare_manifest_path = output / "_staging" / "repair_candidates" / "cmp-1_compare.json"
+            compare_manifest_path.write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-1",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-a",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-a.png",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-1",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-1_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "candidate-a",
+                    "selection_reason": "Best candidate after comparison.",
+                    "created_at": "2026-07-04T00:00:00Z",
+                }
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "promote-selected-candidate")
+            self.assertEqual(entry["comparison_selected_candidate_id"], "candidate-a")
+            self.assertIn("--comparison-id cmp-1", entry["recommended_command"])
+    def test_describe_candidate_work_items_awaits_candidate_selection_after_compare(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 3), (0, 255, 0, 255)).save(candidate_dir / "candidate-b.png")
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-1",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a", "candidate-b"],
+                    "compare_artifact_path": "_staging/repair_candidates/cmp-1_compare.png",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-1_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "",
+                    "selection_reason": "",
+                    "created_at": "2026-07-04T00:00:00Z",
+                }
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "await-candidate-selection")
+    def test_describe_candidate_work_items_reports_no_work_after_promotion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["selected_candidate_id"] = "candidate-a"
+            metadata["objects"][0]["current_asset_revision"] = "candidate-a"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "no-candidate-work-required")
     def test_record_provider_result_writes_bridge_result_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

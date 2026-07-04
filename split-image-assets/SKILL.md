@@ -190,6 +190,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - for generated-route objects, create a package-owned generation brief before generation begins and keep generated output in candidate state until compare/promotion/acceptance evidence exists
 18. Put external model outputs, candidate masks, refinement files, temporary manifests, generation briefs, and provider bridge request/result manifests in `_staging/` while active, then `_archive_intermediate/` when retained for traceability.
    - use `scripts/archive_intermediates.py` when you want a deterministic archive step
+   - use `scripts/describe_candidate_work_items.py` when staged repair candidates exist and you need an explicit next step for compare versus promotion
 19. Normalize professional upstream results with `scripts/import_external_assets.py`. Treat this as the default production path:
    - professional upstream
    - `scripts/import_external_assets.py`
@@ -247,6 +248,8 @@ The capability report distinguishes module-installed from runtime-ready from pro
 `scripts/compare_candidate_assets.py` is the standard compare helper for high-risk repairs. Use it to turn staged repair candidates into a compare artifact plus metadata evidence before promotion.
 
 `scripts/promote_candidate_asset.py` is the deterministic promotion helper for high-risk repairs. Use it when `_staging/repair_candidates/` contains multiple staged candidate assets and one should become the current package-owned asset without hand-editing `metadata.json`. Candidate promotion should come from `_staging/repair_candidates/`, not an arbitrary package path.
+
+`scripts/describe_candidate_work_items.py` is the candidate-stage explainer. Use it to write `_staging/repair_candidates/candidate_work_items.json` so each object records whether candidate stage is still empty, compare evidence is needed, candidate selection is still pending, promotion is ready, or candidate work is already complete.
 
 ## Pipeline Quality Rule
 
@@ -397,6 +400,7 @@ At minimum report:
 - planned object routes and route reasoning for generated candidates
 - provider requests/results written to `_staging/providers/`
 - provider result consumer path used
+- candidate work-item summary path
 - primary segmenter, matting tool, and helper tools
 - generation provider class and whether it is production-ready
 - asset_class/reuse_status policy used for this run

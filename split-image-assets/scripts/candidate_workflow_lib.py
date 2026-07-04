@@ -86,6 +86,14 @@ def ensure_repair_candidate_dir(package_dir: Path, object_id: str) -> Path:
     return path
 
 
+def repair_candidate_root(package_dir: Path) -> Path:
+    return package_dir / "_staging" / "repair_candidates"
+
+
+def candidate_work_item_status_path(package_dir: Path) -> Path:
+    return repair_candidate_root(package_dir) / "candidate_work_items.json"
+
+
 def ensure_upscale_work_dir(package_dir: Path, object_id: str) -> Path:
     path = package_dir / "_staging" / "upscale_work" / object_id
     path.mkdir(parents=True, exist_ok=True)
@@ -181,6 +189,18 @@ def update_object_type(metadata: dict, object_id: str, object_type: str) -> None
         if isinstance(item, dict) and item.get("id") == object_id:
             item["object_type"] = object_type
             break
+
+
+def list_staged_candidate_assets(package_dir: Path, object_id: str) -> list[tuple[str, Path]]:
+    candidate_dir = repair_candidate_root(package_dir) / object_id
+    if not candidate_dir.exists():
+        return []
+    candidates: list[tuple[str, Path]] = []
+    for asset_path in sorted(candidate_dir.glob("*.png")):
+        if asset_path.name.endswith("_mask.png"):
+            continue
+        candidates.append((asset_path.stem, asset_path))
+    return candidates
 
 
 def component_count(mask: Image.Image, threshold: int = 32) -> int:

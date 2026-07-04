@@ -705,3 +705,9 @@
 - Results: The package now writes `_staging/providers/provider_work_items.json` so each object has an explicit next bridge step. Full package validation passed with 201 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the provider work-item status milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 10:55
+- Task: Complete `split-image-assets` candidate work-item status V1.
+- Actions: Added shared candidate-stage status logic in `candidate_workflow_lib.py`; added `describe_candidate_work_items.py`; synchronized `SKILL.md`, workflow, usage docs, implementation baseline, and project memory; expanded regression coverage for candidate-stage-empty, compare-needed, selection-pending, promotion-ready, and no-work states.
+- Results: The package now writes `_staging/repair_candidates/candidate_work_items.json` so each object has an explicit next candidate-stage step. Full package validation passed with 207 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the candidate work-item status milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.
