@@ -52,11 +52,12 @@ def parse_candidate_arg(value: str, parser: argparse.ArgumentParser) -> tuple[st
 def auto_discover_generated_candidates(
     package_dir: Path,
     object_id: str,
-) -> list[tuple[str, str]]:
+    provider_id: str = "",
+) -> list[tuple[str, str, str]]:
     candidate_dir = package_dir / "_staging" / "repair_candidates" / object_id
     if not candidate_dir.exists():
         return []
-    discovered: list[tuple[str, str]] = []
+    discovered: list[tuple[str, str, str]] = []
     for asset_path in sorted(candidate_dir.glob("*.png")):
         if asset_path.name.endswith("_mask.png"):
             continue
@@ -64,10 +65,18 @@ def auto_discover_generated_candidates(
         provider_stage_path = asset_path.with_name(f"{candidate_id}_provider_stage.json")
         if not provider_stage_path.exists():
             continue
+        try:
+            provider_stage = load_provider_stage_manifest(asset_path, candidate_id)
+        except ValueError:
+            continue
+        candidate_provider_id = str(provider_stage.get("provider_id", "")).strip()
+        if provider_id and candidate_provider_id != provider_id:
+            continue
         discovered.append(
             (
                 candidate_id,
                 str(asset_path.relative_to(package_dir)).replace("\\", "/"),
+                candidate_provider_id,
             )
         )
     return discovered
@@ -86,6 +95,9 @@ def candidate_records_for_manifest(candidates: list[dict]) -> list[dict]:
         provider_stage = item.get("provider_stage_manifest", {})
         if provider_stage:
             record["provider_stage_manifest_path"] = item.get("provider_stage_manifest_path", "")
+            record["provider_id"] = provider_stage.get("provider_id", "")
+            record["provider_request_path"] = provider_stage.get("provider_request_path", "")
+            record["provider_result_path"] = provider_stage.get("provider_result_path", "")
             for field_name in [
                 "generation_source",
                 "generation_model_or_tool",
@@ -179,6 +191,7 @@ def main() -> int:
     parser.add_argument("--compare-criterion", action="append", help="Criterion used in the comparison.")
     parser.add_argument("--review-focus", action="append", help="Focus area for human review.")
     parser.add_argument("--risk", action="append", help="Known risk to watch during comparison.")
+    parser.add_argument("--provider-id", help="Restrict generated candidate auto-discovery to one provider id.")
     parser.add_argument(
         "--score-manifest",
         help="Package-relative candidate score manifest from score_candidate_assets.py.",
@@ -208,9 +221,30 @@ def main() -> int:
     candidate_args = list(args.candidate or [])
     if not candidate_args:
         if generated_route:
+            discovered = auto_discover_generated_candidates(
+                package_dir, args.object_id, args.provider_id or ""
+            )
+            if not args.provider_id and discovered:
+                provider_ids = {provider_id for _, _, provider_id in discovered if provider_id}
+                if len(provider_ids) > 1:
+                    preferred_provider = ""
+                    if isinstance(plan_manifest, dict):
+                        preferences = plan_manifest.get("provider_preferences", {})
+                        if isinstance(preferences, dict):
+                            preferred_provider = str(
+                                preferences.get("generation_provider_class", "")
+                            ).strip()
+                    if preferred_provider and preferred_provider in provider_ids:
+                        discovered = [
+                            item for item in discovered if item[2] == preferred_provider
+                        ]
+                    else:
+                        parser.error(
+                            "multiple generated compare providers discovered; supply --provider-id"
+                        )
             candidate_args = [
                 f"{candidate_id}={relative_path}"
-                for candidate_id, relative_path in auto_discover_generated_candidates(package_dir, args.object_id)
+                for candidate_id, relative_path, _ in discovered
             ]
         if not candidate_args:
             parser.error("at least one --candidate is required unless generated candidates can be auto-discovered")

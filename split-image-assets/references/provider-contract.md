@@ -96,6 +96,8 @@ When promotion references an existing comparison, the compare manifest candidate
 
 For generated compare workflows, `compare_candidate_assets.py` may auto-discover candidates from `_staging/repair_candidates/<object-id>/` when the object is planned to `generate` and the staged candidates already carry provider-stage manifests. For single-candidate compare records, `promote_candidate_asset.py` may resolve the candidate id from compare evidence when `--comparison-id` is supplied and no ambiguity remains.
 
+When generated compare auto-discovery sees multiple provider ids, it should prefer `plan_manifest.provider_preferences.generation_provider_class` when that provider is present; otherwise it should fail closed and require an explicit `--provider-id`.
+
 ## Provider Request Contract
 
 Every provider request should include:

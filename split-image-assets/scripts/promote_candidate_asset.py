@@ -320,6 +320,13 @@ def main() -> int:
             compare_manifest_data["candidates"][0]["provider_stage_manifest_path"] = str(
                 (candidate_asset.parent / f"{candidate_id_value}_provider_stage.json").relative_to(package_dir)
             ).replace("\\", "/")
+            compare_manifest_data["candidates"][0]["provider_id"] = provider_stage.get("provider_id", "")
+            compare_manifest_data["candidates"][0]["provider_request_path"] = provider_stage.get(
+                "provider_request_path", ""
+            )
+            compare_manifest_data["candidates"][0]["provider_result_path"] = provider_stage.get(
+                "provider_result_path", ""
+            )
             for field_name in [
                 "generation_source",
                 "generation_model_or_tool",

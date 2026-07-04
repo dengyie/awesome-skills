@@ -734,6 +734,16 @@ def validate_objects(
                                                     errors.append(
                                                         f"{object_id}: generated compare manifest must record provider_stage_manifest_path for the selected candidate"
                                                     )
+                                                for field_name in [
+                                                    "provider_id",
+                                                    "provider_request_path",
+                                                    "provider_result_path",
+                                                ]:
+                                                    value = generated_candidate_record.get(field_name, "")
+                                                    if not isinstance(value, str) or not value.strip():
+                                                        errors.append(
+                                                            f"{object_id}: generated compare manifest must record {field_name} for the selected candidate"
+                                                        )
                                                 for field_name in GENERATED_EVIDENCE_FIELDS:
                                                     value = generated_candidate_record.get(field_name)
                                                     if field_name == "generation_reference_inputs":

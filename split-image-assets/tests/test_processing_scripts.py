@@ -1874,6 +1874,213 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             compare_manifest = json.loads((output / comparison["compare_manifest_path"]).read_text(encoding="utf-8"))
             self.assertEqual(compare_manifest["review_focus"], ["generated fidelity"])
             self.assertEqual(compare_manifest["risks"], ["prompt drift"])
+    def test_compare_candidate_assets_auto_discovery_prefers_plan_selected_provider(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = self._write_generated_plan_manifest(output)
+            plan_manifest["provider_preferences"]["generation_provider_class"] = "external-generated-outputs"
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+            self._write_generation_brief(output)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--provider-id",
+                    "codex-controlled-generation",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--provider-id",
+                    "external-generated-outputs",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            codex_provider_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
+            external_provider_dir = output / "_staging" / "providers" / "external-generated-outputs" / "main_object"
+            codex_provider_dir.mkdir(parents=True, exist_ok=True)
+            external_provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(codex_provider_dir / "candidate_codex.png")
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(external_provider_dir / "candidate_external.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/codex-controlled-generation/main_object/candidate_codex.png",
+                    "--tool-name",
+                    "gpt-image-1",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "codex",
+                    "--execution-mode",
+                    "host-managed",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "stage-candidate",
+                    "--candidate-id",
+                    "candidate-codex",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "external-generated-outputs",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/external-generated-outputs/main_object/candidate_external.png",
+                    "--tool-name",
+                    "external-gen",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "external-manifest",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "external-generated-outputs",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "stage-candidate",
+                    "--candidate-id",
+                    "candidate-external",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--compare-note",
+                    "Auto-discover generated candidates with provider preference.",
+                    "--compare-criterion",
+                    "generated edge fidelity",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            comparison = metadata["objects"][0]["candidate_comparisons"][0]
+            self.assertEqual(comparison["candidate_ids"], ["candidate-external"])
+    def test_compare_candidate_assets_auto_discovery_rejects_multi_provider_candidates_without_preference(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = self._write_generated_plan_manifest(output)
+            plan_manifest["provider_preferences"]["generation_provider_class"] = "unset"
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate-b.png")
+            (candidate_dir / "candidate-a_provider_stage.json").write_text(
+                json.dumps({"provider_id": "codex-controlled-generation"}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            (candidate_dir / "candidate-b_provider_stage.json").write_text(
+                json.dumps({"provider_id": "external-generated-outputs"}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--compare-note",
+                    "Reject mixed providers without explicit choice.",
+                    "--compare-criterion",
+                    "generated edge fidelity",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("multiple generated compare providers discovered", result.stderr)
     def test_compare_candidate_assets_requires_criterion(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
