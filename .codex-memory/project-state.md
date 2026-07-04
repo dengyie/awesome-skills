@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` provider work-item status V1 is complete locally. The package now writes `_staging/providers/provider_work_items.json` so each planned object has an explicit next bridge action such as preparing a generation brief, preparing a provider request, waiting for a result, consuming a result, or skipping provider bridge execution entirely.
 - Current stage: `split-image-assets` provider-plan explanation V1 is complete locally. The package now writes `_staging/providers/provider_plan.json` so route defaults, object-type overrides, valid/invalid plan preferences, selected providers, and alternative provider chains are explicit before broad request generation.
 - The earlier `split-image-assets` provider-aware generated compare selection V1 is also complete locally. Generated compare auto-discovery now understands provider identity, can prefer the planned generation provider when multiple providers are staged, and fails closed when no safe provider choice exists.
 - The canonical `split-image-assets` doc surface has also been re-clustered so `docs/superpowers/split-image-assets/` is the single design/baseline entrypoint, `implementation-plan.md` now reflects the shipped baseline instead of stale checklist phases, and `quick-contract.md` now matches generated-only pass semantics.
@@ -14,6 +15,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (201 tests, provider work-item status V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider work-item status V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (provider work-item status V1 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, provider work-item status V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -m unittest discover split-image-assets\tests -v` (196 tests, provider-plan explanation V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider-plan explanation V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (provider-plan explanation V1 review brief; no new P0/P1 blockers)
@@ -282,6 +287,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Provider work-item status V1 lowers operator burden, but it still does not execute provider chains automatically; upstream execution and compare/promotion sequencing remain intentionally explicit steps.
 - Provider-plan explanation V1 makes provider choice explicit earlier, but it still does not orchestrate multi-step provider execution automatically; request/result/compare/promotion sequencing remains intentionally manual beyond the bounded defaults.
 - Provider-aware generated compare selection V1 now handles multi-provider candidate pools more honestly, but provider-specific multi-step compare/promotion orchestration is still manual and remains future work.
 - Provider-aware compare promotion defaults V1 lowers compare/promotion input burden, but provider-specific multi-step compare/promotion orchestration is still manual and remains future work.
@@ -312,10 +318,10 @@
 - None.
 
 ## Current Focus
-- The provider-plan explanation milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The provider work-item status milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the provider-plan explanation V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the provider work-item status V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`
@@ -329,6 +335,7 @@
 - `split-image-assets/scripts/provider_registry.py`
 - `split-image-assets/scripts/provider_bridge_lib.py`
 - `split-image-assets/scripts/describe_provider_plan.py`
+- `split-image-assets/scripts/describe_provider_work_items.py`
 - `split-image-assets/scripts/prepare_provider_request.py`
 - `split-image-assets/scripts/record_provider_result.py`
 - `split-image-assets/scripts/consume_provider_result.py`

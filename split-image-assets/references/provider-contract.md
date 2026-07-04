@@ -69,6 +69,8 @@ It still counts as explicit package-owned consumption, not as direct provider-si
 
 The standard planning-side explainer is `describe_provider_plan.py`. It should write `_staging/providers/provider_plan.json` before broad request generation so the package owns an explicit summary of route defaults, object-type overrides, valid plan preferences, selected providers, and alternative provider chains.
 
+The standard next-step explainer is `describe_provider_work_items.py`. It should write `_staging/providers/provider_work_items.json` so each object records whether generation brief artifacts, provider requests, and provider results are ready, plus the recommended next bridge action.
+
 For `external-manifest` providers, the preferred pattern is:
 
 - provider result records `artifacts.provider_manifest`

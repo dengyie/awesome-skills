@@ -34,6 +34,14 @@ def provider_result_path(package_dir: Path, provider_id: str, object_id: str) ->
     return provider_object_dir(package_dir, provider_id, object_id) / "result.json"
 
 
+def provider_plan_summary_path(package_dir: Path) -> Path:
+    return provider_bridge_root(package_dir) / "provider_plan.json"
+
+
+def provider_work_item_status_path(package_dir: Path) -> Path:
+    return provider_bridge_root(package_dir) / "provider_work_items.json"
+
+
 def _load_metadata(package_dir: Path) -> dict:
     metadata_path = package_dir / "metadata.json"
     return json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -299,10 +307,224 @@ def build_provider_plan_summary(package_dir: Path, object_id: str | None = None)
 
 
 def write_provider_plan_summary(package_dir: Path, summary: dict) -> Path:
-    target = provider_bridge_root(package_dir) / "provider_plan.json"
+    target = provider_plan_summary_path(package_dir)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return target
+
+
+def infer_consume_mode(result: dict) -> str:
+    artifacts = result.get("artifacts", {})
+    matches: list[str] = []
+    provider_manifest = artifacts.get("provider_manifest")
+    if isinstance(provider_manifest, str) and provider_manifest.strip():
+        matches.append("import-manifest")
+    asset = artifacts.get("asset_png")
+    mask = artifacts.get("source_space_mask")
+    if isinstance(asset, str) and asset.strip() and isinstance(mask, str) and mask.strip():
+        matches.append("import-extract")
+    candidate_path = artifacts.get("candidate_png") or artifacts.get("compare_ready_candidate")
+    if isinstance(candidate_path, str) and candidate_path.strip():
+        matches.append("stage-candidate")
+    unique_matches = list(dict.fromkeys(matches))
+    if len(unique_matches) == 1:
+        return unique_matches[0]
+    if not unique_matches:
+        raise ValueError("cannot infer consume mode from provider result artifacts")
+    choices = ", ".join(unique_matches)
+    raise ValueError(f"cannot infer consume mode because provider result exposes multiple artifact sets: {choices}")
+
+
+def _package_cli_path(package_dir: Path) -> str:
+    return str(package_dir).replace("\\", "/")
+
+
+def _recommended_command(
+    package_dir: Path,
+    object_id: str,
+    selected_provider_id: str,
+    next_action: str,
+    *,
+    explicit_provider_required: bool,
+    inferred_consume_mode: str,
+    consume_mode_error: str,
+) -> str:
+    package_arg = _package_cli_path(package_dir)
+    if next_action == "prepare-generation-brief":
+        return (
+            f"python split-image-assets/scripts/prepare_generation_brief.py "
+            f"{package_arg} --object-id {object_id}"
+        )
+    if next_action == "prepare-provider-request":
+        command = (
+            f"python split-image-assets/scripts/prepare_provider_request.py "
+            f"{package_arg} --object-id {object_id}"
+        )
+        if explicit_provider_required and selected_provider_id:
+            command += f" --provider-id {selected_provider_id}"
+        return command
+    if next_action == "await-provider-result":
+        if not selected_provider_id:
+            return ""
+        return (
+            f"python split-image-assets/scripts/record_provider_result.py "
+            f"{package_arg} --provider-id {selected_provider_id} --object-id {object_id} --status success ..."
+        )
+    if next_action == "consume-provider-result":
+        command = (
+            f"python split-image-assets/scripts/consume_provider_result.py "
+            f"{package_arg} --object-id {object_id}"
+        )
+        if explicit_provider_required and selected_provider_id:
+            command += f" --provider-id {selected_provider_id}"
+        if consume_mode_error and not inferred_consume_mode:
+            command += " --mode <import-extract|stage-candidate|import-manifest>"
+        return command
+    return ""
+
+
+def build_provider_work_item_status(package_dir: Path, object_id: str | None = None) -> dict:
+    summary = build_provider_plan_summary(package_dir, object_id)
+    package_name = str(summary.get("package_name", "")).strip()
+    objects = summary.get("objects", [])
+    if not isinstance(objects, list):
+        raise ValueError("provider plan summary objects must be a list")
+
+    work_items: list[dict] = []
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        current_object_id = str(item.get("object_id", "")).strip()
+        planned_route = str(item.get("planned_route", "")).strip()
+        selected_provider_id = str(item.get("selected_provider_id", "")).strip()
+        request_path_rel = ""
+        result_path_rel = ""
+        request_ready = False
+        result_ready = False
+        generation_brief_ready = False
+        generation_reference_inputs_ready = False
+        inferred_consume_mode = ""
+        consume_mode_error = ""
+        explicit_provider_required = False
+
+        if planned_route == "generate":
+            generation_brief_ready = generation_brief_path(package_dir, current_object_id).exists()
+            generation_reference_inputs_ready = generation_reference_inputs_path(
+                package_dir, current_object_id
+            ).exists()
+
+        if selected_provider_id:
+            request_path = provider_request_path(package_dir, selected_provider_id, current_object_id)
+            result_path = provider_result_path(package_dir, selected_provider_id, current_object_id)
+            request_ready = request_path.exists()
+            result_ready = result_path.exists()
+            request_path_rel = str(request_path.relative_to(package_dir)).replace("\\", "/")
+            result_path_rel = str(result_path.relative_to(package_dir)).replace("\\", "/")
+
+        staged_provider_ids = list_staged_result_provider_ids(package_dir, current_object_id)
+        explicit_provider_required = len(staged_provider_ids) > 1
+
+        next_action = "no-provider-run-required"
+        next_action_detail = (
+            "This planned route does not require a provider bridge run."
+            if planned_route in {"rebuild_downstream", "support_only"}
+            else "No active provider bridge action is required."
+        )
+
+        if selected_provider_id:
+            if planned_route == "generate" and not (
+                generation_brief_ready and generation_reference_inputs_ready
+            ):
+                next_action = "prepare-generation-brief"
+                next_action_detail = (
+                    "Generate routes need a package-owned generation brief and reference-input manifest before request generation."
+                )
+            elif not request_ready:
+                next_action = "prepare-provider-request"
+                next_action_detail = (
+                    "The selected provider has no staged request yet."
+                )
+            elif not result_ready:
+                next_action = "await-provider-result"
+                next_action_detail = (
+                    "The provider request is staged, but the provider result has not been recorded yet."
+                )
+            else:
+                try:
+                    result = load_provider_result(package_dir, selected_provider_id, current_object_id)
+                except ValueError as exc:
+                    next_action = "await-provider-result"
+                    next_action_detail = str(exc)
+                else:
+                    if planned_route == "generate" and not request_ready:
+                        next_action = "prepare-provider-request"
+                        next_action_detail = (
+                            "Generated candidate consumption still needs request-side brief evidence even though a provider result exists."
+                        )
+                    else:
+                        next_action = "consume-provider-result"
+                        try:
+                            inferred_consume_mode = infer_consume_mode(result)
+                        except ValueError as exc:
+                            consume_mode_error = str(exc)
+                            next_action_detail = (
+                                "A provider result is staged, but consume mode must be chosen explicitly because the result exposes multiple artifact sets."
+                            )
+                        else:
+                            next_action_detail = (
+                                f"A provider result is staged and can be consumed through mode {inferred_consume_mode!r}."
+                            )
+
+        work_items.append(
+            {
+                "object_id": current_object_id,
+                "planned_route": planned_route,
+                "object_type": str(item.get("object_type", "")).strip(),
+                "selected_provider_id": selected_provider_id,
+                "selection_source": str(item.get("selection_source", "")).strip(),
+                "provider_role": str(item.get("provider_role", "")).strip(),
+                "execution_mode": str(item.get("execution_mode", "")).strip(),
+                "provider_plan_path": str(provider_plan_summary_path(package_dir).relative_to(package_dir)).replace("\\", "/"),
+                "request_path": request_path_rel,
+                "request_ready": request_ready,
+                "result_path": result_path_rel,
+                "result_ready": result_ready,
+                "generation_brief_ready": generation_brief_ready,
+                "generation_reference_inputs_ready": generation_reference_inputs_ready,
+                "staged_result_provider_ids": staged_provider_ids,
+                "explicit_provider_required": explicit_provider_required,
+                "inferred_consume_mode": inferred_consume_mode,
+                "consume_mode_error": consume_mode_error,
+                "next_action": next_action,
+                "next_action_detail": next_action_detail,
+                "recommended_command": _recommended_command(
+                    package_dir,
+                    current_object_id,
+                    selected_provider_id,
+                    next_action,
+                    explicit_provider_required=explicit_provider_required,
+                    inferred_consume_mode=inferred_consume_mode,
+                    consume_mode_error=consume_mode_error,
+                ),
+            }
+        )
+
+    return {
+        "schema_version": "1.0",
+        "package_name": package_name,
+        "provider_plan_path": str(provider_plan_summary_path(package_dir).relative_to(package_dir)).replace("\\", "/"),
+        "objects": work_items,
+    }
+
+
+def write_provider_work_item_status(package_dir: Path, status: dict) -> Path:
+    target = provider_work_item_status_path(package_dir)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(status, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     return target

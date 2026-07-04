@@ -699,3 +699,9 @@
 - Results: Full package validation passed with 196 tests, quick validation passed, diff check reported only CRLF warnings, and production review found no new P0/P1 blockers for this milestone.
 - Next: Stage and commit the provider-plan explanation milestone atomically, then stop and wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 10:20
+- Task: Complete `split-image-assets` provider work-item status V1.
+- Actions: Added shared provider work-item status logic in `provider_bridge_lib.py`; moved consume-mode inference into the shared bridge layer; added `describe_provider_work_items.py`; synchronized `SKILL.md`, workflow, provider contract, usage docs, implementation baseline, and project memory; expanded regression coverage for next-action states across generate, extract, and rebuild-downstream routes.
+- Results: The package now writes `_staging/providers/provider_work_items.json` so each object has an explicit next bridge step. Full package validation passed with 201 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the provider work-item status milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.

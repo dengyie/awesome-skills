@@ -645,6 +645,255 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             payload = json.loads(result.stdout)
             self.assertEqual(payload["object_count"], 1)
             self.assertEqual(payload["objects"][0]["object_id"], "secondary")
+    def test_describe_provider_work_items_recommends_prepare_generation_brief(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["provider_work_items_path"], "_staging/providers/provider_work_items.json")
+            entry = payload["objects"][0]
+            self.assertEqual(entry["next_action"], "prepare-generation-brief")
+            self.assertIn("prepare_generation_brief.py", entry["recommended_command"])
+    def test_describe_provider_work_items_recommends_prepare_provider_request_after_brief(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            self._write_single_object_metadata(output)
+            self._write_generation_brief(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "prepare-provider-request")
+            self.assertEqual(entry["selected_provider_id"], "codex-controlled-generation")
+            self.assertIn("prepare_provider_request.py", entry["recommended_command"])
+    def test_describe_provider_work_items_recommends_await_provider_result_after_request(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["object_type"] = "ui-carrier"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_generation_brief(output)
+            request_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(request_result.returncode, 0, request_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "await-provider-result")
+            self.assertTrue(entry["request_ready"])
+            self.assertFalse(entry["result_ready"])
+            self.assertIn("record_provider_result.py", entry["recommended_command"])
+    def test_describe_provider_work_items_recommends_consume_provider_result_when_ready(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {
+                    "generation_provider_class": "unset",
+                    "segmentation_provider_class": "unset",
+                },
+                "objects": [
+                    {
+                        "object_id": "main_object",
+                        "object_type": "ui-carrier",
+                        "planned_route": "extract",
+                    }
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+            request_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(request_result.returncode, 0, request_result.stderr)
+            provider_dir = output / "_staging" / "providers" / "grounded-sam-bridge" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (2, 2), (255, 0, 0, 255)).save(provider_dir / "main_object.png")
+            Image.new("L", (4, 3), 255).save(provider_dir / "main_object_mask.png")
+            record_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "grounded-sam-bridge",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "asset_png=_staging/providers/grounded-sam-bridge/main_object/main_object.png",
+                    "--artifact",
+                    "source_space_mask=_staging/providers/grounded-sam-bridge/main_object/main_object_mask.png",
+                    "--tool-name",
+                    "Grounded-SAM",
+                    "--tool-role",
+                    "segmentation",
+                    "--tool-version",
+                    "external",
+                    "--execution-mode",
+                    "bridge",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(record_result.returncode, 0, record_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "consume-provider-result")
+            self.assertEqual(entry["inferred_consume_mode"], "import-extract")
+            self.assertIn("consume_provider_result.py", entry["recommended_command"])
+    def test_describe_provider_work_items_reports_no_provider_run_required_for_rebuild_downstream(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {
+                    "generation_provider_class": "unset",
+                    "segmentation_provider_class": "unset",
+                },
+                "objects": [
+                    {
+                        "object_id": "live_text",
+                        "object_type": "generic-object",
+                        "planned_route": "rebuild_downstream",
+                    }
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "no-provider-run-required")
+            self.assertEqual(entry["selected_provider_id"], "")
+            self.assertEqual(entry["recommended_command"], "")
     def test_record_provider_result_writes_bridge_result_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

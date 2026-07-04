@@ -5,6 +5,7 @@ from pathlib import Path
 
 from import_external_assets import checked_metadata, import_record, load_manifest
 from provider_bridge_lib import (
+    infer_consume_mode,
     load_provider_request,
     load_provider_result,
     resolve_result_provider_id,
@@ -19,28 +20,6 @@ def find_metadata_object(metadata: dict, object_id: str) -> dict | None:
         if isinstance(item, dict) and item.get("id") == object_id:
             return item
     return None
-
-
-def infer_consume_mode(result: dict) -> str:
-    artifacts = result.get("artifacts", {})
-    matches: list[str] = []
-    provider_manifest = artifacts.get("provider_manifest")
-    if isinstance(provider_manifest, str) and provider_manifest.strip():
-        matches.append("import-manifest")
-    asset = artifacts.get("asset_png")
-    mask = artifacts.get("source_space_mask")
-    if isinstance(asset, str) and asset.strip() and isinstance(mask, str) and mask.strip():
-        matches.append("import-extract")
-    candidate_path = artifacts.get("candidate_png") or artifacts.get("compare_ready_candidate")
-    if isinstance(candidate_path, str) and candidate_path.strip():
-        matches.append("stage-candidate")
-    unique_matches = list(dict.fromkeys(matches))
-    if len(unique_matches) == 1:
-        return unique_matches[0]
-    if not unique_matches:
-        raise ValueError("cannot infer consume mode from provider result artifacts")
-    choices = ", ".join(unique_matches)
-    raise ValueError(f"cannot infer consume mode because provider result exposes multiple artifact sets: {choices}")
 
 
 def resolve_import_extract_value(
