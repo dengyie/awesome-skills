@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Registered Tasks Should Expose Stable Registry Identity In The Output Surface
+- Decision: Extend the shared task registry and helper outputs so `recommended_task` carries `task_registry_key` and `task_registry_version`, and `lookup_registered_task(...)` returns the same identity data.
+- Rationale: After introducing a shared task registry, downstream consumers could infer that a task came from the registry, but they still had no explicit stable identity field to key off. Adding registry identity closes that gap without broadening the protocol much further.
+- Alternatives considered: Leave registry identity implicit in `task_type` + `task_phase` + `task_state`, or wait for a broader schema registry effort.
+- Impact: Consumers can now key directly on a stable registry id and version, and the registry contract is more explicit without changing the surrounding behavior.
+- Rollback trigger: If a later schema-registry layer supersedes this local identity surface, migrate the same registry identity semantics there rather than removing them without replacement.
+- Related files: `split-image-assets/scripts/work_item_schema_contract.py`, `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/references/shared-task-contract.md`, `split-image-assets/tests/test_docs_and_contract.py`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-05 - Shared Task Protocol Should Also Register Known Task Identities Instead Of Repeating Goals And Defaults In Callers
 - Decision: Add a `TASK_REGISTRY` in `work_item_schema_contract.py` and route candidate/provider callers through it for known task state metadata such as `task_goal`, `default_variant_id`, and allowed variant ids.
 - Rationale: After shared schema, shared enums, shared contract, shared protocol validation, and shared bundle assembly landed, callers were still repeating the last layer of task identity semantics. That kept the protocol logically centralized but operationally duplicated. A small registry closes that gap and makes the helper, tests, and callers speak one source of truth.
