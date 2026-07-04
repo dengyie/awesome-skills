@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - The Shared Task Schema Helper Should Enforce Its Own Core Protocol Invariants
+- Decision: Harden `work_item_schema_lib.py` so it validates non-empty semantic fields, allowed task/phase/branch vocabularies, unique normalized field lists, and the key task invariant that the default variant must be the one recommended variant.
+- Rationale: Once the shared helper and shared contract existed, the remaining weakness was that the helper still accepted structurally inconsistent inputs. That left the contract documented but not enforced. Adding lightweight validation hardens the boundary without changing normal behavior for valid callers.
+- Alternatives considered: Leave validation entirely to tests and docs, or move to a much heavier schema library.
+- Impact: Invalid task/variant combinations now fail fast at construction time, while valid candidate/provider work-item outputs remain unchanged. Future refactors get a tighter safety net around the shared protocol.
+- Rollback trigger: If a later protocol layer supersedes these builders, preserve the same invariants there rather than weakening the task contract.
+- Related files: `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/scripts/work_item_schema_contract.py`, `split-image-assets/references/shared-task-contract.md`, `split-image-assets/tests/test_docs_and_contract.py`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-05 - Shared Work-Item Helpers And Enums Need A First-Class Contract Reference, Not Just Code Reuse
 - Decision: Add `references/shared-task-contract.md` and route `SKILL.md` plus usage docs to it as the formal contract surface for shared work-item task/recommendation semantics.
 - Rationale: Once the shared helper and enum layers existed, the remaining risk was discoverability and drift in human/operator understanding, not code duplication. Without a first-class reference, future contributors would still need to read helper code to understand the intended contract. A dedicated reference turns the current implementation into an explicit maintained surface.

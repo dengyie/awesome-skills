@@ -825,3 +825,9 @@
 - Results: The shared work-item schema now has a formal reference document instead of living only in code and tests. Full package validation passed with 241 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 04:25
+- Task: Complete `split-image-assets` shared task protocol V1.
+- Actions: Hardened `work_item_schema_lib.py` with core protocol validation against the shared contract vocabulary; expanded `work_item_schema_contract.py` to expose allowed vocab sets; updated the shared-task reference with explicit protocol invariants; expanded focused tests to cover helper rejection of invalid task protocol shapes.
+- Results: The shared task surface is now both documented and enforced at construction time, while valid candidate/provider outputs remain unchanged. Full package validation passed with 242 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

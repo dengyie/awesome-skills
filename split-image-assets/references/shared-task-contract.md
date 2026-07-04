@@ -37,6 +37,12 @@ Each variant should include:
 - `next_action_if_success`
 - `requires_human_confirmation`
 
+Protocol invariants:
+
+- `variant_id`, `phase`, `intent`, `branch_flag`, and `branch_value` must be non-empty
+- `phase`, `intent`, and `branch_flag` should come from `work_item_schema_contract.py`
+- `requires_fields[]` and `writes_fields[]` should contain unique non-empty strings
+
 ## Task Layer
 
 When variants belong to one coherent step family, the work item may also expose:
@@ -54,6 +60,14 @@ That task object should include:
 - `variants[]`
 
 `recommended_task.variants[]` should mirror the same variant objects already emitted in `recommended_command_variants[]`.
+
+Protocol invariants:
+
+- `variants[]` must be non-empty when `recommended_task` exists
+- exactly one variant in that task should have `recommended=true`
+- `default_variant_id` must match that recommended variant
+- In plain terms: default_variant_id must match the one recommended branch.
+- every variant inside one task should share the same `phase` as `task_phase`
 
 ## Shared Vocabulary
 

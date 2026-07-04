@@ -157,6 +157,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "work_item_schema_lib.py",
             "candidate-lifecycle",
             "provider-bridge",
+            "exactly one variant",
+            "default_variant_id must match",
         ]:
             self.assertIn(expected, shared_task_contract)
     def test_skill_frontmatter_and_core_rules_are_present(self):

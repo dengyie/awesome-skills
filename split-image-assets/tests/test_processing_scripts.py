@@ -43,6 +43,46 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertEqual(task["task_type"], contract.TASK_TYPE_CANDIDATE_LIFECYCLE)
         self.assertEqual(task["default_variant_id"], "example")
         self.assertEqual(task["variant_count"], 1)
+    def test_work_item_schema_lib_rejects_invalid_task_protocol(self):
+        module = self._load_script_module("work_item_schema_lib.py")
+        contract = self._load_script_module("work_item_schema_contract.py")
+        good_variant = module.build_command_variant(
+            "example",
+            "Example",
+            "python tool.py",
+            phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+            intent=contract.INTENT_RECORD_SELECTION_ONLY,
+            branch_flag=contract.BRANCH_FLAG_PROMOTION_ANSWER,
+            branch_value="skip",
+            recommended=True,
+        )
+        with self.assertRaisesRegex(ValueError, "default_variant_id must match one of the provided variants"):
+            module.build_recommended_task(
+                task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+                task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+                task_state="await-candidate-selection",
+                task_goal="record-compare-winner",
+                default_variant_id="missing",
+                variants=[good_variant],
+            )
+        with self.assertRaisesRegex(ValueError, "exactly one variant per task must be marked recommended"):
+            module.build_recommended_task(
+                task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+                task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+                task_state="await-candidate-selection",
+                task_goal="record-compare-winner",
+                default_variant_id="example",
+                variants=[{**good_variant, "recommended": False}],
+            )
+        with self.assertRaisesRegex(ValueError, "all variants in one task must share the same phase as task_phase"):
+            module.build_recommended_task(
+                task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+                task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+                task_state="await-candidate-selection",
+                task_goal="record-compare-winner",
+                default_variant_id="example",
+                variants=[{**good_variant, "phase": contract.TASK_PHASE_PROVIDER_BRIDGE}],
+            )
     def test_prepare_provider_request_writes_bridge_request_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

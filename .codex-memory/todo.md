@@ -3,6 +3,7 @@
 ## Next
 - [ ] Choose the next bounded `split-image-assets` milestone after provider-aware candidate lifecycle next steps V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` shared task protocol V1: helper protocol validation, shared-task invariant docs, focused protocol tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` shared task contract V1: formal shared-task reference, docs routing, focused contract tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` work-item enum contract V1: shared work-item semantic constants, caller migration, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` work-item shared schema V1: shared work-item schema helper, caller consolidation, docs, canonical plan sync, and regression coverage.
