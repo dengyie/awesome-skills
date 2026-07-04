@@ -789,3 +789,9 @@
 - Results: Candidate work items now show explicit branch-specific commands instead of forcing the operator to infer neighboring lifecycle paths from one default command. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 01:20
+- Task: Complete `split-image-assets` candidate lifecycle schema V1.
+- Actions: Extended `recommended_command_variants[]` with machine-readable lifecycle metadata such as `phase`, `intent`, branch flag/value, recommendation status, and required user fields; synchronized usage/workflow/skill/baseline docs and project memory; expanded regression coverage for the richer variant schema.
+- Results: Candidate lifecycle recommendations are now easier for both humans and downstream agents to interpret without guessing branch semantics from prose alone. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

@@ -50,6 +50,7 @@ The current package baseline is:
 - candidate selection recording adapter
 - candidate lifecycle orchestration
 - candidate lifecycle recommendation variants
+- candidate lifecycle schema
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -58,6 +59,21 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `candidate lifecycle schema V1`
+
+Closed status: complete
+
+What landed:
+
+- `recommended_command_variants[]` now carries machine-readable lifecycle metadata such as `phase`, `intent`, branch flag/value, `recommended`, and `requires_fields`
+- pending selection and pending promotion approval states now expose structured branch descriptors instead of only label-plus-command rows
+- the compatibility/default `recommended_command` surface remains intact while richer consumers can read the schema fields directly
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `candidate lifecycle recommendation variants V1`
 
@@ -502,6 +518,7 @@ These are the important completed milestones that define the current architectur
 31. candidate selection recording adapter V1
 32. candidate lifecycle orchestration V1
 33. candidate lifecycle recommendation variants V1
+34. candidate lifecycle schema V1
 
 Treat these as delivered baseline, not as active checklist items.
 

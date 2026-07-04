@@ -174,12 +174,30 @@ def _recommended_selection_command(
     return " ".join(parts)
 
 
-def _command_variant(variant_id: str, label: str, command: str, note: str = "") -> dict:
+def _command_variant(
+    variant_id: str,
+    label: str,
+    command: str,
+    note: str = "",
+    *,
+    phase: str,
+    intent: str,
+    branch_flag: str,
+    branch_value: str,
+    recommended: bool,
+    requires_fields: list[str] | None = None,
+) -> dict:
     return {
         "variant_id": variant_id,
+        "phase": phase,
         "label": label,
+        "intent": intent,
         "command": command,
         "note": note,
+        "branch_flag": branch_flag,
+        "branch_value": branch_value,
+        "recommended": recommended,
+        "requires_fields": list(requires_fields or []),
     }
 
 
@@ -219,18 +237,39 @@ def _selection_command_variants(
             "Record Winner",
             " ".join([*base, "--promotion-answer", "skip"]),
             "Safe default: record compare winner only.",
+            phase="candidate-selection",
+            intent="record-selection-only",
+            branch_flag="promotion_answer",
+            branch_value="skip",
+            recommended=True,
+            requires_fields=["selection_reason", "evidence_ref"]
+            + (["candidate_id"] if requires_candidate_id else []),
         ),
         _command_variant(
             "selection-then-promote-yes",
             "Select + Promote",
             " ".join([*base, "--promotion-answer", "yes"]),
             "Records selection first, then continues into promotion approval and promotion.",
+            phase="candidate-selection",
+            intent="record-selection-and-promote",
+            branch_flag="promotion_answer",
+            branch_value="yes",
+            recommended=False,
+            requires_fields=["selection_reason", "evidence_ref"]
+            + (["candidate_id"] if requires_candidate_id else []),
         ),
         _command_variant(
             "selection-then-decline",
             "Select + Decline",
             " ".join([*base, "--promotion-answer", "no"]),
             "Records selection first, then records that promotion should not continue.",
+            phase="candidate-selection",
+            intent="record-selection-and-decline-promotion",
+            branch_flag="promotion_answer",
+            branch_value="no",
+            recommended=False,
+            requires_fields=["selection_reason", "evidence_ref"]
+            + (["candidate_id"] if requires_candidate_id else []),
         ),
     ]
 
@@ -263,12 +302,24 @@ def _promotion_decision_variants(
             "Approve + Promote",
             " ".join([*base, "--decision-answer", "yes", *shared]),
             "Records promotion approval and continues into promotion.",
+            phase="candidate-promotion",
+            intent="approve-and-promote",
+            branch_flag="decision_answer",
+            branch_value="yes",
+            recommended=True,
+            requires_fields=["evidence_ref"],
         ),
         _command_variant(
             "decline-promotion",
             "Decline Promotion",
             " ".join([*base, "--decision-answer", "no", *shared]),
             "Keeps the current revision active and records the decline.",
+            phase="candidate-promotion",
+            intent="decline-promotion",
+            branch_flag="decision_answer",
+            branch_value="no",
+            recommended=False,
+            requires_fields=["evidence_ref"],
         ),
     ]
 

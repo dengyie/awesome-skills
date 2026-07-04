@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Lifecycle Recommendation Variants Need Stable Machine-Readable Fields
+- Decision: Promote `recommended_command_variants[]` from a richer string list into a lightweight machine-readable schema with explicit lifecycle metadata such as `phase`, `intent`, branch flag/value, recommendation status, and required user-supplied fields.
+- Rationale: Variants made lifecycle branches visible, but they still required downstream consumers to infer the meaning of each branch from human labels and notes. Adding stable schema fields makes the recommendation surface safer for both UI rendering and agent consumption without forcing a broader workflow engine.
+- Alternatives considered: Keep label-plus-command only, or replace the whole candidate work-item surface with a brand-new task engine.
+- Impact: Consumers can now distinguish default branches from optional ones, understand whether a branch belongs to selection or promotion, and know which user-supplied fields still need to be filled before execution.
+- Rollback trigger: If a future task schema supersedes command variants, carry these semantics into that schema rather than collapsing back to opaque label-plus-command rows.
+- Related files: `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Candidate Work Items Should Surface Explicit Lifecycle Command Variants, Not Only One Happy Path
 - Decision: Extend `describe_candidate_work_items.py` so key lifecycle states continue to publish `recommended_command` for compatibility but also expose `recommended_command_variants[]` with explicit branch-specific commands.
 - Rationale: After selection and lifecycle wrappers landed, the work-item surface still compressed meaningful choices into one string. That kept the state model correct but left the operator inferring which adjacent branches existed. Adding structured variants lowers cognitive load without weakening honesty because each branch is still explicit and state-specific.
