@@ -1476,6 +1476,117 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertTrue(payload["candidate_asset_path"].endswith("candidate-a.png"))
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["confirmation"]["candidate_promotion"]["status"], "confirmed")
+    def test_record_candidate_promotion_approval_resolves_provider_specific_comparison(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            metadata = self._write_single_object_metadata(output)
+            compare_dir = output / "_staging" / "repair_candidates"
+            compare_dir.mkdir(parents=True, exist_ok=True)
+            (compare_dir / "cmp-a_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-a",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-a",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-a.png",
+                                "provider_id": "codex-controlled-generation",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (compare_dir / "cmp-b_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-b",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-b"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-b",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-b.png",
+                                "provider_id": "external-generated-outputs",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-a",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-a_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "candidate-a",
+                    "selection_reason": "Provider A winner.",
+                    "created_at": "2026-07-04T00:00:00Z",
+                },
+                {
+                    "comparison_id": "cmp-b",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-b"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-b_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "candidate-b",
+                    "selection_reason": "Provider B winner.",
+                    "created_at": "2026-07-04T00:00:00Z",
+                },
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_candidate_promotion_approval.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--provider-id",
+                    "external-generated-outputs",
+                    "--decision-answer",
+                    "yes",
+                    "--evidence-ref",
+                    "chat:promotion-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["comparison_id"], "cmp-b")
+            self.assertEqual(payload["candidate_id"], "candidate-b")
     def test_apply_candidate_promotion_decision_records_approval_and_promotes(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1585,6 +1696,178 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(payload["delivery_class"], "clean-extraction")
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-a")
+    def test_apply_candidate_promotion_decision_resolves_provider_specific_comparison(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            compare_dir = output / "_staging" / "repair_candidates"
+            compare_dir.mkdir(parents=True, exist_ok=True)
+            candidate_dir = compare_dir / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 4), (0, 0, 255, 255)).save(candidate_dir / "candidate-b.png")
+            (compare_dir / "cmp-a_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-a",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-a",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-a.png",
+                                "provider_id": "codex-controlled-generation",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (compare_dir / "cmp-b_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-b",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-b"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-b",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-b.png",
+                                "provider_id": "external-generated-outputs",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-a",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-a_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "candidate-a",
+                    "selection_reason": "Provider A winner.",
+                    "created_at": "2026-07-04T00:00:00Z",
+                },
+                {
+                    "comparison_id": "cmp-b",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-b"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-b_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "candidate-b",
+                    "selection_reason": "Provider B winner.",
+                    "created_at": "2026-07-04T00:00:00Z",
+                },
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "apply_candidate_promotion_decision.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--provider-id",
+                    "external-generated-outputs",
+                    "--decision-answer",
+                    "yes",
+                    "--evidence-ref",
+                    "chat:promotion-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["approval"]["comparison_id"], "cmp-b")
+            self.assertIn("Promoted candidate candidate-b", payload["promotion"]["stdout"])
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-b")
+            self.assertEqual(metadata["objects"][0]["repair_history"][-1]["comparison_id"], "cmp-b")
+    def test_apply_candidate_promotion_decision_resolves_single_staged_candidate_by_provider_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 4), (0, 0, 255, 255)).save(candidate_dir / "candidate-b.png")
+            (candidate_dir / "candidate-a_provider_stage.json").write_text(
+                json.dumps({"provider_id": "codex-controlled-generation"}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            (candidate_dir / "candidate-b_provider_stage.json").write_text(
+                json.dumps({"provider_id": "external-generated-outputs"}, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "apply_candidate_promotion_decision.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--provider-id",
+                    "external-generated-outputs",
+                    "--decision-answer",
+                    "yes",
+                    "--selection-reason",
+                    "Provider-specific single candidate path.",
+                    "--evidence-ref",
+                    "chat:promotion-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-b")
     def test_apply_candidate_promotion_decision_rejects_multiple_staged_candidates_without_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

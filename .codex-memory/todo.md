@@ -3,6 +3,7 @@
 ## Next
 - [ ] Choose the next bounded `split-image-assets` milestone after provider-aware candidate lifecycle next steps V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` provider-specific candidate approval/promotion resolution V1: provider-aware compare resolution, provider-scoped single-candidate resolution, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider-aware candidate lifecycle next steps V1: candidate provider-id/provider-stage surfacing, mixed-provider pool warning, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` single-candidate promotion decision path V1: direct single-candidate approval/promotion support, candidate work-item path alignment, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` promotion decision defaults V1: inferred delivery-class/default repair-note for promotion decisions, candidate work-item command simplification, docs, canonical plan sync, and regression coverage.

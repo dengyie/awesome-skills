@@ -52,6 +52,7 @@ def main() -> int:
     parser.add_argument("package_dir", help="Asset package directory.")
     parser.add_argument("--object-id", required=True)
     parser.add_argument("--comparison-id", default="")
+    parser.add_argument("--provider-id", default="")
     parser.add_argument("--decision-answer", choices=["yes", "no"], required=True)
     parser.add_argument(
         "--decision-source",
@@ -97,6 +98,8 @@ def main() -> int:
     ]
     if args.comparison_id:
         approval_command.extend(["--comparison-id", args.comparison_id])
+    if args.provider_id:
+        approval_command.extend(["--provider-id", args.provider_id])
     if args.selection_reason:
         approval_command.extend(["--selection-reason", args.selection_reason])
 
@@ -134,8 +137,9 @@ def main() -> int:
         "--repair-note",
         repair_note,
     ]
-    if args.comparison_id:
-        promote_command.extend(["--comparison-id", args.comparison_id])
+    resolved_comparison_id = str(approval_payload.get("comparison_id", "")).strip()
+    if resolved_comparison_id:
+        promote_command.extend(["--comparison-id", resolved_comparison_id])
     else:
         candidate_id = str(approval_payload.get("candidate_id", "")).strip()
         candidate_asset_path = str(approval_payload.get("candidate_asset_path", "")).strip()

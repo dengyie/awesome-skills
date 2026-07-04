@@ -300,6 +300,8 @@ That adapter can now infer `delivery_class` from the planned route or current ob
 
 If no compare evidence exists yet but the object has exactly one staged candidate, the same approval adapter and decision adapter can now use that direct single-candidate path. If more than one staged candidate exists, they must still stop and require an explicit compare or winner selection first.
 
+If compare evidence or staged candidates are mixed across providers for the same object, both adapters may take `--provider-id` so they can resolve the correct provider-specific comparison or the unique staged candidate for that provider. If `--provider-id` still matches more than one comparison or more than one staged candidate, they should fail closed and require a more explicit user decision.
+
 `describe_candidate_work_items.py` should now also show candidate provider ids when provider-stage manifests exist. If a staged candidate pool mixes providers, its next-step detail should say that explicitly before compare starts.
 
 Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.

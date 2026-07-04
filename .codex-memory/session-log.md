@@ -759,3 +759,9 @@
 - Results: Candidate lifecycle next-step reporting now carries provider provenance earlier, before compare begins. Full package validation passed with 227 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the provider-aware candidate lifecycle next steps milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 20:05
+- Task: Complete `split-image-assets` provider-specific candidate approval/promotion resolution V1.
+- Actions: Extended `record_candidate_promotion_approval.py` so `--provider-id` can resolve a provider-specific comparison or the unique staged candidate for that provider; fixed `apply_candidate_promotion_decision.py` so provider-aware compare resolution flows through promotion instead of falling into the direct single-candidate branch; synchronized skill/workflow/usage/baseline docs and project memory; expanded regression coverage for provider-specific compare and staged-candidate paths.
+- Results: Mixed-provider candidate pools can now stay provider-aware through approval and promotion adapters when one provider-scoped answer is unambiguous, while ambiguous provider-scoped pools still fail closed. Full package validation passed with 230 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

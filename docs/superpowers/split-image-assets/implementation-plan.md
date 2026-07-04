@@ -45,6 +45,7 @@ The current package baseline is:
 - promotion decision defaults
 - single-candidate promotion decision path
 - provider-aware candidate lifecycle next steps
+- provider-specific candidate approval/promotion resolution
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -53,6 +54,21 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `provider-specific candidate approval/promotion resolution V1`
+
+Closed status: complete
+
+What landed:
+
+- `record_candidate_promotion_approval.py` can now use `--provider-id` to resolve the correct provider-specific comparison when mixed-provider compare evidence exists for one object
+- the same approval adapter can also use `--provider-id` to select the unique staged candidate for that provider when no compare evidence exists yet
+- `apply_candidate_promotion_decision.py` now threads that provider-specific resolution through approval and promotion so provider-aware compare paths do not fall back into the direct single-candidate branch by mistake
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider-aware candidate lifecycle next steps V1`
 
@@ -417,6 +433,7 @@ These are the important completed milestones that define the current architectur
 26. promotion decision defaults V1
 27. single-candidate promotion decision path V1
 28. provider-aware candidate lifecycle next steps
+29. provider-specific candidate approval/promotion resolution V1
 
 Treat these as delivered baseline, not as active checklist items.
 

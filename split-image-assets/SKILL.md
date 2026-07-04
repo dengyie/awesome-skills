@@ -265,6 +265,8 @@ When route evidence is already clear, `scripts/apply_candidate_promotion_decisio
 
 When no compare evidence exists yet but exactly one staged candidate exists, both `scripts/record_candidate_promotion_approval.py` and `scripts/apply_candidate_promotion_decision.py` may use that direct single-candidate path instead of forcing a synthetic compare step. Multi-candidate no-compare situations must still fail closed.
 
+When provider-specific compare records or staged candidates exist in the same object pool, both adapters may take `--provider-id` so they can resolve the right compare evidence or the unique staged candidate for that provider. If `--provider-id` still maps to multiple compare records or multiple staged candidates, the adapters must fail closed and require a more explicit user choice.
+
 `scripts/describe_candidate_work_items.py` should also surface staged candidate provider identities and explicitly flag mixed-provider candidate pools before compare, so generated-route candidate work does not become provider-blind again.
 
 `scripts/promote_candidate_asset.py` should also fail closed until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required` from a real user-backed source. The helper and the runtime guard should agree.
