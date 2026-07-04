@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Single Staged Candidates Should Not Need Fake Compare Evidence To Reach Approval And Promotion
+- Decision: Let `record_candidate_promotion_approval.py` and `apply_candidate_promotion_decision.py` support the direct single-candidate path when exactly one staged repair candidate exists and no compare evidence exists yet.
+- Rationale: The candidate work-item helper was already steering the operator toward an approval-and-promotion path for the single-candidate case, but the adapter stack still required compare evidence first. Supporting the direct path removes that mismatch while still failing closed for multi-candidate no-compare situations.
+- Alternatives considered: Force every promotion through compare evidence even for one staged candidate, or allow broader heuristic winner selection without compare.
+- Impact: The single-candidate direct path now works end to end through the same approval and promotion contracts, while multi-candidate paths still require either compare selection evidence or a more explicit human choice.
+- Rollback trigger: If future workflows decide that every candidate promotion must carry compare evidence regardless of candidate count, narrow this support back to compare-backed paths instead of weakening the evidence rules elsewhere.
+- Related files: `split-image-assets/scripts/record_candidate_promotion_approval.py`, `split-image-assets/scripts/apply_candidate_promotion_decision.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-04 - Promotion Decision Adapters May Infer Delivery Class And Repair Note From Existing Package Truth
 - Decision: Let `apply_candidate_promotion_decision.py` infer `delivery_class` from planned-route or current object delivery truth when that inference is deterministic, and generate a default `repair_note` when one is not supplied.
 - Rationale: After compare-to-promotion orchestration V1, the remaining command burden on the happy path was mostly repeated mechanical fields. The package already knows enough in common cases to fill those safely. Adding these defaults lowers friction without weakening honesty because the adapter still fails closed when route truth is ambiguous.

@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after promotion decision defaults V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after single-candidate promotion decision path V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` single-candidate promotion decision path V1: direct single-candidate approval/promotion support, candidate work-item path alignment, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` promotion decision defaults V1: inferred delivery-class/default repair-note for promotion decisions, candidate work-item command simplification, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` compare-to-promotion orchestration V1: decision-and-promote adapter, candidate work-item command sync, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` candidate promotion approval auto-record V1: low-burden candidate-promotion approval adapter, candidate work-item command sync, docs, canonical plan sync, and regression coverage.

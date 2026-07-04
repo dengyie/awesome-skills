@@ -747,3 +747,9 @@
 - Results: The compare-to-promotion adapter now needs fewer repeated arguments on the common path while still failing closed when delivery truth cannot be inferred safely. Full package validation passed with 222 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the promotion decision defaults milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 17:20
+- Task: Complete `split-image-assets` single-candidate promotion decision path V1.
+- Actions: Extended `record_candidate_promotion_approval.py` and `apply_candidate_promotion_decision.py` to support the direct single-candidate path when no compare evidence exists yet; synchronized candidate work-item expectations, implementation baseline, and project memory; expanded regression coverage for direct single-candidate approval/promotion and fail-closed multi-candidate no-compare cases.
+- Results: The direct single-candidate path now works through the same approval and promotion contracts without requiring a synthetic compare step. Full package validation passed with 222 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the single-candidate promotion decision path milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.
