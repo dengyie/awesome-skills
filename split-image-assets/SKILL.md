@@ -395,6 +395,7 @@ Record formal gate outcomes in `metadata.decision_log[]` with `stage`, `pause_ca
 - Read `references/pipeline-recipes.md` before choosing or documenting the extraction path.
 - Read `references/default-route-chains.md` before selecting the default provider chain for a resolved route.
 - Read `references/provider-contract.md` when you need the provider bridge request/result contract.
+- Read `references/shared-task-contract.md` when you need the shared recommendation schema for candidate/provider work items.
 - Read `references/grounded-sam-pipeline.md` before accepting or running professional upstream outputs.
 - Read `references/ui-atomic-split.md` before planning complex UI, dashboard, badge, tile/glyph, or control-heavy images.
 - Read `references/quick-contract.md` for the short package contract view.

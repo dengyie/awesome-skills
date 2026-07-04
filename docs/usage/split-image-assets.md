@@ -40,6 +40,7 @@ For deeper details, use the more specialized sources instead of treating this fi
 - `split-image-assets/references/workflow.md`: gate and state-machine detail
 - `split-image-assets/references/asset-package-contract.md`: package contract and validator truth surface
 - `split-image-assets/references/provider-contract.md`: provider bridge request/result contract
+- `split-image-assets/references/shared-task-contract.md`: shared candidate/provider recommendation schema
 - `split-image-assets/references/default-route-chains.md`: default provider chains per route
 - `split-image-assets/references/pipeline-recipes.md`: route and recipe choice
 - `split-image-assets/references/ui-atomic-split.md`: UI-specific planning

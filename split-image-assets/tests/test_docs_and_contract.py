@@ -18,6 +18,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             ROOT / "references" / "quick-contract.md",
             ROOT / "references" / "asset-package-contract.md",
             ROOT / "references" / "provider-contract.md",
+            ROOT / "references" / "shared-task-contract.md",
             ROOT / "references" / "default-route-chains.md",
             ROOT / "references" / "qa-standards.md",
             ROOT / "references" / "manual-review.md",
@@ -139,6 +140,25 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "object_type` override",
         ]:
             self.assertIn(expected, provider_contract + "\n" + default_chains)
+    def test_shared_task_contract_describes_shared_recommendation_surface(self):
+        shared_task_contract = (ROOT / "references" / "shared-task-contract.md").read_text(
+            encoding="utf-8"
+        )
+        for expected in [
+            "Shared Task Contract",
+            "recommended_command",
+            "recommended_command_variants[]",
+            "recommended_task",
+            "task_type",
+            "task_phase",
+            "branch_flag",
+            "writes_fields[]",
+            "work_item_schema_contract.py",
+            "work_item_schema_lib.py",
+            "candidate-lifecycle",
+            "provider-bridge",
+        ]:
+            self.assertIn(expected, shared_task_contract)
     def test_skill_frontmatter_and_core_rules_are_present(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         match = re.match(r"---\n(.*?)\n---", skill_text, re.DOTALL)

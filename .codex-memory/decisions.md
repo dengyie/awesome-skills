@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Shared Work-Item Helpers And Enums Need A First-Class Contract Reference, Not Just Code Reuse
+- Decision: Add `references/shared-task-contract.md` and route `SKILL.md` plus usage docs to it as the formal contract surface for shared work-item task/recommendation semantics.
+- Rationale: Once the shared helper and enum layers existed, the remaining risk was discoverability and drift in human/operator understanding, not code duplication. Without a first-class reference, future contributors would still need to read helper code to understand the intended contract. A dedicated reference turns the current implementation into an explicit maintained surface.
+- Alternatives considered: Leave the contract implicit in code and tests, or wait until a larger task engine exists.
+- Impact: The shared task schema now has a documented home, docs routing points to it directly, and focused tests protect that surface alongside the implementation.
+- Rollback trigger: If a broader protocol spec later supersedes this reference, migrate the same contract statements into that protocol instead of deleting them without replacement.
+- Related files: `split-image-assets/references/shared-task-contract.md`, `split-image-assets/SKILL.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_docs_and_contract.py`
+
 ## 2026-07-05 - Shared Work-Item Helpers Also Need Shared Semantic Constants
 - Decision: Add `work_item_schema_contract.py` as the shared home for common task/recommendation semantic constants such as task types, phases, intents, and branch flags.
 - Rationale: After the shared schema helper landed, the remaining drift risk moved from structure to literal strings. Keeping those semantics duplicated across candidate and provider modules would make future refactors brittle and noisy. A small constant layer closes that gap without changing behavior.

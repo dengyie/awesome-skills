@@ -819,3 +819,9 @@
 - Results: Candidate and provider recommendation semantics now share one vocabulary in addition to one schema builder, reducing drift risk without changing output behavior. Full package validation passed with 240 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 03:55
+- Task: Complete `split-image-assets` shared task contract V1.
+- Actions: Added `references/shared-task-contract.md`; routed `SKILL.md` and usage docs to it; synchronized implementation baseline and project memory; expanded docs tests so the shared task contract surface is checked directly.
+- Results: The shared work-item schema now has a formal reference document instead of living only in code and tests. Full package validation passed with 241 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.
