@@ -136,6 +136,17 @@ def main() -> int:
     ]
     if args.comparison_id:
         promote_command.extend(["--comparison-id", args.comparison_id])
+    else:
+        candidate_id = str(approval_payload.get("candidate_id", "")).strip()
+        candidate_asset_path = str(approval_payload.get("candidate_asset_path", "")).strip()
+        if not candidate_id or not candidate_asset_path:
+            parser.error(
+                "single-candidate direct promotion requires approval payload with candidate_id and candidate_asset_path"
+            )
+        promote_command.extend(["--candidate-id", candidate_id, "--candidate-asset", candidate_asset_path])
+        selection_reason = str(approval_payload.get("selection_reason", "")).strip()
+        if selection_reason:
+            promote_command.extend(["--selection-reason", selection_reason])
     if args.active_reconstruction_method:
         promote_command.extend(["--active-reconstruction-method", args.active_reconstruction_method])
     if args.generation_source:

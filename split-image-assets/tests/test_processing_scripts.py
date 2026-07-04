@@ -1361,6 +1361,44 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("selected_candidate_id or exactly one candidate", result.stderr)
+    def test_record_candidate_promotion_approval_records_single_staged_candidate_without_compare(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (0, 255, 0, 255)).save(candidate_dir / "candidate-a.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_candidate_promotion_approval.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--decision-answer",
+                    "yes",
+                    "--selection-reason",
+                    "Only staged candidate available.",
+                    "--evidence-ref",
+                    "chat:promotion-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["candidate_id"], "candidate-a")
+            self.assertTrue(payload["candidate_asset_path"].endswith("candidate-a.png"))
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["confirmation"]["candidate_promotion"]["status"], "confirmed")
     def test_apply_candidate_promotion_decision_records_approval_and_promotes(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1428,6 +1466,83 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["confirmation"]["candidate_promotion"]["status"], "confirmed")
             self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-a")
+    def test_apply_candidate_promotion_decision_promotes_single_staged_candidate_without_compare(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate-a.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "apply_candidate_promotion_decision.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--decision-answer",
+                    "yes",
+                    "--selection-reason",
+                    "Only staged candidate available.",
+                    "--evidence-ref",
+                    "chat:promotion-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["decision_answer"], "yes")
+            self.assertEqual(payload["delivery_class"], "clean-extraction")
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-a")
+    def test_apply_candidate_promotion_decision_rejects_multiple_staged_candidates_without_compare(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (0, 255, 0, 255)).save(candidate_dir / "candidate-a.png")
+            Image.new("RGBA", (4, 3), (0, 0, 255, 255)).save(candidate_dir / "candidate-b.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "apply_candidate_promotion_decision.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--decision-answer",
+                    "yes",
+                    "--selection-reason",
+                    "Need a winner first.",
+                    "--evidence-ref",
+                    "chat:promotion-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("selected_candidate_id or exactly one staged candidate", result.stderr)
     def test_apply_candidate_promotion_decision_records_decline_without_promoting(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

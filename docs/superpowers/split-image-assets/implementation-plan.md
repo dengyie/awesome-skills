@@ -44,6 +44,7 @@ The current package baseline is:
 - compare-to-promotion orchestration adapter
 - promotion decision defaults
 - single-candidate promotion decision path
+- provider-aware candidate lifecycle next steps
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -400,6 +401,7 @@ These are the important completed milestones that define the current architectur
 25. compare-to-promotion orchestration V1
 26. promotion decision defaults V1
 27. single-candidate promotion decision path V1
+28. provider-aware candidate lifecycle next steps
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -421,7 +423,7 @@ Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
    - more explicit provider capability mapping on top of the now-harder bridge contract
-   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, provider-aware generated compare selection, provider-plan summaries, provider work-item status, candidate work-item status, compare-selected promotion defaults, candidate promotion approval handoff, promotion approval runtime guard, candidate promotion approval auto-record, compare-to-promotion orchestration, promotion decision defaults, and single-candidate promotion decision path
+   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, provider-aware generated compare selection, provider-plan summaries, provider work-item status, candidate work-item status, compare-selected promotion defaults, candidate promotion approval handoff, promotion approval runtime guard, candidate promotion approval auto-record, compare-to-promotion orchestration, promotion decision defaults, single-candidate promotion decision path, and provider-aware candidate lifecycle next steps
    - optional native runner expansion on top of the bridge layer
 
 2. broader fixture and package migration

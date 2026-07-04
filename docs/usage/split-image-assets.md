@@ -296,6 +296,8 @@ If you want one deterministic command that both records the yes/no decision and,
 
 That adapter can now infer `delivery_class` from the planned route or current object delivery state in common cases, and it can generate a default `repair_note`. If the route truth is not strong enough, it should still fail closed and require an explicit `--delivery-class`.
 
+If no compare evidence exists yet but the object has exactly one staged candidate, the same approval adapter and decision adapter can now use that direct single-candidate path. If more than one staged candidate exists, they must still stop and require an explicit compare or winner selection first.
+
 Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.

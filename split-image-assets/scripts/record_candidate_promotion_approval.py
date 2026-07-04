@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from candidate_workflow_lib import list_staged_candidate_assets
+
 
 def read_metadata(package_dir: Path) -> dict:
     return json.loads((package_dir / "metadata.json").read_text(encoding="utf-8"))
@@ -46,6 +48,21 @@ def resolve_comparison(target: dict, comparison_id: str, parser: argparse.Argume
     if len(comparisons) == 1 and isinstance(comparisons[0], dict):
         return comparisons[0]
     parser.error("--comparison-id is required unless exactly one candidate comparison exists")
+    raise AssertionError("unreachable")
+
+
+def resolve_single_staged_candidate(package_dir: Path, object_id: str, parser: argparse.ArgumentParser) -> tuple[str, str]:
+    candidates = list_staged_candidate_assets(package_dir, object_id)
+    if len(candidates) == 1:
+        candidate_id, asset_path = candidates[0]
+        return candidate_id, str(asset_path.relative_to(package_dir)).replace("\\", "/")
+    if not candidates:
+        parser.error(
+            "candidate promotion approval requires compare evidence or exactly one staged candidate"
+        )
+    parser.error(
+        "candidate promotion approval requires compare evidence with selected_candidate_id or exactly one staged candidate"
+    )
     raise AssertionError("unreachable")
 
 
@@ -108,16 +125,33 @@ def main() -> int:
     if target is None:
         parser.error(f"unknown object-id: {args.object_id}")
 
-    comparison = resolve_comparison(target, args.comparison_id, parser)
-    comparison_id = str(comparison.get("comparison_id", "")).strip()
-    candidate_id = resolve_candidate_id(comparison, parser)
-    selection_reason = resolve_selection_reason(
-        comparison, args.selection_reason, args.decision_answer, parser
-    )
+    comparison = None
+    comparison_id = ""
+    candidate_id = ""
+    candidate_asset_path = ""
+    selection_reason = ""
+    if args.comparison_id or len(target.get("candidate_comparisons", [])) == 1:
+        comparison = resolve_comparison(target, args.comparison_id, parser)
+        comparison_id = str(comparison.get("comparison_id", "")).strip()
+        candidate_id = resolve_candidate_id(comparison, parser)
+        selection_reason = resolve_selection_reason(
+            comparison, args.selection_reason, args.decision_answer, parser
+        )
+    else:
+        candidate_id, candidate_asset_path = resolve_single_staged_candidate(
+            package_dir, args.object_id, parser
+        )
+        selection_reason = resolve_selection_reason(
+            {"selection_reason": ""},
+            args.selection_reason,
+            args.decision_answer,
+            parser,
+        )
 
     if args.decision_answer == "yes":
-        comparison["selected_candidate_id"] = candidate_id
-        comparison["selection_reason"] = selection_reason
+        if comparison is not None:
+            comparison["selected_candidate_id"] = candidate_id
+            comparison["selection_reason"] = selection_reason
         write_metadata(package_dir, metadata)
 
     effect = (
@@ -168,6 +202,7 @@ def main() -> int:
         "object_id": args.object_id,
         "comparison_id": comparison_id,
         "candidate_id": candidate_id,
+        "candidate_asset_path": candidate_asset_path,
         "decision_answer": args.decision_answer,
         "selection_reason": selection_reason,
     }

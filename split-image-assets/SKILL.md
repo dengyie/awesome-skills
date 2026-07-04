@@ -261,6 +261,8 @@ When compare evidence already selects a candidate but `metadata.confirmation.can
 
 When route evidence is already clear, `scripts/apply_candidate_promotion_decision.py` may infer `delivery_class` from the planned route or current object delivery state, and it may generate a deterministic default `repair_note`. If the route truth is not strong enough, it must still fail closed and require an explicit `--delivery-class`.
 
+When no compare evidence exists yet but exactly one staged candidate exists, both `scripts/record_candidate_promotion_approval.py` and `scripts/apply_candidate_promotion_decision.py` may use that direct single-candidate path instead of forcing a synthetic compare step. Multi-candidate no-compare situations must still fail closed.
+
 `scripts/promote_candidate_asset.py` should also fail closed until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required` from a real user-backed source. The helper and the runtime guard should agree.
 
 ## Pipeline Quality Rule
