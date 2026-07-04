@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Candidate Promotion Approval Should Be Enforced At Runtime, Not Only Suggested By Helpers
+- Decision: Make `promote_candidate_asset.py` itself refuse to run until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required` from a valid user-backed source.
+- Rationale: Candidate promotion approval handoff V1 made the workflow recommendation explicit, but direct script invocation could still bypass that approval step. Enforcing the same rule in the runtime path closes the loophole and keeps the helper state aligned with actual behavior.
+- Alternatives considered: Keep approval as documentation-plus-helper guidance only, or defer runtime enforcement until a later broader orchestration pass.
+- Impact: Promotion now matches the workflow's formal approval contract, promotion-related tests explicitly set approval state when they are meant to exercise other validation paths, and future orchestration work can assume promotion does not silently bypass approval.
+- Rollback trigger: If later workflows intentionally need a controlled bypass for migration or legacy repair cases, add an explicit bounded escape hatch with auditable evidence rather than removing the runtime guard.
+- Related files: `split-image-assets/scripts/promote_candidate_asset.py`, `split-image-assets/tests/skill_package_testlib.py`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/SKILL.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-04 - Candidate Work Items Should Reflect The Promotion Approval Gate, Not Just Candidate Availability
 - Decision: Make `describe_candidate_work_items.py` recommend a `record_quality_review.py` formal-approval handoff when a candidate is selected but `metadata.confirmation.candidate_promotion` is still pending, and only recommend direct promotion once that gate is confirmed or explicitly not required.
 - Rationale: After compare-selected promotion defaults V1, the helper could tell when a candidate was promotion-ready in a mechanical sense, but it still skipped over the workflow's formal approval requirement. Surfacing the approval handoff explicitly lowers operator confusion without forcing promotion script behavior to change.

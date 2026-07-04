@@ -8,6 +8,10 @@ from candidate_workflow_lib import load_provider_stage_manifest
 from package_state_lib import update_asset_summary
 
 
+VALID_PROMOTION_CONFIRMATION_STATUSES = {"confirmed", "not-required"}
+VALID_PROMOTION_CONFIRMATION_SOURCES = {"explicit-user-confirmed", "inferred-from-user"}
+
+
 def read_metadata(package_dir: Path) -> dict:
     return json.loads((package_dir / "metadata.json").read_text(encoding="utf-8"))
 
@@ -83,6 +87,25 @@ def find_compare_candidate_record(compare_manifest: dict, candidate_id: str) -> 
         if isinstance(item, dict) and item.get("candidate_id") == candidate_id:
             return item
     return {}
+
+
+def require_candidate_promotion_confirmation(metadata: dict, parser: argparse.ArgumentParser) -> None:
+    confirmation = metadata.get("confirmation", {})
+    if not isinstance(confirmation, dict):
+        parser.error("metadata.confirmation must be an object before candidate promotion")
+    entry = confirmation.get("candidate_promotion", {})
+    if not isinstance(entry, dict):
+        parser.error("metadata.confirmation.candidate_promotion must be an object before candidate promotion")
+    status = str(entry.get("status", "")).strip()
+    source = str(entry.get("source", "")).strip()
+    if status not in VALID_PROMOTION_CONFIRMATION_STATUSES:
+        parser.error(
+            "metadata.confirmation.candidate_promotion must be confirmed or not-required before candidate promotion"
+        )
+    if source not in VALID_PROMOTION_CONFIRMATION_SOURCES:
+        parser.error(
+            "metadata.confirmation.candidate_promotion must come from explicit-user-confirmed or inferred-from-user before candidate promotion"
+        )
 
 
 def main() -> int:
@@ -224,6 +247,7 @@ def main() -> int:
         provider_stage = load_provider_stage_manifest(candidate_asset, candidate_id_value)
     except (ValueError, json.JSONDecodeError) as exc:
         parser.error(f"provider stage manifest is not valid JSON: {exc}")
+    require_candidate_promotion_confirmation(metadata, parser)
 
     target["selected_candidate_id"] = candidate_id_value
     target["current_asset_revision"] = candidate_id_value

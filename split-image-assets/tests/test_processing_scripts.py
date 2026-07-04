@@ -132,6 +132,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
 
             result = subprocess.run(
                 [
@@ -173,6 +176,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
             self._write_generation_brief(output)
 
             result = subprocess.run(
@@ -400,6 +406,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
 
             result = subprocess.run(
                 [
@@ -459,6 +468,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
 
             result = subprocess.run(
                 [
@@ -528,6 +540,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
 
             result = subprocess.run(
                 [
@@ -587,6 +601,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
 
             result = subprocess.run(
                 [
@@ -627,6 +643,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
 
             result = subprocess.run(
                 [
@@ -655,6 +673,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(init_result.returncode, 0, init_result.stderr)
             self._write_generated_plan_manifest(output)
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
 
             result = subprocess.run(
                 [
@@ -683,6 +703,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(init_result.returncode, 0, init_result.stderr)
             self._write_generated_plan_manifest(output)
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
+            self._set_candidate_promotion_confirmation(output)
             self._write_generation_brief(output)
 
             result = subprocess.run(
@@ -781,6 +803,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 encoding="utf-8",
             )
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             request_result = subprocess.run(
                 [
                     sys.executable,
@@ -3885,6 +3908,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_v2.png")
@@ -3972,6 +3996,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
@@ -4039,6 +4064,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
@@ -4101,6 +4127,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
@@ -4160,6 +4187,211 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             obj = metadata["objects"][0]
             self.assertEqual(obj["selected_candidate_id"], "candidate-b")
             self.assertEqual(obj["candidate_comparisons"][0]["selection_reason"], "Candidate B has the cleaner final silhouette.")
+    def test_promote_candidate_asset_rejects_pending_candidate_promotion_confirmation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_v2.png")
+            Image.new("L", (6, 6), 255).save(candidate_dir / "candidate_v2_mask.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-v2=_staging/repair_candidates/candidate_v2.png",
+                    "--compare-note",
+                    "Only one viable candidate after manual cleanup.",
+                    "--compare-criterion",
+                    "single viable candidate rationale",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata_path = output / "metadata.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate-asset",
+                    "_staging/repair_candidates/candidate_v2.png",
+                    "--candidate-mask",
+                    "_staging/repair_candidates/candidate_v2_mask.png",
+                    "--candidate-id",
+                    "candidate-v2",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "approximate-reconstruction",
+                    "--active-reconstruction-method",
+                    "manual carrier redraw",
+                    "--repair-note",
+                    "Promote the cleaner carrier candidate after comparison.",
+                    "--selection-reason",
+                    "Cleaner interior edge and better carrier silhouette.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("candidate_promotion must be confirmed or not-required", result.stderr)
+    def test_promote_candidate_asset_allows_confirmed_candidate_promotion_confirmation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["evidence_ref"] = "chat:promotion-approved"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--compare-note",
+                    "Single-candidate compare for direct promotion.",
+                    "--compare-criterion",
+                    "single viable candidate",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Promote single compare candidate.",
+                    "--selection-reason",
+                    "Only viable candidate in the compare set.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+    def test_promote_candidate_asset_allows_not_required_candidate_promotion_confirmation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            metadata = self._write_single_object_metadata(output)
+            metadata["confirmation"]["candidate_promotion"]["status"] = "not-required"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["evidence_ref"] = "chat:promotion-not-required"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--compare-note",
+                    "Single-candidate compare for direct promotion.",
+                    "--compare-criterion",
+                    "single viable candidate",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Promote single compare candidate without extra approval.",
+                    "--selection-reason",
+                    "Only viable candidate in the compare set.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
     def test_promote_candidate_asset_uses_selection_reason_from_comparison_record(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -4173,6 +4405,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
@@ -4240,6 +4473,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
@@ -4304,6 +4538,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
@@ -4369,6 +4604,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             self._write_generated_plan_manifest(output)
             self._write_generation_brief(output)
             subprocess.run(
@@ -4492,6 +4728,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             self._write_generated_plan_manifest(output)
             self._write_generation_brief(output)
             subprocess.run(
@@ -4628,6 +4865,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "generated-v3.png")
@@ -4670,6 +4908,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             metadata = self._write_single_object_metadata(output)
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["evidence_ref"] = "chat:promotion-approved"
             outside_asset = tmp_path / "outside_target.png"
             metadata["objects"][0]["asset_path"] = str(outside_asset)
             (output / "metadata.json").write_text(
@@ -4718,6 +4959,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_v2.png")
@@ -4764,6 +5006,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             non_candidate_dir = output / "_staging" / "misc"
             non_candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(non_candidate_dir / "candidate_v2.png")
@@ -4806,6 +5049,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_v2.png")
@@ -4844,6 +5088,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
             self._write_single_object_metadata(output)
+            self._set_candidate_promotion_confirmation(output)
             candidate_dir = output / "_staging" / "repair_candidates"
             candidate_dir.mkdir(parents=True, exist_ok=True)
             Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_v2.png")

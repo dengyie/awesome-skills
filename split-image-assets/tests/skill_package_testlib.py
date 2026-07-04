@@ -188,6 +188,25 @@ class SplitImageAssetsTestBase(unittest.TestCase):
             encoding="utf-8",
         )
         return metadata
+    def _set_candidate_promotion_confirmation(
+        self,
+        package_dir: pathlib.Path,
+        *,
+        status: str = "confirmed",
+        source: str = "explicit-user-confirmed",
+        evidence_ref: str = "chat:promotion-approved",
+    ) -> dict:
+        metadata_path = package_dir / "metadata.json"
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata.setdefault("confirmation", {}).setdefault("candidate_promotion", {})
+        metadata["confirmation"]["candidate_promotion"]["status"] = status
+        metadata["confirmation"]["candidate_promotion"]["source"] = source
+        metadata["confirmation"]["candidate_promotion"]["evidence_ref"] = evidence_ref
+        metadata_path.write_text(
+            json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        return metadata
     def _write_ready_validation_package(self, output: pathlib.Path) -> dict:
         metadata = self._write_single_object_metadata(output)
         metadata["decision_log"] = [

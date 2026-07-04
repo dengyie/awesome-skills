@@ -723,3 +723,9 @@
 - Results: Candidate work items now distinguish “selected candidate exists” from “promotion approval is recorded.” Full package validation passed with 213 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the candidate promotion approval handoff milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 12:20
+- Task: Complete `split-image-assets` promotion approval runtime guard V1.
+- Actions: Added runtime candidate-promotion confirmation enforcement to `promote_candidate_asset.py`; added a reusable test helper for marking `candidate_promotion` confirmation; synchronized affected promotion tests, docs, implementation baseline, and project memory; cleared stale `__pycache__` during validation after rapid Windows-side edits to ensure fresh test imports.
+- Results: Promotion now fails closed until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required`. Full package validation passed with 216 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the promotion approval runtime guard milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.

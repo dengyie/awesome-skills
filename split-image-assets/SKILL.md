@@ -255,6 +255,8 @@ When compare evidence already records `selected_candidate_id` and `selection_rea
 
 When compare evidence already selects a candidate but `metadata.confirmation.candidate_promotion` is still pending, `scripts/describe_candidate_work_items.py` should recommend recording the formal approval handoff through `record_quality_review.py` before it recommends `promote_candidate_asset.py`.
 
+`scripts/promote_candidate_asset.py` should also fail closed until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required` from a real user-backed source. The helper and the runtime guard should agree.
+
 ## Pipeline Quality Rule
 
 Every reusable layer must have provenance. Record which tool or manual process created the mask, which process created or refined alpha, which stage repaired the background, the layer's `composition_order`, and which quality gates were inspected.

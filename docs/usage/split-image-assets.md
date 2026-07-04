@@ -287,6 +287,8 @@ When a comparison record already contains `selected_candidate_id` and `selection
 
 `describe_candidate_work_items.py` now also distinguishes between “candidate is selected” and “candidate promotion approval has been recorded.” If compare already chose a candidate but `metadata.confirmation.candidate_promotion` is still pending, the helper should recommend a `record_quality_review.py` formal-approval step before it recommends `promote_candidate_asset.py`.
 
+`promote_candidate_asset.py` itself now enforces that same gate. Promotion should fail closed until `metadata.confirmation.candidate_promotion` is `confirmed` or explicitly `not-required` with a real user-backed source.
+
 Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.
