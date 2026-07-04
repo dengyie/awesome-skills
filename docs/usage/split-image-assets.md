@@ -290,6 +290,8 @@ When a comparison record already contains `selected_candidate_id` and `selection
 
 `describe_candidate_work_items.py` now also distinguishes between “candidate is selected” and “candidate promotion approval has been recorded.” If compare already chose a candidate but `metadata.confirmation.candidate_promotion` is still pending, the helper should recommend a `record_quality_review.py` formal-approval step before it recommends `promote_candidate_asset.py`.
 
+If compare evidence exists but no selected candidate has been recorded yet, use `record_candidate_selection.py` to write `selected_candidate_id`, `selection_reason`, and a decision-log entry before approval or promotion. For a single-candidate compare set it may infer the candidate; for an ambiguous compare it must still require an explicit `--candidate-id`.
+
 `promote_candidate_asset.py` itself now enforces that same gate. Promotion should fail closed until `metadata.confirmation.candidate_promotion` is `confirmed` or explicitly `not-required` with a real user-backed source.
 
 If you want a lower-burden way to record that approval, use `record_candidate_promotion_approval.py`. It can reuse compare-owned `selected_candidate_id` and `selection_reason`, or infer the candidate from a single-candidate compare set, then write the `candidate_promotion` gate through the normal review contract.

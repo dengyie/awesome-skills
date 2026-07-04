@@ -771,3 +771,9 @@
 - Results: Candidate work-item compare commands now lower operator burden without becoming more permissive than the real compare helper. Full package validation passed with 233 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-04 23:35
+- Task: Complete `split-image-assets` candidate selection recording adapter V1.
+- Actions: Added `record_candidate_selection.py` as a low-burden compare-selection adapter; moved provider-aware comparison resolution into shared `candidate_workflow_lib.py`; updated `describe_candidate_work_items.py` so pending-selection states now recommend the new adapter, including single-candidate compare sets; synchronized skill/workflow/usage/baseline docs and project memory; expanded regression coverage for single-candidate compare selection, provider-aware compare selection, and pending-selection handoff commands.
+- Results: The candidate lifecycle now has an explicit compare-selection step before approval and promotion instead of relying on generic review-field editing. Full package validation passed with 237 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

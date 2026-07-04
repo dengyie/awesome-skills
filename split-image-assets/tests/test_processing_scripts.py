@@ -2193,6 +2193,339 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(result.returncode, 0, result.stderr)
             entry = json.loads(result.stdout)["objects"][0]
             self.assertEqual(entry["next_action"], "await-candidate-selection")
+            self.assertIn("record_candidate_selection.py", entry["recommended_command"])
+            self.assertIn("--candidate-id <candidate-id>", entry["recommended_command"])
+    def test_describe_candidate_work_items_recommends_selection_without_candidate_id_for_single_candidate_compare(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-1",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-1_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "",
+                    "selection_reason": "",
+                    "created_at": "2026-07-04T00:00:00Z",
+                }
+            ]
+            (output / "_staging" / "repair_candidates" / "cmp-1_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-1",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-a",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-a.png",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertIn("record_candidate_selection.py", entry["recommended_command"])
+            self.assertNotIn("--candidate-id", entry["recommended_command"])
+    def test_record_candidate_selection_records_single_candidate_compare(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-1",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-1_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "",
+                    "selection_reason": "",
+                    "created_at": "2026-07-04T00:00:00Z",
+                }
+            ]
+            (output / "_staging" / "repair_candidates" / "cmp-1_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-1",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-a",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-a.png",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_candidate_selection.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    "cmp-1",
+                    "--selection-reason",
+                    "Only viable candidate in compare.",
+                    "--evidence-ref",
+                    "chat:selection-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["candidate_id"], "candidate-a")
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            obj = metadata["objects"][0]
+            self.assertEqual(obj["selected_candidate_id"], "candidate-a")
+            self.assertEqual(obj["candidate_comparisons"][0]["selected_candidate_id"], "candidate-a")
+            self.assertEqual(obj["candidate_comparisons"][0]["selection_reason"], "Only viable candidate in compare.")
+            self.assertEqual(metadata["decision_log"][-1]["stage"], "candidate-selection")
+    def test_record_candidate_selection_requires_candidate_id_for_multi_candidate_compare(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-1",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a", "candidate-b"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-1_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "",
+                    "selection_reason": "",
+                    "created_at": "2026-07-04T00:00:00Z",
+                }
+            ]
+            (output / "_staging" / "repair_candidates").mkdir(parents=True, exist_ok=True)
+            (output / "_staging" / "repair_candidates" / "cmp-1_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-1",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a", "candidate-b"],
+                        "candidates": [],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_candidate_selection.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    "cmp-1",
+                    "--selection-reason",
+                    "Pick one winner.",
+                    "--evidence-ref",
+                    "chat:selection-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--candidate-id is required unless compare evidence already selects a candidate or references exactly one candidate", result.stderr)
+    def test_record_candidate_selection_resolves_provider_specific_comparison(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            compare_dir = output / "_staging" / "repair_candidates"
+            compare_dir.mkdir(parents=True, exist_ok=True)
+            (compare_dir / "cmp-a_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-a",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-a",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-a.png",
+                                "provider_id": "codex-controlled-generation",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (compare_dir / "cmp-b_compare.json").write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-b",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-b"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-b",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-b.png",
+                                "provider_id": "external-generated-outputs",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-a",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-a_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "",
+                    "selection_reason": "",
+                    "created_at": "2026-07-04T00:00:00Z",
+                },
+                {
+                    "comparison_id": "cmp-b",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-b"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-b_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "",
+                    "selection_reason": "",
+                    "created_at": "2026-07-04T00:00:00Z",
+                },
+            ]
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_candidate_selection.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--provider-id",
+                    "external-generated-outputs",
+                    "--selection-reason",
+                    "Provider B candidate wins.",
+                    "--evidence-ref",
+                    "chat:selection-approved",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["comparison_id"], "cmp-b")
+            self.assertEqual(payload["candidate_id"], "candidate-b")
     def test_describe_candidate_work_items_reports_no_work_after_promotion(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

@@ -139,6 +139,39 @@ def _recommended_promotion_approval_command(
     return " ".join(parts)
 
 
+def _recommended_selection_command(
+    package_dir: Path,
+    object_id: str,
+    *,
+    comparison_id: str,
+    candidate_id: str,
+    requires_candidate_id: bool,
+) -> str:
+    package_arg = str(package_dir).replace("\\", "/")
+    parts = [
+        "python",
+        "split-image-assets/scripts/record_candidate_selection.py",
+        package_arg,
+        "--object-id",
+        object_id,
+        "--comparison-id",
+        comparison_id,
+    ]
+    if requires_candidate_id:
+        parts.extend(["--candidate-id", "<candidate-id>" if not candidate_id else candidate_id])
+    parts.extend(
+        [
+            "--selection-reason",
+            "\"Explain why this candidate wins the compare.\"",
+            "--decision-source",
+            "explicit-user-confirmed",
+            "--evidence-ref",
+            "<selection-evidence-ref>",
+        ]
+    )
+    return " ".join(parts)
+
+
 def build_candidate_work_item_status(package_dir: Path, object_id: str | None = None) -> dict:
     metadata = read_metadata(package_dir)
     plan_manifest = read_plan_manifest(package_dir)
@@ -271,10 +304,26 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 object_type=str(plan_object.get("object_type", "")).strip() if isinstance(plan_object, dict) else "",
                 plan_manifest=plan_manifest if isinstance(plan_manifest, dict) else None,
             )
-        elif len(candidates) > 1 and latest_comparison_id and not comparison_selected_candidate_id:
+        elif latest_comparison_id and not comparison_selected_candidate_id:
             next_action = "await-candidate-selection"
             next_action_detail = (
                 "Comparison evidence exists, but no selected candidate has been recorded for the latest comparison."
+            )
+            compare_candidate_ids = latest_comparison.get("candidate_ids", []) if isinstance(latest_comparison, dict) else []
+            single_candidate_id = (
+                compare_candidate_ids[0]
+                if isinstance(compare_candidate_ids, list)
+                and len(compare_candidate_ids) == 1
+                and isinstance(compare_candidate_ids[0], str)
+                and compare_candidate_ids[0].strip()
+                else ""
+            )
+            recommended_command = _recommended_selection_command(
+                package_dir,
+                current_object_id,
+                comparison_id=latest_comparison_id,
+                candidate_id=single_candidate_id,
+                requires_candidate_id=not bool(single_candidate_id),
             )
         else:
             candidate_id = comparison_selected_candidate_id or (candidate_ids[0] if len(candidate_ids) == 1 else "")

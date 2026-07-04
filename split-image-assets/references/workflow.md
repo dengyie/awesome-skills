@@ -180,6 +180,7 @@ If pause is not allowed, continue with the documented fallback and record the ra
    - generated `stage-candidate` consumption should write a provider-stage manifest beside the staged candidate so later promotion can reuse the same generation evidence
    - when staged repair candidates exist, `describe_candidate_work_items.py` should write `_staging/repair_candidates/candidate_work_items.json` so compare versus promotion next steps are explicit
    - generated candidate compare recommendations should follow the same provider-aware auto-discovery contract as `compare_candidate_assets.py`: single-provider pools may compare without a manual candidate list, plan-preferred provider scope may be suggested when it is explicit and valid, and mixed-provider pools without a safe preference must stop for an explicit provider choice
+   - when compare evidence exists but no selected candidate has been recorded yet, use `record_candidate_selection.py` to record `selected_candidate_id` and `selection_reason` before approval or promotion
    - `record_candidate_promotion_approval.py` and `apply_candidate_promotion_decision.py` may take `--provider-id` when compare records or staged candidates are mixed across providers
    - those adapters should resolve provider-specific compare evidence first, then fall back to a unique staged candidate for that provider only when compare evidence does not exist yet
    - if `--provider-id` still maps to multiple comparisons or multiple staged candidates, stop and require an explicit comparison id or a human winner choice

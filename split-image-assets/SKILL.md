@@ -253,6 +253,8 @@ When compare evidence already records `selected_candidate_id` and `selection_rea
 
 `scripts/describe_candidate_work_items.py` is the candidate-stage explainer. Use it to write `_staging/repair_candidates/candidate_work_items.json` so each object records whether candidate stage is still empty, compare evidence is needed, candidate selection is still pending, promotion is ready, or candidate work is already complete.
 
+When compare evidence exists but no selected candidate has been recorded yet, `scripts/describe_candidate_work_items.py` should recommend `scripts/record_candidate_selection.py` before it recommends approval or promotion. That selection adapter should record `selected_candidate_id`, `selection_reason`, and a decision-log entry without pretending candidate promotion has already been approved.
+
 When compare evidence already selects a candidate but `metadata.confirmation.candidate_promotion` is still pending, `scripts/describe_candidate_work_items.py` should recommend the low-burden promotion-decision adapter before it recommends `promote_candidate_asset.py`.
 
 That candidate-stage explainer should also surface staged candidate provider identities and flag mixed-provider candidate pools before compare, so generated-route repair work does not become provider-blind again.
@@ -260,6 +262,8 @@ That candidate-stage explainer should also surface staged candidate provider ide
 For generated-route candidate pools, `scripts/describe_candidate_work_items.py` should also recommend compare commands that match the real provider-aware auto-discovery rules: use a plain auto-discovery compare command for single-provider pools, use the plan-preferred provider scope when an explicit generation provider preference is valid, and otherwise require an explicit `--provider-id` choice instead of pretending route-default compare is safe.
 
 `scripts/record_candidate_promotion_approval.py` is the low-burden approval adapter for that handoff. Use it when compare evidence already owns the selected candidate or the compare set contains exactly one candidate, and you want to record the `candidate_promotion` gate without manually reconstructing the full `record_quality_review.py` decision payload.
+
+`scripts/record_candidate_selection.py` is the low-burden candidate-selection adapter for the earlier compare step. Use it when compare evidence exists but the winner has not yet been recorded. It may reuse a single-candidate compare set, or resolve one provider-specific comparison through `--provider-id`, but it must still fail closed when the compare result is ambiguous.
 
 `scripts/apply_candidate_promotion_decision.py` is the next-step orchestration adapter for that handoff. Use it when you want one deterministic command to record a yes/no candidate-promotion decision and, for `yes`, continue directly into `promote_candidate_asset.py`.
 

@@ -248,6 +248,85 @@ def list_staged_candidate_records(package_dir: Path, object_id: str) -> list[dic
     return records
 
 
+def load_compare_manifest(package_dir: Path, comparison: dict) -> dict:
+    compare_manifest_path = str(comparison.get("compare_manifest_path", "")).strip()
+    if not compare_manifest_path:
+        return {}
+    path = (package_dir / compare_manifest_path).resolve()
+    if not path.exists():
+        raise ValueError(f"compare manifest is missing: {compare_manifest_path}")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"compare manifest is not valid JSON: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("compare manifest must contain an object")
+    return data
+
+
+def comparison_matches_provider(package_dir: Path, comparison: dict, provider_id: str) -> bool:
+    compare_manifest = load_compare_manifest(package_dir, comparison)
+    if not compare_manifest:
+        return False
+    selected_candidate_id = str(comparison.get("selected_candidate_id", "")).strip()
+    candidates = compare_manifest.get("candidates", [])
+    if not isinstance(candidates, list):
+        return False
+    provider_matches: list[dict] = []
+    for item in candidates:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("provider_id", "")).strip() != provider_id:
+            continue
+        provider_matches.append(item)
+    if not provider_matches:
+        return False
+    if selected_candidate_id:
+        return any(str(item.get("candidate_id", "")).strip() == selected_candidate_id for item in provider_matches)
+    return len(provider_matches) == len(candidates)
+
+
+def resolve_candidate_comparison(
+    package_dir: Path,
+    target: dict,
+    comparison_id: str = "",
+    provider_id: str = "",
+) -> dict:
+    comparisons = target.get("candidate_comparisons", [])
+    if not isinstance(comparisons, list):
+        raise ValueError("target object candidate_comparisons must be a list when present")
+    explicit_id = comparison_id.strip() if comparison_id else ""
+    if explicit_id:
+        comparison = next(
+            (
+                item
+                for item in comparisons
+                if isinstance(item, dict) and item.get("comparison_id") == explicit_id
+            ),
+            None,
+        )
+        if comparison is None:
+            raise ValueError(f"unknown comparison-id: {explicit_id}")
+        if provider_id and not comparison_matches_provider(package_dir, comparison, provider_id):
+            raise ValueError(f"comparison-id {explicit_id} does not match provider-id: {provider_id}")
+        return comparison
+    if provider_id:
+        matches = [
+            item
+            for item in comparisons
+            if isinstance(item, dict) and comparison_matches_provider(package_dir, item, provider_id)
+        ]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            raise ValueError(
+                f"multiple candidate comparisons match provider-id {provider_id}; supply --comparison-id"
+            )
+    if len(comparisons) == 1 and isinstance(comparisons[0], dict):
+        return comparisons[0]
+    raise ValueError("--comparison-id is required unless exactly one candidate comparison exists")
+
+
 def component_count(mask: Image.Image, threshold: int = 32) -> int:
     width, height = mask.size
     pixels = mask.load()

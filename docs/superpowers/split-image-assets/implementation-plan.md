@@ -47,6 +47,7 @@ The current package baseline is:
 - provider-aware candidate lifecycle next steps
 - provider-specific candidate approval/promotion resolution
 - provider-aware compare command orchestration
+- candidate selection recording adapter
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -55,6 +56,21 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `candidate selection recording adapter V1`
+
+Closed status: complete
+
+What landed:
+
+- `record_candidate_selection.py` now provides a low-burden compare-selection adapter that records `selected_candidate_id`, `selection_reason`, and a decision-log entry before approval or promotion
+- the adapter shares the same provider-aware compare resolution rules as the later approval and promotion helpers
+- `describe_candidate_work_items.py` now recommends the selection adapter whenever compare evidence exists but the selected candidate has not yet been recorded, including single-candidate compare sets
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider-aware compare command orchestration V1`
 
@@ -451,6 +467,7 @@ These are the important completed milestones that define the current architectur
 28. provider-aware candidate lifecycle next steps
 29. provider-specific candidate approval/promotion resolution V1
 30. provider-aware compare command orchestration V1
+31. candidate selection recording adapter V1
 
 Treat these as delivered baseline, not as active checklist items.
 

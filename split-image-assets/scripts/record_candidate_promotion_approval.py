@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from candidate_workflow_lib import list_staged_candidate_records
+from candidate_workflow_lib import list_staged_candidate_records, resolve_candidate_comparison
 
 
 def read_metadata(package_dir: Path) -> dict:
@@ -26,87 +26,6 @@ def find_object(metadata: dict, object_id: str) -> dict | None:
         if isinstance(item, dict) and item.get("id") == object_id:
             return item
     return None
-
-
-def load_compare_manifest(package_dir: Path, comparison: dict, parser: argparse.ArgumentParser) -> dict:
-    compare_manifest_path = str(comparison.get("compare_manifest_path", "")).strip()
-    if not compare_manifest_path:
-        return {}
-    path = (package_dir / compare_manifest_path).resolve()
-    if not path.exists():
-        parser.error(f"compare manifest is missing: {compare_manifest_path}")
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        parser.error(f"compare manifest is not valid JSON: {exc}")
-    if not isinstance(data, dict):
-        parser.error("compare manifest must contain an object")
-    return data
-
-
-def _comparison_matches_provider(package_dir: Path, comparison: dict, provider_id: str, parser: argparse.ArgumentParser) -> bool:
-    compare_manifest = load_compare_manifest(package_dir, comparison, parser)
-    if not compare_manifest:
-        return False
-    selected_candidate_id = str(comparison.get("selected_candidate_id", "")).strip()
-    candidates = compare_manifest.get("candidates", [])
-    if not isinstance(candidates, list):
-        return False
-    provider_matches: list[dict] = []
-    for item in candidates:
-        if not isinstance(item, dict):
-            continue
-        if str(item.get("provider_id", "")).strip() != provider_id:
-            continue
-        provider_matches.append(item)
-    if not provider_matches:
-        return False
-    if selected_candidate_id:
-        return any(str(item.get("candidate_id", "")).strip() == selected_candidate_id for item in provider_matches)
-    return len(provider_matches) == len(candidates)
-
-
-def resolve_comparison(
-    package_dir: Path,
-    target: dict,
-    comparison_id: str,
-    provider_id: str,
-    parser: argparse.ArgumentParser,
-) -> dict:
-    comparisons = target.get("candidate_comparisons", [])
-    if not isinstance(comparisons, list):
-        parser.error("target object candidate_comparisons must be a list when present")
-    explicit_id = comparison_id.strip() if comparison_id else ""
-    if explicit_id:
-        comparison = next(
-            (
-                item
-                for item in comparisons
-                if isinstance(item, dict) and item.get("comparison_id") == explicit_id
-            ),
-            None,
-        )
-        if comparison is None:
-            parser.error(f"unknown comparison-id: {explicit_id}")
-        if provider_id and not _comparison_matches_provider(package_dir, comparison, provider_id, parser):
-            parser.error(f"comparison-id {explicit_id} does not match provider-id: {provider_id}")
-        return comparison
-    if provider_id:
-        matches = [
-            item
-            for item in comparisons
-            if isinstance(item, dict) and _comparison_matches_provider(package_dir, item, provider_id, parser)
-        ]
-        if len(matches) == 1:
-            return matches[0]
-        if len(matches) > 1:
-            parser.error(
-                f"multiple candidate comparisons match provider-id {provider_id}; supply --comparison-id"
-            )
-    if len(comparisons) == 1 and isinstance(comparisons[0], dict):
-        return comparisons[0]
-    parser.error("--comparison-id is required unless exactly one candidate comparison exists")
-    raise AssertionError("unreachable")
 
 
 def resolve_single_staged_candidate(
@@ -197,7 +116,12 @@ def main() -> int:
     candidate_comparisons = target.get("candidate_comparisons", [])
     has_comparisons = isinstance(candidate_comparisons, list) and bool(candidate_comparisons)
     if args.comparison_id or (args.provider_id and has_comparisons) or len(candidate_comparisons) == 1:
-        comparison = resolve_comparison(package_dir, target, args.comparison_id, args.provider_id, parser)
+        try:
+            comparison = resolve_candidate_comparison(
+                package_dir, target, args.comparison_id, args.provider_id
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
         comparison_id = str(comparison.get("comparison_id", "")).strip()
         candidate_id = resolve_candidate_id(comparison, parser)
         selection_reason = resolve_selection_reason(

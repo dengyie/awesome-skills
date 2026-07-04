@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` candidate selection recording adapter V1 is complete locally. `record_candidate_selection.py` now records `selected_candidate_id`, `selection_reason`, and a decision-log entry from compare evidence, and `describe_candidate_work_items.py` now recommends that adapter whenever compare evidence exists but the winner has not yet been recorded.
 - Current stage: `split-image-assets` provider-aware compare command orchestration V1 is complete locally. `describe_candidate_work_items.py` now recommends compare commands that match the real generated-route provider-aware auto-discovery rules, including explicit provider-scope placeholders when no safe default exists.
 - Current stage: `split-image-assets` provider-specific candidate approval/promotion resolution V1 is complete locally. `record_candidate_promotion_approval.py` and `apply_candidate_promotion_decision.py` can now both stay provider-aware when mixed-provider compare evidence exists, and they can fall back to the unique staged candidate for one provider when no compare evidence exists yet.
 - Current stage: `split-image-assets` provider-aware candidate lifecycle next steps V1 is complete locally. `describe_candidate_work_items.py` now surfaces staged candidate provider ids and provider-stage manifest paths, and it explicitly flags mixed-provider candidate pools before compare.
@@ -26,6 +27,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (237 tests, candidate selection recording adapter V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, candidate selection recording adapter V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (candidate selection recording adapter V1 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, candidate selection recording adapter V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (233 tests, provider-aware compare command orchestration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider-aware compare command orchestration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (provider-aware compare command orchestration V1 review brief; no new P0/P1 blockers)
@@ -342,6 +347,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Candidate selection recording adapter V1 makes the compare-selection step explicit and lower-burden, but it still intentionally refuses ambiguous compare results; multi-candidate compares without an explicit winner choice still require a real candidate id or a clearer compare record.
 - Provider-aware compare command orchestration V1 makes generated candidate compare entry much clearer, but it still intentionally refuses to treat route-default provider selection as a safe compare default; mixed-provider pools without an explicit valid plan preference still require an explicit provider choice.
 - Provider-specific candidate approval/promotion resolution V1 keeps provider-scoped approval and promotion honest, but it still intentionally refuses provider-scoped ambiguity; if one provider still has multiple compare records or multiple staged candidates, a human or an explicit comparison id must resolve it.
 - Provider-aware candidate lifecycle next steps V1 makes candidate pools less opaque, but it still does not automatically choose between providers; mixed-provider pools still require explicit compare or a human choice.
@@ -384,10 +390,10 @@
 - None.
 
 ## Current Focus
-- The provider-aware compare command orchestration milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The candidate selection recording adapter milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the provider-aware compare command orchestration V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the candidate selection recording adapter V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`
