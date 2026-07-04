@@ -225,7 +225,7 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 
 `scripts/describe_provider_plan.py` is the planning-side bridge helper. Use it after `plan_manifest.json` is ready and before broad request generation so the package owns an explicit `_staging/providers/provider_plan.json` summary of route defaults, object-type overrides, valid plan preferences, selected providers, and alternative provider chains.
 
-`scripts/describe_provider_work_items.py` is the next-step bridge helper. Use it after provider planning to write `_staging/providers/provider_work_items.json` so each object records bridge artifact readiness, inferred consume mode when possible, and the recommended next command.
+`scripts/describe_provider_work_items.py` is the next-step bridge helper. Use it after provider planning to write `_staging/providers/provider_work_items.json` so each object records bridge artifact readiness, inferred consume mode when possible, and the recommended next command. Like the candidate-side surface, it should keep `recommended_command` for compatibility and may also expose `recommended_command_variants[]` plus a grouped `recommended_task` object when one provider bridge step has a stable task envelope.
 
 `scripts/prepare_generation_brief.py` is the package-owned helper for generate routes. It writes `_staging/generation_briefs/<object-id>.json` plus `_staging/generation_briefs/<object-id>_reference_inputs.json`, and `prepare_provider_request.py` should fail closed for generate routes when those inputs do not exist yet.
 

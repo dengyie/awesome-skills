@@ -693,6 +693,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             entry = payload["objects"][0]
             self.assertEqual(entry["next_action"], "prepare-generation-brief")
             self.assertIn("prepare_generation_brief.py", entry["recommended_command"])
+            self.assertEqual(entry["recommended_command_variants"][0]["variant_id"], "prepare-generation-brief")
+            self.assertEqual(entry["recommended_task"]["task_type"], "provider-bridge")
+            self.assertEqual(entry["recommended_task"]["task_state"], "prepare-generation-brief")
+            self.assertEqual(entry["recommended_task"]["default_variant_id"], "prepare-generation-brief")
     def test_describe_provider_work_items_recommends_prepare_provider_request_after_brief(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -723,6 +727,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["next_action"], "prepare-provider-request")
             self.assertEqual(entry["selected_provider_id"], "codex-controlled-generation")
             self.assertIn("prepare_provider_request.py", entry["recommended_command"])
+            self.assertEqual(entry["recommended_command_variants"][0]["intent"], "prepare-provider-request")
+            self.assertEqual(entry["recommended_command_variants"][0]["writes_fields"], ["provider_request"])
+            self.assertEqual(entry["recommended_task"]["default_variant_id"], "prepare-provider-request")
     def test_describe_provider_work_items_recommends_await_provider_result_after_request(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -770,6 +777,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertTrue(entry["request_ready"])
             self.assertFalse(entry["result_ready"])
             self.assertIn("record_provider_result.py", entry["recommended_command"])
+            self.assertEqual(entry["recommended_command_variants"][0]["intent"], "record-provider-result")
+            self.assertEqual(entry["recommended_command_variants"][0]["next_action_if_success"], "consume-provider-result")
     def test_describe_provider_work_items_recommends_consume_provider_result_when_ready(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -867,6 +876,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["next_action"], "consume-provider-result")
             self.assertEqual(entry["inferred_consume_mode"], "import-extract")
             self.assertIn("consume_provider_result.py", entry["recommended_command"])
+            self.assertEqual(entry["recommended_command_variants"][0]["intent"], "consume-provider-result")
+            self.assertEqual(entry["recommended_command_variants"][0]["branch_value"], "consume-provider-result")
+            self.assertEqual(entry["recommended_task"]["task_state"], "consume-provider-result")
     def test_describe_provider_work_items_reports_no_provider_run_required_for_rebuild_downstream(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -917,6 +929,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["next_action"], "no-provider-run-required")
             self.assertEqual(entry["selected_provider_id"], "")
             self.assertEqual(entry["recommended_command"], "")
+            self.assertEqual(entry["recommended_command_variants"], [])
+            self.assertIsNone(entry["recommended_task"])
     def test_describe_candidate_work_items_reports_candidate_stage_empty(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

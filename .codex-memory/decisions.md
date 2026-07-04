@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Provider Bridge Work Items Should Use The Same Structured Recommendation Shape As Candidate Work Items
+- Decision: Extend provider work-item reporting so key bridge states expose `recommended_command_variants[]` and grouped `recommended_task` objects, while preserving `recommended_command` for compatibility.
+- Rationale: Candidate lifecycle recommendations had already moved to a richer schema, but provider work items still lagged behind with only one command string. That made the two workflow surfaces feel inconsistent and kept downstream consumers from handling provider-side next steps with the same structure. Aligning the shapes lowers cognitive and integration cost without changing provider execution semantics.
+- Alternatives considered: Leave provider work items command-only, or postpone provider-side structure until a larger shared task engine exists.
+- Impact: Prepare/request/result/consume bridge states now have structured provider-side task envelopes, and future shared work-item consumers can treat provider and candidate next steps more uniformly.
+- Rollback trigger: If a future shared task protocol replaces both work-item surfaces, preserve the provider-side phase and intent semantics there instead of flattening back to one command string.
+- Related files: `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Lifecycle Recommendation Variants Should Be Grouped Into Task Objects When They Belong To One Step Family
 - Decision: Add a grouped `recommended_task` object on candidate work items whenever `recommended_command_variants[]` are really branches of one lifecycle step family.
 - Rationale: Machine-readable variant fields made each branch clearer, but downstream consumers still had to infer whether three branches belonged to one “selection task” or were unrelated options. Grouping them under a task object lowers coordination cost without requiring a larger task engine.

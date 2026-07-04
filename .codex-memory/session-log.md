@@ -801,3 +801,9 @@
 - Results: Candidate lifecycle recommendations now read as task-shaped objects rather than only decorated command rows, while preserving compatibility with existing command consumers. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 02:20
+- Task: Complete `split-image-assets` provider work-item schema V1.
+- Actions: Extended `provider_bridge_lib.py` so provider work items now emit `recommended_command_variants[]` and grouped `recommended_task` objects for key bridge states; synchronized usage/workflow/skill/baseline docs and project memory; expanded regression coverage for provider prepare/request/result/consume recommendation structure.
+- Results: Provider-side next steps now share the same structured recommendation shape as candidate-side work items while preserving compatibility with existing `recommended_command` consumers. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

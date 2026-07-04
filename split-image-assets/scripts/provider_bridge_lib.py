@@ -386,6 +386,166 @@ def _recommended_command(
     return ""
 
 
+def _provider_command_variant(
+    variant_id: str,
+    label: str,
+    command: str,
+    note: str = "",
+    *,
+    phase: str,
+    intent: str,
+    branch_flag: str,
+    branch_value: str,
+    recommended: bool,
+    requires_fields: list[str] | None = None,
+    writes_fields: list[str] | None = None,
+    next_action_if_success: str = "",
+    requires_human_confirmation: bool = False,
+) -> dict:
+    return {
+        "variant_id": variant_id,
+        "phase": phase,
+        "label": label,
+        "intent": intent,
+        "command": command,
+        "note": note,
+        "branch_flag": branch_flag,
+        "branch_value": branch_value,
+        "recommended": recommended,
+        "requires_fields": list(requires_fields or []),
+        "writes_fields": list(writes_fields or []),
+        "next_action_if_success": next_action_if_success,
+        "requires_human_confirmation": requires_human_confirmation,
+    }
+
+
+def _provider_recommended_task(
+    *,
+    task_phase: str,
+    task_state: str,
+    task_goal: str,
+    default_variant_id: str,
+    variants: list[dict],
+) -> dict:
+    return {
+        "task_type": "provider-bridge",
+        "task_phase": task_phase,
+        "task_state": task_state,
+        "task_goal": task_goal,
+        "default_variant_id": default_variant_id,
+        "variant_count": len(variants),
+        "variants": variants,
+    }
+
+
+def _provider_command_variants(
+    package_dir: Path,
+    object_id: str,
+    selected_provider_id: str,
+    next_action: str,
+    *,
+    explicit_provider_required: bool,
+    inferred_consume_mode: str,
+    consume_mode_error: str,
+) -> list[dict]:
+    package_arg = _package_cli_path(package_dir)
+    if next_action == "prepare-generation-brief":
+        return [
+            _provider_command_variant(
+                "prepare-generation-brief",
+                "Prepare Brief",
+                f"python split-image-assets/scripts/prepare_generation_brief.py {package_arg} --object-id {object_id}",
+                "Create the package-owned generation brief and reference-input manifest first.",
+                phase="provider-bridge",
+                intent="prepare-generation-brief",
+                branch_flag="next_action",
+                branch_value="prepare-generation-brief",
+                recommended=True,
+                writes_fields=["generation_brief", "generation_reference_inputs"],
+                next_action_if_success="prepare-provider-request",
+            )
+        ]
+    if next_action == "prepare-provider-request":
+        command = (
+            f"python split-image-assets/scripts/prepare_provider_request.py "
+            f"{package_arg} --object-id {object_id}"
+        )
+        requires_fields: list[str] = []
+        if explicit_provider_required and selected_provider_id:
+            command += f" --provider-id {selected_provider_id}"
+        elif explicit_provider_required:
+            command += " --provider-id <provider-id>"
+            requires_fields.append("provider_id")
+        return [
+            _provider_command_variant(
+                "prepare-provider-request",
+                "Prepare Request",
+                command,
+                "Stage the provider request manifest for the selected provider path.",
+                phase="provider-bridge",
+                intent="prepare-provider-request",
+                branch_flag="next_action",
+                branch_value="prepare-provider-request",
+                recommended=True,
+                requires_fields=requires_fields,
+                writes_fields=["provider_request"],
+                next_action_if_success="await-provider-result",
+            )
+        ]
+    if next_action == "await-provider-result":
+        if not selected_provider_id:
+            return []
+        return [
+            _provider_command_variant(
+                "record-provider-result",
+                "Record Result",
+                f"python split-image-assets/scripts/record_provider_result.py {package_arg} --provider-id {selected_provider_id} --object-id {object_id} --status success ...",
+                "Record the upstream provider result after the request completes.",
+                phase="provider-bridge",
+                intent="record-provider-result",
+                branch_flag="next_action",
+                branch_value="await-provider-result",
+                recommended=True,
+                requires_fields=["status", "artifacts", "tool_name", "tool_role", "tool_version"],
+                writes_fields=["provider_result"],
+                next_action_if_success="consume-provider-result",
+            )
+        ]
+    if next_action == "consume-provider-result":
+        command = (
+            f"python split-image-assets/scripts/consume_provider_result.py "
+            f"{package_arg} --object-id {object_id}"
+        )
+        requires_fields: list[str] = []
+        if explicit_provider_required and selected_provider_id:
+            command += f" --provider-id {selected_provider_id}"
+        elif explicit_provider_required:
+            command += " --provider-id <provider-id>"
+            requires_fields.append("provider_id")
+        if consume_mode_error and not inferred_consume_mode:
+            command += " --mode <import-extract|stage-candidate|import-manifest>"
+            requires_fields.append("mode")
+        elif inferred_consume_mode:
+            command += f" --mode {inferred_consume_mode}"
+        return [
+            _provider_command_variant(
+                "consume-provider-result",
+                "Consume Result",
+                command,
+                "Consume the staged provider result into import or candidate staging.",
+                phase="provider-bridge",
+                intent="consume-provider-result",
+                branch_flag="next_action",
+                branch_value="consume-provider-result",
+                recommended=True,
+                requires_fields=requires_fields,
+                writes_fields=["metadata", "staged_assets"],
+                next_action_if_success="no-provider-run-required",
+            )
+        ]
+    return []
+
+
 def build_provider_work_item_status(package_dir: Path, object_id: str | None = None) -> dict:
     summary = build_provider_plan_summary(package_dir, object_id)
     package_name = str(summary.get("package_name", "")).strip()
@@ -433,6 +593,8 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
             if planned_route in {"rebuild_downstream", "support_only"}
             else "No active provider bridge action is required."
         )
+        recommended_command_variants: list[dict] = []
+        recommended_task: dict | None = None
 
         if selected_provider_id:
             if planned_route == "generate" and not (
@@ -478,6 +640,32 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
                                 f"A provider result is staged and can be consumed through mode {inferred_consume_mode!r}."
                             )
 
+        recommended_command = _recommended_command(
+            package_dir,
+            current_object_id,
+            selected_provider_id,
+            next_action,
+            explicit_provider_required=explicit_provider_required,
+            inferred_consume_mode=inferred_consume_mode,
+            consume_mode_error=consume_mode_error,
+        )
+        recommended_command_variants = _provider_command_variants(
+            package_dir,
+            current_object_id,
+            selected_provider_id,
+            next_action,
+            explicit_provider_required=explicit_provider_required,
+            inferred_consume_mode=inferred_consume_mode,
+            consume_mode_error=consume_mode_error,
+        )
+        if recommended_command_variants:
+            recommended_task = _provider_recommended_task(
+                task_phase="provider-bridge",
+                task_state=next_action,
+                task_goal=next_action,
+                default_variant_id=recommended_command_variants[0]["variant_id"],
+                variants=recommended_command_variants,
+            )
         work_items.append(
             {
                 "object_id": current_object_id,
@@ -500,15 +688,9 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
                 "consume_mode_error": consume_mode_error,
                 "next_action": next_action,
                 "next_action_detail": next_action_detail,
-                "recommended_command": _recommended_command(
-                    package_dir,
-                    current_object_id,
-                    selected_provider_id,
-                    next_action,
-                    explicit_provider_required=explicit_provider_required,
-                    inferred_consume_mode=inferred_consume_mode,
-                    consume_mode_error=consume_mode_error,
-                ),
+                "recommended_command": recommended_command,
+                "recommended_command_variants": recommended_command_variants,
+                "recommended_task": recommended_task,
             }
         )
 

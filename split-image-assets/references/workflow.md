@@ -170,7 +170,7 @@ If pause is not allowed, continue with the documented fallback and record the ra
 5. Create or refresh `plan_manifest.json` and run `generation_routing`.
 6. Select the default provider chain for each resolved route, then apply any explicit `object_type` override, write a provider-plan summary with `describe_provider_plan.py`, write provider work-item status with `describe_provider_work_items.py`, and write bridge request manifests under `_staging/providers/`.
    - `describe_provider_plan.py` should write `_staging/providers/provider_plan.json` so provider choice is explicit before request generation begins
-   - `describe_provider_work_items.py` should write `_staging/providers/provider_work_items.json` so each object has an explicit bridge next action before and after request/result staging
+   - `describe_provider_work_items.py` should write `_staging/providers/provider_work_items.json` so each object has an explicit bridge next action before and after request/result staging; `recommended_command` stays as the compatibility/default next step and richer provider task metadata may surface through `recommended_command_variants[]` plus `recommended_task`
    - `prepare_provider_request.py` may omit `--provider-id` when the default chain should be used
    - `generate` routes should first create `_staging/generation_briefs/<object-id>.json` and `_staging/generation_briefs/<object-id>_reference_inputs.json` through `prepare_generation_brief.py`
    - `prepare_provider_request.py` should fail closed for generate routes when those package-owned brief artifacts are missing
