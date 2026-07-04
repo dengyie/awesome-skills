@@ -735,3 +735,9 @@
 - Results: Candidate promotion approval can now be recorded from compare evidence with fewer repeated arguments while still using the same confirmation and decision-log contract. Full package validation passed with 219 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the candidate promotion approval auto-record milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 16:10
+- Task: Complete `split-image-assets` compare-to-promotion orchestration V1.
+- Actions: Added `apply_candidate_promotion_decision.py` to combine candidate-promotion decision recording with optional direct promotion; updated `describe_candidate_work_items.py` to recommend the new adapter; synchronized docs, implementation baseline, and project memory; expanded regression coverage for yes/no decision flows and fail-closed argument requirements.
+- Results: Compare evidence can now flow through one deterministic approval-and-promote adapter while still respecting the existing approval runtime guard and compare evidence requirements. Full package validation passed with 222 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the compare-to-promotion orchestration milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.

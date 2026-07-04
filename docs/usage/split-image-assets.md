@@ -292,6 +292,8 @@ When a comparison record already contains `selected_candidate_id` and `selection
 
 If you want a lower-burden way to record that approval, use `record_candidate_promotion_approval.py`. It can reuse compare-owned `selected_candidate_id` and `selection_reason`, or infer the candidate from a single-candidate compare set, then write the `candidate_promotion` gate through the normal review contract.
 
+If you want one deterministic command that both records the yes/no decision and, for `yes`, continues into promotion, use `apply_candidate_promotion_decision.py`.
+
 Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.
 
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.

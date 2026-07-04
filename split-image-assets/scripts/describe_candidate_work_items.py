@@ -89,11 +89,12 @@ def _recommended_promotion_approval_command(
     *,
     comparison_id: str,
     candidate_id: str,
+    delivery_class: str,
 ) -> str:
     package_arg = str(package_dir).replace("\\", "/")
     parts = [
         "python",
-        "split-image-assets/scripts/record_candidate_promotion_approval.py",
+        "split-image-assets/scripts/apply_candidate_promotion_decision.py",
         package_arg,
         "--object-id",
         object_id,
@@ -108,6 +109,10 @@ def _recommended_promotion_approval_command(
             "explicit-user-confirmed",
             "--evidence-ref",
             "<approval-evidence-ref>",
+            "--delivery-class",
+            delivery_class,
+            "--repair-note",
+            "\"Promote selected candidate.\"",
         ]
     )
     return " ".join(parts)
@@ -255,6 +260,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id=latest_comparison_id,
                         candidate_id=candidate_id,
+                        delivery_class=recommended_delivery_class,
                     )
             elif len(candidates) == 1:
                 if candidate_promotion_status in {"confirmed", "not-required"}:
@@ -281,6 +287,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id="",
                         candidate_id=candidate_ids[0],
+                        delivery_class=recommended_delivery_class,
                     )
 
         work_items.append(

@@ -253,9 +253,11 @@ When compare evidence already records `selected_candidate_id` and `selection_rea
 
 `scripts/describe_candidate_work_items.py` is the candidate-stage explainer. Use it to write `_staging/repair_candidates/candidate_work_items.json` so each object records whether candidate stage is still empty, compare evidence is needed, candidate selection is still pending, promotion is ready, or candidate work is already complete.
 
-When compare evidence already selects a candidate but `metadata.confirmation.candidate_promotion` is still pending, `scripts/describe_candidate_work_items.py` should recommend recording the formal approval handoff through `record_quality_review.py` before it recommends `promote_candidate_asset.py`.
+When compare evidence already selects a candidate but `metadata.confirmation.candidate_promotion` is still pending, `scripts/describe_candidate_work_items.py` should recommend the low-burden promotion-decision adapter before it recommends `promote_candidate_asset.py`.
 
 `scripts/record_candidate_promotion_approval.py` is the low-burden approval adapter for that handoff. Use it when compare evidence already owns the selected candidate or the compare set contains exactly one candidate, and you want to record the `candidate_promotion` gate without manually reconstructing the full `record_quality_review.py` decision payload.
+
+`scripts/apply_candidate_promotion_decision.py` is the next-step orchestration adapter for that handoff. Use it when you want one deterministic command to record a yes/no candidate-promotion decision and, for `yes`, continue directly into `promote_candidate_asset.py`.
 
 `scripts/promote_candidate_asset.py` should also fail closed until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required` from a real user-backed source. The helper and the runtime guard should agree.
 

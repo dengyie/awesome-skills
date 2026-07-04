@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` compare-to-promotion orchestration V1 is complete locally. `apply_candidate_promotion_decision.py` now records a yes/no candidate-promotion decision from compare evidence and, for `yes`, continues directly into promotion through the existing runtime guard.
 - Current stage: `split-image-assets` candidate promotion approval auto-record V1 is complete locally. `record_candidate_promotion_approval.py` now records `candidate_promotion` approval from compare evidence with a low-burden adapter, and `describe_candidate_work_items.py` recommends that adapter directly.
 - Current stage: `split-image-assets` promotion approval runtime guard V1 is complete locally. `promote_candidate_asset.py` now refuses candidate promotion until `metadata.confirmation.candidate_promotion` is `confirmed` or explicitly `not-required`, so the runtime path now matches the earlier approval-aware helper state.
 - Current stage: `split-image-assets` candidate promotion approval handoff V1 is complete locally. `describe_candidate_work_items.py` now distinguishes between “candidate is selected” and “candidate promotion approval is recorded,” and it recommends `record_quality_review.py` before promotion when the formal approval gate is still pending.
@@ -20,6 +21,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (222 tests, compare-to-promotion orchestration V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, compare-to-promotion orchestration V1)
+- 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (compare-to-promotion orchestration V1 review brief; no new P0/P1 blockers)
+- 2026-07-04: `git diff --check` (passed with only CRLF warnings, compare-to-promotion orchestration V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (219 tests, candidate promotion approval auto-record V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, candidate promotion approval auto-record V1)
 - 2026-07-04: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (candidate promotion approval auto-record V1 review brief; no new P0/P1 blockers)
@@ -312,6 +317,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Compare-to-promotion orchestration V1 lowers command count, but it still depends on explicit yes/no user-backed approval inputs and does not choose winners automatically for multi-candidate compares.
 - Candidate promotion approval auto-record V1 lowers command burden, but it still depends on compare evidence being structurally sound; it does not decide winners automatically for multi-candidate compares.
 - Promotion approval runtime guard V1 closes the direct bypass path, but the workflow still depends on explicit user-backed approval recording through `record_quality_review.py`; there is no automatic approval generator.
 - Candidate promotion approval handoff V1 makes the approval step explicit earlier, but the workflow still does not automatically approve or deny promotion; formal user confirmation remains external to the helper.
@@ -348,10 +354,10 @@
 - None.
 
 ## Current Focus
-- The candidate promotion approval auto-record milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The compare-to-promotion orchestration milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the candidate promotion approval auto-record V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the compare-to-promotion orchestration V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

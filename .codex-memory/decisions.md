@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Compare Approval Recording And Promotion Can Share A Single Deterministic Adapter
+- Decision: Add `apply_candidate_promotion_decision.py` so a yes/no promotion decision from compare evidence can record approval and, for `yes`, continue directly into `promote_candidate_asset.py`.
+- Rationale: After candidate promotion approval auto-record V1, the workflow still required two separate commands for the common “approve and promote” path. A thin adapter lowers that burden without weakening evidence rules because it still relies on compare evidence, writes approval through the existing review contract, and then passes through the runtime guard.
+- Alternatives considered: Keep approval recording and promotion as two separate commands forever, or jump directly to a broader orchestration runner.
+- Impact: The common compare-to-promotion path is shorter, candidate work-item guidance now points to one deterministic next command, and promotion still cannot bypass approval because the runtime guard remains in place.
+- Rollback trigger: If later workflows need a more general orchestrator, preserve this adapter's evidence semantics but merge it into the broader orchestrator instead of falling back to longer manual command chains.
+- Related files: `split-image-assets/scripts/apply_candidate_promotion_decision.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `docs/usage/split-image-assets.md`, `split-image-assets/SKILL.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/tests/test_docs_and_contract.py`
+
 ## 2026-07-04 - Candidate Promotion Approval Should Have A Low-Burden Adapter, Not Just A Long Review Command
 - Decision: Add `record_candidate_promotion_approval.py` as a deterministic adapter that records `candidate_promotion` approval from compare evidence, while still reusing the normal `record_quality_review.py` contract underneath.
 - Rationale: After promotion approval runtime guard V1, the workflow was correct but the command burden for recording approval was still high. A thin adapter lowers that burden without inventing a second approval state model, because it still writes through the same confirmation and decision-log contract.
