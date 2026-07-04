@@ -12,7 +12,7 @@ from candidate_workflow_lib import (
 )
 from package_state_lib import find_plan_object, read_plan_manifest
 from provider_bridge_lib import describe_provider_selection
-from work_item_schema_lib import build_command_variant, build_recommended_task
+from work_item_schema_lib import build_command_variant, build_recommendation_bundle
 from work_item_schema_contract import (
     BRANCH_FLAG_DECISION_ANSWER,
     BRANCH_FLAG_PROMOTION_ANSWER,
@@ -410,9 +410,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
 
         next_action = "no-candidate-work-required"
         next_action_detail = "No candidate-stage action is currently required."
-        recommended_command = ""
-        recommended_command_variants: list[dict] = []
-        recommended_task: dict | None = None
+        recommendation_bundle = build_recommendation_bundle()
 
         if selected_candidate_id and promoted_revision == selected_candidate_id:
             next_action = "no-candidate-work-required"
@@ -456,7 +454,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         next_action_detail = (
                             "Multiple staged candidates exist across different provider ids and no safe provider default is available; choose a provider scope explicitly before compare."
                         )
-            recommended_command = _recommended_compare_command(
+            recommendation_bundle["recommended_command"] = _recommended_compare_command(
                 package_dir,
                 current_object_id,
                 candidates,
@@ -478,13 +476,6 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 and compare_candidate_ids[0].strip()
                 else ""
             )
-            recommended_command = _recommended_selection_command(
-                package_dir,
-                current_object_id,
-                comparison_id=latest_comparison_id,
-                candidate_id=single_candidate_id,
-                requires_candidate_id=not bool(single_candidate_id),
-            )
             recommended_command_variants = _selection_command_variants(
                 package_dir,
                 current_object_id,
@@ -492,13 +483,20 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 candidate_id=single_candidate_id,
                 requires_candidate_id=not bool(single_candidate_id),
             )
-            recommended_task = build_recommended_task(
+            recommendation_bundle = build_recommendation_bundle(
+                recommended_command=_recommended_selection_command(
+                    package_dir,
+                    current_object_id,
+                    comparison_id=latest_comparison_id,
+                    candidate_id=single_candidate_id,
+                    requires_candidate_id=not bool(single_candidate_id),
+                ),
+                variants=recommended_command_variants,
                 task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
                 task_phase=TASK_PHASE_CANDIDATE_SELECTION,
                 task_state=next_action,
                 task_goal="record-compare-winner",
                 default_variant_id="selection-only",
-                variants=recommended_command_variants,
             )
         else:
             candidate_id = comparison_selected_candidate_id or (candidate_ids[0] if len(candidate_ids) == 1 else "")
@@ -531,7 +529,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                     next_action_detail = (
                         "Comparison evidence is present and candidate promotion approval has already been recorded."
                     )
-                    recommended_command = _recommended_promote_command(
+                    recommendation_bundle["recommended_command"] = _recommended_promote_command(
                         package_dir,
                         current_object_id,
                         candidate_id=candidate_id,
@@ -545,25 +543,25 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                     next_action_detail = (
                         "A compare-selected candidate exists, but the candidate_promotion approval gate is still pending."
                     )
-                    recommended_command = _recommended_promotion_approval_command(
-                        package_dir,
-                        current_object_id,
-                        comparison_id=latest_comparison_id,
-                        candidate_id=candidate_id,
-                        delivery_class=recommended_delivery_class,
-                    )
                     recommended_command_variants = _promotion_decision_variants(
                         package_dir,
                         current_object_id,
                         comparison_id=latest_comparison_id,
                     )
-                    recommended_task = build_recommended_task(
+                    recommendation_bundle = build_recommendation_bundle(
+                        recommended_command=_recommended_promotion_approval_command(
+                            package_dir,
+                            current_object_id,
+                            comparison_id=latest_comparison_id,
+                            candidate_id=candidate_id,
+                            delivery_class=recommended_delivery_class,
+                        ),
+                        variants=recommended_command_variants,
                         task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
                         task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
                         task_state=next_action,
                         task_goal="decide-candidate-promotion",
                         default_variant_id="approve-and-promote",
-                        variants=recommended_command_variants,
                     )
             elif len(candidates) == 1:
                 if candidate_promotion_status in {"confirmed", "not-required"}:
@@ -571,7 +569,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                     next_action_detail = (
                         "Exactly one staged candidate exists and promotion approval has already been recorded."
                     )
-                    recommended_command = _recommended_promote_command(
+                    recommendation_bundle["recommended_command"] = _recommended_promote_command(
                         package_dir,
                         current_object_id,
                         candidate_id=candidate_ids[0],
@@ -585,25 +583,25 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                     next_action_detail = (
                         "Exactly one staged candidate exists, but candidate_promotion approval is still pending."
                     )
-                    recommended_command = _recommended_promotion_approval_command(
-                        package_dir,
-                        current_object_id,
-                        comparison_id="",
-                        candidate_id=candidate_ids[0],
-                        delivery_class=recommended_delivery_class,
-                    )
                     recommended_command_variants = _promotion_decision_variants(
                         package_dir,
                         current_object_id,
                         comparison_id="",
                     )
-                    recommended_task = build_recommended_task(
+                    recommendation_bundle = build_recommendation_bundle(
+                        recommended_command=_recommended_promotion_approval_command(
+                            package_dir,
+                            current_object_id,
+                            comparison_id="",
+                            candidate_id=candidate_ids[0],
+                            delivery_class=recommended_delivery_class,
+                        ),
+                        variants=recommended_command_variants,
                         task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
                         task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
                         task_state=next_action,
                         task_goal="decide-candidate-promotion",
                         default_variant_id="approve-and-promote",
-                        variants=recommended_command_variants,
                     )
 
         work_items.append(
@@ -629,9 +627,9 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 "recommended_delivery_class": recommended_delivery_class,
                 "next_action": next_action,
                 "next_action_detail": next_action_detail,
-                "recommended_command": recommended_command,
-                "recommended_command_variants": recommended_command_variants,
-                "recommended_task": recommended_task,
+                "recommended_command": recommendation_bundle["recommended_command"],
+                "recommended_command_variants": recommendation_bundle["recommended_command_variants"],
+                "recommended_task": recommendation_bundle["recommended_task"],
             }
         )
 

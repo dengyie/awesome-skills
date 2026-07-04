@@ -85,6 +85,39 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 default_variant_id="example",
                 variants=[{**good_variant, "phase": contract.TASK_PHASE_PROVIDER_BRIDGE}],
             )
+    def test_work_item_schema_lib_build_recommendation_bundle_enforces_default_command_match(self):
+        module = self._load_script_module("work_item_schema_lib.py")
+        contract = self._load_script_module("work_item_schema_contract.py")
+        variant = module.build_command_variant(
+            "example",
+            "Example",
+            "python tool.py --flag yes",
+            phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+            intent=contract.INTENT_RECORD_SELECTION_ONLY,
+            branch_flag=contract.BRANCH_FLAG_PROMOTION_ANSWER,
+            branch_value="skip",
+            recommended=True,
+        )
+        bundle = module.build_recommendation_bundle(
+            variants=[variant],
+            task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+            task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+            task_state="await-candidate-selection",
+            task_goal="record-compare-winner",
+            default_variant_id="example",
+        )
+        self.assertEqual(bundle["recommended_command"], "python tool.py --flag yes")
+        self.assertEqual(bundle["recommended_task"]["default_variant_id"], "example")
+        with self.assertRaisesRegex(ValueError, "recommended_command must match the default variant command"):
+            module.build_recommendation_bundle(
+                recommended_command="python other.py",
+                variants=[variant],
+                task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+                task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+                task_state="await-candidate-selection",
+                task_goal="record-compare-winner",
+                default_variant_id="example",
+            )
     def test_prepare_provider_request_writes_bridge_request_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

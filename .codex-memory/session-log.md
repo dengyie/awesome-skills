@@ -831,3 +831,9 @@
 - Results: The shared task surface is now both documented and enforced at construction time, while valid candidate/provider outputs remain unchanged. Full package validation passed with 242 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 04:55
+- Task: Complete `split-image-assets` work-item recommendation bundle V1.
+- Actions: Switched candidate and provider work-item callers to use `build_recommendation_bundle(...)` instead of hand-assembling the three-part recommendation surface; aligned the provider consume-result default command with the protocol-enforced default variant path; synchronized implementation baseline and project memory; expanded focused tests for bundle consistency.
+- Results: The final recommendation envelope now comes from one shared builder across both work-item surfaces, and the bundle-level consistency rule is exercised by real callers instead of only helper tests. Full package validation passed with 243 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

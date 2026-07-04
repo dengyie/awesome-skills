@@ -16,7 +16,7 @@ from provider_registry import (
     get_provider_spec,
     list_supported_provider_ids,
 )
-from work_item_schema_lib import build_command_variant, build_recommended_task
+from work_item_schema_lib import build_command_variant, build_recommendation_bundle
 from work_item_schema_contract import (
     BRANCH_FLAG_NEXT_ACTION,
     INTENT_CONSUME_PROVIDER_RESULT,
@@ -390,6 +390,8 @@ def _recommended_command(
         )
         if explicit_provider_required and selected_provider_id:
             command += f" --provider-id {selected_provider_id}"
+        if inferred_consume_mode:
+            command += f" --mode {inferred_consume_mode}"
         if consume_mode_error and not inferred_consume_mode:
             command += " --mode <import-extract|stage-candidate|import-manifest>"
         return command
@@ -551,8 +553,7 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
             if planned_route in {"rebuild_downstream", "support_only"}
             else "No active provider bridge action is required."
         )
-        recommended_command_variants: list[dict] = []
-        recommended_task: dict | None = None
+        recommendation_bundle = build_recommendation_bundle()
 
         if selected_provider_id:
             if planned_route == "generate" and not (
@@ -598,15 +599,6 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
                                 f"A provider result is staged and can be consumed through mode {inferred_consume_mode!r}."
                             )
 
-        recommended_command = _recommended_command(
-            package_dir,
-            current_object_id,
-            selected_provider_id,
-            next_action,
-            explicit_provider_required=explicit_provider_required,
-            inferred_consume_mode=inferred_consume_mode,
-            consume_mode_error=consume_mode_error,
-        )
         recommended_command_variants = _provider_command_variants(
             package_dir,
             current_object_id,
@@ -617,13 +609,32 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
             consume_mode_error=consume_mode_error,
         )
         if recommended_command_variants:
-            recommended_task = build_recommended_task(
+            recommendation_bundle = build_recommendation_bundle(
+                recommended_command=_recommended_command(
+                    package_dir,
+                    current_object_id,
+                    selected_provider_id,
+                    next_action,
+                    explicit_provider_required=explicit_provider_required,
+                    inferred_consume_mode=inferred_consume_mode,
+                    consume_mode_error=consume_mode_error,
+                ),
+                variants=recommended_command_variants,
                 task_type=TASK_TYPE_PROVIDER_BRIDGE,
                 task_phase=TASK_PHASE_PROVIDER_BRIDGE,
                 task_state=next_action,
                 task_goal=next_action,
                 default_variant_id=recommended_command_variants[0]["variant_id"],
-                variants=recommended_command_variants,
+            )
+        else:
+            recommendation_bundle["recommended_command"] = _recommended_command(
+                package_dir,
+                current_object_id,
+                selected_provider_id,
+                next_action,
+                explicit_provider_required=explicit_provider_required,
+                inferred_consume_mode=inferred_consume_mode,
+                consume_mode_error=consume_mode_error,
             )
         work_items.append(
             {
@@ -647,9 +658,9 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
                 "consume_mode_error": consume_mode_error,
                 "next_action": next_action,
                 "next_action_detail": next_action_detail,
-                "recommended_command": recommended_command,
-                "recommended_command_variants": recommended_command_variants,
-                "recommended_task": recommended_task,
+                "recommended_command": recommendation_bundle["recommended_command"],
+                "recommended_command_variants": recommendation_bundle["recommended_command_variants"],
+                "recommended_task": recommendation_bundle["recommended_task"],
             }
         )
 

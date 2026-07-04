@@ -87,6 +87,7 @@ What landed:
 
 - candidate and provider work-item recommendation builders now reuse a shared `work_item_schema_lib.py` helper for command variants and grouped task envelopes
 - the shared helper keeps the candidate/provider task-like recommendation surfaces aligned while preserving the current JSON contract
+- later follow-up work may continue to route all three recommendation layers (`recommended_command`, `recommended_command_variants[]`, `recommended_task`) through the same shared bundle helper instead of assembling them separately in each caller
 
 Verification completed:
 

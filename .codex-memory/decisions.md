@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Recommendation Bundle Assembly Should Also Be Shared, Not Rebuilt In Each Work-Item Surface
+- Decision: Route candidate and provider work-item assembly through `build_recommendation_bundle(...)` instead of hand-assembling `recommended_command`, `recommended_command_variants[]`, and `recommended_task` in each caller.
+- Rationale: After the shared helper, shared enums, shared contract, and protocol validation existed, the remaining duplicated logic was the final bundling step itself. That duplication kept the most important compatibility rule — default command must match default variant — outside the main callers. Moving both callers to the shared bundle keeps one source of truth for output assembly and makes protocol guarantees effective in normal code paths.
+- Alternatives considered: Keep each caller assembling the three fields manually, or move directly to a larger task engine abstraction.
+- Impact: Candidate and provider work-item surfaces now rely on one bundle builder for the final recommendation envelope, reducing assembly drift while preserving the same JSON behavior for valid outputs.
+- Rollback trigger: If a future engine replaces command bundles entirely, preserve the current bundle consistency rules there rather than copying ad hoc assembly back into each caller.
+- Related files: `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - The Shared Task Schema Helper Should Enforce Its Own Core Protocol Invariants
 - Decision: Harden `work_item_schema_lib.py` so it validates non-empty semantic fields, allowed task/phase/branch vocabularies, unique normalized field lists, and the key task invariant that the default variant must be the one recommended variant.
 - Rationale: Once the shared helper and shared contract existed, the remaining weakness was that the helper still accepted structurally inconsistent inputs. That left the contract documented but not enforced. Adding lightweight validation hardens the boundary without changing normal behavior for valid callers.
