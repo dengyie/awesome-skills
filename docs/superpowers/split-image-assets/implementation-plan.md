@@ -64,6 +64,20 @@ This means the package is no longer primarily a packaging helper with extraction
 
 ## Most Recent Closed Milestone
 
+### `registered task bundle helper V1`
+
+Closed status: complete
+
+What landed:
+
+- candidate and provider callers now use `build_registered_task_bundle(...)` instead of composing registry lookup and recommendation bundle assembly by hand
+- the registry-aware bundle path is now the normal construction path for known work-item task states
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+
 ### `shared task registry versioning V1`
 
 Closed status: complete
@@ -620,6 +634,7 @@ These are the important completed milestones that define the current architectur
 38. shared task contract V1
 39. work-item recommendation bundle V1
 40. shared task registry versioning V1
+41. registered task bundle helper V1
 
 Treat these as delivered baseline, not as active checklist items.
 

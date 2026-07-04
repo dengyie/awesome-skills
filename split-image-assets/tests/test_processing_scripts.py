@@ -178,6 +178,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertEqual(bundle["recommended_task"]["task_goal"], "record-compare-winner")
         self.assertEqual(bundle["recommended_task"]["default_variant_id"], "selection-only")
         self.assertEqual(bundle["recommended_task"]["task_registry_key"], "candidate-lifecycle.await-candidate-selection")
+    def test_work_item_schema_lib_has_single_registered_task_bundle_definition(self):
+        helper_text = (ROOT / "scripts" / "work_item_schema_lib.py").read_text(encoding="utf-8")
+        self.assertEqual(helper_text.count("def build_registered_task_bundle("), 1)
     def test_prepare_provider_request_writes_bridge_request_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
