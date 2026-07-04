@@ -92,6 +92,20 @@ Verification completed:
 - `python -B -m unittest discover split-image-assets\tests -v`
 - `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
+### `shared task registry access V1`
+
+Closed status: complete
+
+What landed:
+
+- the shared task registry now has direct accessors for registry-key lookup and ordered task listing instead of only implicit tuple-key access inside callers
+- shared-task docs and focused tests now treat registry access as part of the public local contract surface
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+
 ### `work-item recommendation bundle V1`
 
 Closed status: complete

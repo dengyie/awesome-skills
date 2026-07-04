@@ -229,6 +229,34 @@ def build_registered_task_bundle(
     )
 
 
+def lookup_registered_task_by_key(registry_key: str) -> dict:
+    registry_key_value = _require_non_empty_string(registry_key, "registry_key")
+    for (task_type, task_phase, task_state), registration in TASK_REGISTRY.items():
+        if str(registration.get("registry_key", "")).strip() != registry_key_value:
+            continue
+        return {
+            "task_type": str(task_type),
+            "task_phase": str(task_phase),
+            "task_state": str(task_state),
+            "task_registry_version": SHARED_TASK_REGISTRY_VERSION,
+            "task_registry_reference": SHARED_TASK_REGISTRY_REFERENCE,
+            "task_registry_key": registry_key_value,
+            "task_goal": str(registration["task_goal"]),
+            "default_variant_id": str(registration["default_variant_id"]),
+            "allowed_variant_ids": list(registration["allowed_variant_ids"]),
+        }
+    raise ValueError("registry_key must match a registered shared task")
+
+
+def list_registered_tasks() -> list[dict]:
+    entries: list[dict] = []
+    for (_task_type, _task_phase, _task_state), registration in TASK_REGISTRY.items():
+        entries.append(
+            lookup_registered_task_by_key(str(registration["registry_key"]))
+        )
+    return sorted(entries, key=lambda item: item["task_registry_key"])
+
+
 def lookup_registered_task(
     *,
     task_type: str,

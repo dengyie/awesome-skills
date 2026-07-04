@@ -122,6 +122,22 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertEqual(registration["task_goal"], "consume-provider-result")
         self.assertEqual(registration["default_variant_id"], "consume-provider-result")
         self.assertEqual(registration["allowed_variant_ids"], ["consume-provider-result"])
+    def test_work_item_schema_lib_lookup_registered_task_by_key_returns_registry_entry(self):
+        module = self._load_script_module("work_item_schema_lib.py")
+        registration = module.lookup_registered_task_by_key(
+            "candidate-lifecycle.record-candidate-promotion-approval"
+        )
+        self.assertEqual(registration["task_type"], "candidate-lifecycle")
+        self.assertEqual(registration["task_phase"], "candidate-promotion")
+        self.assertEqual(registration["task_state"], "record-candidate-promotion-approval")
+        self.assertEqual(registration["default_variant_id"], "approve-and-promote")
+    def test_work_item_schema_lib_lists_registered_tasks(self):
+        module = self._load_script_module("work_item_schema_lib.py")
+        entries = module.list_registered_tasks()
+        self.assertGreaterEqual(len(entries), 6)
+        self.assertEqual(entries, sorted(entries, key=lambda item: item["task_registry_key"]))
+        self.assertIn("candidate-lifecycle.await-candidate-selection", [item["task_registry_key"] for item in entries])
+        self.assertIn("provider-bridge.consume-provider-result", [item["task_registry_key"] for item in entries])
     def test_work_item_schema_lib_build_recommendation_bundle_enforces_default_command_match(self):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")

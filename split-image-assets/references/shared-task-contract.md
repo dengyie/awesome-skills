@@ -96,6 +96,12 @@ The canonical shared builders currently live in:
 
 - `split-image-assets/scripts/work_item_schema_lib.py`
 
+The canonical registry accessors now include:
+
+- `lookup_registered_task(...)`
+- `lookup_registered_task_by_key(...)`
+- `list_registered_tasks()`
+
 Do not duplicate task-type, phase, branch-flag, or common intent literals in new code when these helpers already own them.
 
 ## Current Task Types

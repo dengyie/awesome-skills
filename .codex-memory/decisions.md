@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - The Shared Task Registry Should Be Directly Queryable By Key Or Listing, Not Only Indirectly Through Work-Item Builders
+- Decision: Add registry accessors such as `lookup_registered_task_by_key(...)` and `list_registered_tasks()` to the shared task schema layer.
+- Rationale: Once registry identities existed, downstream consumers still had to either know the tuple form or wait for a caller to build a task bundle. A small direct access surface makes the registry itself consumable and easier to validate without changing workflow behavior.
+- Alternatives considered: Keep the registry accessible only through tuple-based lookup, or postpone registry access until a larger schema registry exists.
+- Impact: Tests, docs, and future tooling can now inspect the registry directly by key or enumerate it, while the existing work-item surfaces remain unchanged.
+- Rollback trigger: If a broader registry API supersedes this local helper, preserve key-based lookup and ordered listing semantics there rather than removing them outright.
+- Related files: `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/references/shared-task-contract.md`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Registered Task Bundle Assembly Should Be Shared Too, Not Repeated In Each Caller
 - Decision: Add and use `build_registered_task_bundle(...)` so callers stop wiring `lookup_registered_task(...)` and `build_recommendation_bundle(...)` together by hand.
 - Rationale: After the registry and bundle helpers both existed, callers still repeated the glue logic that combined them. That left one more place where a caller could drift from the shared task protocol. A small wrapper closes that gap and keeps registry-driven bundle assembly consistent.

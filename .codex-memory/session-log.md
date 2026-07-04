@@ -855,6 +855,12 @@
 - Results: Registry-aware bundle assembly is now centralized in one helper instead of repeated in each caller. Full package validation passed with 245 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 07:45
+- Task: Complete `split-image-assets` shared task registry access V1.
+- Actions: Added `lookup_registered_task_by_key(...)` and `list_registered_tasks()` to the shared schema layer; expanded focused tests for key-based lookup and ordered registry listing; synchronized the implementation baseline and project memory.
+- Results: The shared task registry is now directly consumable by key or full listing instead of only indirectly through work-item builders. Full package validation passed with 248 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.
 ## 2026-07-05 06:05
 - Task: Complete `split-image-assets` shared task registry identity V1.
 - Actions: Added `task_registry_version` and `task_registry_key` to the shared task contract and helper outputs; extended the shared-task reference accordingly; expanded focused tests so helper, provider work items, and candidate work items all expose the identity surface.

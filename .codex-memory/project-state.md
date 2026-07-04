@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` shared task registry access V1 is complete locally. The shared task registry can now be consumed directly by key or enumerated as a sorted list, instead of only being read indirectly through work-item task builders.
 - Current stage: `split-image-assets` registered task bundle helper V1 is complete locally. Candidate and provider work-item callers now rely on `build_registered_task_bundle(...)` instead of wiring registry lookup and recommendation bundle assembly together by hand.
 - Current stage: `split-image-assets` shared task registry versioning V1 is complete locally. Shared task outputs now expose `task_registry_reference` alongside key/version so registry identity is more self-describing.
 - Current stage: `split-image-assets` shared task registry identity V1 is complete locally. Shared task outputs now carry explicit `task_registry_key` and `task_registry_version` fields so downstream consumers do not have to infer registry identity from task type/phase/state alone.
@@ -41,6 +42,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (248 tests, shared task registry access V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, shared task registry access V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (shared task registry access V1 review brief; no new P0/P1 blockers)
+- 2026-07-05: `git diff --check` (passed with only CRLF warnings, shared task registry access V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (245 tests, registered task bundle helper V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, registered task bundle helper V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (registered task bundle helper V1 review brief; no new P0/P1 blockers)
@@ -417,6 +422,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Shared task registry access V1 makes the registry directly queryable, but the registry still intentionally remains local and code-backed rather than externalized into a broader schema service.
 - Registered task bundle helper V1 removes one more layer of duplicated assembly, but candidate and provider work-item state machines still intentionally remain separate above the shared protocol helpers.
 - Shared task registry versioning V1 makes registry identity more self-describing, but the registry is still intentionally local and lightweight rather than a broader external schema registry.
 - Shared task registry identity V1 makes task identity explicit, but the registry is still intentionally local and lightweight rather than a broader versioned schema registry.
@@ -474,10 +480,10 @@
 - None.
 
 ## Current Focus
-- The registered task bundle helper milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The shared task registry access milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the registered task bundle helper V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the shared task registry access V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`
