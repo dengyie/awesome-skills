@@ -16,7 +16,7 @@ from provider_registry import (
     get_provider_spec,
     list_supported_provider_ids,
 )
-from work_item_schema_lib import build_command_variant, build_recommendation_bundle
+from work_item_schema_lib import build_command_variant, build_recommendation_bundle, lookup_registered_task
 from work_item_schema_contract import (
     BRANCH_FLAG_NEXT_ACTION,
     INTENT_CONSUME_PROVIDER_RESULT,
@@ -609,6 +609,11 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
             consume_mode_error=consume_mode_error,
         )
         if recommended_command_variants:
+            task_registration = lookup_registered_task(
+                task_type=TASK_TYPE_PROVIDER_BRIDGE,
+                task_phase=TASK_PHASE_PROVIDER_BRIDGE,
+                task_state=next_action,
+            )
             recommendation_bundle = build_recommendation_bundle(
                 recommended_command=_recommended_command(
                     package_dir,
@@ -620,11 +625,11 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
                     consume_mode_error=consume_mode_error,
                 ),
                 variants=recommended_command_variants,
-                task_type=TASK_TYPE_PROVIDER_BRIDGE,
-                task_phase=TASK_PHASE_PROVIDER_BRIDGE,
-                task_state=next_action,
-                task_goal=next_action,
-                default_variant_id=recommended_command_variants[0]["variant_id"],
+                task_type=task_registration["task_type"],
+                task_phase=task_registration["task_phase"],
+                task_state=task_registration["task_state"],
+                task_goal=task_registration["task_goal"],
+                default_variant_id=task_registration["default_variant_id"],
             )
         else:
             recommendation_bundle["recommended_command"] = _recommended_command(

@@ -837,3 +837,9 @@
 - Results: The final recommendation envelope now comes from one shared builder across both work-item surfaces, and the bundle-level consistency rule is exercised by real callers instead of only helper tests. Full package validation passed with 243 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 05:30
+- Task: Complete `split-image-assets` shared task registry V1.
+- Actions: Added `TASK_REGISTRY` to the shared task contract; taught `work_item_schema_lib.py` to validate registered task identities and added `lookup_registered_task(...)`; updated candidate/provider callers to fetch task goal/default variant metadata from the registry instead of repeating literals; synchronized implementation baseline and project memory; expanded focused tests for registry lookup and registry-enforced validation.
+- Results: Known task states are now centrally registered and validated, and the callers no longer duplicate task goal/default metadata. Full package validation passed with 244 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

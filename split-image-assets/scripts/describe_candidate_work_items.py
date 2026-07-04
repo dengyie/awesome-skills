@@ -12,7 +12,7 @@ from candidate_workflow_lib import (
 )
 from package_state_lib import find_plan_object, read_plan_manifest
 from provider_bridge_lib import describe_provider_selection
-from work_item_schema_lib import build_command_variant, build_recommendation_bundle
+from work_item_schema_lib import build_command_variant, build_recommendation_bundle, lookup_registered_task
 from work_item_schema_contract import (
     BRANCH_FLAG_DECISION_ANSWER,
     BRANCH_FLAG_PROMOTION_ANSWER,
@@ -483,6 +483,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 candidate_id=single_candidate_id,
                 requires_candidate_id=not bool(single_candidate_id),
             )
+            task_registration = lookup_registered_task(
+                task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
+                task_phase=TASK_PHASE_CANDIDATE_SELECTION,
+                task_state=next_action,
+            )
             recommendation_bundle = build_recommendation_bundle(
                 recommended_command=_recommended_selection_command(
                     package_dir,
@@ -492,11 +497,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                     requires_candidate_id=not bool(single_candidate_id),
                 ),
                 variants=recommended_command_variants,
-                task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
-                task_phase=TASK_PHASE_CANDIDATE_SELECTION,
-                task_state=next_action,
-                task_goal="record-compare-winner",
-                default_variant_id="selection-only",
+                task_type=task_registration["task_type"],
+                task_phase=task_registration["task_phase"],
+                task_state=task_registration["task_state"],
+                task_goal=task_registration["task_goal"],
+                default_variant_id=task_registration["default_variant_id"],
             )
         else:
             candidate_id = comparison_selected_candidate_id or (candidate_ids[0] if len(candidate_ids) == 1 else "")
@@ -548,6 +553,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id=latest_comparison_id,
                     )
+                    task_registration = lookup_registered_task(
+                        task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
+                        task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
+                        task_state=next_action,
+                    )
                     recommendation_bundle = build_recommendation_bundle(
                         recommended_command=_recommended_promotion_approval_command(
                             package_dir,
@@ -557,11 +567,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                             delivery_class=recommended_delivery_class,
                         ),
                         variants=recommended_command_variants,
-                        task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
-                        task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
-                        task_state=next_action,
-                        task_goal="decide-candidate-promotion",
-                        default_variant_id="approve-and-promote",
+                        task_type=task_registration["task_type"],
+                        task_phase=task_registration["task_phase"],
+                        task_state=task_registration["task_state"],
+                        task_goal=task_registration["task_goal"],
+                        default_variant_id=task_registration["default_variant_id"],
                     )
             elif len(candidates) == 1:
                 if candidate_promotion_status in {"confirmed", "not-required"}:
@@ -588,6 +598,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id="",
                     )
+                    task_registration = lookup_registered_task(
+                        task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
+                        task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
+                        task_state=next_action,
+                    )
                     recommendation_bundle = build_recommendation_bundle(
                         recommended_command=_recommended_promotion_approval_command(
                             package_dir,
@@ -597,11 +612,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                             delivery_class=recommended_delivery_class,
                         ),
                         variants=recommended_command_variants,
-                        task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
-                        task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
-                        task_state=next_action,
-                        task_goal="decide-candidate-promotion",
-                        default_variant_id="approve-and-promote",
+                        task_type=task_registration["task_type"],
+                        task_phase=task_registration["task_phase"],
+                        task_state=task_registration["task_state"],
+                        task_goal=task_registration["task_goal"],
+                        default_variant_id=task_registration["default_variant_id"],
                     )
 
         work_items.append(

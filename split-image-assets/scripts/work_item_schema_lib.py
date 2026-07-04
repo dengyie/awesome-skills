@@ -5,6 +5,7 @@ from work_item_schema_contract import (
     ALLOWED_TASK_TYPES,
     SHARED_TASK_CONTRACT_REFERENCE,
     SHARED_TASK_PROTOCOL_VERSION,
+    TASK_REGISTRY,
 )
 
 
@@ -96,6 +97,9 @@ def build_recommended_task(
         raise ValueError(f"task_type must be one of: {sorted(ALLOWED_TASK_TYPES)}")
     if task_phase_value not in ALLOWED_TASK_PHASES:
         raise ValueError(f"task_phase must be one of: {sorted(ALLOWED_TASK_PHASES)}")
+    registration = TASK_REGISTRY.get((task_type_value, task_phase_value, task_state_value))
+    if registration is None:
+        raise ValueError("task_type/task_phase/task_state must match a registered shared task")
     if not isinstance(variants, list) or not variants:
         raise ValueError("variants must be a non-empty list")
     variant_ids: list[str] = []
@@ -120,6 +124,18 @@ def build_recommended_task(
         raise ValueError("exactly one variant per task must be marked recommended")
     if recommended_ids[0] != default_variant_id_value:
         raise ValueError("default_variant_id must match the recommended variant")
+    if task_goal_value != str(registration.get("task_goal", "")).strip():
+        raise ValueError("task_goal must match the registered shared task goal")
+    if default_variant_id_value != str(registration.get("default_variant_id", "")).strip():
+        raise ValueError("default_variant_id must match the registered shared task default variant")
+    allowed_variant_ids = registration.get("allowed_variant_ids", [])
+    if not isinstance(allowed_variant_ids, list) or not all(
+        isinstance(item, str) and item.strip() for item in allowed_variant_ids
+    ):
+        raise ValueError("registered shared task allowed_variant_ids must be a list of non-empty strings")
+    unexpected_variant_ids = [item for item in variant_ids if item not in allowed_variant_ids]
+    if unexpected_variant_ids:
+        raise ValueError("variants must stay within the registered shared task variant ids")
     return {
         "task_protocol_version": SHARED_TASK_PROTOCOL_VERSION,
         "task_contract_reference": SHARED_TASK_CONTRACT_REFERENCE,
@@ -178,4 +194,26 @@ def build_recommendation_bundle(
         "recommended_command": command_value,
         "recommended_command_variants": normalized_variants,
         "recommended_task": recommended_task,
+    }
+
+
+def lookup_registered_task(
+    *,
+    task_type: str,
+    task_phase: str,
+    task_state: str,
+) -> dict:
+    task_type_value = _require_non_empty_string(task_type, "task_type")
+    task_phase_value = _require_non_empty_string(task_phase, "task_phase")
+    task_state_value = _require_non_empty_string(task_state, "task_state")
+    registration = TASK_REGISTRY.get((task_type_value, task_phase_value, task_state_value))
+    if registration is None:
+        raise ValueError("task_type/task_phase/task_state must match a registered shared task")
+    return {
+        "task_type": task_type_value,
+        "task_phase": task_phase_value,
+        "task_state": task_state_value,
+        "task_goal": str(registration["task_goal"]),
+        "default_variant_id": str(registration["default_variant_id"]),
+        "allowed_variant_ids": list(registration["allowed_variant_ids"]),
     }

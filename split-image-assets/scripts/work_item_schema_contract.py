@@ -45,3 +45,43 @@ ALLOWED_INTENTS = {
     INTENT_RECORD_PROVIDER_RESULT,
     INTENT_CONSUME_PROVIDER_RESULT,
 }
+
+TASK_REGISTRY = {
+    (TASK_TYPE_CANDIDATE_LIFECYCLE, TASK_PHASE_CANDIDATE_SELECTION, "await-candidate-selection"): {
+        "task_goal": "record-compare-winner",
+        "default_variant_id": "selection-only",
+        "allowed_variant_ids": [
+            "selection-only",
+            "selection-then-promote-yes",
+            "selection-then-decline",
+        ],
+    },
+    (TASK_TYPE_CANDIDATE_LIFECYCLE, TASK_PHASE_CANDIDATE_PROMOTION, "record-candidate-promotion-approval"): {
+        "task_goal": "decide-candidate-promotion",
+        "default_variant_id": "approve-and-promote",
+        "allowed_variant_ids": [
+            "approve-and-promote",
+            "decline-promotion",
+        ],
+    },
+    (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "prepare-generation-brief"): {
+        "task_goal": "prepare-generation-brief",
+        "default_variant_id": "prepare-generation-brief",
+        "allowed_variant_ids": ["prepare-generation-brief"],
+    },
+    (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "prepare-provider-request"): {
+        "task_goal": "prepare-provider-request",
+        "default_variant_id": "prepare-provider-request",
+        "allowed_variant_ids": ["prepare-provider-request"],
+    },
+    (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "await-provider-result"): {
+        "task_goal": "await-provider-result",
+        "default_variant_id": "record-provider-result",
+        "allowed_variant_ids": ["record-provider-result"],
+    },
+    (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "consume-provider-result"): {
+        "task_goal": "consume-provider-result",
+        "default_variant_id": "consume-provider-result",
+        "allowed_variant_ids": ["consume-provider-result"],
+    },
+}

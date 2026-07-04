@@ -64,6 +64,22 @@ This means the package is no longer primarily a packaging helper with extraction
 
 ## Most Recent Closed Milestone
 
+### `work-item recommendation bundle V1`
+
+Closed status: complete
+
+What landed:
+
+- candidate and provider work-item callers now route the final recommendation envelope through `build_recommendation_bundle(...)`
+- the shared bundle helper now enforces that the compatibility/default command stays aligned with the default variant path
+- provider consume-result recommendations now keep the inferred `--mode` on the compatibility command so the shared bundle consistency rule holds in real outputs
+- later follow-up work may continue to move task-goal/default-variant semantics into a shared registry so callers stop repeating those values
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+
 ### `shared task contract V1`
 
 Closed status: complete
@@ -587,6 +603,7 @@ These are the important completed milestones that define the current architectur
 36. provider work-item schema V1
 37. work-item shared schema V1
 38. shared task contract V1
+39. work-item recommendation bundle V1
 
 Treat these as delivered baseline, not as active checklist items.
 

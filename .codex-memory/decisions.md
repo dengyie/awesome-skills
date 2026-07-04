@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Shared Task Protocol Should Also Register Known Task Identities Instead Of Repeating Goals And Defaults In Callers
+- Decision: Add a `TASK_REGISTRY` in `work_item_schema_contract.py` and route candidate/provider callers through it for known task state metadata such as `task_goal`, `default_variant_id`, and allowed variant ids.
+- Rationale: After shared schema, shared enums, shared contract, shared protocol validation, and shared bundle assembly landed, callers were still repeating the last layer of task identity semantics. That kept the protocol logically centralized but operationally duplicated. A small registry closes that gap and makes the helper, tests, and callers speak one source of truth.
+- Alternatives considered: Keep task goals/default variants inline in each caller, or postpone registry work until a larger task engine exists.
+- Impact: Known task states are now centrally registered and validated, callers stop repeating default task metadata, and future additions to the task surface can update one registry instead of multiple modules.
+- Rollback trigger: If a broader workflow registry supersedes this local task map, preserve the same registered semantics there rather than reverting to hardcoded per-caller literals.
+- Related files: `split-image-assets/scripts/work_item_schema_contract.py`, `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Recommendation Bundle Assembly Should Also Be Shared, Not Rebuilt In Each Work-Item Surface
 - Decision: Route candidate and provider work-item assembly through `build_recommendation_bundle(...)` instead of hand-assembling `recommended_command`, `recommended_command_variants[]`, and `recommended_task` in each caller.
 - Rationale: After the shared helper, shared enums, shared contract, and protocol validation existed, the remaining duplicated logic was the final bundling step itself. That duplication kept the most important compatibility rule — default command must match default variant — outside the main callers. Moving both callers to the shared bundle keeps one source of truth for output assembly and makes protocol guarantees effective in normal code paths.

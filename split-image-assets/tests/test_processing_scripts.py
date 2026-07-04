@@ -14,8 +14,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")
         variant = module.build_command_variant(
-            "example",
-            "Example",
+            "selection-only",
+            "Record Winner",
             "python tool.py",
             "Example note.",
             phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
@@ -33,15 +33,15 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
             task_state="await-candidate-selection",
             task_goal="record-compare-winner",
-            default_variant_id="example",
+            default_variant_id="selection-only",
             variants=[variant],
         )
-        self.assertEqual(variant["variant_id"], "example")
+        self.assertEqual(variant["variant_id"], "selection-only")
         self.assertEqual(variant["phase"], contract.TASK_PHASE_CANDIDATE_SELECTION)
         self.assertEqual(variant["writes_fields"], ["selected_candidate_id"])
         self.assertTrue(variant["requires_human_confirmation"])
         self.assertEqual(task["task_type"], contract.TASK_TYPE_CANDIDATE_LIFECYCLE)
-        self.assertEqual(task["default_variant_id"], "example")
+        self.assertEqual(task["default_variant_id"], "selection-only")
         self.assertEqual(task["variant_count"], 1)
         self.assertEqual(task["task_protocol_version"], contract.SHARED_TASK_PROTOCOL_VERSION)
         self.assertEqual(task["task_contract_reference"], contract.SHARED_TASK_CONTRACT_REFERENCE)
@@ -49,8 +49,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")
         good_variant = module.build_command_variant(
-            "example",
-            "Example",
+            "selection-only",
+            "Record Winner",
             "python tool.py",
             phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
             intent=contract.INTENT_RECORD_SELECTION_ONLY,
@@ -73,7 +73,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
                 task_state="await-candidate-selection",
                 task_goal="record-compare-winner",
-                default_variant_id="example",
+                default_variant_id="selection-only",
                 variants=[{**good_variant, "recommended": False}],
             )
         with self.assertRaisesRegex(ValueError, "all variants in one task must share the same phase as task_phase"):
@@ -82,15 +82,46 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
                 task_state="await-candidate-selection",
                 task_goal="record-compare-winner",
-                default_variant_id="example",
+                default_variant_id="selection-only",
                 variants=[{**good_variant, "phase": contract.TASK_PHASE_PROVIDER_BRIDGE}],
             )
+        with self.assertRaisesRegex(ValueError, "task_goal must match the registered shared task goal"):
+            module.build_recommended_task(
+                task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+                task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+                task_state="await-candidate-selection",
+                task_goal="wrong-goal",
+                default_variant_id="selection-only",
+                variants=[
+                    module.build_command_variant(
+                        "selection-only",
+                        "Record Winner",
+                        "python tool.py --flag yes",
+                        phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+                        intent=contract.INTENT_RECORD_SELECTION_ONLY,
+                        branch_flag=contract.BRANCH_FLAG_PROMOTION_ANSWER,
+                        branch_value="skip",
+                        recommended=True,
+                    )
+                ],
+            )
+    def test_work_item_schema_lib_lookup_registered_task_returns_registry_entry(self):
+        module = self._load_script_module("work_item_schema_lib.py")
+        contract = self._load_script_module("work_item_schema_contract.py")
+        registration = module.lookup_registered_task(
+            task_type=contract.TASK_TYPE_PROVIDER_BRIDGE,
+            task_phase=contract.TASK_PHASE_PROVIDER_BRIDGE,
+            task_state="consume-provider-result",
+        )
+        self.assertEqual(registration["task_goal"], "consume-provider-result")
+        self.assertEqual(registration["default_variant_id"], "consume-provider-result")
+        self.assertEqual(registration["allowed_variant_ids"], ["consume-provider-result"])
     def test_work_item_schema_lib_build_recommendation_bundle_enforces_default_command_match(self):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")
         variant = module.build_command_variant(
-            "example",
-            "Example",
+            "selection-only",
+            "Record Winner",
             "python tool.py --flag yes",
             phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
             intent=contract.INTENT_RECORD_SELECTION_ONLY,
@@ -104,10 +135,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
             task_state="await-candidate-selection",
             task_goal="record-compare-winner",
-            default_variant_id="example",
+            default_variant_id="selection-only",
         )
         self.assertEqual(bundle["recommended_command"], "python tool.py --flag yes")
-        self.assertEqual(bundle["recommended_task"]["default_variant_id"], "example")
+        self.assertEqual(bundle["recommended_task"]["default_variant_id"], "selection-only")
         with self.assertRaisesRegex(ValueError, "recommended_command must match the default variant command"):
             module.build_recommendation_bundle(
                 recommended_command="python other.py",
@@ -116,7 +147,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
                 task_state="await-candidate-selection",
                 task_goal="record-compare-winner",
-                default_variant_id="example",
+                default_variant_id="selection-only",
             )
     def test_prepare_provider_request_writes_bridge_request_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
