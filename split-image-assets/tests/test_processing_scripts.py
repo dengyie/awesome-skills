@@ -48,6 +48,15 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertEqual(task["task_registry_version"], contract.SHARED_TASK_REGISTRY_VERSION)
         self.assertEqual(task["task_registry_reference"], contract.SHARED_TASK_REGISTRY_REFERENCE)
         self.assertEqual(task["task_registry_key"], "candidate-lifecycle.await-candidate-selection")
+    def test_work_item_schema_contract_registry_source_is_valid(self):
+        contract = self._load_script_module("work_item_schema_contract.py")
+        self.assertEqual(contract.validate_task_registry_source(), [])
+        entries = contract.list_task_registry_entries()
+        self.assertGreaterEqual(len(entries), 6)
+        self.assertIn(
+            "candidate-lifecycle.await-candidate-selection",
+            [entry["registry_key"] for entry in entries],
+        )
     def test_work_item_schema_lib_rejects_invalid_task_protocol(self):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")

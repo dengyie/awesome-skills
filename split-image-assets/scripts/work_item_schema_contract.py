@@ -8,7 +8,6 @@ SHARED_TASK_PROTOCOL_VERSION = "1.0"
 SHARED_TASK_CONTRACT_REFERENCE = "split-image-assets/references/shared-task-contract.md"
 SHARED_TASK_REGISTRY_VERSION = "1.0"
 SHARED_TASK_REGISTRY_REFERENCE = "split-image-assets/scripts/work_item_schema_contract.py"
-SHARED_TASK_REGISTRY_REFERENCE = "split-image-assets/scripts/work_item_schema_contract.py"
 
 TASK_PHASE_CANDIDATE_SELECTION = "candidate-selection"
 TASK_PHASE_CANDIDATE_PROMOTION = "candidate-promotion"
@@ -94,3 +93,60 @@ TASK_REGISTRY = {
         "allowed_variant_ids": ["consume-provider-result"],
     },
 }
+
+
+def list_task_registry_entries() -> list[dict]:
+    entries: list[dict] = []
+    for (task_type, task_phase, task_state), registration in TASK_REGISTRY.items():
+        entries.append(
+            {
+                "task_type": str(task_type),
+                "task_phase": str(task_phase),
+                "task_state": str(task_state),
+                "registry_key": str(registration.get("registry_key", "")).strip(),
+                "task_goal": str(registration.get("task_goal", "")).strip(),
+                "default_variant_id": str(registration.get("default_variant_id", "")).strip(),
+                "allowed_variant_ids": list(registration.get("allowed_variant_ids", [])),
+            }
+        )
+    return entries
+
+
+def validate_task_registry_source() -> list[str]:
+    errors: list[str] = []
+    entries = list_task_registry_entries()
+    seen_registry_keys: set[str] = set()
+    for entry in entries:
+        registry_key = entry["registry_key"]
+        if not registry_key:
+            errors.append("registry entry must declare a non-empty registry_key")
+        elif registry_key in seen_registry_keys:
+            errors.append(f"duplicate registry_key: {registry_key}")
+        else:
+            seen_registry_keys.add(registry_key)
+        if not entry["task_goal"]:
+            errors.append(f"{registry_key or '<missing>'}: task_goal must be non-empty")
+        default_variant_id = entry["default_variant_id"]
+        if not default_variant_id:
+            errors.append(f"{registry_key or '<missing>'}: default_variant_id must be non-empty")
+        allowed_variant_ids = entry["allowed_variant_ids"]
+        if not isinstance(allowed_variant_ids, list) or not allowed_variant_ids:
+            errors.append(f"{registry_key or '<missing>'}: allowed_variant_ids must be a non-empty list")
+            continue
+        normalized_allowed_variant_ids: list[str] = []
+        seen_variant_ids: set[str] = set()
+        for item in allowed_variant_ids:
+            if not isinstance(item, str) or not item.strip():
+                errors.append(f"{registry_key or '<missing>'}: allowed_variant_ids entries must be non-empty strings")
+                continue
+            candidate = item.strip()
+            if candidate in seen_variant_ids:
+                errors.append(f"{registry_key or '<missing>'}: duplicate allowed_variant_id {candidate}")
+                continue
+            seen_variant_ids.add(candidate)
+            normalized_allowed_variant_ids.append(candidate)
+        if default_variant_id and default_variant_id not in normalized_allowed_variant_ids:
+            errors.append(
+                f"{registry_key or '<missing>'}: default_variant_id must appear in allowed_variant_ids"
+            )
+    return errors

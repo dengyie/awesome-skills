@@ -92,6 +92,11 @@ Each registered task should also expose a stable `task_registry_key`, for exampl
 - `candidate-lifecycle.record-candidate-promotion-approval`
 - `provider-bridge.prepare-generation-brief`
 
+The contract source should also be self-checked through:
+
+- `list_task_registry_entries()`
+- `validate_task_registry_source()`
+
 The canonical shared builders currently live in:
 
 - `split-image-assets/scripts/work_item_schema_lib.py`
