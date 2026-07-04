@@ -3,11 +3,13 @@ from work_item_schema_contract import (
     ALLOWED_INTENTS,
     ALLOWED_TASK_PHASES,
     ALLOWED_TASK_TYPES,
+    list_task_registry_entries,
+    get_task_registry_entry,
+    get_task_registry_entry_by_key,
     SHARED_TASK_CONTRACT_REFERENCE,
     SHARED_TASK_PROTOCOL_VERSION,
     SHARED_TASK_REGISTRY_REFERENCE,
     SHARED_TASK_REGISTRY_VERSION,
-    TASK_REGISTRY,
 )
 
 
@@ -99,7 +101,7 @@ def build_recommended_task(
         raise ValueError(f"task_type must be one of: {sorted(ALLOWED_TASK_TYPES)}")
     if task_phase_value not in ALLOWED_TASK_PHASES:
         raise ValueError(f"task_phase must be one of: {sorted(ALLOWED_TASK_PHASES)}")
-    registration = TASK_REGISTRY.get((task_type_value, task_phase_value, task_state_value))
+    registration = get_task_registry_entry(task_type_value, task_phase_value, task_state_value)
     if registration is None:
         raise ValueError("task_type/task_phase/task_state must match a registered shared task")
     registry_key = str(registration.get("registry_key", "")).strip()
@@ -231,13 +233,12 @@ def build_registered_task_bundle(
 
 def lookup_registered_task_by_key(registry_key: str) -> dict:
     registry_key_value = _require_non_empty_string(registry_key, "registry_key")
-    for (task_type, task_phase, task_state), registration in TASK_REGISTRY.items():
-        if str(registration.get("registry_key", "")).strip() != registry_key_value:
-            continue
+    registration = get_task_registry_entry_by_key(registry_key_value)
+    if registration is not None:
         return {
-            "task_type": str(task_type),
-            "task_phase": str(task_phase),
-            "task_state": str(task_state),
+            "task_type": str(registration["task_type"]),
+            "task_phase": str(registration["task_phase"]),
+            "task_state": str(registration["task_state"]),
             "task_registry_version": SHARED_TASK_REGISTRY_VERSION,
             "task_registry_reference": SHARED_TASK_REGISTRY_REFERENCE,
             "task_registry_key": registry_key_value,
@@ -250,10 +251,8 @@ def lookup_registered_task_by_key(registry_key: str) -> dict:
 
 def list_registered_tasks() -> list[dict]:
     entries: list[dict] = []
-    for (_task_type, _task_phase, _task_state), registration in TASK_REGISTRY.items():
-        entries.append(
-            lookup_registered_task_by_key(str(registration["registry_key"]))
-        )
+    for registration in list_task_registry_entries():
+        entries.append(lookup_registered_task_by_key(str(registration["registry_key"])))
     return sorted(entries, key=lambda item: item["task_registry_key"])
 
 
@@ -266,7 +265,7 @@ def lookup_registered_task(
     task_type_value = _require_non_empty_string(task_type, "task_type")
     task_phase_value = _require_non_empty_string(task_phase, "task_phase")
     task_state_value = _require_non_empty_string(task_state, "task_state")
-    registration = TASK_REGISTRY.get((task_type_value, task_phase_value, task_state_value))
+    registration = get_task_registry_entry(task_type_value, task_phase_value, task_state_value)
     if registration is None:
         raise ValueError("task_type/task_phase/task_state must match a registered shared task")
     return {

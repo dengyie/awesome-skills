@@ -103,6 +103,10 @@ The canonical shared builders currently live in:
 
 The canonical registry accessors now include:
 
+- `get_task_registry_entry(...)`
+- `get_task_registry_entry_by_key(...)`
+- `list_task_registry_entries()`
+- `validate_task_registry_source()`
 - `lookup_registered_task(...)`
 - `lookup_registered_task_by_key(...)`
 - `list_registered_tasks()`

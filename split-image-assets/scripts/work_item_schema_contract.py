@@ -95,20 +95,35 @@ TASK_REGISTRY = {
 }
 
 
+def get_task_registry_entry(task_type: str, task_phase: str, task_state: str) -> dict | None:
+    entry = TASK_REGISTRY.get((task_type, task_phase, task_state))
+    if entry is None:
+        return None
+    return {
+        "task_type": str(task_type),
+        "task_phase": str(task_phase),
+        "task_state": str(task_state),
+        "registry_key": str(entry.get("registry_key", "")).strip(),
+        "task_goal": str(entry.get("task_goal", "")).strip(),
+        "default_variant_id": str(entry.get("default_variant_id", "")).strip(),
+        "allowed_variant_ids": list(entry.get("allowed_variant_ids", [])),
+    }
+
+
+def get_task_registry_entry_by_key(registry_key: str) -> dict | None:
+    for task_type, task_phase, task_state in TASK_REGISTRY:
+        entry = get_task_registry_entry(task_type, task_phase, task_state)
+        if entry and entry["registry_key"] == registry_key:
+            return entry
+    return None
+
+
 def list_task_registry_entries() -> list[dict]:
     entries: list[dict] = []
-    for (task_type, task_phase, task_state), registration in TASK_REGISTRY.items():
-        entries.append(
-            {
-                "task_type": str(task_type),
-                "task_phase": str(task_phase),
-                "task_state": str(task_state),
-                "registry_key": str(registration.get("registry_key", "")).strip(),
-                "task_goal": str(registration.get("task_goal", "")).strip(),
-                "default_variant_id": str(registration.get("default_variant_id", "")).strip(),
-                "allowed_variant_ids": list(registration.get("allowed_variant_ids", [])),
-            }
-        )
+    for task_type, task_phase, task_state in TASK_REGISTRY:
+        entry = get_task_registry_entry(task_type, task_phase, task_state)
+        if entry is not None:
+            entries.append(entry)
     return entries
 
 

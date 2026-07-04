@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - The Shared Task Registry Needs A First-Class Access Surface In The Contract Layer
+- Decision: Add explicit contract-layer registry accessors such as `get_task_registry_entry(...)` and `get_task_registry_entry_by_key(...)`, and make the schema helper depend on those accessors instead of the raw registry map.
+- Rationale: Once key-based lookup and listing existed in the helper layer, the registry was still not truly a first-class source surface because callers below it still depended on raw contract data shape. Moving access into the contract layer keeps the registry semantics closer to the source of truth and reduces future helper drift.
+- Alternatives considered: Keep all registry access in `work_item_schema_lib.py`, or jump directly to a broader schema service abstraction.
+- Impact: The contract module now exposes a clearer local registry API, helper code depends less on raw `TASK_REGISTRY` structure, and focused tests can validate registry source behavior more directly.
+- Rollback trigger: If a future registry service supersedes the local contract module, preserve the same lookup semantics there rather than reintroducing direct dict traversal in callers.
+- Related files: `split-image-assets/scripts/work_item_schema_contract.py`, `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/references/shared-task-contract.md`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - The Shared Task Registry Should Be Directly Queryable By Key Or Listing, Not Only Indirectly Through Work-Item Builders
 - Decision: Add registry accessors such as `lookup_registered_task_by_key(...)` and `list_registered_tasks()` to the shared task schema layer.
 - Rationale: Once registry identities existed, downstream consumers still had to either know the tuple form or wait for a caller to build a task bundle. A small direct access surface makes the registry itself consumable and easier to validate without changing workflow behavior.

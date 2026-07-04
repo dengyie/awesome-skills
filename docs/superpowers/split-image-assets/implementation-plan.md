@@ -78,6 +78,20 @@ Verification completed:
 - `python -B -m unittest discover split-image-assets\tests -v`
 - `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
+### `shared schema registry V1`
+
+Closed status: complete
+
+What landed:
+
+- the shared task registry now has direct contract-level accessors instead of only implicit raw constant access
+- `work_item_schema_lib.py` now depends on the contract-layer accessors instead of traversing `TASK_REGISTRY` structure directly
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
+
 ### `shared task registry versioning V1`
 
 Closed status: complete

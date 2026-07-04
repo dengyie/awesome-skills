@@ -57,6 +57,17 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "candidate-lifecycle.await-candidate-selection",
             [entry["registry_key"] for entry in entries],
         )
+    def test_work_item_schema_contract_accessors_return_registry_entries(self):
+        contract = self._load_script_module("work_item_schema_contract.py")
+        entry = contract.get_task_registry_entry(
+            contract.TASK_TYPE_PROVIDER_BRIDGE,
+            contract.TASK_PHASE_PROVIDER_BRIDGE,
+            "consume-provider-result",
+        )
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry["registry_key"], "provider-bridge.consume-provider-result")
+        by_key = contract.get_task_registry_entry_by_key("provider-bridge.consume-provider-result")
+        self.assertEqual(by_key, entry)
     def test_work_item_schema_lib_rejects_invalid_task_protocol(self):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")
