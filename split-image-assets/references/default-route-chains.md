@@ -4,6 +4,8 @@ Use this file when a planned object route needs a default upstream provider chai
 
 These defaults are not hardcoded quality guarantees. They are the standard first-choice orchestration path so the agent does not rebuild the same tool-selection logic every run.
 
+The default path should also stay explainable. Provider planning should surface not only which provider was selected, but also why it fits the route, which object types it is specialized for, and which consume mode the downstream bridge is expected to use.
+
 V1 active provider surface is intentionally limited to:
 
 - `external-professional-outputs`

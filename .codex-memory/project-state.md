@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` provider capability mapping V1 is complete locally. The provider registry now exposes route-required capability tags, object-type fit, and expected consume mode hints, and the provider plan/work-item artifacts carry that explanation forward.
 - Current stage: `split-image-assets` shared schema registry V1 is complete locally. The shared task registry now exposes contract-layer accessors, so the helper layer no longer depends on raw registry map traversal.
 - Current stage: `split-image-assets` shared task registry access V1 is complete locally. The shared task registry can now be consumed directly by key or enumerated as a sorted list, instead of only being read indirectly through work-item task builders.
 - Current stage: `split-image-assets` registered task bundle helper V1 is complete locally. Candidate and provider work-item callers now rely on `build_registered_task_bundle(...)` instead of wiring registry lookup and recommendation bundle assembly together by hand.
@@ -43,6 +44,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (250 tests, provider capability mapping V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, provider capability mapping V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (provider capability mapping V1 review brief; no new P0/P1 blockers)
+- 2026-07-05: `git diff --check` (passed with only CRLF warnings, provider capability mapping V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (250 tests, shared schema registry V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, shared schema registry V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (shared schema registry V1 review brief; no new P0/P1 blockers)
@@ -427,6 +432,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Provider capability mapping V1 makes default provider choice easier to explain, but it is still advisory metadata rather than a hard validator gate; provider quality truth still depends on downstream package evidence, compare, review, and promotion steps.
 - Shared schema registry V1 makes the registry easier to consume from the contract layer, but it is still intentionally an in-process local registry rather than a broader external schema registry.
 - Shared task registry access V1 makes the registry directly queryable, but the registry still intentionally remains local and code-backed rather than externalized into a broader schema service.
 - Registered task bundle helper V1 removes one more layer of duplicated assembly, but candidate and provider work-item state machines still intentionally remain separate above the shared protocol helpers.
@@ -486,10 +492,10 @@
 - None.
 
 ## Current Focus
-- The shared schema registry milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The provider capability mapping milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the shared schema registry V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the provider capability mapping V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

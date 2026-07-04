@@ -315,6 +315,18 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             module.get_default_provider_chain("extract", "ui-carrier"),
             ["grounded-sam-bridge"],
         )
+        self.assertEqual(
+            module.get_route_required_capability_tags("generate"),
+            ["brief-driven-generation", "staged-candidate-delivery", "compare-ready-candidate"],
+        )
+        capability_fit = module.describe_provider_capability_fit(
+            "extract",
+            "photo-object-matte",
+            "external-professional-outputs",
+        )
+        self.assertEqual(capability_fit["object_type_fit"], "preferred")
+        self.assertEqual(capability_fit["expected_consume_mode"], "import-manifest")
+        self.assertEqual(capability_fit["missing_capability_tags"], [])
     def test_provider_contract_validates_request_and_result(self):
         module = self._load_script_module("provider_contract.py")
         with tempfile.TemporaryDirectory() as tmp:

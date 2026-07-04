@@ -147,8 +147,8 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - choose the route default first, then apply any explicit `object_type` override
     - this is the route default plus object_type override rule for provider selection
     - allow `plan_manifest.provider_preferences` to override the default only when the preferred provider is valid for the route
-    - write a package-owned provider plan summary with `scripts/describe_provider_plan.py` before broad request generation so the selected provider, selection source, and alternative providers are explicit
-    - write provider work-item status with `scripts/describe_provider_work_items.py` so each object has an explicit next action such as `prepare-generation-brief`, `prepare-provider-request`, `await-provider-result`, or `consume-provider-result`
+    - write a package-owned provider plan summary with `scripts/describe_provider_plan.py` before broad request generation so the selected provider, selection source, alternative providers, capability fit, and expected consume mode are explicit
+    - write provider work-item status with `scripts/describe_provider_work_items.py` so each object has an explicit next action such as `prepare-generation-brief`, `prepare-provider-request`, `await-provider-result`, or `consume-provider-result`, without losing the capability-fit explanation
     - build provider request manifests with `scripts/prepare_provider_request.py`; `--provider-id` is optional when the default chain is acceptable
     - provider requests and results must satisfy the selected provider's registry-specific input/output contract, not just the generic JSON schema
     - for `generate` routes, write a package-owned brief first with `scripts/prepare_generation_brief.py`
@@ -224,6 +224,8 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 `scripts/describe_provider_plan.py`, `scripts/describe_provider_work_items.py`, `scripts/prepare_provider_request.py`, `scripts/record_provider_result.py`, `scripts/consume_provider_result.py`, and the provider bridge helpers standardize how planned object routes talk to upstream providers. Use them to normalize provider planning, work-item status, requests, and results into `_staging/providers/` before import, compare, or promotion. This bridge layer should come before broad native-runner expansion.
 
 `scripts/describe_provider_plan.py` is the planning-side bridge helper. Use it after `plan_manifest.json` is ready and before broad request generation so the package owns an explicit `_staging/providers/provider_plan.json` summary of route defaults, object-type overrides, valid plan preferences, selected providers, and alternative provider chains.
+
+That provider-plan summary should also tell the operator whether the selected provider is preferred or merely tolerated for the current object type, which route-required capability tags it covers, and which consume mode is expected if the bridge succeeds.
 
 `scripts/describe_provider_work_items.py` is the next-step bridge helper. Use it after provider planning to write `_staging/providers/provider_work_items.json` so each object records bridge artifact readiness, inferred consume mode when possible, and the recommended next command. Like the candidate-side surface, it should keep `recommended_command` for compatibility and may also expose `recommended_command_variants[]` plus a grouped `recommended_task` object when one provider bridge step has a stable task envelope.
 
@@ -414,6 +416,7 @@ At minimum report:
 - provider plan summary path
 - provider work-item summary path
 - provider chain summary
+- provider capability fit summary
 - tooling preflight result
 - production_capable: true/false
 - generation capability result
@@ -427,6 +430,7 @@ At minimum report:
 - visual hierarchy and recommended split plan
 - extraction pipeline recipe, stages, upstream tools, and quality gates
 - planned object routes and route reasoning for generated candidates
+- route-required capability tags, selected provider capability tags, expected consume mode, and object-type fit
 - provider requests/results written to `_staging/providers/`
 - provider result consumer path used
 - candidate work-item summary path

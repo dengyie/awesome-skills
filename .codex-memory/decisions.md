@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Provider Planning Should Explain Capability Fit, Not Only Selection Outcome
+- Decision: Extend the local provider registry with route-required capability tags, provider capability tags, preferred/discouraged object types, and expected consume mode hints, then surface that capability-fit layer through `describe_provider_plan.py` and `describe_provider_work_items.py`.
+- Rationale: The bridge-first provider layer had become structurally strong, but its default path still forced operators to infer too much from a bare provider id. A small capability-fit surface lowers cognitive load without expanding runtime scope or weakening existing truth gates.
+- Alternatives considered: Keep the provider layer selection-only, or jump directly to a larger native runtime/provider expansion milestone.
+- Impact: Package-owned provider planning artifacts now explain why a provider was chosen, what it is specialized for, and which consume path is expected, while leaving final quality truth in the existing import/compare/review/promotion gates.
+- Rollback trigger: If a future provider engine supersedes the local registry, preserve the same capability-fit semantics there rather than collapsing back to id-only selection artifacts.
+- Related files: `split-image-assets/scripts/provider_registry.py`, `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/references/provider-contract.md`, `split-image-assets/references/default-route-chains.md`, `split-image-assets/tests/test_environment_and_init.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - The Shared Task Registry Needs A First-Class Access Surface In The Contract Layer
 - Decision: Add explicit contract-layer registry accessors such as `get_task_registry_entry(...)` and `get_task_registry_entry_by_key(...)`, and make the schema helper depend on those accessors instead of the raw registry map.
 - Rationale: Once key-based lookup and listing existed in the helper layer, the registry was still not truly a first-class source surface because callers below it still depended on raw contract data shape. Moving access into the contract layer keeps the registry semantics closer to the source of truth and reduces future helper drift.

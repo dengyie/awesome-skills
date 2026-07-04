@@ -69,7 +69,17 @@ It still counts as explicit package-owned consumption, not as direct provider-si
 
 The standard planning-side explainer is `describe_provider_plan.py`. It should write `_staging/providers/provider_plan.json` before broad request generation so the package owns an explicit summary of route defaults, object-type overrides, valid plan preferences, selected providers, and alternative provider chains.
 
+That provider-plan summary should also expose provider capability fit, including:
+
+- route-required capability tags
+- selected provider capability tags
+- preferred versus discouraged object types
+- expected consume mode for the selected provider path
+- short selection notes that explain why the default path is or is not a good fit
+
 The standard next-step explainer is `describe_provider_work_items.py`. It should write `_staging/providers/provider_work_items.json` so each object records whether generation brief artifacts, provider requests, and provider results are ready, plus the recommended next bridge action.
+
+`provider_work_items.json` should carry the same capability-fit surface forward so the recommended next action is not divorced from why that provider path was chosen in the first place.
 
 For `external-manifest` providers, the preferred pattern is:
 

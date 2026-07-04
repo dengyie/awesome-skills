@@ -10,6 +10,7 @@ from provider_contract import (
     validate_provider_result,
 )
 from provider_registry import (
+    describe_provider_capability_fit,
     get_default_provider_chain,
     get_default_route_chain,
     get_object_type_override_chain,
@@ -121,6 +122,22 @@ def describe_provider_selection(
         selection_source = "object-type-override"
 
     provider_spec = get_provider_spec(selected_provider_id) if selected_provider_id else None
+    capability_fit = (
+        describe_provider_capability_fit(route, obj_type, selected_provider_id)
+        if selected_provider_id
+        else {
+            "route_required_capability_tags": [],
+            "provider_capability_tags": [],
+            "missing_capability_tags": [],
+            "preferred_object_types": [],
+            "discouraged_object_types": [],
+            "preferred_object_type_match": False,
+            "discouraged_object_type_match": False,
+            "object_type_fit": "not-applicable",
+            "expected_consume_mode": "",
+            "selection_notes": [],
+        }
+    )
     alternative_provider_chain = [
         candidate_id for candidate_id in supported_provider_ids if candidate_id != selected_provider_id
     ]
@@ -132,6 +149,7 @@ def describe_provider_selection(
         notes.append(f"Using the route default provider chain for planned route {route!r}.")
     elif selection_source == "plan-preference":
         notes.append("A valid plan preference overrides the normal default provider chain.")
+    notes.extend(capability_fit["selection_notes"])
 
     return {
         "planned_route": route,
@@ -146,6 +164,15 @@ def describe_provider_selection(
         "alternative_provider_chain": alternative_provider_chain,
         "provider_role": provider_spec["provider_role"] if provider_spec else "",
         "execution_mode": provider_spec["execution_mode"] if provider_spec else "",
+        "route_required_capability_tags": capability_fit["route_required_capability_tags"],
+        "provider_capability_tags": capability_fit["provider_capability_tags"],
+        "missing_capability_tags": capability_fit["missing_capability_tags"],
+        "preferred_object_types": capability_fit["preferred_object_types"],
+        "discouraged_object_types": capability_fit["discouraged_object_types"],
+        "preferred_object_type_match": capability_fit["preferred_object_type_match"],
+        "discouraged_object_type_match": capability_fit["discouraged_object_type_match"],
+        "object_type_fit": capability_fit["object_type_fit"],
+        "expected_consume_mode": capability_fit["expected_consume_mode"],
         "notes": notes,
     }
 
@@ -520,6 +547,7 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
         current_object_id = str(item.get("object_id", "")).strip()
         planned_route = str(item.get("planned_route", "")).strip()
         selected_provider_id = str(item.get("selected_provider_id", "")).strip()
+        expected_consume_mode = str(item.get("expected_consume_mode", "")).strip()
         request_path_rel = ""
         result_path_rel = ""
         request_ready = False
@@ -594,6 +622,10 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
                             next_action_detail = (
                                 "A provider result is staged, but consume mode must be chosen explicitly because the result exposes multiple artifact sets."
                             )
+                            if expected_consume_mode:
+                                next_action_detail += (
+                                    f" The registry default for this provider path is {expected_consume_mode!r}."
+                                )
                         else:
                             next_action_detail = (
                                 f"A provider result is staged and can be consumed through mode {inferred_consume_mode!r}."
@@ -643,6 +675,15 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
                 "selection_source": str(item.get("selection_source", "")).strip(),
                 "provider_role": str(item.get("provider_role", "")).strip(),
                 "execution_mode": str(item.get("execution_mode", "")).strip(),
+                "route_required_capability_tags": list(item.get("route_required_capability_tags", [])),
+                "provider_capability_tags": list(item.get("provider_capability_tags", [])),
+                "missing_capability_tags": list(item.get("missing_capability_tags", [])),
+                "preferred_object_types": list(item.get("preferred_object_types", [])),
+                "discouraged_object_types": list(item.get("discouraged_object_types", [])),
+                "preferred_object_type_match": bool(item.get("preferred_object_type_match", False)),
+                "discouraged_object_type_match": bool(item.get("discouraged_object_type_match", False)),
+                "object_type_fit": str(item.get("object_type_fit", "")).strip(),
+                "expected_consume_mode": expected_consume_mode,
                 "provider_plan_path": str(provider_plan_summary_path(package_dir).relative_to(package_dir)).replace("\\", "/"),
                 "request_path": request_path_rel,
                 "request_ready": request_ready,

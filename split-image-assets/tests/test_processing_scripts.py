@@ -771,10 +771,16 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             by_object_id = {entry["object_id"]: entry for entry in provider_plan["objects"]}
             self.assertEqual(by_object_id["hero_logo"]["selected_provider_id"], "external-professional-outputs")
             self.assertEqual(by_object_id["hero_logo"]["selection_source"], "object-type-override")
+            self.assertEqual(by_object_id["hero_logo"]["object_type_fit"], "preferred")
+            self.assertEqual(by_object_id["hero_logo"]["expected_consume_mode"], "import-manifest")
+            self.assertIn("reconstruction-ready-import", by_object_id["hero_logo"]["provider_capability_tags"])
             self.assertEqual(by_object_id["reconstructed_badge"]["selected_provider_id"], "external-generated-outputs")
             self.assertEqual(by_object_id["reconstructed_badge"]["selection_source"], "plan-preference")
+            self.assertEqual(by_object_id["reconstructed_badge"]["expected_consume_mode"], "stage-candidate")
+            self.assertIn("brief-driven-generation", by_object_id["reconstructed_badge"]["route_required_capability_tags"])
             self.assertEqual(by_object_id["live_text"]["selected_provider_id"], "")
             self.assertEqual(by_object_id["live_text"]["selection_source"], "route-default")
+            self.assertEqual(by_object_id["live_text"]["object_type_fit"], "not-applicable")
     def test_describe_provider_plan_records_invalid_preference_status_and_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -829,6 +835,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["selected_provider_id"], "grounded-sam-bridge")
             self.assertEqual(entry["selection_source"], "route-default")
             self.assertIn("external-professional-outputs", entry["alternative_provider_chain"])
+            self.assertEqual(entry["object_type_fit"], "preferred")
+            self.assertEqual(entry["expected_consume_mode"], "import-extract")
     def test_describe_provider_plan_filters_single_object(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -910,6 +918,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 "split-image-assets/scripts/work_item_schema_contract.py",
             )
             self.assertEqual(entry["recommended_task"]["task_registry_key"], "provider-bridge.prepare-generation-brief")
+            self.assertEqual(entry["expected_consume_mode"], "stage-candidate")
+            self.assertIn("brief-driven-generation", entry["provider_capability_tags"])
     def test_describe_provider_work_items_recommends_prepare_provider_request_after_brief(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -943,6 +953,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["recommended_command_variants"][0]["intent"], "prepare-provider-request")
             self.assertEqual(entry["recommended_command_variants"][0]["writes_fields"], ["provider_request"])
             self.assertEqual(entry["recommended_task"]["default_variant_id"], "prepare-provider-request")
+            self.assertEqual(entry["object_type_fit"], "preferred")
     def test_describe_provider_work_items_recommends_await_provider_result_after_request(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1088,6 +1099,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             entry = json.loads(result.stdout)["objects"][0]
             self.assertEqual(entry["next_action"], "consume-provider-result")
             self.assertEqual(entry["inferred_consume_mode"], "import-extract")
+            self.assertEqual(entry["expected_consume_mode"], "import-extract")
             self.assertIn("consume_provider_result.py", entry["recommended_command"])
             self.assertEqual(entry["recommended_command_variants"][0]["intent"], "consume-provider-result")
             self.assertEqual(entry["recommended_command_variants"][0]["branch_value"], "consume-provider-result")

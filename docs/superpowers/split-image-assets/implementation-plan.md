@@ -55,6 +55,7 @@ The current package baseline is:
 - provider work-item schema
 - shared work-item schema helper
 - shared task contract
+- provider capability mapping
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -63,6 +64,20 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `provider capability mapping V1`
+
+Closed status: complete
+
+What landed:
+
+- the provider registry now exposes route-required capability tags, provider capability tags, object-type fit, and expected consume mode hints
+- `describe_provider_plan.py` and `describe_provider_work_items.py` now preserve that capability-fit explanation in package-owned planning artifacts instead of only surfacing a selected provider id
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `registered task bundle helper V1`
 
@@ -663,6 +678,7 @@ These are the important completed milestones that define the current architectur
 39. work-item recommendation bundle V1
 40. shared task registry versioning V1
 41. registered task bundle helper V1
+42. provider capability mapping V1
 
 Treat these as delivered baseline, not as active checklist items.
 

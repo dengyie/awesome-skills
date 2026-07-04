@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after provider-aware candidate lifecycle next steps V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
+- [ ] Choose the next bounded `split-image-assets` milestone after provider capability mapping V1. Candidate directions: deeper generated-route provider support, broader fixture/package migration, or planning-helper depth.
 ## Done
+- [x] Close `split-image-assets` provider capability mapping V1: registry-backed capability fit, expected consume mode surfacing, provider plan/work-item doc sync, and regression coverage.
 - [x] Close `split-image-assets` shared schema registry V1: direct registry access surface, focused accessor tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` shared task registry access V1: registry accessors, focused access tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` registered task bundle helper V1: shared registry-aware bundle helper, caller migration, focused bundle tests, canonical plan sync, and regression coverage.

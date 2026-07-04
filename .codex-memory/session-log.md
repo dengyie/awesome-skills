@@ -873,3 +873,9 @@
 - Results: Registered tasks now have explicit stable identity fields in the JSON output instead of relying only on `task_type` + `task_phase` + `task_state` inference. Full package validation passed with 244 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 09:10
+- Task: Complete `split-image-assets` provider capability mapping V1.
+- Actions: Extended the local provider registry with route-required capability tags, preferred/discouraged object types, and expected consume mode hints; threaded that capability-fit surface through `describe_provider_plan.py` and `describe_provider_work_items.py`; synchronized provider docs, usage docs, the canonical implementation baseline, and project memory; expanded focused provider registry/plan/work-item regression coverage.
+- Results: Provider planning artifacts now explain why a provider path was chosen and which consume path it expects, rather than surfacing only a provider id. Full package validation passed with 250 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.
