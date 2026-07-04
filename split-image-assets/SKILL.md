@@ -253,6 +253,8 @@ When compare evidence already records `selected_candidate_id` and `selection_rea
 
 `scripts/describe_candidate_work_items.py` is the candidate-stage explainer. Use it to write `_staging/repair_candidates/candidate_work_items.json` so each object records whether candidate stage is still empty, compare evidence is needed, candidate selection is still pending, promotion is ready, or candidate work is already complete.
 
+When compare evidence already selects a candidate but `metadata.confirmation.candidate_promotion` is still pending, `scripts/describe_candidate_work_items.py` should recommend recording the formal approval handoff through `record_quality_review.py` before it recommends `promote_candidate_asset.py`.
+
 ## Pipeline Quality Rule
 
 Every reusable layer must have provenance. Record which tool or manual process created the mask, which process created or refined alpha, which stage repaired the background, the layer's `composition_order`, and which quality gates were inspected.

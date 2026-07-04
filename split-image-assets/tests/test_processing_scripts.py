@@ -977,10 +977,124 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             entry = json.loads(result.stdout)["objects"][0]
-            self.assertEqual(entry["next_action"], "promote-single-candidate")
+            self.assertEqual(entry["next_action"], "record-candidate-promotion-approval")
             self.assertEqual(entry["recommended_delivery_class"], "generated-reconstruction")
+            self.assertIn("record_quality_review.py", entry["recommended_command"])
+    def test_describe_candidate_work_items_recommends_promote_single_candidate_after_approval(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["evidence_ref"] = "chat:promotion-approved"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_dir / "candidate-a.png")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "promote-single-candidate")
             self.assertIn("promote_candidate_asset.py", entry["recommended_command"])
     def test_describe_candidate_work_items_recommends_promote_selected_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_generated_plan_manifest(output)
+            metadata = self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates" / "main_object"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            candidate_path = candidate_dir / "candidate-a.png"
+            Image.new("RGBA", (4, 3), (255, 0, 0, 255)).save(candidate_path)
+            compare_manifest_path = output / "_staging" / "repair_candidates" / "cmp-1_compare.json"
+            compare_manifest_path.write_text(
+                json.dumps(
+                    {
+                        "comparison_id": "cmp-1",
+                        "object_id": "main_object",
+                        "candidate_ids": ["candidate-a"],
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-a",
+                                "asset_path": "_staging/repair_candidates/main_object/candidate-a.png",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            metadata["objects"][0]["candidate_comparisons"] = [
+                {
+                    "comparison_id": "cmp-1",
+                    "object_id": "main_object",
+                    "candidate_ids": ["candidate-a"],
+                    "compare_artifact_path": "",
+                    "compare_manifest_path": "_staging/repair_candidates/cmp-1_compare.json",
+                    "compare_note": "",
+                    "compare_criteria": ["shape fidelity"],
+                    "review_focus": [],
+                    "risks": [],
+                    "score_manifest_path": "",
+                    "selected_candidate_id": "candidate-a",
+                    "selection_reason": "Best candidate after comparison.",
+                    "created_at": "2026-07-04T00:00:00Z",
+                }
+            ]
+            metadata["confirmation"]["candidate_promotion"]["status"] = "confirmed"
+            metadata["confirmation"]["candidate_promotion"]["source"] = "explicit-user-confirmed"
+            metadata["confirmation"]["candidate_promotion"]["evidence_ref"] = "chat:promotion-approved"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_candidate_work_items.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            entry = json.loads(result.stdout)["objects"][0]
+            self.assertEqual(entry["next_action"], "promote-selected-candidate")
+            self.assertEqual(entry["comparison_selected_candidate_id"], "candidate-a")
+            self.assertIn("--comparison-id cmp-1", entry["recommended_command"])
+            self.assertNotIn("--candidate-id", entry["recommended_command"])
+            self.assertNotIn("--selection-reason", entry["recommended_command"])
+            self.assertEqual(entry["candidate_promotion_status"], "confirmed")
+    def test_describe_candidate_work_items_requests_promotion_approval_for_selected_candidate_when_pending(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -1049,11 +1163,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             entry = json.loads(result.stdout)["objects"][0]
-            self.assertEqual(entry["next_action"], "promote-selected-candidate")
-            self.assertEqual(entry["comparison_selected_candidate_id"], "candidate-a")
-            self.assertIn("--comparison-id cmp-1", entry["recommended_command"])
-            self.assertNotIn("--candidate-id", entry["recommended_command"])
-            self.assertNotIn("--selection-reason", entry["recommended_command"])
+            self.assertEqual(entry["next_action"], "record-candidate-promotion-approval")
+            self.assertEqual(entry["candidate_promotion_status"], "pending")
+            self.assertIn("record_quality_review.py", entry["recommended_command"])
+            self.assertIn("final-promotion-acceptance", entry["recommended_command"])
     def test_describe_candidate_work_items_awaits_candidate_selection_after_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

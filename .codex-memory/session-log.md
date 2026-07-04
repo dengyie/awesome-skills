@@ -717,3 +717,9 @@
 - Results: Promotion can now continue directly from compare evidence when compare already records both the selected candidate and the selection rationale. Full package validation passed with 211 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the compare-selected promotion defaults milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 11:45
+- Task: Complete `split-image-assets` candidate promotion approval handoff V1.
+- Actions: Updated `describe_candidate_work_items.py` so it now reads `metadata.confirmation.candidate_promotion`; added an approval-aware next action that recommends `record_quality_review.py` when promotion is still pending formal approval; synchronized usage/skill/baseline docs and project memory; expanded regression coverage for pending-versus-confirmed promotion handoff states.
+- Results: Candidate work items now distinguish “selected candidate exists” from “promotion approval is recorded.” Full package validation passed with 213 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the candidate promotion approval handoff milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.

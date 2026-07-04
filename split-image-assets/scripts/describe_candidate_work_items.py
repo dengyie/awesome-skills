@@ -83,6 +83,42 @@ def _recommended_promote_command(
     return " ".join(parts)
 
 
+def _recommended_promotion_approval_command(
+    package_dir: Path,
+    object_id: str,
+    *,
+    candidate_id: str,
+) -> str:
+    package_arg = str(package_dir).replace("\\", "/")
+    return " ".join(
+        [
+            "python",
+            "split-image-assets/scripts/record_quality_review.py",
+            package_arg,
+            "--object-id",
+            object_id,
+            "--decision-stage",
+            "final-promotion-acceptance",
+            "--decision-question",
+            f"\"Promote {candidate_id} over the current revision?\"",
+            "--decision-recommended",
+            "yes",
+            "--decision-answer",
+            "yes",
+            "--decision-effect",
+            f"\"Promote {candidate_id} as the active revision.\"",
+            "--decision-source",
+            "explicit-user-confirmed",
+            "--pause-category",
+            "formal-approval",
+            "--blocking",
+            "true",
+            "--evidence-ref",
+            "<approval-evidence-ref>",
+        ]
+    )
+
+
 def build_candidate_work_item_status(package_dir: Path, object_id: str | None = None) -> dict:
     metadata = read_metadata(package_dir)
     plan_manifest = read_plan_manifest(package_dir)
@@ -120,6 +156,27 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
             else ""
         )
         promoted_revision = str(item.get("current_asset_revision", "")).strip()
+        confirmation = metadata.get("confirmation", {})
+        candidate_promotion_confirmation = (
+            confirmation.get("candidate_promotion", {})
+            if isinstance(confirmation, dict)
+            else {}
+        )
+        candidate_promotion_status = (
+            str(candidate_promotion_confirmation.get("status", "")).strip()
+            if isinstance(candidate_promotion_confirmation, dict)
+            else ""
+        )
+        candidate_promotion_source = (
+            str(candidate_promotion_confirmation.get("source", "")).strip()
+            if isinstance(candidate_promotion_confirmation, dict)
+            else ""
+        )
+        candidate_promotion_evidence_ref = (
+            str(candidate_promotion_confirmation.get("evidence_ref", "")).strip()
+            if isinstance(candidate_promotion_confirmation, dict)
+            else ""
+        )
         comparison_selected_candidate_id = (
             str(latest_comparison.get("selected_candidate_id", "")).strip()
             if isinstance(latest_comparison, dict)
@@ -180,33 +237,55 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 )
 
             if latest_comparison_id and candidate_id:
-                next_action = "promote-selected-candidate"
-                next_action_detail = (
-                    "Comparison evidence is present and a candidate can be promoted from the latest comparison."
-                )
-                recommended_command = _recommended_promote_command(
-                    package_dir,
-                    current_object_id,
-                    candidate_id=candidate_id,
-                    candidate_asset_path=candidate_asset_path,
-                    comparison_id=latest_comparison_id,
-                    delivery_class=recommended_delivery_class,
-                    selection_reason=comparison_selection_reason,
-                )
+                if candidate_promotion_status in {"confirmed", "not-required"}:
+                    next_action = "promote-selected-candidate"
+                    next_action_detail = (
+                        "Comparison evidence is present and candidate promotion approval has already been recorded."
+                    )
+                    recommended_command = _recommended_promote_command(
+                        package_dir,
+                        current_object_id,
+                        candidate_id=candidate_id,
+                        candidate_asset_path=candidate_asset_path,
+                        comparison_id=latest_comparison_id,
+                        delivery_class=recommended_delivery_class,
+                        selection_reason=comparison_selection_reason,
+                    )
+                else:
+                    next_action = "record-candidate-promotion-approval"
+                    next_action_detail = (
+                        "A compare-selected candidate exists, but the candidate_promotion approval gate is still pending."
+                    )
+                    recommended_command = _recommended_promotion_approval_command(
+                        package_dir,
+                        current_object_id,
+                        candidate_id=candidate_id,
+                    )
             elif len(candidates) == 1:
-                next_action = "promote-single-candidate"
-                next_action_detail = (
-                    "Exactly one staged candidate exists, so direct promotion is available without a multi-candidate comparison."
-                )
-                recommended_command = _recommended_promote_command(
-                    package_dir,
-                    current_object_id,
-                    candidate_id=candidate_ids[0],
-                    candidate_asset_path=package_relative(package_dir, candidates[0][1]),
-                    comparison_id="",
-                    delivery_class=recommended_delivery_class,
-                    selection_reason="",
-                )
+                if candidate_promotion_status in {"confirmed", "not-required"}:
+                    next_action = "promote-single-candidate"
+                    next_action_detail = (
+                        "Exactly one staged candidate exists and promotion approval has already been recorded."
+                    )
+                    recommended_command = _recommended_promote_command(
+                        package_dir,
+                        current_object_id,
+                        candidate_id=candidate_ids[0],
+                        candidate_asset_path=package_relative(package_dir, candidates[0][1]),
+                        comparison_id="",
+                        delivery_class=recommended_delivery_class,
+                        selection_reason="",
+                    )
+                else:
+                    next_action = "record-candidate-promotion-approval"
+                    next_action_detail = (
+                        "Exactly one staged candidate exists, but candidate_promotion approval is still pending."
+                    )
+                    recommended_command = _recommended_promotion_approval_command(
+                        package_dir,
+                        current_object_id,
+                        candidate_id=candidate_ids[0],
+                    )
 
         work_items.append(
             {
@@ -217,6 +296,9 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 "latest_comparison_id": latest_comparison_id,
                 "comparison_selected_candidate_id": comparison_selected_candidate_id,
                 "comparison_selection_reason": comparison_selection_reason,
+                "candidate_promotion_status": candidate_promotion_status,
+                "candidate_promotion_source": candidate_promotion_source,
+                "candidate_promotion_evidence_ref": candidate_promotion_evidence_ref,
                 "selected_candidate_id": selected_candidate_id,
                 "current_asset_revision": promoted_revision,
                 "recommended_delivery_class": recommended_delivery_class,

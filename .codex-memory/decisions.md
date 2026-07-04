@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Candidate Work Items Should Reflect The Promotion Approval Gate, Not Just Candidate Availability
+- Decision: Make `describe_candidate_work_items.py` recommend a `record_quality_review.py` formal-approval handoff when a candidate is selected but `metadata.confirmation.candidate_promotion` is still pending, and only recommend direct promotion once that gate is confirmed or explicitly not required.
+- Rationale: After compare-selected promotion defaults V1, the helper could tell when a candidate was promotion-ready in a mechanical sense, but it still skipped over the workflow's formal approval requirement. Surfacing the approval handoff explicitly lowers operator confusion without forcing promotion script behavior to change.
+- Alternatives considered: Leave approval handling implicit in docs, or make `promote_candidate_asset.py` itself refuse to run without prior approval immediately.
+- Impact: Candidate work-item status now models the actual workflow more faithfully, record-quality-review becomes the explicit next step when formal approval is missing, and future orchestration work can use this state without guessing whether approval is still pending.
+- Rollback trigger: If later workflow policy decides promotion should always enforce approval inside the promotion script itself, keep the helper state but align it to the stricter runtime guard rather than removing the approval-aware status.
+- Related files: `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/SKILL.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`
+
 ## 2026-07-04 - Compare Evidence Should Own Promotion Defaults Once It Already Records The Answer
 - Decision: Let `promote_candidate_asset.py --comparison-id ...` reuse `selected_candidate_id` and `selection_reason` from the comparison record when those values are already present there, while still failing closed if comparison evidence has not recorded them yet.
 - Rationale: After candidate work-item status V1, the remaining high-friction point was that promotion still often asked the operator to repeat facts that compare evidence already owned. Reusing those values lowers operator burden without weakening honesty because the workflow still requires explicit selection evidence before promotion can proceed.
