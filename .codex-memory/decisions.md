@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Lifecycle Recommendation Variants Should Be Grouped Into Task Objects When They Belong To One Step Family
+- Decision: Add a grouped `recommended_task` object on candidate work items whenever `recommended_command_variants[]` are really branches of one lifecycle step family.
+- Rationale: Machine-readable variant fields made each branch clearer, but downstream consumers still had to infer whether three branches belonged to one “selection task” or were unrelated options. Grouping them under a task object lowers coordination cost without requiring a larger task engine.
+- Alternatives considered: Keep only flat variants, or jump directly to a larger repo-owned task protocol.
+- Impact: Pending selection and pending promotion approval states now expose a stable task envelope with task type, phase, goal, and default variant, while preserving existing command compatibility surfaces.
+- Rollback trigger: If a future task engine supersedes command variants, carry the grouped task semantics into that system rather than flattening them back into unrelated variant rows.
+- Related files: `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Lifecycle Recommendation Variants Need Stable Machine-Readable Fields
 - Decision: Promote `recommended_command_variants[]` from a richer string list into a lightweight machine-readable schema with explicit lifecycle metadata such as `phase`, `intent`, branch flag/value, recommendation status, and required user-supplied fields.
 - Rationale: Variants made lifecycle branches visible, but they still required downstream consumers to infer the meaning of each branch from human labels and notes. Adding stable schema fields makes the recommendation surface safer for both UI rendering and agent consumption without forcing a broader workflow engine.

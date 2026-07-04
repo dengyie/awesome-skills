@@ -795,3 +795,9 @@
 - Results: Candidate lifecycle recommendations are now easier for both humans and downstream agents to interpret without guessing branch semantics from prose alone. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 01:55
+- Task: Complete `split-image-assets` candidate lifecycle task schema V1.
+- Actions: Added grouped `recommended_task` envelopes on top of lifecycle command variants; synchronized usage/workflow/skill/baseline docs and project memory; expanded regression coverage for task grouping and success-transition metadata.
+- Results: Candidate lifecycle recommendations now read as task-shaped objects rather than only decorated command rows, while preserving compatibility with existing command consumers. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

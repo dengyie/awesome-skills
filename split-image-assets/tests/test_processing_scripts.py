@@ -1210,12 +1210,22 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 [item["variant_id"] for item in entry["recommended_command_variants"]],
                 ["approve-and-promote", "decline-promotion"],
             )
+            self.assertEqual(entry["recommended_task"]["task_type"], "candidate-lifecycle")
+            self.assertEqual(entry["recommended_task"]["task_phase"], "candidate-promotion")
+            self.assertEqual(entry["recommended_task"]["task_state"], "record-candidate-promotion-approval")
+            self.assertEqual(entry["recommended_task"]["task_goal"], "decide-candidate-promotion")
+            self.assertEqual(entry["recommended_task"]["default_variant_id"], "approve-and-promote")
             self.assertEqual(entry["recommended_command_variants"][0]["phase"], "candidate-promotion")
             self.assertEqual(entry["recommended_command_variants"][0]["intent"], "approve-and-promote")
             self.assertEqual(entry["recommended_command_variants"][0]["branch_flag"], "decision_answer")
             self.assertEqual(entry["recommended_command_variants"][0]["branch_value"], "yes")
             self.assertTrue(entry["recommended_command_variants"][0]["recommended"])
             self.assertEqual(entry["recommended_command_variants"][0]["requires_fields"], ["evidence_ref"])
+            self.assertEqual(
+                entry["recommended_command_variants"][0]["writes_fields"],
+                ["confirmation.candidate_promotion", "current_asset_revision", "repair_history"],
+            )
+            self.assertEqual(entry["recommended_command_variants"][0]["next_action_if_success"], "no-candidate-work-required")
     def test_describe_candidate_work_items_recommends_promote_single_candidate_after_approval(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2217,6 +2227,11 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 [item["variant_id"] for item in entry["recommended_command_variants"]],
                 ["selection-only", "selection-then-promote-yes", "selection-then-decline"],
             )
+            self.assertEqual(entry["recommended_task"]["task_type"], "candidate-lifecycle")
+            self.assertEqual(entry["recommended_task"]["task_phase"], "candidate-selection")
+            self.assertEqual(entry["recommended_task"]["task_state"], "await-candidate-selection")
+            self.assertEqual(entry["recommended_task"]["task_goal"], "record-compare-winner")
+            self.assertEqual(entry["recommended_task"]["default_variant_id"], "selection-only")
             self.assertEqual(entry["recommended_command_variants"][0]["phase"], "candidate-selection")
             self.assertEqual(entry["recommended_command_variants"][0]["intent"], "record-selection-only")
             self.assertEqual(entry["recommended_command_variants"][0]["branch_flag"], "promotion_answer")
@@ -2226,6 +2241,11 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 entry["recommended_command_variants"][0]["requires_fields"],
                 ["selection_reason", "evidence_ref", "candidate_id"],
             )
+            self.assertEqual(
+                entry["recommended_command_variants"][0]["writes_fields"],
+                ["selected_candidate_id", "decision_log"],
+            )
+            self.assertEqual(entry["recommended_command_variants"][0]["next_action_if_success"], "record-candidate-promotion-approval")
     def test_describe_candidate_work_items_recommends_selection_without_candidate_id_for_single_candidate_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2303,6 +2323,16 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["recommended_command_variants"][0]["requires_fields"], ["selection_reason", "evidence_ref"])
             self.assertEqual(entry["recommended_command_variants"][1]["intent"], "record-selection-and-promote")
             self.assertEqual(entry["recommended_command_variants"][2]["intent"], "record-selection-and-decline-promotion")
+            self.assertEqual(
+                entry["recommended_command_variants"][1]["writes_fields"],
+                [
+                    "selected_candidate_id",
+                    "decision_log",
+                    "confirmation.candidate_promotion",
+                    "current_asset_revision",
+                    "repair_history",
+                ],
+            )
     def test_record_candidate_selection_records_single_candidate_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

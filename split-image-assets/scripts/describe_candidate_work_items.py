@@ -186,6 +186,9 @@ def _command_variant(
     branch_value: str,
     recommended: bool,
     requires_fields: list[str] | None = None,
+    writes_fields: list[str] | None = None,
+    next_action_if_success: str = "",
+    requires_human_confirmation: bool = True,
 ) -> dict:
     return {
         "variant_id": variant_id,
@@ -198,6 +201,29 @@ def _command_variant(
         "branch_value": branch_value,
         "recommended": recommended,
         "requires_fields": list(requires_fields or []),
+        "writes_fields": list(writes_fields or []),
+        "next_action_if_success": next_action_if_success,
+        "requires_human_confirmation": requires_human_confirmation,
+    }
+
+
+def _recommended_task(
+    *,
+    task_type: str,
+    task_phase: str,
+    task_state: str,
+    task_goal: str,
+    default_variant_id: str,
+    variants: list[dict],
+) -> dict:
+    return {
+        "task_type": task_type,
+        "task_phase": task_phase,
+        "task_state": task_state,
+        "task_goal": task_goal,
+        "default_variant_id": default_variant_id,
+        "variant_count": len(variants),
+        "variants": variants,
     }
 
 
@@ -244,6 +270,8 @@ def _selection_command_variants(
             recommended=True,
             requires_fields=["selection_reason", "evidence_ref"]
             + (["candidate_id"] if requires_candidate_id else []),
+            writes_fields=["selected_candidate_id", "decision_log"],
+            next_action_if_success="record-candidate-promotion-approval",
         ),
         _command_variant(
             "selection-then-promote-yes",
@@ -257,6 +285,14 @@ def _selection_command_variants(
             recommended=False,
             requires_fields=["selection_reason", "evidence_ref"]
             + (["candidate_id"] if requires_candidate_id else []),
+            writes_fields=[
+                "selected_candidate_id",
+                "decision_log",
+                "confirmation.candidate_promotion",
+                "current_asset_revision",
+                "repair_history",
+            ],
+            next_action_if_success="no-candidate-work-required",
         ),
         _command_variant(
             "selection-then-decline",
@@ -270,6 +306,8 @@ def _selection_command_variants(
             recommended=False,
             requires_fields=["selection_reason", "evidence_ref"]
             + (["candidate_id"] if requires_candidate_id else []),
+            writes_fields=["selected_candidate_id", "decision_log"],
+            next_action_if_success="record-candidate-promotion-approval",
         ),
     ]
 
@@ -308,6 +346,12 @@ def _promotion_decision_variants(
             branch_value="yes",
             recommended=True,
             requires_fields=["evidence_ref"],
+            writes_fields=[
+                "confirmation.candidate_promotion",
+                "current_asset_revision",
+                "repair_history",
+            ],
+            next_action_if_success="no-candidate-work-required",
         ),
         _command_variant(
             "decline-promotion",
@@ -320,6 +364,8 @@ def _promotion_decision_variants(
             branch_value="no",
             recommended=False,
             requires_fields=["evidence_ref"],
+            writes_fields=["confirmation.candidate_promotion", "decision_log"],
+            next_action_if_success="record-candidate-promotion-approval",
         ),
     ]
 
@@ -406,6 +452,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
         next_action_detail = "No candidate-stage action is currently required."
         recommended_command = ""
         recommended_command_variants: list[dict] = []
+        recommended_task: dict | None = None
 
         if selected_candidate_id and promoted_revision == selected_candidate_id:
             next_action = "no-candidate-work-required"
@@ -485,6 +532,14 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 candidate_id=single_candidate_id,
                 requires_candidate_id=not bool(single_candidate_id),
             )
+            recommended_task = _recommended_task(
+                task_type="candidate-lifecycle",
+                task_phase="candidate-selection",
+                task_state=next_action,
+                task_goal="record-compare-winner",
+                default_variant_id="selection-only",
+                variants=recommended_command_variants,
+            )
         else:
             candidate_id = comparison_selected_candidate_id or (candidate_ids[0] if len(candidate_ids) == 1 else "")
             candidate_asset_path = ""
@@ -542,6 +597,14 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id=latest_comparison_id,
                     )
+                    recommended_task = _recommended_task(
+                        task_type="candidate-lifecycle",
+                        task_phase="candidate-promotion",
+                        task_state=next_action,
+                        task_goal="decide-candidate-promotion",
+                        default_variant_id="approve-and-promote",
+                        variants=recommended_command_variants,
+                    )
             elif len(candidates) == 1:
                 if candidate_promotion_status in {"confirmed", "not-required"}:
                     next_action = "promote-single-candidate"
@@ -574,6 +637,14 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id="",
                     )
+                    recommended_task = _recommended_task(
+                        task_type="candidate-lifecycle",
+                        task_phase="candidate-promotion",
+                        task_state=next_action,
+                        task_goal="decide-candidate-promotion",
+                        default_variant_id="approve-and-promote",
+                        variants=recommended_command_variants,
+                    )
 
         work_items.append(
             {
@@ -600,6 +671,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 "next_action_detail": next_action_detail,
                 "recommended_command": recommended_command,
                 "recommended_command_variants": recommended_command_variants,
+                "recommended_task": recommended_task,
             }
         )
 
