@@ -43,6 +43,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertEqual(task["task_type"], contract.TASK_TYPE_CANDIDATE_LIFECYCLE)
         self.assertEqual(task["default_variant_id"], "example")
         self.assertEqual(task["variant_count"], 1)
+        self.assertEqual(task["task_protocol_version"], contract.SHARED_TASK_PROTOCOL_VERSION)
+        self.assertEqual(task["task_contract_reference"], contract.SHARED_TASK_CONTRACT_REFERENCE)
     def test_work_item_schema_lib_rejects_invalid_task_protocol(self):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")
@@ -770,6 +772,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["recommended_task"]["task_type"], "provider-bridge")
             self.assertEqual(entry["recommended_task"]["task_state"], "prepare-generation-brief")
             self.assertEqual(entry["recommended_task"]["default_variant_id"], "prepare-generation-brief")
+            self.assertEqual(entry["recommended_task"]["task_protocol_version"], "1.0")
     def test_describe_provider_work_items_recommends_prepare_provider_request_after_brief(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1302,6 +1305,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["recommended_task"]["task_state"], "record-candidate-promotion-approval")
             self.assertEqual(entry["recommended_task"]["task_goal"], "decide-candidate-promotion")
             self.assertEqual(entry["recommended_task"]["default_variant_id"], "approve-and-promote")
+            self.assertEqual(
+                entry["recommended_task"]["task_contract_reference"],
+                "split-image-assets/references/shared-task-contract.md",
+            )
             self.assertEqual(entry["recommended_command_variants"][0]["phase"], "candidate-promotion")
             self.assertEqual(entry["recommended_command_variants"][0]["intent"], "approve-and-promote")
             self.assertEqual(entry["recommended_command_variants"][0]["branch_flag"], "decision_answer")
@@ -2319,6 +2326,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["recommended_task"]["task_state"], "await-candidate-selection")
             self.assertEqual(entry["recommended_task"]["task_goal"], "record-compare-winner")
             self.assertEqual(entry["recommended_task"]["default_variant_id"], "selection-only")
+            self.assertEqual(entry["recommended_task"]["task_protocol_version"], "1.0")
             self.assertEqual(entry["recommended_command_variants"][0]["phase"], "candidate-selection")
             self.assertEqual(entry["recommended_command_variants"][0]["intent"], "record-selection-only")
             self.assertEqual(entry["recommended_command_variants"][0]["branch_flag"], "promotion_answer")

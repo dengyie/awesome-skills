@@ -4,6 +4,8 @@ ALLOWED_TASK_TYPES = {
     TASK_TYPE_CANDIDATE_LIFECYCLE,
     TASK_TYPE_PROVIDER_BRIDGE,
 }
+SHARED_TASK_PROTOCOL_VERSION = "1.0"
+SHARED_TASK_CONTRACT_REFERENCE = "split-image-assets/references/shared-task-contract.md"
 
 TASK_PHASE_CANDIDATE_SELECTION = "candidate-selection"
 TASK_PHASE_CANDIDATE_PROMOTION = "candidate-promotion"

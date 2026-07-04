@@ -159,6 +159,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "provider-bridge",
             "exactly one variant",
             "default_variant_id must match",
+            "task_protocol_version",
+            "task_contract_reference",
+            "1.0",
         ]:
             self.assertIn(expected, shared_task_contract)
     def test_skill_frontmatter_and_core_rules_are_present(self):

@@ -3,6 +3,8 @@ from work_item_schema_contract import (
     ALLOWED_INTENTS,
     ALLOWED_TASK_PHASES,
     ALLOWED_TASK_TYPES,
+    SHARED_TASK_CONTRACT_REFERENCE,
+    SHARED_TASK_PROTOCOL_VERSION,
 )
 
 
@@ -119,6 +121,8 @@ def build_recommended_task(
     if recommended_ids[0] != default_variant_id_value:
         raise ValueError("default_variant_id must match the recommended variant")
     return {
+        "task_protocol_version": SHARED_TASK_PROTOCOL_VERSION,
+        "task_contract_reference": SHARED_TASK_CONTRACT_REFERENCE,
         "task_type": task_type_value,
         "task_phase": task_phase_value,
         "task_state": task_state_value,
@@ -126,4 +130,52 @@ def build_recommended_task(
         "default_variant_id": default_variant_id_value,
         "variant_count": len(normalized_variants),
         "variants": normalized_variants,
+    }
+
+
+def build_recommendation_bundle(
+    *,
+    recommended_command: str = "",
+    variants: list[dict] | None = None,
+    task_type: str = "",
+    task_phase: str = "",
+    task_state: str = "",
+    task_goal: str = "",
+    default_variant_id: str = "",
+) -> dict:
+    command_value = recommended_command.strip() if isinstance(recommended_command, str) else ""
+    normalized_variants = list(variants or [])
+    recommended_task = None
+    if normalized_variants:
+        if not task_type or not task_phase or not task_state or not task_goal or not default_variant_id:
+            raise ValueError(
+                "task_type, task_phase, task_state, task_goal, and default_variant_id are required when variants are provided"
+            )
+        recommended_task = build_recommended_task(
+            task_type=task_type,
+            task_phase=task_phase,
+            task_state=task_state,
+            task_goal=task_goal,
+            default_variant_id=default_variant_id,
+            variants=normalized_variants,
+        )
+        if not command_value:
+            command_value = str(recommended_task["variants"][0].get("command", "")).strip()
+        default_variant = next(
+            (
+                item
+                for item in recommended_task["variants"]
+                if str(item.get("variant_id", "")).strip() == recommended_task["default_variant_id"]
+            ),
+            None,
+        )
+        if default_variant is None:
+            raise ValueError("default variant could not be resolved from recommended_task")
+        default_command = str(default_variant.get("command", "")).strip()
+        if command_value != default_command:
+            raise ValueError("recommended_command must match the default variant command when variants are provided")
+    return {
+        "recommended_command": command_value,
+        "recommended_command_variants": normalized_variants,
+        "recommended_task": recommended_task,
     }

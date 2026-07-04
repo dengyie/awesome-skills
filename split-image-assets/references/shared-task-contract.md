@@ -58,6 +58,8 @@ That task object should include:
 - `default_variant_id`
 - `variant_count`
 - `variants[]`
+- `task_protocol_version`
+- `task_contract_reference`
 
 `recommended_task.variants[]` should mirror the same variant objects already emitted in `recommended_command_variants[]`.
 
@@ -74,6 +76,11 @@ Protocol invariants:
 The canonical shared constants currently live in:
 
 - `split-image-assets/scripts/work_item_schema_contract.py`
+
+Current protocol identity:
+
+- `task_protocol_version`: `1.0`
+- `task_contract_reference`: `split-image-assets/references/shared-task-contract.md`
 
 The canonical shared builders currently live in:
 
