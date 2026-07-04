@@ -49,6 +49,30 @@ def parse_candidate_arg(value: str, parser: argparse.ArgumentParser) -> tuple[st
     return candidate_id, asset_path
 
 
+def auto_discover_generated_candidates(
+    package_dir: Path,
+    object_id: str,
+) -> list[tuple[str, str]]:
+    candidate_dir = package_dir / "_staging" / "repair_candidates" / object_id
+    if not candidate_dir.exists():
+        return []
+    discovered: list[tuple[str, str]] = []
+    for asset_path in sorted(candidate_dir.glob("*.png")):
+        if asset_path.name.endswith("_mask.png"):
+            continue
+        candidate_id = asset_path.stem
+        provider_stage_path = asset_path.with_name(f"{candidate_id}_provider_stage.json")
+        if not provider_stage_path.exists():
+            continue
+        discovered.append(
+            (
+                candidate_id,
+                str(asset_path.relative_to(package_dir)).replace("\\", "/"),
+            )
+        )
+    return discovered
+
+
 def candidate_records_for_manifest(candidates: list[dict]) -> list[dict]:
     records = []
     for item in candidates:
@@ -149,7 +173,6 @@ def main() -> int:
     parser.add_argument(
         "--candidate",
         action="append",
-        required=True,
         help="Candidate pair in the form candidate_id=package/relative/path.png",
     )
     parser.add_argument("--compare-note", default="", help="Short note about the comparison context.")
@@ -180,6 +203,17 @@ def main() -> int:
     require_generated_stage_evidence = (
         isinstance(plan_object, dict) and str(plan_object.get("planned_route", "")).strip() == "generate"
     )
+    generated_route = require_generated_stage_evidence
+
+    candidate_args = list(args.candidate or [])
+    if not candidate_args:
+        if generated_route:
+            candidate_args = [
+                f"{candidate_id}={relative_path}"
+                for candidate_id, relative_path in auto_discover_generated_candidates(package_dir, args.object_id)
+            ]
+        if not candidate_args:
+            parser.error("at least one --candidate is required unless generated candidates can be auto-discovered")
 
     score_manifest_data = None
     score_by_candidate: dict[str, dict] = {}
@@ -205,7 +239,7 @@ def main() -> int:
 
     candidates: list[dict] = []
     requested_candidate_ids: list[str] = []
-    for value in args.candidate:
+    for value in candidate_args:
         candidate_id, relative_path = parse_candidate_arg(value, parser)
         requested_candidate_ids.append(candidate_id)
         asset_path = package_path(package_dir, relative_path, f"candidate {candidate_id}", parser)
@@ -274,8 +308,8 @@ def main() -> int:
                 "compare_artifact_path": str(compare_artifact_path.relative_to(package_dir)).replace("\\", "/"),
                 "compare_note": args.compare_note,
                 "compare_criteria": args.compare_criterion or [],
-                "review_focus": args.review_focus or [],
-                "risks": args.risk or [],
+                "review_focus": args.review_focus or (["generated fidelity"] if generated_route else []),
+                "risks": args.risk or (["prompt drift"] if generated_route else []),
                 "score_manifest_path": score_manifest_path_rel,
                 "recommended_candidate_order": score_manifest_data.get("recommended_candidate_order", [])
                 if isinstance(score_manifest_data, dict)
@@ -304,8 +338,8 @@ def main() -> int:
             "compare_manifest_path": str(compare_manifest_path.relative_to(package_dir)).replace("\\", "/"),
             "compare_note": args.compare_note,
             "compare_criteria": args.compare_criterion or [],
-            "review_focus": args.review_focus or [],
-            "risks": args.risk or [],
+            "review_focus": args.review_focus or (["generated fidelity"] if generated_route else []),
+            "risks": args.risk or (["prompt drift"] if generated_route else []),
             "score_manifest_path": score_manifest_path_rel,
             "selected_candidate_id": "",
             "selection_reason": "",

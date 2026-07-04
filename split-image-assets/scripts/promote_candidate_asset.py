@@ -96,7 +96,7 @@ def main() -> int:
         help="Package-relative staged candidate asset path. Optional when --comparison-id can resolve the candidate from compare evidence.",
     )
     parser.add_argument("--candidate-mask", help="Package-relative staged candidate mask path.")
-    parser.add_argument("--candidate-id", required=True, help="Candidate identifier recorded in metadata.")
+    parser.add_argument("--candidate-id", help="Candidate identifier recorded in metadata. Optional when --comparison-id resolves exactly one candidate.")
     parser.add_argument("--comparison-id", help="Existing candidate comparison record id to resolve.")
     parser.add_argument(
         "--delivery-class",
@@ -136,6 +136,7 @@ def main() -> int:
     comparison = None
     compare_manifest = {}
     compare_candidate_record = {}
+    candidate_id_value = args.candidate_id or ""
     if args.comparison_id:
         comparison = next(
             (
@@ -148,15 +149,29 @@ def main() -> int:
         if comparison is None:
             parser.error(f"unknown comparison-id: {args.comparison_id}")
         candidate_ids = comparison.get("candidate_ids", [])
-        if not isinstance(candidate_ids, list) or args.candidate_id not in candidate_ids:
-            parser.error("comparison-id must reference a comparison that includes the selected candidate")
+        if not isinstance(candidate_ids, list):
+            parser.error("comparison-id must reference a comparison with candidate_ids")
         compare_manifest_path = comparison.get("compare_manifest_path", "")
         if not isinstance(compare_manifest_path, str) or not compare_manifest_path.strip():
             parser.error("comparison-id must reference a comparison with compare_manifest_path")
         compare_manifest = load_compare_manifest(package_dir, compare_manifest_path, parser)
-        compare_candidate_record = find_compare_candidate_record(compare_manifest, args.candidate_id)
+        if not all(
+            isinstance(item, str) and item.strip() for item in candidate_ids
+        ):
+            parser.error("comparison-id must reference a comparison with candidate_ids")
+        if not candidate_id_value:
+            if len(candidate_ids) == 1:
+                candidate_id_value = candidate_ids[0]
+            else:
+                parser.error("--candidate-id is required when --comparison-id references multiple candidates")
+        if candidate_id_value not in candidate_ids:
+            parser.error("comparison-id must reference a comparison that includes the selected candidate")
+        compare_candidate_record = find_compare_candidate_record(compare_manifest, candidate_id_value)
         if not compare_candidate_record:
             parser.error("comparison-id compare manifest must include the selected candidate record")
+
+    if not candidate_id_value:
+        parser.error("--candidate-id is required unless --comparison-id resolves exactly one candidate")
 
     candidate_asset_value = args.candidate_asset
     if not candidate_asset_value and compare_candidate_record:
@@ -195,12 +210,12 @@ def main() -> int:
         shutil.copy2(candidate_mask, destination_mask)
 
     try:
-        provider_stage = load_provider_stage_manifest(candidate_asset, args.candidate_id)
+        provider_stage = load_provider_stage_manifest(candidate_asset, candidate_id_value)
     except (ValueError, json.JSONDecodeError) as exc:
         parser.error(f"provider stage manifest is not valid JSON: {exc}")
 
-    target["selected_candidate_id"] = args.candidate_id
-    target["current_asset_revision"] = args.candidate_id
+    target["selected_candidate_id"] = candidate_id_value
+    target["current_asset_revision"] = candidate_id_value
     target["delivery_class"] = args.delivery_class
     if args.delivery_class == "approximate-reconstruction":
         target["reuse_status"] = "approximate-reconstruction"
@@ -264,7 +279,7 @@ def main() -> int:
     repair_history = target.setdefault("repair_history", [])
     repair_history.append(
         {
-            "candidate_id": args.candidate_id,
+            "candidate_id": candidate_id_value,
             "note": args.repair_note,
             "candidate_asset": candidate_asset_value,
             "candidate_mask": args.candidate_mask or "",
@@ -273,21 +288,21 @@ def main() -> int:
         }
     )
     if args.comparison_id:
-        comparison["selected_candidate_id"] = args.candidate_id
+        comparison["selected_candidate_id"] = candidate_id_value
         comparison["selection_reason"] = args.selection_reason
         comparison["selected_at"] = now
     else:
-        comparison_id = f"manual-{args.candidate_id}"
+        comparison_id = f"manual-{candidate_id_value}"
         compare_manifest_rel = f"_staging/repair_candidates/{comparison_id}_compare.json"
         write_json(
             package_dir / compare_manifest_rel,
             {
                 "comparison_id": comparison_id,
                 "object_id": args.object_id,
-                "candidate_ids": [args.candidate_id],
+                "candidate_ids": [candidate_id_value],
                 "candidates": [
                     {
-                        "candidate_id": args.candidate_id,
+                        "candidate_id": candidate_id_value,
                         "asset_path": candidate_asset_value,
                     }
                 ],
@@ -303,7 +318,7 @@ def main() -> int:
         compare_manifest_data = json.loads((package_dir / compare_manifest_rel).read_text(encoding="utf-8"))
         if args.delivery_class == "generated-reconstruction" and provider_stage:
             compare_manifest_data["candidates"][0]["provider_stage_manifest_path"] = str(
-                (candidate_asset.parent / f"{args.candidate_id}_provider_stage.json").relative_to(package_dir)
+                (candidate_asset.parent / f"{candidate_id_value}_provider_stage.json").relative_to(package_dir)
             ).replace("\\", "/")
             for field_name in [
                 "generation_source",
@@ -321,7 +336,7 @@ def main() -> int:
             {
                 "comparison_id": comparison_id,
                 "object_id": args.object_id,
-                "candidate_ids": [args.candidate_id],
+                "candidate_ids": [candidate_id_value],
                 "compare_artifact_path": "",
                 "compare_manifest_path": compare_manifest_rel,
                 "compare_note": "Manual direct promotion without multi-candidate comparison.",
@@ -329,15 +344,15 @@ def main() -> int:
                 "review_focus": ["selection rationale"],
                 "risks": [],
                 "score_manifest_path": "",
-                "selected_candidate_id": args.candidate_id,
+                "selected_candidate_id": candidate_id_value,
                 "selection_reason": args.selection_reason,
                 "created_at": now,
             }
         )
     update_asset_summary(metadata)
     write_metadata(package_dir, metadata)
-    append_qa_report(package_dir, args.object_id, args.candidate_id, args.selection_reason)
-    print(f"Promoted candidate {args.candidate_id} for {args.object_id}")
+    append_qa_report(package_dir, args.object_id, candidate_id_value, args.selection_reason)
+    print(f"Promoted candidate {candidate_id_value} for {args.object_id}")
     return 0
 
 

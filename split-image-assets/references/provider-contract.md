@@ -94,6 +94,8 @@ For generated candidate comparison, the preferred compare-side pattern is:
 
 When promotion references an existing comparison, the compare manifest candidate record should be treated as the first evidence source for generated candidate asset paths and generated evidence fields before falling back to sibling stage manifests or manual flag repetition.
 
+For generated compare workflows, `compare_candidate_assets.py` may auto-discover candidates from `_staging/repair_candidates/<object-id>/` when the object is planned to `generate` and the staged candidates already carry provider-stage manifests. For single-candidate compare records, `promote_candidate_asset.py` may resolve the candidate id from compare evidence when `--comparison-id` is supplied and no ambiguity remains.
+
 ## Provider Request Contract
 
 Every provider request should include:

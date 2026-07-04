@@ -1771,6 +1771,109 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("generated compare candidates require provider stage evidence", result.stderr)
+    def test_compare_candidate_assets_auto_discovers_generated_candidates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            self._write_single_object_metadata(output)
+            self._write_generated_plan_manifest(output)
+            self._write_generation_brief(output)
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            provider_dir = output / "_staging" / "providers" / "codex-controlled-generation" / "main_object"
+            provider_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(provider_dir / "candidate_a.png")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--status",
+                    "success",
+                    "--artifact",
+                    "candidate_png=_staging/providers/codex-controlled-generation/main_object/candidate_a.png",
+                    "--tool-name",
+                    "gpt-image-1",
+                    "--tool-role",
+                    "generation",
+                    "--tool-version",
+                    "test-version",
+                    "--execution-mode",
+                    "host-managed",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "consume_provider_result.py"),
+                    str(output),
+                    "--provider-id",
+                    "codex-controlled-generation",
+                    "--object-id",
+                    "main_object",
+                    "--mode",
+                    "stage-candidate",
+                    "--candidate-id",
+                    "candidate-a",
+                ],
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            shutil.copy2(
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-a.png",
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-b.png",
+            )
+            shutil.copy2(
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-a_provider_stage.json",
+                output / "_staging" / "repair_candidates" / "main_object" / "candidate-b_provider_stage.json",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--compare-note",
+                    "Auto-discover generated candidates.",
+                    "--compare-criterion",
+                    "generated edge fidelity",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            comparison = metadata["objects"][0]["candidate_comparisons"][0]
+            self.assertEqual(comparison["candidate_ids"], ["candidate-a", "candidate-b"])
+            compare_manifest = json.loads((output / comparison["compare_manifest_path"]).read_text(encoding="utf-8"))
+            self.assertEqual(compare_manifest["review_focus"], ["generated fidelity"])
+            self.assertEqual(compare_manifest["risks"], ["prompt drift"])
     def test_compare_candidate_assets_requires_criterion(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2944,6 +3047,68 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "Promote using compare manifest candidate path.",
                     "--selection-reason",
                     "Candidate A best matches the expected silhouette.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["objects"][0]["selected_candidate_id"], "candidate-a")
+    def test_promote_candidate_asset_resolves_single_candidate_id_from_compare_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (6, 6), (20, 20, 20, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            Image.new("RGBA", (4, 4), (255, 0, 0, 255)).save(
+                output / "assets" / "main_object_transparent.png"
+            )
+            Image.new("L", (6, 6), 255).save(output / "masks" / "mask_main.png")
+            self._write_single_object_metadata(output)
+            candidate_dir = output / "_staging" / "repair_candidates"
+            candidate_dir.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (4, 4), (0, 255, 0, 255)).save(candidate_dir / "candidate_a.png")
+            compare_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "compare_candidate_assets.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--candidate",
+                    "candidate-a=_staging/repair_candidates/candidate_a.png",
+                    "--compare-note",
+                    "Single-candidate compare for direct promotion.",
+                    "--compare-criterion",
+                    "single viable candidate",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(compare_result.returncode, 0, compare_result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            comparison_id = metadata["objects"][0]["candidate_comparisons"][0]["comparison_id"]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "promote_candidate_asset.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                    "--comparison-id",
+                    comparison_id,
+                    "--delivery-class",
+                    "clean-extraction",
+                    "--repair-note",
+                    "Promote single compare candidate.",
+                    "--selection-reason",
+                    "Only viable candidate in the compare set.",
                 ],
                 text=True,
                 capture_output=True,
