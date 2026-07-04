@@ -174,6 +174,105 @@ def _recommended_selection_command(
     return " ".join(parts)
 
 
+def _command_variant(variant_id: str, label: str, command: str, note: str = "") -> dict:
+    return {
+        "variant_id": variant_id,
+        "label": label,
+        "command": command,
+        "note": note,
+    }
+
+
+def _selection_command_variants(
+    package_dir: Path,
+    object_id: str,
+    *,
+    comparison_id: str,
+    candidate_id: str,
+    requires_candidate_id: bool,
+) -> list[dict]:
+    package_arg = str(package_dir).replace("\\", "/")
+    base = [
+        "python",
+        "split-image-assets/scripts/apply_candidate_selection_decision.py",
+        package_arg,
+        "--object-id",
+        object_id,
+        "--comparison-id",
+        comparison_id,
+    ]
+    if requires_candidate_id:
+        base.extend(["--candidate-id", "<candidate-id>" if not candidate_id else candidate_id])
+    base.extend(
+        [
+            "--selection-reason",
+            "\"Explain why this candidate wins the compare.\"",
+            "--decision-source",
+            "explicit-user-confirmed",
+            "--evidence-ref",
+            "<selection-evidence-ref>",
+        ]
+    )
+    return [
+        _command_variant(
+            "selection-only",
+            "Record Winner",
+            " ".join([*base, "--promotion-answer", "skip"]),
+            "Safe default: record compare winner only.",
+        ),
+        _command_variant(
+            "selection-then-promote-yes",
+            "Select + Promote",
+            " ".join([*base, "--promotion-answer", "yes"]),
+            "Records selection first, then continues into promotion approval and promotion.",
+        ),
+        _command_variant(
+            "selection-then-decline",
+            "Select + Decline",
+            " ".join([*base, "--promotion-answer", "no"]),
+            "Records selection first, then records that promotion should not continue.",
+        ),
+    ]
+
+
+def _promotion_decision_variants(
+    package_dir: Path,
+    object_id: str,
+    *,
+    comparison_id: str,
+) -> list[dict]:
+    package_arg = str(package_dir).replace("\\", "/")
+    base = [
+        "python",
+        "split-image-assets/scripts/apply_candidate_promotion_decision.py",
+        package_arg,
+        "--object-id",
+        object_id,
+    ]
+    if comparison_id:
+        base.extend(["--comparison-id", comparison_id])
+    shared = [
+        "--decision-source",
+        "explicit-user-confirmed",
+        "--evidence-ref",
+        "<approval-evidence-ref>",
+    ]
+    return [
+        _command_variant(
+            "approve-and-promote",
+            "Approve + Promote",
+            " ".join([*base, "--decision-answer", "yes", *shared]),
+            "Records promotion approval and continues into promotion.",
+        ),
+        _command_variant(
+            "decline-promotion",
+            "Decline Promotion",
+            " ".join([*base, "--decision-answer", "no", *shared]),
+            "Keeps the current revision active and records the decline.",
+        ),
+    ]
+
+
 def build_candidate_work_item_status(package_dir: Path, object_id: str | None = None) -> dict:
     metadata = read_metadata(package_dir)
     plan_manifest = read_plan_manifest(package_dir)
@@ -255,6 +354,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
         next_action = "no-candidate-work-required"
         next_action_detail = "No candidate-stage action is currently required."
         recommended_command = ""
+        recommended_command_variants: list[dict] = []
 
         if selected_candidate_id and promoted_revision == selected_candidate_id:
             next_action = "no-candidate-work-required"
@@ -327,6 +427,13 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 candidate_id=single_candidate_id,
                 requires_candidate_id=not bool(single_candidate_id),
             )
+            recommended_command_variants = _selection_command_variants(
+                package_dir,
+                current_object_id,
+                comparison_id=latest_comparison_id,
+                candidate_id=single_candidate_id,
+                requires_candidate_id=not bool(single_candidate_id),
+            )
         else:
             candidate_id = comparison_selected_candidate_id or (candidate_ids[0] if len(candidate_ids) == 1 else "")
             candidate_asset_path = ""
@@ -379,6 +486,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         candidate_id=candidate_id,
                         delivery_class=recommended_delivery_class,
                     )
+                    recommended_command_variants = _promotion_decision_variants(
+                        package_dir,
+                        current_object_id,
+                        comparison_id=latest_comparison_id,
+                    )
             elif len(candidates) == 1:
                 if candidate_promotion_status in {"confirmed", "not-required"}:
                     next_action = "promote-single-candidate"
@@ -406,6 +518,11 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         candidate_id=candidate_ids[0],
                         delivery_class=recommended_delivery_class,
                     )
+                    recommended_command_variants = _promotion_decision_variants(
+                        package_dir,
+                        current_object_id,
+                        comparison_id="",
+                    )
 
         work_items.append(
             {
@@ -431,6 +548,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 "next_action": next_action,
                 "next_action_detail": next_action_detail,
                 "recommended_command": recommended_command,
+                "recommended_command_variants": recommended_command_variants,
             }
         )
 

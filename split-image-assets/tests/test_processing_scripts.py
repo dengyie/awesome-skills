@@ -1206,6 +1206,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["next_action"], "record-candidate-promotion-approval")
             self.assertEqual(entry["recommended_delivery_class"], "generated-reconstruction")
             self.assertIn("apply_candidate_promotion_decision.py", entry["recommended_command"])
+            self.assertEqual(
+                [item["variant_id"] for item in entry["recommended_command_variants"]],
+                ["approve-and-promote", "decline-promotion"],
+            )
     def test_describe_candidate_work_items_recommends_promote_single_candidate_after_approval(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -1394,6 +1398,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(entry["candidate_promotion_status"], "pending")
             self.assertIn("apply_candidate_promotion_decision.py", entry["recommended_command"])
             self.assertIn("--comparison-id cmp-1", entry["recommended_command"])
+            self.assertEqual(
+                [item["variant_id"] for item in entry["recommended_command_variants"]],
+                ["approve-and-promote", "decline-promotion"],
+            )
     def test_record_candidate_promotion_approval_records_confirmed_gate_from_selected_comparison(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2196,6 +2204,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertIn("apply_candidate_selection_decision.py", entry["recommended_command"])
             self.assertIn("--candidate-id <candidate-id>", entry["recommended_command"])
             self.assertIn("--promotion-answer skip", entry["recommended_command"])
+            self.assertEqual(
+                [item["variant_id"] for item in entry["recommended_command_variants"]],
+                ["selection-only", "selection-then-promote-yes", "selection-then-decline"],
+            )
     def test_describe_candidate_work_items_recommends_selection_without_candidate_id_for_single_candidate_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -2266,6 +2278,10 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertIn("apply_candidate_selection_decision.py", entry["recommended_command"])
             self.assertNotIn("--candidate-id", entry["recommended_command"])
             self.assertIn("--promotion-answer skip", entry["recommended_command"])
+            self.assertEqual(
+                [item["variant_id"] for item in entry["recommended_command_variants"]],
+                ["selection-only", "selection-then-promote-yes", "selection-then-decline"],
+            )
     def test_record_candidate_selection_records_single_candidate_compare(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

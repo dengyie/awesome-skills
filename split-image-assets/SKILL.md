@@ -251,7 +251,7 @@ The capability report distinguishes module-installed from runtime-ready from pro
 
 When compare evidence already records `selected_candidate_id` and `selection_reason`, `scripts/promote_candidate_asset.py --comparison-id ...` may reuse those values instead of requiring them to be repeated manually. Missing compare-side selection evidence must still fail closed.
 
-`scripts/describe_candidate_work_items.py` is the candidate-stage explainer. Use it to write `_staging/repair_candidates/candidate_work_items.json` so each object records whether candidate stage is still empty, compare evidence is needed, candidate selection is still pending, promotion is ready, or candidate work is already complete.
+`scripts/describe_candidate_work_items.py` is the candidate-stage explainer. Use it to write `_staging/repair_candidates/candidate_work_items.json` so each object records whether candidate stage is still empty, compare evidence is needed, candidate selection is still pending, promotion is ready, or candidate work is already complete. That artifact should now keep `recommended_command` for compatibility and also surface `recommended_command_variants[]` when the next step has meaningful yes/no/skip branches.
 
 When compare evidence exists but no selected candidate has been recorded yet, `scripts/describe_candidate_work_items.py` should recommend `scripts/record_candidate_selection.py` before it recommends approval or promotion. That selection adapter should record `selected_candidate_id`, `selection_reason`, and a decision-log entry without pretending candidate promotion has already been approved.
 

@@ -783,3 +783,9 @@
 - Results: The compare-selection-to-promotion path now has a lower-burden orchestration command without skipping the explicit selection state transition. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 00:55
+- Task: Complete `split-image-assets` candidate lifecycle recommendation variants V1.
+- Actions: Extended `describe_candidate_work_items.py` so it now emits `recommended_command_variants[]` for pending selection and pending promotion-approval states while keeping `recommended_command` for compatibility; synchronized usage/workflow/skill/baseline docs and project memory; expanded regression coverage for the new variant surface.
+- Results: Candidate work items now show explicit branch-specific commands instead of forcing the operator to infer neighboring lifecycle paths from one default command. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

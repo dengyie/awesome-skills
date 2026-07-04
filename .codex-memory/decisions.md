@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Candidate Work Items Should Surface Explicit Lifecycle Command Variants, Not Only One Happy Path
+- Decision: Extend `describe_candidate_work_items.py` so key lifecycle states continue to publish `recommended_command` for compatibility but also expose `recommended_command_variants[]` with explicit branch-specific commands.
+- Rationale: After selection and lifecycle wrappers landed, the work-item surface still compressed meaningful choices into one string. That kept the state model correct but left the operator inferring which adjacent branches existed. Adding structured variants lowers cognitive load without weakening honesty because each branch is still explicit and state-specific.
+- Alternatives considered: Keep a single default command only, or replace `recommended_command` entirely with a new structure and break compatibility.
+- Impact: Pending selection and pending promotion-approval states now expose explicit safe/default, yes, and no branches directly in `candidate_work_items.json`. Existing consumers that only read `recommended_command` keep working.
+- Rollback trigger: If future consumers standardize on a richer task schema than command strings, migrate these variants into that schema rather than collapsing back to one opaque command.
+- Related files: `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `docs/usage/split-image-assets.md`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-04 - Compare Winner Selection And Promotion Decision Should Have A Thin Orchestration Wrapper
 - Decision: Add `apply_candidate_selection_decision.py` as a thin lifecycle wrapper that records compare winner selection first and can optionally continue into a yes/no promotion decision.
 - Rationale: After the selection adapter landed, the lifecycle was clearer but still required users to manually chain selection and promotion-decision commands when they already knew the winner and whether promotion should continue. A wrapper lowers command burden without collapsing the underlying state model because it still writes selection explicitly before delegating to promotion decision logic.

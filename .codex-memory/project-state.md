@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` candidate lifecycle recommendation variants V1 is complete locally. `describe_candidate_work_items.py` now emits `recommended_command_variants[]` for pending selection and pending promotion-approval states while keeping `recommended_command` as the compatibility/default surface.
 - Current stage: `split-image-assets` candidate lifecycle orchestration V1 is complete locally. `apply_candidate_selection_decision.py` now wraps compare winner selection and can optionally continue into the promotion-decision path, and `describe_candidate_work_items.py` now recommends that wrapper for pending compare-selection states.
 - Current stage: `split-image-assets` candidate selection recording adapter V1 is complete locally. `record_candidate_selection.py` now records `selected_candidate_id`, `selection_reason`, and a decision-log entry from compare evidence, and `describe_candidate_work_items.py` now recommends that adapter whenever compare evidence exists but the winner has not yet been recorded.
 - Current stage: `split-image-assets` provider-aware compare command orchestration V1 is complete locally. `describe_candidate_work_items.py` now recommends compare commands that match the real generated-route provider-aware auto-discovery rules, including explicit provider-scope placeholders when no safe default exists.
@@ -28,6 +29,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (239 tests, candidate lifecycle recommendation variants V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, candidate lifecycle recommendation variants V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (candidate lifecycle recommendation variants V1 review brief; no new P0/P1 blockers)
+- 2026-07-05: `git diff --check` (passed with only CRLF warnings, candidate lifecycle recommendation variants V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (239 tests, candidate lifecycle orchestration V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, candidate lifecycle orchestration V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (candidate lifecycle orchestration V1 review brief; no new P0/P1 blockers)
@@ -352,6 +357,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Candidate lifecycle recommendation variants V1 makes branches much clearer, but it still intentionally keeps `recommended_command` as a compatibility/default surface; consumers that only read one string will still miss some richer branch detail until they adopt `recommended_command_variants[]`.
 - Candidate lifecycle orchestration V1 lowers compare-selection-to-promotion command burden, but it still intentionally uses `--promotion-answer skip` as the safe default; users must still consciously request `yes` or `no` rather than having promotion intent inferred from selection alone.
 - Candidate selection recording adapter V1 makes the compare-selection step explicit and lower-burden, but it still intentionally refuses ambiguous compare results; multi-candidate compares without an explicit winner choice still require a real candidate id or a clearer compare record.
 - Provider-aware compare command orchestration V1 makes generated candidate compare entry much clearer, but it still intentionally refuses to treat route-default provider selection as a safe compare default; mixed-provider pools without an explicit valid plan preference still require an explicit provider choice.
@@ -396,10 +402,10 @@
 - None.
 
 ## Current Focus
-- The candidate lifecycle orchestration milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The candidate lifecycle recommendation variants milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the candidate lifecycle orchestration V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the candidate lifecycle recommendation variants V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`
