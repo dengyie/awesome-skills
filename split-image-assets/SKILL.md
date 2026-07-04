@@ -265,6 +265,8 @@ For generated-route candidate pools, `scripts/describe_candidate_work_items.py` 
 
 `scripts/record_candidate_selection.py` is the low-burden candidate-selection adapter for the earlier compare step. Use it when compare evidence exists but the winner has not yet been recorded. It may reuse a single-candidate compare set, or resolve one provider-specific comparison through `--provider-id`, but it must still fail closed when the compare result is ambiguous.
 
+`scripts/apply_candidate_selection_decision.py` is the thin lifecycle wrapper for that same handoff. Use it when you want one deterministic command to record the compare winner and optionally continue into a yes/no promotion decision. It should reuse `record_candidate_selection.py` first and then pass through `apply_candidate_promotion_decision.py` only when promotion is intentionally requested.
+
 `scripts/apply_candidate_promotion_decision.py` is the next-step orchestration adapter for that handoff. Use it when you want one deterministic command to record a yes/no candidate-promotion decision and, for `yes`, continue directly into `promote_candidate_asset.py`.
 
 When route evidence is already clear, `scripts/apply_candidate_promotion_decision.py` may infer `delivery_class` from the planned route or current object delivery state, and it may generate a deterministic default `repair_note`. If the route truth is not strong enough, it must still fail closed and require an explicit `--delivery-class`.

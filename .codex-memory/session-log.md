@@ -777,3 +777,9 @@
 - Results: The candidate lifecycle now has an explicit compare-selection step before approval and promotion instead of relying on generic review-field editing. Full package validation passed with 237 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 00:20
+- Task: Complete `split-image-assets` candidate lifecycle orchestration V1.
+- Actions: Added `apply_candidate_selection_decision.py` as a thin wrapper over compare winner selection plus optional promotion decision; updated `describe_candidate_work_items.py` so pending compare-selection states now recommend the wrapper with `--promotion-answer skip`; synchronized skill/workflow/usage/baseline docs and project memory; expanded regression coverage for selection-only and selection-plus-promotion wrapper paths.
+- Results: The compare-selection-to-promotion path now has a lower-burden orchestration command without skipping the explicit selection state transition. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

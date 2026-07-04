@@ -3,6 +3,7 @@
 ## Next
 - [ ] Choose the next bounded `split-image-assets` milestone after provider-aware candidate lifecycle next steps V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` candidate lifecycle orchestration V1: selection-to-promotion wrapper, candidate work-item lifecycle handoff, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` candidate selection recording adapter V1: low-burden compare selection adapter, provider-aware compare resolution reuse, candidate work-item handoff, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider-aware compare command orchestration V1: generated compare recommendation defaults, provider-scope placeholder gating, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider-specific candidate approval/promotion resolution V1: provider-aware compare resolution, provider-scoped single-candidate resolution, docs, canonical plan sync, and regression coverage.

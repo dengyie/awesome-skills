@@ -150,7 +150,7 @@ def _recommended_selection_command(
     package_arg = str(package_dir).replace("\\", "/")
     parts = [
         "python",
-        "split-image-assets/scripts/record_candidate_selection.py",
+        "split-image-assets/scripts/apply_candidate_selection_decision.py",
         package_arg,
         "--object-id",
         object_id,
@@ -167,6 +167,8 @@ def _recommended_selection_command(
             "explicit-user-confirmed",
             "--evidence-ref",
             "<selection-evidence-ref>",
+            "--promotion-answer",
+            "skip",
         ]
     )
     return " ".join(parts)
