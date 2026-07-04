@@ -67,6 +67,8 @@ The standard first consumer is `consume_provider_result.py`. It may:
 
 It still counts as explicit package-owned consumption, not as direct provider-side metadata mutation.
 
+The standard planning-side explainer is `describe_provider_plan.py`. It should write `_staging/providers/provider_plan.json` before broad request generation so the package owns an explicit summary of route defaults, object-type overrides, valid plan preferences, selected providers, and alternative provider chains.
+
 For `external-manifest` providers, the preferred pattern is:
 
 - provider result records `artifacts.provider_manifest`

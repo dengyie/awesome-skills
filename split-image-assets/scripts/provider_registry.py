@@ -83,10 +83,29 @@ def get_default_route_chain(planned_route: str) -> list[str]:
     return list(DEFAULT_ROUTE_PROVIDER_CHAINS[planned_route])
 
 
-def get_default_provider_chain(planned_route: str, object_type: str) -> list[str]:
+def get_object_type_override_chain(planned_route: str, object_type: str) -> list[str]:
     route = str(planned_route).strip()
     obj_type = str(object_type).strip()
     override = OBJECT_TYPE_PROVIDER_OVERRIDES.get((route, obj_type))
-    if override is not None:
-        return list(override)
+    if override is None:
+        return []
+    return list(override)
+
+
+def get_default_provider_chain(planned_route: str, object_type: str) -> list[str]:
+    override = get_object_type_override_chain(planned_route, object_type)
+    if override:
+        return override
+    route = str(planned_route).strip()
     return get_default_route_chain(route)
+
+
+def list_supported_provider_ids(planned_route: str) -> list[str]:
+    route = str(planned_route).strip()
+    provider_ids: list[str] = []
+    for provider_id, spec in PROVIDER_REGISTRY.items():
+        if provider_id not in V1_ACTIVE_PROVIDER_IDS:
+            continue
+        if route in spec["supported_routes"]:
+            provider_ids.append(provider_id)
+    return provider_ids

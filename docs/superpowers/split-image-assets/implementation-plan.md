@@ -34,6 +34,7 @@ The current package baseline is:
 - compare-driven promotion orchestration
 - provider-aware compare/promotion defaults
 - provider-aware generated compare selection
+- provider-plan explanation helper
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -42,6 +43,22 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `provider-plan explanation V1`
+
+Closed status: complete
+
+What landed:
+
+- `describe_provider_plan.py` now writes `_staging/providers/provider_plan.json` as a package-owned provider-plan summary before broad request generation
+- provider selection is now explained per object with route defaults, object-type overrides, valid/invalid plan preferences, selected provider, and alternative provider chains
+- provider selection reasoning now reuses the same shared selection logic that `prepare_provider_request.py` uses instead of maintaining a second provider-planning rule set
+- package docs and tests now describe the provider-plan summary step explicitly
+
+Verification completed:
+
+- `python -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider-aware generated compare selection V1`
 
@@ -227,6 +244,7 @@ These are the important completed milestones that define the current architectur
 15. compare-driven promotion orchestration V1
 16. provider-aware compare promotion defaults V1
 17. provider-aware generated compare selection V1
+18. provider-plan explanation V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -248,7 +266,7 @@ Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
    - more explicit provider capability mapping on top of the now-harder bridge contract
-   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, and provider-aware generated compare selection
+   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, provider-aware generated compare selection, and provider-plan summaries
    - optional native runner expansion on top of the bridge layer
 
 2. broader fixture and package migration

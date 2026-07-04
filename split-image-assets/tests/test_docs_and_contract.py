@@ -38,6 +38,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             ROOT / "scripts" / "provider_registry.py",
             ROOT / "scripts" / "provider_bridge_lib.py",
             ROOT / "scripts" / "generation_brief_lib.py",
+            ROOT / "scripts" / "describe_provider_plan.py",
             ROOT / "scripts" / "prepare_provider_request.py",
             ROOT / "scripts" / "prepare_generation_brief.py",
             ROOT / "scripts" / "consume_provider_result.py",
@@ -169,6 +170,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertIn("plan_manifest.json", skill_text)
         self.assertIn("default provider chain", skill_text)
         self.assertIn("object_type override", skill_text)
+        self.assertIn("describe_provider_plan.py", skill_text)
         self.assertIn("prepare_provider_request.py", skill_text)
         self.assertIn("prepare_generation_brief.py", skill_text)
         self.assertIn("consume_provider_result.py", skill_text)
@@ -227,12 +229,14 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "record_quality_review.py",
             "archive_intermediates.py",
             "export_asset_manifest.py",
+            "describe_provider_plan.py",
             "prepare_provider_request.py",
             "consume_provider_result.py",
             "record_provider_result.py",
             "prepare_generation_brief.py",
             "provider bridge",
             "_staging/providers/",
+            "provider_plan.json",
             "object_type override",
             "must not write `metadata.json` directly",
             "`qa.status=pass` requires extraction-capable",

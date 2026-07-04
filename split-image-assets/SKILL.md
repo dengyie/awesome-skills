@@ -147,6 +147,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
     - choose the route default first, then apply any explicit `object_type` override
     - this is the route default plus object_type override rule for provider selection
     - allow `plan_manifest.provider_preferences` to override the default only when the preferred provider is valid for the route
+    - write a package-owned provider plan summary with `scripts/describe_provider_plan.py` before broad request generation so the selected provider, selection source, and alternative providers are explicit
     - build provider request manifests with `scripts/prepare_provider_request.py`; `--provider-id` is optional when the default chain is acceptable
     - provider requests and results must satisfy the selected provider's registry-specific input/output contract, not just the generic JSON schema
     - for `generate` routes, write a package-owned brief first with `scripts/prepare_generation_brief.py`
@@ -218,7 +219,9 @@ Pillow, OpenCV, and skimage are not primary segmenters for production splitting.
 
 `scripts/import_external_assets.py` is the standard adapter for professional upstream outputs. Use it to copy SAM2, rembg, BiRefNet, RMBG, Qwen-Image-Layered, LayerDiffuse, manual, or user-provided assets into the package while recording object metadata and upstream tool provenance. This adapter path is the primary production workflow, not a side path.
 
-`scripts/prepare_provider_request.py`, `scripts/record_provider_result.py`, `scripts/consume_provider_result.py`, and the provider bridge helpers standardize how planned object routes talk to upstream providers. Use them to normalize provider requests/results into `_staging/providers/<provider-id>/<object-id>/` before import, compare, or promotion. This bridge layer should come before broad native-runner expansion.
+`scripts/describe_provider_plan.py`, `scripts/prepare_provider_request.py`, `scripts/record_provider_result.py`, `scripts/consume_provider_result.py`, and the provider bridge helpers standardize how planned object routes talk to upstream providers. Use them to normalize provider planning, requests, and results into `_staging/providers/` before import, compare, or promotion. This bridge layer should come before broad native-runner expansion.
+
+`scripts/describe_provider_plan.py` is the planning-side bridge helper. Use it after `plan_manifest.json` is ready and before broad request generation so the package owns an explicit `_staging/providers/provider_plan.json` summary of route defaults, object-type overrides, valid plan preferences, selected providers, and alternative provider chains.
 
 `scripts/prepare_generation_brief.py` is the package-owned helper for generate routes. It writes `_staging/generation_briefs/<object-id>.json` plus `_staging/generation_briefs/<object-id>_reference_inputs.json`, and `prepare_provider_request.py` should fail closed for generate routes when those inputs do not exist yet.
 
@@ -373,6 +376,7 @@ At minimum report:
 - package path
 - source image
 - plan manifest path
+- provider plan summary path
 - provider chain summary
 - tooling preflight result
 - production_capable: true/false

@@ -687,3 +687,15 @@
 - Results: `split-image-assets` now treats broken reconstruction installs as manual-redraw-only instead of semi-available production paths, and promoted candidates require structured compare evidence that survives archiving. Full `split-image-assets` validation passed with 81 tests.
 - Next: Commit this reconstruction/compare hardening pass and push when desired.
 - Blockers: None.
+## 2026-07-04 09:10
+- Task: Complete `split-image-assets` provider-plan explanation V1.
+- Actions: Added shared provider-selection explanation logic in `provider_bridge_lib.py`; added `describe_provider_plan.py` to write `_staging/providers/provider_plan.json`; normalized `"unset"` provider preferences so they fall back honestly; synchronized `SKILL.md`, workflow, provider contract, usage docs, implementation baseline, and project memory; expanded processing/docs regression coverage.
+- Results: The package now exposes selected provider, selection source, route default, object-type override, valid/invalid plan preference handling, and alternative providers before broad request generation begins. Processing and docs suites passed locally.
+- Next: Run full `split-image-assets` validation, production review, and commit the milestone atomically if no P0/P1 blockers appear.
+- Blockers: None.
+## 2026-07-04 09:20
+- Task: Close `split-image-assets` provider-plan explanation V1 after full verification.
+- Actions: Ran full `split-image-assets` unittest discovery, `quick_validate.py`, `git diff --check`, and `production-code-quality-review` phase-gate review; synchronized verification evidence into the implementation baseline and project-memory state.
+- Results: Full package validation passed with 196 tests, quick validation passed, diff check reported only CRLF warnings, and production review found no new P0/P1 blockers for this milestone.
+- Next: Stage and commit the provider-plan explanation milestone atomically, then stop and wait for the next bounded milestone choice.
+- Blockers: None.

@@ -485,6 +485,166 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 ).read_text(encoding="utf-8")
             )
             self.assertEqual(request["provider_id"], "grounded-sam-bridge")
+    def test_describe_provider_plan_writes_provider_plan_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {
+                    "generation_provider_class": "external-generated-outputs",
+                    "segmentation_provider_class": "unset",
+                },
+                "objects": [
+                    {
+                        "object_id": "hero_logo",
+                        "object_type": "outlined-illustration-logo",
+                        "planned_route": "extract",
+                    },
+                    {
+                        "object_id": "reconstructed_badge",
+                        "object_type": "ui-carrier",
+                        "planned_route": "generate",
+                    },
+                    {
+                        "object_id": "live_text",
+                        "object_type": "generic-object",
+                        "planned_route": "rebuild_downstream",
+                    },
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_plan.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["provider_plan_path"], "_staging/providers/provider_plan.json")
+            self.assertEqual(payload["object_count"], 3)
+            provider_plan = json.loads(
+                (output / payload["provider_plan_path"]).read_text(encoding="utf-8")
+            )
+            by_object_id = {entry["object_id"]: entry for entry in provider_plan["objects"]}
+            self.assertEqual(by_object_id["hero_logo"]["selected_provider_id"], "external-professional-outputs")
+            self.assertEqual(by_object_id["hero_logo"]["selection_source"], "object-type-override")
+            self.assertEqual(by_object_id["reconstructed_badge"]["selected_provider_id"], "external-generated-outputs")
+            self.assertEqual(by_object_id["reconstructed_badge"]["selection_source"], "plan-preference")
+            self.assertEqual(by_object_id["live_text"]["selected_provider_id"], "")
+            self.assertEqual(by_object_id["live_text"]["selection_source"], "route-default")
+    def test_describe_provider_plan_records_invalid_preference_status_and_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = {
+                "schema_version": "1.0",
+                "package_name": "fixture",
+                "source": {"path": "source/source_original.png", "width": 4, "height": 3},
+                "quality_target": {"tier": "visual-acceptance-ready", "notes": ""},
+                "planning_status": {"status": "completed", "notes": ""},
+                "route_policy": {"planning_required": True, "generation_routing_gate": "confirmed"},
+                "provider_preferences": {
+                    "generation_provider_class": "unset",
+                    "segmentation_provider_class": "local-model-runtime",
+                },
+                "objects": [
+                    {
+                        "object_id": "main_object",
+                        "object_type": "ui-carrier",
+                        "planned_route": "extract",
+                    }
+                ],
+                "summary": {},
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_plan.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            entry = payload["objects"][0]
+            self.assertEqual(entry["preferred_provider_status"], "invalid-provider-id")
+            self.assertEqual(entry["selected_provider_id"], "grounded-sam-bridge")
+            self.assertEqual(entry["selection_source"], "route-default")
+            self.assertIn("external-professional-outputs", entry["alternative_provider_chain"])
+    def test_describe_provider_plan_filters_single_object(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            plan_manifest = self._write_generated_plan_manifest(output)
+            plan_manifest["objects"].append(
+                {
+                    "object_id": "secondary",
+                    "object_type": "ui-glyph",
+                    "planned_route": "extract",
+                }
+            )
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_plan.py"),
+                    str(output),
+                    "--object-id",
+                    "secondary",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["object_count"], 1)
+            self.assertEqual(payload["objects"][0]["object_id"], "secondary")
     def test_record_provider_result_writes_bridge_result_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
