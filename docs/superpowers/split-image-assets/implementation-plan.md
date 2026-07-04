@@ -53,6 +53,7 @@ The current package baseline is:
 - candidate lifecycle schema
 - candidate lifecycle task schema
 - provider work-item schema
+- shared work-item schema helper
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -61,6 +62,20 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `work-item shared schema V1`
+
+Closed status: complete
+
+What landed:
+
+- candidate and provider work-item recommendation builders now reuse a shared `work_item_schema_lib.py` helper for command variants and grouped task envelopes
+- the shared helper keeps the candidate/provider task-like recommendation surfaces aligned while preserving the current JSON contract
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider work-item schema V1`
 
@@ -553,6 +568,7 @@ These are the important completed milestones that define the current architectur
 34. candidate lifecycle schema V1
 35. candidate lifecycle task schema V1
 36. provider work-item schema V1
+37. work-item shared schema V1
 
 Treat these as delivered baseline, not as active checklist items.
 

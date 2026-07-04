@@ -3,6 +3,7 @@
 ## Next
 - [ ] Choose the next bounded `split-image-assets` milestone after provider-aware candidate lifecycle next steps V1. Candidate directions: provider-specific compare/promotion orchestration, deeper provider capability mapping, or broader fixture/package migration.
 ## Done
+- [x] Close `split-image-assets` work-item shared schema V1: shared work-item schema helper, caller consolidation, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` provider work-item schema V1: structured provider recommendation variants/task grouping, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` candidate lifecycle task schema V1: grouped recommended_task surface, richer variant transition metadata, docs, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` candidate lifecycle schema V1: machine-readable variant metadata, docs, canonical plan sync, and regression coverage.

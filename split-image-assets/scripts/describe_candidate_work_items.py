@@ -12,6 +12,7 @@ from candidate_workflow_lib import (
 )
 from package_state_lib import find_plan_object, read_plan_manifest
 from provider_bridge_lib import describe_provider_selection
+from work_item_schema_lib import build_command_variant, build_recommended_task
 
 
 def _recommended_compare_command(
@@ -174,59 +175,6 @@ def _recommended_selection_command(
     return " ".join(parts)
 
 
-def _command_variant(
-    variant_id: str,
-    label: str,
-    command: str,
-    note: str = "",
-    *,
-    phase: str,
-    intent: str,
-    branch_flag: str,
-    branch_value: str,
-    recommended: bool,
-    requires_fields: list[str] | None = None,
-    writes_fields: list[str] | None = None,
-    next_action_if_success: str = "",
-    requires_human_confirmation: bool = True,
-) -> dict:
-    return {
-        "variant_id": variant_id,
-        "phase": phase,
-        "label": label,
-        "intent": intent,
-        "command": command,
-        "note": note,
-        "branch_flag": branch_flag,
-        "branch_value": branch_value,
-        "recommended": recommended,
-        "requires_fields": list(requires_fields or []),
-        "writes_fields": list(writes_fields or []),
-        "next_action_if_success": next_action_if_success,
-        "requires_human_confirmation": requires_human_confirmation,
-    }
-
-
-def _recommended_task(
-    *,
-    task_type: str,
-    task_phase: str,
-    task_state: str,
-    task_goal: str,
-    default_variant_id: str,
-    variants: list[dict],
-) -> dict:
-    return {
-        "task_type": task_type,
-        "task_phase": task_phase,
-        "task_state": task_state,
-        "task_goal": task_goal,
-        "default_variant_id": default_variant_id,
-        "variant_count": len(variants),
-        "variants": variants,
-    }
-
-
 def _selection_command_variants(
     package_dir: Path,
     object_id: str,
@@ -258,7 +206,7 @@ def _selection_command_variants(
         ]
     )
     return [
-        _command_variant(
+        build_command_variant(
             "selection-only",
             "Record Winner",
             " ".join([*base, "--promotion-answer", "skip"]),
@@ -273,7 +221,7 @@ def _selection_command_variants(
             writes_fields=["selected_candidate_id", "decision_log"],
             next_action_if_success="record-candidate-promotion-approval",
         ),
-        _command_variant(
+        build_command_variant(
             "selection-then-promote-yes",
             "Select + Promote",
             " ".join([*base, "--promotion-answer", "yes"]),
@@ -294,7 +242,7 @@ def _selection_command_variants(
             ],
             next_action_if_success="no-candidate-work-required",
         ),
-        _command_variant(
+        build_command_variant(
             "selection-then-decline",
             "Select + Decline",
             " ".join([*base, "--promotion-answer", "no"]),
@@ -335,7 +283,7 @@ def _promotion_decision_variants(
         "<approval-evidence-ref>",
     ]
     return [
-        _command_variant(
+        build_command_variant(
             "approve-and-promote",
             "Approve + Promote",
             " ".join([*base, "--decision-answer", "yes", *shared]),
@@ -353,7 +301,7 @@ def _promotion_decision_variants(
             ],
             next_action_if_success="no-candidate-work-required",
         ),
-        _command_variant(
+        build_command_variant(
             "decline-promotion",
             "Decline Promotion",
             " ".join([*base, "--decision-answer", "no", *shared]),
@@ -532,7 +480,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 candidate_id=single_candidate_id,
                 requires_candidate_id=not bool(single_candidate_id),
             )
-            recommended_task = _recommended_task(
+            recommended_task = build_recommended_task(
                 task_type="candidate-lifecycle",
                 task_phase="candidate-selection",
                 task_state=next_action,
@@ -597,7 +545,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id=latest_comparison_id,
                     )
-                    recommended_task = _recommended_task(
+                    recommended_task = build_recommended_task(
                         task_type="candidate-lifecycle",
                         task_phase="candidate-promotion",
                         task_state=next_action,
@@ -637,7 +585,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         current_object_id,
                         comparison_id="",
                     )
-                    recommended_task = _recommended_task(
+                    recommended_task = build_recommended_task(
                         task_type="candidate-lifecycle",
                         task_phase="candidate-promotion",
                         task_state=next_action,

@@ -10,6 +10,38 @@ from skill_package_testlib import Image, REPO, ROOT, SplitImageAssetsTestBase, j
 
 
 class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
+    def test_work_item_schema_lib_builders_return_machine_readable_shape(self):
+        module = self._load_script_module("work_item_schema_lib.py")
+        variant = module.build_command_variant(
+            "example",
+            "Example",
+            "python tool.py",
+            "Example note.",
+            phase="candidate-selection",
+            intent="record-selection-only",
+            branch_flag="promotion_answer",
+            branch_value="skip",
+            recommended=True,
+            requires_fields=["selection_reason"],
+            writes_fields=["selected_candidate_id"],
+            next_action_if_success="record-candidate-promotion-approval",
+            requires_human_confirmation=True,
+        )
+        task = module.build_recommended_task(
+            task_type="candidate-lifecycle",
+            task_phase="candidate-selection",
+            task_state="await-candidate-selection",
+            task_goal="record-compare-winner",
+            default_variant_id="example",
+            variants=[variant],
+        )
+        self.assertEqual(variant["variant_id"], "example")
+        self.assertEqual(variant["phase"], "candidate-selection")
+        self.assertEqual(variant["writes_fields"], ["selected_candidate_id"])
+        self.assertTrue(variant["requires_human_confirmation"])
+        self.assertEqual(task["task_type"], "candidate-lifecycle")
+        self.assertEqual(task["default_variant_id"], "example")
+        self.assertEqual(task["variant_count"], 1)
     def test_prepare_provider_request_writes_bridge_request_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

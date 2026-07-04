@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Candidate And Provider Recommendation Schemas Should Share One Helper Before They Drift Again
+- Decision: Introduce `work_item_schema_lib.py` as the shared builder for command variants and grouped task envelopes across candidate and provider work-item surfaces.
+- Rationale: After both surfaces independently grew richer task-like metadata, they were clearly converging on the same structure. Leaving them duplicated would make future field additions noisy and invite drift. A small shared helper keeps the structure aligned without forcing a larger runtime or protocol change.
+- Alternatives considered: Keep duplicate builders in both modules, or jump directly to a repo-wide task engine abstraction.
+- Impact: Candidate and provider work-item recommendations now share one schema builder while preserving their separate state logic. Future schema fields can be added once and consumed consistently across both surfaces.
+- Rollback trigger: If a future task engine replaces both work-item surfaces, carry this schema intent into that system rather than copying the old duplicate builders back into each module.
+- Related files: `split-image-assets/scripts/work_item_schema_lib.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_docs_and_contract.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Provider Bridge Work Items Should Use The Same Structured Recommendation Shape As Candidate Work Items
 - Decision: Extend provider work-item reporting so key bridge states expose `recommended_command_variants[]` and grouped `recommended_task` objects, while preserving `recommended_command` for compatibility.
 - Rationale: Candidate lifecycle recommendations had already moved to a richer schema, but provider work items still lagged behind with only one command string. That made the two workflow surfaces feel inconsistent and kept downstream consumers from handling provider-side next steps with the same structure. Aligning the shapes lowers cognitive and integration cost without changing provider execution semantics.

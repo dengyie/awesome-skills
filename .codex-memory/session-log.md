@@ -807,3 +807,9 @@
 - Results: Provider-side next steps now share the same structured recommendation shape as candidate-side work items while preserving compatibility with existing `recommended_command` consumers. Full package validation passed with 239 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 02:55
+- Task: Complete `split-image-assets` work-item shared schema V1.
+- Actions: Added `work_item_schema_lib.py` as the shared builder for command variants and grouped task envelopes; switched both candidate and provider work-item surfaces to use it; synchronized implementation baseline and project memory; added a focused helper-structure test and updated the required-file contract.
+- Results: Candidate and provider recommendation schemas now share one helper without changing their public JSON shape. Full package validation passed with 240 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.
