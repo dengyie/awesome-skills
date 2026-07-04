@@ -155,6 +155,29 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 task_goal="record-compare-winner",
                 default_variant_id="selection-only",
             )
+    def test_work_item_schema_lib_build_registered_task_bundle_uses_registry_defaults(self):
+        module = self._load_script_module("work_item_schema_lib.py")
+        contract = self._load_script_module("work_item_schema_contract.py")
+        variant = module.build_command_variant(
+            "selection-only",
+            "Record Winner",
+            "python tool.py --flag yes",
+            phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+            intent=contract.INTENT_RECORD_SELECTION_ONLY,
+            branch_flag=contract.BRANCH_FLAG_PROMOTION_ANSWER,
+            branch_value="skip",
+            recommended=True,
+        )
+        bundle = module.build_registered_task_bundle(
+            recommended_command="python tool.py --flag yes",
+            variants=[variant],
+            task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+            task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+            task_state="await-candidate-selection",
+        )
+        self.assertEqual(bundle["recommended_task"]["task_goal"], "record-compare-winner")
+        self.assertEqual(bundle["recommended_task"]["default_variant_id"], "selection-only")
+        self.assertEqual(bundle["recommended_task"]["task_registry_key"], "candidate-lifecycle.await-candidate-selection")
     def test_prepare_provider_request_writes_bridge_request_manifest(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

@@ -205,6 +205,30 @@ def build_recommendation_bundle(
     }
 
 
+def build_registered_task_bundle(
+    *,
+    recommended_command: str = "",
+    variants: list[dict] | None = None,
+    task_type: str,
+    task_phase: str,
+    task_state: str,
+) -> dict:
+    registration = lookup_registered_task(
+        task_type=task_type,
+        task_phase=task_phase,
+        task_state=task_state,
+    )
+    return build_recommendation_bundle(
+        recommended_command=recommended_command,
+        variants=variants,
+        task_type=registration["task_type"],
+        task_phase=registration["task_phase"],
+        task_state=registration["task_state"],
+        task_goal=registration["task_goal"],
+        default_variant_id=registration["default_variant_id"],
+    )
+
+
 def lookup_registered_task(
     *,
     task_type: str,

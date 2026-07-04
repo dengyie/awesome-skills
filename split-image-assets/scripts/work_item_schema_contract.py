@@ -8,6 +8,7 @@ SHARED_TASK_PROTOCOL_VERSION = "1.0"
 SHARED_TASK_CONTRACT_REFERENCE = "split-image-assets/references/shared-task-contract.md"
 SHARED_TASK_REGISTRY_VERSION = "1.0"
 SHARED_TASK_REGISTRY_REFERENCE = "split-image-assets/scripts/work_item_schema_contract.py"
+SHARED_TASK_REGISTRY_REFERENCE = "split-image-assets/scripts/work_item_schema_contract.py"
 
 TASK_PHASE_CANDIDATE_SELECTION = "candidate-selection"
 TASK_PHASE_CANDIDATE_PROMOTION = "candidate-promotion"
