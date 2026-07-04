@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-04 - Candidate Promotion Approval Should Have A Low-Burden Adapter, Not Just A Long Review Command
+- Decision: Add `record_candidate_promotion_approval.py` as a deterministic adapter that records `candidate_promotion` approval from compare evidence, while still reusing the normal `record_quality_review.py` contract underneath.
+- Rationale: After promotion approval runtime guard V1, the workflow was correct but the command burden for recording approval was still high. A thin adapter lowers that burden without inventing a second approval state model, because it still writes through the same confirmation and decision-log contract.
+- Alternatives considered: Keep using only the long `record_quality_review.py` command forever, or jump directly to full compare/promotion orchestration.
+- Impact: Approval can now be recorded with fewer repeated arguments, candidate work-item recommended commands are shorter, and single-candidate compare sets can be resolved honestly without hand-editing metadata.
+- Rollback trigger: If later workflows consolidate compare and promotion into a larger orchestrator, preserve the adapter's evidence behavior but merge it into the orchestrator rather than reverting to manual long-form commands.
+- Related files: `split-image-assets/scripts/record_candidate_promotion_approval.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `docs/usage/split-image-assets.md`, `split-image-assets/SKILL.md`, `docs/superpowers/split-image-assets/implementation-plan.md`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/tests/test_docs_and_contract.py`
+
 ## 2026-07-04 - Candidate Promotion Approval Should Be Enforced At Runtime, Not Only Suggested By Helpers
 - Decision: Make `promote_candidate_asset.py` itself refuse to run until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required` from a valid user-backed source.
 - Rationale: Candidate promotion approval handoff V1 made the workflow recommendation explicit, but direct script invocation could still bypass that approval step. Enforcing the same rule in the runtime path closes the loophole and keeps the helper state aligned with actual behavior.

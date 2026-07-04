@@ -729,3 +729,9 @@
 - Results: Promotion now fails closed until `metadata.confirmation.candidate_promotion` is `confirmed` or `not-required`. Full package validation passed with 216 tests, quick validation passed, and production review found no new P0/P1 blockers.
 - Next: Stage and commit the promotion approval runtime guard milestone atomically, then wait for the next bounded milestone choice.
 - Blockers: None.
+## 2026-07-04 15:31
+- Task: Complete `split-image-assets` candidate promotion approval auto-record V1.
+- Actions: Added `record_candidate_promotion_approval.py` as a low-burden adapter over the existing review contract; updated `describe_candidate_work_items.py` to recommend the adapter instead of a raw long review command; synchronized docs, implementation baseline, and project memory; expanded regression coverage for selected-candidate, single-candidate, and fail-closed multi-candidate approval recording paths.
+- Results: Candidate promotion approval can now be recorded from compare evidence with fewer repeated arguments while still using the same confirmation and decision-log contract. Full package validation passed with 219 tests, quick validation passed, and production review found no new P0/P1 blockers.
+- Next: Stage and commit the candidate promotion approval auto-record milestone atomically, then wait for the next bounded milestone choice.
+- Blockers: None.

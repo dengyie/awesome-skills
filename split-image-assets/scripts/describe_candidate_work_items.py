@@ -87,36 +87,30 @@ def _recommended_promotion_approval_command(
     package_dir: Path,
     object_id: str,
     *,
+    comparison_id: str,
     candidate_id: str,
 ) -> str:
     package_arg = str(package_dir).replace("\\", "/")
-    return " ".join(
+    parts = [
+        "python",
+        "split-image-assets/scripts/record_candidate_promotion_approval.py",
+        package_arg,
+        "--object-id",
+        object_id,
+    ]
+    if comparison_id:
+        parts.extend(["--comparison-id", comparison_id])
+    parts.extend(
         [
-            "python",
-            "split-image-assets/scripts/record_quality_review.py",
-            package_arg,
-            "--object-id",
-            object_id,
-            "--decision-stage",
-            "final-promotion-acceptance",
-            "--decision-question",
-            f"\"Promote {candidate_id} over the current revision?\"",
-            "--decision-recommended",
-            "yes",
             "--decision-answer",
             "yes",
-            "--decision-effect",
-            f"\"Promote {candidate_id} as the active revision.\"",
             "--decision-source",
             "explicit-user-confirmed",
-            "--pause-category",
-            "formal-approval",
-            "--blocking",
-            "true",
             "--evidence-ref",
             "<approval-evidence-ref>",
         ]
     )
+    return " ".join(parts)
 
 
 def build_candidate_work_item_status(package_dir: Path, object_id: str | None = None) -> dict:
@@ -259,6 +253,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                     recommended_command = _recommended_promotion_approval_command(
                         package_dir,
                         current_object_id,
+                        comparison_id=latest_comparison_id,
                         candidate_id=candidate_id,
                     )
             elif len(candidates) == 1:
@@ -284,6 +279,7 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                     recommended_command = _recommended_promotion_approval_command(
                         package_dir,
                         current_object_id,
+                        comparison_id="",
                         candidate_id=candidate_ids[0],
                     )
 

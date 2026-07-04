@@ -40,6 +40,7 @@ The current package baseline is:
 - compare-selected promotion defaults
 - candidate promotion approval handoff
 - promotion approval runtime guard
+- candidate promotion approval auto-record
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -48,6 +49,21 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `candidate promotion approval auto-record V1`
+
+Closed status: complete
+
+What landed:
+
+- `record_candidate_promotion_approval.py` now records the `candidate_promotion` gate from compare evidence with a lower-burden adapter
+- the adapter can reuse compare-owned `selected_candidate_id` and `selection_reason`, or fill the selected candidate from a single-candidate compare set
+- `describe_candidate_work_items.py` now recommends that adapter instead of a long raw `record_quality_review.py` command
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `promotion approval runtime guard V1`
 
@@ -332,6 +348,7 @@ These are the important completed milestones that define the current architectur
 21. compare-selected promotion defaults V1
 22. candidate promotion approval handoff V1
 23. promotion approval runtime guard V1
+24. candidate promotion approval auto-record V1
 
 Treat these as delivered baseline, not as active checklist items.
 
@@ -353,7 +370,7 @@ Choose only one as the next bounded milestone:
 
 1. deeper generated-route provider support
    - more explicit provider capability mapping on top of the now-harder bridge contract
-   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, provider-aware generated compare selection, provider-plan summaries, provider work-item status, candidate work-item status, compare-selected promotion defaults, candidate promotion approval handoff, and promotion approval runtime guard
+   - richer generated candidate lifecycle helpers on top of prepared briefs, provider-stage evidence, generated compare manifests, compare-driven promotion, provider-aware defaults, provider-aware generated compare selection, provider-plan summaries, provider work-item status, candidate work-item status, compare-selected promotion defaults, candidate promotion approval handoff, promotion approval runtime guard, and candidate promotion approval auto-record
    - optional native runner expansion on top of the bridge layer
 
 2. broader fixture and package migration
