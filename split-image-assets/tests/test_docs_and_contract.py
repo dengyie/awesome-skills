@@ -162,6 +162,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "task_protocol_version",
             "task_contract_reference",
             "1.0",
+            "task_registry_version",
+            "task_registry_key",
+            "provider-bridge.prepare-generation-brief",
         ]:
             self.assertIn(expected, shared_task_contract)
     def test_skill_frontmatter_and_core_rules_are_present(self):

@@ -5,6 +5,7 @@ from work_item_schema_contract import (
     ALLOWED_TASK_TYPES,
     SHARED_TASK_CONTRACT_REFERENCE,
     SHARED_TASK_PROTOCOL_VERSION,
+    SHARED_TASK_REGISTRY_VERSION,
     TASK_REGISTRY,
 )
 
@@ -100,6 +101,9 @@ def build_recommended_task(
     registration = TASK_REGISTRY.get((task_type_value, task_phase_value, task_state_value))
     if registration is None:
         raise ValueError("task_type/task_phase/task_state must match a registered shared task")
+    registry_key = str(registration.get("registry_key", "")).strip()
+    if not registry_key:
+        raise ValueError("registered shared task must declare a non-empty registry_key")
     if not isinstance(variants, list) or not variants:
         raise ValueError("variants must be a non-empty list")
     variant_ids: list[str] = []
@@ -139,6 +143,8 @@ def build_recommended_task(
     return {
         "task_protocol_version": SHARED_TASK_PROTOCOL_VERSION,
         "task_contract_reference": SHARED_TASK_CONTRACT_REFERENCE,
+        "task_registry_version": SHARED_TASK_REGISTRY_VERSION,
+        "task_registry_key": registry_key,
         "task_type": task_type_value,
         "task_phase": task_phase_value,
         "task_state": task_state_value,
@@ -213,6 +219,8 @@ def lookup_registered_task(
         "task_type": task_type_value,
         "task_phase": task_phase_value,
         "task_state": task_state_value,
+        "task_registry_version": SHARED_TASK_REGISTRY_VERSION,
+        "task_registry_key": str(registration["registry_key"]),
         "task_goal": str(registration["task_goal"]),
         "default_variant_id": str(registration["default_variant_id"]),
         "allowed_variant_ids": list(registration["allowed_variant_ids"]),

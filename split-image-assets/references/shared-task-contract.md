@@ -81,6 +81,13 @@ Current protocol identity:
 
 - `task_protocol_version`: `1.0`
 - `task_contract_reference`: `split-image-assets/references/shared-task-contract.md`
+- `task_registry_version`: `1.0`
+
+Each registered task should also expose a stable `task_registry_key`, for example:
+
+- `candidate-lifecycle.await-candidate-selection`
+- `candidate-lifecycle.record-candidate-promotion-approval`
+- `provider-bridge.prepare-generation-brief`
 
 The canonical shared builders currently live in:
 

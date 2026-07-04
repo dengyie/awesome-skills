@@ -6,6 +6,7 @@ ALLOWED_TASK_TYPES = {
 }
 SHARED_TASK_PROTOCOL_VERSION = "1.0"
 SHARED_TASK_CONTRACT_REFERENCE = "split-image-assets/references/shared-task-contract.md"
+SHARED_TASK_REGISTRY_VERSION = "1.0"
 
 TASK_PHASE_CANDIDATE_SELECTION = "candidate-selection"
 TASK_PHASE_CANDIDATE_PROMOTION = "candidate-promotion"
@@ -48,6 +49,7 @@ ALLOWED_INTENTS = {
 
 TASK_REGISTRY = {
     (TASK_TYPE_CANDIDATE_LIFECYCLE, TASK_PHASE_CANDIDATE_SELECTION, "await-candidate-selection"): {
+        "registry_key": "candidate-lifecycle.await-candidate-selection",
         "task_goal": "record-compare-winner",
         "default_variant_id": "selection-only",
         "allowed_variant_ids": [
@@ -57,6 +59,7 @@ TASK_REGISTRY = {
         ],
     },
     (TASK_TYPE_CANDIDATE_LIFECYCLE, TASK_PHASE_CANDIDATE_PROMOTION, "record-candidate-promotion-approval"): {
+        "registry_key": "candidate-lifecycle.record-candidate-promotion-approval",
         "task_goal": "decide-candidate-promotion",
         "default_variant_id": "approve-and-promote",
         "allowed_variant_ids": [
@@ -65,21 +68,25 @@ TASK_REGISTRY = {
         ],
     },
     (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "prepare-generation-brief"): {
+        "registry_key": "provider-bridge.prepare-generation-brief",
         "task_goal": "prepare-generation-brief",
         "default_variant_id": "prepare-generation-brief",
         "allowed_variant_ids": ["prepare-generation-brief"],
     },
     (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "prepare-provider-request"): {
+        "registry_key": "provider-bridge.prepare-provider-request",
         "task_goal": "prepare-provider-request",
         "default_variant_id": "prepare-provider-request",
         "allowed_variant_ids": ["prepare-provider-request"],
     },
     (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "await-provider-result"): {
+        "registry_key": "provider-bridge.await-provider-result",
         "task_goal": "await-provider-result",
         "default_variant_id": "record-provider-result",
         "allowed_variant_ids": ["record-provider-result"],
     },
     (TASK_TYPE_PROVIDER_BRIDGE, TASK_PHASE_PROVIDER_BRIDGE, "consume-provider-result"): {
+        "registry_key": "provider-bridge.consume-provider-result",
         "task_goal": "consume-provider-result",
         "default_variant_id": "consume-provider-result",
         "allowed_variant_ids": ["consume-provider-result"],
