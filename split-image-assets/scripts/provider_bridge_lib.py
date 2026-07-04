@@ -17,6 +17,15 @@ from provider_registry import (
     list_supported_provider_ids,
 )
 from work_item_schema_lib import build_command_variant, build_recommended_task
+from work_item_schema_contract import (
+    BRANCH_FLAG_NEXT_ACTION,
+    INTENT_CONSUME_PROVIDER_RESULT,
+    INTENT_PREPARE_GENERATION_BRIEF,
+    INTENT_PREPARE_PROVIDER_REQUEST,
+    INTENT_RECORD_PROVIDER_RESULT,
+    TASK_PHASE_PROVIDER_BRIDGE,
+    TASK_TYPE_PROVIDER_BRIDGE,
+)
 
 
 def provider_bridge_root(package_dir: Path) -> Path:
@@ -405,9 +414,9 @@ def _provider_command_variants(
                 "Prepare Brief",
                 f"python split-image-assets/scripts/prepare_generation_brief.py {package_arg} --object-id {object_id}",
                 "Create the package-owned generation brief and reference-input manifest first.",
-                phase="provider-bridge",
-                intent="prepare-generation-brief",
-                branch_flag="next_action",
+                phase=TASK_PHASE_PROVIDER_BRIDGE,
+                intent=INTENT_PREPARE_GENERATION_BRIEF,
+                branch_flag=BRANCH_FLAG_NEXT_ACTION,
                 branch_value="prepare-generation-brief",
                 recommended=True,
                 writes_fields=["generation_brief", "generation_reference_inputs"],
@@ -431,9 +440,9 @@ def _provider_command_variants(
                 "Prepare Request",
                 command,
                 "Stage the provider request manifest for the selected provider path.",
-                phase="provider-bridge",
-                intent="prepare-provider-request",
-                branch_flag="next_action",
+                phase=TASK_PHASE_PROVIDER_BRIDGE,
+                intent=INTENT_PREPARE_PROVIDER_REQUEST,
+                branch_flag=BRANCH_FLAG_NEXT_ACTION,
                 branch_value="prepare-provider-request",
                 recommended=True,
                 requires_fields=requires_fields,
@@ -450,9 +459,9 @@ def _provider_command_variants(
                 "Record Result",
                 f"python split-image-assets/scripts/record_provider_result.py {package_arg} --provider-id {selected_provider_id} --object-id {object_id} --status success ...",
                 "Record the upstream provider result after the request completes.",
-                phase="provider-bridge",
-                intent="record-provider-result",
-                branch_flag="next_action",
+                phase=TASK_PHASE_PROVIDER_BRIDGE,
+                intent=INTENT_RECORD_PROVIDER_RESULT,
+                branch_flag=BRANCH_FLAG_NEXT_ACTION,
                 branch_value="await-provider-result",
                 recommended=True,
                 requires_fields=["status", "artifacts", "tool_name", "tool_role", "tool_version"],
@@ -482,9 +491,9 @@ def _provider_command_variants(
                 "Consume Result",
                 command,
                 "Consume the staged provider result into import or candidate staging.",
-                phase="provider-bridge",
-                intent="consume-provider-result",
-                branch_flag="next_action",
+                phase=TASK_PHASE_PROVIDER_BRIDGE,
+                intent=INTENT_CONSUME_PROVIDER_RESULT,
+                branch_flag=BRANCH_FLAG_NEXT_ACTION,
                 branch_value="consume-provider-result",
                 recommended=True,
                 requires_fields=requires_fields,
@@ -609,8 +618,8 @@ def build_provider_work_item_status(package_dir: Path, object_id: str | None = N
         )
         if recommended_command_variants:
             recommended_task = build_recommended_task(
-                task_type="provider-bridge",
-                task_phase="provider-bridge",
+                task_type=TASK_TYPE_PROVIDER_BRIDGE,
+                task_phase=TASK_PHASE_PROVIDER_BRIDGE,
                 task_state=next_action,
                 task_goal=next_action,
                 default_variant_id=recommended_command_variants[0]["variant_id"],

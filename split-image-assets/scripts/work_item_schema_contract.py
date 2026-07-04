@@ -1,0 +1,20 @@
+TASK_TYPE_CANDIDATE_LIFECYCLE = "candidate-lifecycle"
+TASK_TYPE_PROVIDER_BRIDGE = "provider-bridge"
+
+TASK_PHASE_CANDIDATE_SELECTION = "candidate-selection"
+TASK_PHASE_CANDIDATE_PROMOTION = "candidate-promotion"
+TASK_PHASE_PROVIDER_BRIDGE = "provider-bridge"
+
+BRANCH_FLAG_PROMOTION_ANSWER = "promotion_answer"
+BRANCH_FLAG_DECISION_ANSWER = "decision_answer"
+BRANCH_FLAG_NEXT_ACTION = "next_action"
+
+INTENT_RECORD_SELECTION_ONLY = "record-selection-only"
+INTENT_RECORD_SELECTION_AND_PROMOTE = "record-selection-and-promote"
+INTENT_RECORD_SELECTION_AND_DECLINE_PROMOTION = "record-selection-and-decline-promotion"
+INTENT_APPROVE_AND_PROMOTE = "approve-and-promote"
+INTENT_DECLINE_PROMOTION = "decline-promotion"
+INTENT_PREPARE_GENERATION_BRIEF = "prepare-generation-brief"
+INTENT_PREPARE_PROVIDER_REQUEST = "prepare-provider-request"
+INTENT_RECORD_PROVIDER_RESULT = "record-provider-result"
+INTENT_CONSUME_PROVIDER_RESULT = "consume-provider-result"

@@ -13,6 +13,18 @@ from candidate_workflow_lib import (
 from package_state_lib import find_plan_object, read_plan_manifest
 from provider_bridge_lib import describe_provider_selection
 from work_item_schema_lib import build_command_variant, build_recommended_task
+from work_item_schema_contract import (
+    BRANCH_FLAG_DECISION_ANSWER,
+    BRANCH_FLAG_PROMOTION_ANSWER,
+    INTENT_APPROVE_AND_PROMOTE,
+    INTENT_DECLINE_PROMOTION,
+    INTENT_RECORD_SELECTION_AND_DECLINE_PROMOTION,
+    INTENT_RECORD_SELECTION_AND_PROMOTE,
+    INTENT_RECORD_SELECTION_ONLY,
+    TASK_PHASE_CANDIDATE_PROMOTION,
+    TASK_PHASE_CANDIDATE_SELECTION,
+    TASK_TYPE_CANDIDATE_LIFECYCLE,
+)
 
 
 def _recommended_compare_command(
@@ -211,9 +223,9 @@ def _selection_command_variants(
             "Record Winner",
             " ".join([*base, "--promotion-answer", "skip"]),
             "Safe default: record compare winner only.",
-            phase="candidate-selection",
-            intent="record-selection-only",
-            branch_flag="promotion_answer",
+            phase=TASK_PHASE_CANDIDATE_SELECTION,
+            intent=INTENT_RECORD_SELECTION_ONLY,
+            branch_flag=BRANCH_FLAG_PROMOTION_ANSWER,
             branch_value="skip",
             recommended=True,
             requires_fields=["selection_reason", "evidence_ref"]
@@ -226,9 +238,9 @@ def _selection_command_variants(
             "Select + Promote",
             " ".join([*base, "--promotion-answer", "yes"]),
             "Records selection first, then continues into promotion approval and promotion.",
-            phase="candidate-selection",
-            intent="record-selection-and-promote",
-            branch_flag="promotion_answer",
+            phase=TASK_PHASE_CANDIDATE_SELECTION,
+            intent=INTENT_RECORD_SELECTION_AND_PROMOTE,
+            branch_flag=BRANCH_FLAG_PROMOTION_ANSWER,
             branch_value="yes",
             recommended=False,
             requires_fields=["selection_reason", "evidence_ref"]
@@ -247,9 +259,9 @@ def _selection_command_variants(
             "Select + Decline",
             " ".join([*base, "--promotion-answer", "no"]),
             "Records selection first, then records that promotion should not continue.",
-            phase="candidate-selection",
-            intent="record-selection-and-decline-promotion",
-            branch_flag="promotion_answer",
+            phase=TASK_PHASE_CANDIDATE_SELECTION,
+            intent=INTENT_RECORD_SELECTION_AND_DECLINE_PROMOTION,
+            branch_flag=BRANCH_FLAG_PROMOTION_ANSWER,
             branch_value="no",
             recommended=False,
             requires_fields=["selection_reason", "evidence_ref"]
@@ -288,9 +300,9 @@ def _promotion_decision_variants(
             "Approve + Promote",
             " ".join([*base, "--decision-answer", "yes", *shared]),
             "Records promotion approval and continues into promotion.",
-            phase="candidate-promotion",
-            intent="approve-and-promote",
-            branch_flag="decision_answer",
+            phase=TASK_PHASE_CANDIDATE_PROMOTION,
+            intent=INTENT_APPROVE_AND_PROMOTE,
+            branch_flag=BRANCH_FLAG_DECISION_ANSWER,
             branch_value="yes",
             recommended=True,
             requires_fields=["evidence_ref"],
@@ -306,9 +318,9 @@ def _promotion_decision_variants(
             "Decline Promotion",
             " ".join([*base, "--decision-answer", "no", *shared]),
             "Keeps the current revision active and records the decline.",
-            phase="candidate-promotion",
-            intent="decline-promotion",
-            branch_flag="decision_answer",
+            phase=TASK_PHASE_CANDIDATE_PROMOTION,
+            intent=INTENT_DECLINE_PROMOTION,
+            branch_flag=BRANCH_FLAG_DECISION_ANSWER,
             branch_value="no",
             recommended=False,
             requires_fields=["evidence_ref"],
@@ -481,8 +493,8 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 requires_candidate_id=not bool(single_candidate_id),
             )
             recommended_task = build_recommended_task(
-                task_type="candidate-lifecycle",
-                task_phase="candidate-selection",
+                task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
+                task_phase=TASK_PHASE_CANDIDATE_SELECTION,
                 task_state=next_action,
                 task_goal="record-compare-winner",
                 default_variant_id="selection-only",
@@ -546,8 +558,8 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         comparison_id=latest_comparison_id,
                     )
                     recommended_task = build_recommended_task(
-                        task_type="candidate-lifecycle",
-                        task_phase="candidate-promotion",
+                        task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
+                        task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
                         task_state=next_action,
                         task_goal="decide-candidate-promotion",
                         default_variant_id="approve-and-promote",
@@ -586,8 +598,8 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                         comparison_id="",
                     )
                     recommended_task = build_recommended_task(
-                        task_type="candidate-lifecycle",
-                        task_phase="candidate-promotion",
+                        task_type=TASK_TYPE_CANDIDATE_LIFECYCLE,
+                        task_phase=TASK_PHASE_CANDIDATE_PROMOTION,
                         task_state=next_action,
                         task_goal="decide-candidate-promotion",
                         default_variant_id="approve-and-promote",

@@ -34,6 +34,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             ROOT / "scripts" / "compare_candidate_assets.py",
             ROOT / "scripts" / "candidate_workflow_lib.py",
             ROOT / "scripts" / "work_item_schema_lib.py",
+            ROOT / "scripts" / "work_item_schema_contract.py",
             ROOT / "scripts" / "package_state_lib.py",
             ROOT / "scripts" / "provider_contract.py",
             ROOT / "scripts" / "provider_registry.py",

@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Shared Work-Item Helpers Also Need Shared Semantic Constants
+- Decision: Add `work_item_schema_contract.py` as the shared home for common task/recommendation semantic constants such as task types, phases, intents, and branch flags.
+- Rationale: After the shared schema helper landed, the remaining drift risk moved from structure to literal strings. Keeping those semantics duplicated across candidate and provider modules would make future refactors brittle and noisy. A small constant layer closes that gap without changing behavior.
+- Alternatives considered: Keep literals inline in each module, or postpone constant sharing until a larger task engine exists.
+- Impact: Candidate and provider recommendation builders now share the same semantic vocabulary, making future schema changes easier and reducing typo/drift risk without altering the JSON contract.
+- Rollback trigger: If a future protocol supersedes this task vocabulary, carry the semantics into that protocol rather than scattering raw strings back into each module.
+- Related files: `split-image-assets/scripts/work_item_schema_contract.py`, `split-image-assets/scripts/describe_candidate_work_items.py`, `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_docs_and_contract.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Candidate And Provider Recommendation Schemas Should Share One Helper Before They Drift Again
 - Decision: Introduce `work_item_schema_lib.py` as the shared builder for command variants and grouped task envelopes across candidate and provider work-item surfaces.
 - Rationale: After both surfaces independently grew richer task-like metadata, they were clearly converging on the same structure. Leaving them duplicated would make future field additions noisy and invite drift. A small shared helper keeps the structure aligned without forcing a larger runtime or protocol change.

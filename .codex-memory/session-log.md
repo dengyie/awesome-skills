@@ -813,3 +813,9 @@
 - Results: Candidate and provider recommendation schemas now share one helper without changing their public JSON shape. Full package validation passed with 240 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 03:20
+- Task: Complete `split-image-assets` work-item enum contract V1.
+- Actions: Added `work_item_schema_contract.py` as the shared constant layer for task types, phases, intents, and branch flags; updated candidate and provider recommendation builders to consume the shared constants; synchronized implementation baseline and project memory; expanded the helper-structure test to cover the shared constants.
+- Results: Candidate and provider recommendation semantics now share one vocabulary in addition to one schema builder, reducing drift risk without changing output behavior. Full package validation passed with 240 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

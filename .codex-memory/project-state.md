@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` work-item enum contract V1 is complete locally. Candidate and provider recommendation builders now share a common constant vocabulary for task types, phases, intents, and branch flags through `work_item_schema_contract.py`.
 - Current stage: `split-image-assets` work-item shared schema V1 is complete locally. Candidate and provider work-item recommendation envelopes now share `work_item_schema_lib.py`, reducing schema drift risk while preserving their public JSON contract.
 - Current stage: `split-image-assets` provider work-item schema V1 is complete locally. Provider work items now expose `recommended_command_variants[]` and grouped `recommended_task` objects for key bridge states, so provider and candidate next-step surfaces are more uniform.
 - Current stage: `split-image-assets` candidate lifecycle task schema V1 is complete locally. Candidate work items now expose grouped `recommended_task` objects for pending selection and pending promotion approval states, so richer consumers can treat lifecycle branches as one task family instead of isolated command rows.
@@ -33,6 +34,10 @@
 - `main`
 
 ## Last Verified
+- 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (240 tests, work-item enum contract V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, work-item enum contract V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (work-item enum contract V1 review brief; no new P0/P1 blockers)
+- 2026-07-05: `git diff --check` (passed with only CRLF warnings, work-item enum contract V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (240 tests, work-item shared schema V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, work-item shared schema V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown` (work-item shared schema V1 review brief; no new P0/P1 blockers)
@@ -377,6 +382,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Work-item enum contract V1 centralizes semantics, but the vocabulary is still intentionally local to `split-image-assets`; broader cross-skill reuse remains future work.
 - Work-item shared schema V1 removes duplicate builders, but it still intentionally shares only structure, not state logic; candidate and provider recommendation semantics still live in their own modules by design.
 - Provider work-item schema V1 aligns provider-side recommendations with candidate-side structure, but it still intentionally models only the current command-oriented bridge states rather than broader multi-provider orchestration branches.
 - Candidate lifecycle task schema V1 makes branch grouping clearer, but it still intentionally wraps command execution rather than replacing it with a fully repo-owned action protocol; downstream consumers still ultimately run shell commands.
@@ -426,10 +432,10 @@
 - None.
 
 ## Current Focus
-- The work-item shared schema milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The work-item enum contract milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the work-item shared schema V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the work-item enum contract V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

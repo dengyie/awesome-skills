@@ -12,14 +12,15 @@ from skill_package_testlib import Image, REPO, ROOT, SplitImageAssetsTestBase, j
 class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
     def test_work_item_schema_lib_builders_return_machine_readable_shape(self):
         module = self._load_script_module("work_item_schema_lib.py")
+        contract = self._load_script_module("work_item_schema_contract.py")
         variant = module.build_command_variant(
             "example",
             "Example",
             "python tool.py",
             "Example note.",
-            phase="candidate-selection",
-            intent="record-selection-only",
-            branch_flag="promotion_answer",
+            phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
+            intent=contract.INTENT_RECORD_SELECTION_ONLY,
+            branch_flag=contract.BRANCH_FLAG_PROMOTION_ANSWER,
             branch_value="skip",
             recommended=True,
             requires_fields=["selection_reason"],
@@ -28,18 +29,18 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             requires_human_confirmation=True,
         )
         task = module.build_recommended_task(
-            task_type="candidate-lifecycle",
-            task_phase="candidate-selection",
+            task_type=contract.TASK_TYPE_CANDIDATE_LIFECYCLE,
+            task_phase=contract.TASK_PHASE_CANDIDATE_SELECTION,
             task_state="await-candidate-selection",
             task_goal="record-compare-winner",
             default_variant_id="example",
             variants=[variant],
         )
         self.assertEqual(variant["variant_id"], "example")
-        self.assertEqual(variant["phase"], "candidate-selection")
+        self.assertEqual(variant["phase"], contract.TASK_PHASE_CANDIDATE_SELECTION)
         self.assertEqual(variant["writes_fields"], ["selected_candidate_id"])
         self.assertTrue(variant["requires_human_confirmation"])
-        self.assertEqual(task["task_type"], "candidate-lifecycle")
+        self.assertEqual(task["task_type"], contract.TASK_TYPE_CANDIDATE_LIFECYCLE)
         self.assertEqual(task["default_variant_id"], "example")
         self.assertEqual(task["variant_count"], 1)
     def test_prepare_provider_request_writes_bridge_request_manifest(self):
