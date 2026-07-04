@@ -5,24 +5,60 @@ from pathlib import Path
 from candidate_workflow_lib import (
     candidate_work_item_status_path,
     candidate_delivery_class_for_route,
-    default_promotion_repair_note,
     list_staged_candidate_records,
     package_relative,
     read_metadata,
     write_json,
 )
 from package_state_lib import find_plan_object, read_plan_manifest
+from provider_bridge_lib import describe_provider_selection
 
 
-def _recommended_compare_command(package_dir: Path, object_id: str, candidates: list[dict]) -> str:
+def _recommended_compare_command(
+    package_dir: Path,
+    object_id: str,
+    candidates: list[dict],
+    *,
+    planned_route: str,
+    object_type: str,
+    plan_manifest: dict | None,
+) -> str:
     package_arg = str(package_dir).replace("\\", "/")
-    parts = [
+    base_parts = [
         "python",
         "split-image-assets/scripts/compare_candidate_assets.py",
         package_arg,
         "--object-id",
         object_id,
     ]
+    provider_ids = sorted(
+        {
+            str(record.get("provider_id", "")).strip()
+            for record in candidates
+            if str(record.get("provider_id", "")).strip()
+        }
+    )
+    if planned_route == "generate" and provider_ids:
+        parts = [*base_parts]
+        if len(provider_ids) == 1:
+            parts.extend(["--compare-criterion", "<criterion>"])
+            return " ".join(parts)
+        if isinstance(plan_manifest, dict):
+            selection = describe_provider_selection(plan_manifest, planned_route, object_type, None)
+            selected_provider_id = str(selection.get("selected_provider_id", "")).strip()
+            selection_source = str(selection.get("selection_source", "")).strip()
+            if (
+                selection_source == "plan-preference"
+                and selected_provider_id
+                and selected_provider_id in provider_ids
+            ):
+                parts.extend(["--provider-id", selected_provider_id])
+                parts.extend(["--compare-criterion", "<criterion>"])
+                return " ".join(parts)
+        parts.extend(["--provider-id", "<provider-id>"])
+        parts.extend(["--compare-criterion", "<criterion>"])
+        return " ".join(parts)
+    parts = [*base_parts]
     for record in candidates:
         parts.extend(["--candidate", f"{record['candidate_id']}={record['relative_asset_path']}"])
     parts.extend(["--compare-criterion", "<criterion>"])
@@ -202,7 +238,39 @@ def build_candidate_work_item_status(package_dir: Path, object_id: str | None = 
                 next_action_detail = (
                     "Multiple staged candidates exist across different provider ids and no comparison evidence has been recorded yet."
                 )
-            recommended_command = _recommended_compare_command(package_dir, current_object_id, candidates)
+                if planned_route == "generate":
+                    selection = (
+                        describe_provider_selection(
+                            plan_manifest,
+                            planned_route,
+                            str(plan_object.get("object_type", "")).strip(),
+                            None,
+                        )
+                        if isinstance(plan_manifest, dict) and isinstance(plan_object, dict)
+                        else {}
+                    )
+                    selected_provider_id = str(selection.get("selected_provider_id", "")).strip()
+                    selection_source = str(selection.get("selection_source", "")).strip()
+                    if (
+                        selection_source == "plan-preference"
+                        and selected_provider_id
+                        and selected_provider_id in candidate_provider_ids
+                    ):
+                        next_action_detail = (
+                            "Multiple staged candidates exist across different provider ids; start compare with the plan-selected provider scope so provider-aware auto-discovery stays aligned with the current route plan."
+                        )
+                    else:
+                        next_action_detail = (
+                            "Multiple staged candidates exist across different provider ids and no safe provider default is available; choose a provider scope explicitly before compare."
+                        )
+            recommended_command = _recommended_compare_command(
+                package_dir,
+                current_object_id,
+                candidates,
+                planned_route=planned_route,
+                object_type=str(plan_object.get("object_type", "")).strip() if isinstance(plan_object, dict) else "",
+                plan_manifest=plan_manifest if isinstance(plan_manifest, dict) else None,
+            )
         elif len(candidates) > 1 and latest_comparison_id and not comparison_selected_candidate_id:
             next_action = "await-candidate-selection"
             next_action_detail = (

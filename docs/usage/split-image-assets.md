@@ -306,6 +306,8 @@ If compare evidence or staged candidates are mixed across providers for the same
 
 Use `compare_candidate_assets.py` when more than one viable repair candidate exists. The compare artifact is review evidence, not a final asset, and should stay in `_staging/repair_candidates/` or `_archive_intermediate/`. Compare is not just a contact sheet; the compare manifest should also record candidate asset paths, criteria, review focus, risks, and later selection rationale.
 
+For generated candidate pools, the candidate work-item helper should now recommend the lower-burden compare command that matches the real auto-discovery rules: no manual `--candidate` list for a single-provider pool, `--provider-id <preferred>` when a valid generation provider preference safely scopes a mixed-provider pool, and an explicit `--provider-id <provider-id>` placeholder when no safe provider default exists.
+
 When you summarize a run, call out the primary segmenter, the matting/refinement tool, and any helper-only tools separately. Pillow/OpenCV/skimage should only appear in the helper-tools bucket.
 
 Use separate final-report lines for:

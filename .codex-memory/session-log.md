@@ -765,3 +765,9 @@
 - Results: Mixed-provider candidate pools can now stay provider-aware through approval and promotion adapters when one provider-scoped answer is unambiguous, while ambiguous provider-scoped pools still fail closed. Full package validation passed with 230 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-04 22:20
+- Task: Complete `split-image-assets` provider-aware compare command orchestration V1.
+- Actions: Updated `describe_candidate_work_items.py` so generated-route compare recommendations now follow the real provider-aware auto-discovery contract; added regression coverage for single-provider generated pools, mixed-provider pools with an explicit generation provider preference, and mixed-provider pools that still require explicit provider choice; synchronized skill/workflow/usage/baseline docs and project memory.
+- Results: Candidate work-item compare commands now lower operator burden without becoming more permissive than the real compare helper. Full package validation passed with 233 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

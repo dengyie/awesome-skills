@@ -257,6 +257,8 @@ When compare evidence already selects a candidate but `metadata.confirmation.can
 
 That candidate-stage explainer should also surface staged candidate provider identities and flag mixed-provider candidate pools before compare, so generated-route repair work does not become provider-blind again.
 
+For generated-route candidate pools, `scripts/describe_candidate_work_items.py` should also recommend compare commands that match the real provider-aware auto-discovery rules: use a plain auto-discovery compare command for single-provider pools, use the plan-preferred provider scope when an explicit generation provider preference is valid, and otherwise require an explicit `--provider-id` choice instead of pretending route-default compare is safe.
+
 `scripts/record_candidate_promotion_approval.py` is the low-burden approval adapter for that handoff. Use it when compare evidence already owns the selected candidate or the compare set contains exactly one candidate, and you want to record the `candidate_promotion` gate without manually reconstructing the full `record_quality_review.py` decision payload.
 
 `scripts/apply_candidate_promotion_decision.py` is the next-step orchestration adapter for that handoff. Use it when you want one deterministic command to record a yes/no candidate-promotion decision and, for `yes`, continue directly into `promote_candidate_asset.py`.
