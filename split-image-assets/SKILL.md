@@ -376,6 +376,7 @@ When a split decision affects reuse boundaries, editability, animation readiness
 This is a confirmation-driven workflow, not passive ambiguity handling. Ask one question at a time, include the recommended answer, resolve one branch before moving on, and inspect the source image, metadata, and prior user instructions before asking. Do not batch unrelated questions unless the user explicitly asks for a full alignment round.
 
 `inferred-from-user` means the answer is already supported by durable user evidence such as earlier instructions, approved metadata, or a prior accepted policy. It does not mean the agent guessed what the user probably wants.
+Global autonomy instructions do not by themselves satisfy semantic gates. If the branch is being recorded as `inferred-from-user`, the evidence must resolve the exact branch being recorded, including the relevant `resource_family` when semantic narrowing is the question.
 
 Ask when deciding:
 
@@ -386,6 +387,7 @@ Ask when deciding:
 - whether a low-confidence automated mask should be retried with another upstream tool or sent to manual review
 - whether structurally valid output should remain `needs-review` until the user accepts its cleanliness and granularity
 - whether a warning is a true defect, an expected stylistic signal, or mixed and needs human judgment
+- whether a `resource_family` choice should narrow the semantic branch inside `Granularity Alignment Gate`
 
 If the answer can be determined from the source image, existing metadata, or user-provided requirements, inspect that evidence first. If ambiguity remains, ask exactly one focused question and wait for the answer before continuing that branch. Progress updates are commentary, not confirmation gates.
 

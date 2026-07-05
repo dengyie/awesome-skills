@@ -1,3 +1,10 @@
+from semantic_scope_lib import (
+    ALLOWED_RESOURCE_FAMILIES,
+    WEAK_AUTONOMY_EVIDENCE_MARKERS,
+    default_scope_selection,
+    is_weak_autonomy_evidence,
+)
+
 ALLOWED_PAUSE_CATEGORIES = {"user-decision", "external-blocker", "formal-approval"}
 ALLOWED_BLOCKING_VALUES = {"true", "false"}
 ALLOWED_DECISION_SOURCES = {

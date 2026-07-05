@@ -7,6 +7,14 @@
 - Rollback trigger: If a future broader package-repair flow wants best-effort planning from damaged packages, it should live behind an explicit recovery mode rather than weakening the default provider bridge path.
 - Related files: `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
 
+## 2026-07-05 - Semantic Narrowing Needs An Explicit Resource-Family Surface
+- Decision: Add a shared `resource_family` scope-selection helper surface and make the split-image-assets docs say that global autonomy instructions do not by themselves satisfy semantic gates.
+- Rationale: Task 1 is hardening the semantic contract surface, and semantic narrowing is a distinct branch from broad execution permission. A small helper plus explicit documentation keeps the branch honest without changing the allowed stop classes or the existing truth gates.
+- Alternatives considered: Leave resource-family narrowing implicit inside the docs, or defer the helper until later planning-validation work.
+- Impact: The contract layer now exposes `ALLOWED_RESOURCE_FAMILIES`, `default_scope_selection()`, and `is_weak_autonomy_evidence(...)`, and the docs make it clear that `inferred-from-user` must resolve the exact branch being recorded.
+- Rollback trigger: If a later milestone chooses a different canonical scope-selection shape, preserve the semantics and keep the exact-branch requirement rather than reintroducing generic autonomy defaults.
+- Related files: `split-image-assets/scripts/semantic_scope_lib.py`, `split-image-assets/scripts/split_image_assets_contract.py`, `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `split-image-assets/references/confirmation-prompts.md`, `split-image-assets/references/asset-package-contract.md`, `docs/usage/split-image-assets.md`
+
 ## 2026-07-05 - Provider Planning Should Explain Capability Fit, Not Only Selection Outcome
 - Decision: Extend the local provider registry with route-required capability tags, provider capability tags, preferred/discouraged object types, and expected consume mode hints, then surface that capability-fit layer through `describe_provider_plan.py` and `describe_provider_work_items.py`.
 - Rationale: The bridge-first provider layer had become structurally strong, but its default path still forced operators to infer too much from a bare provider id. A small capability-fit surface lowers cognitive load without expanding runtime scope or weakening existing truth gates.

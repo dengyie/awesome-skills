@@ -102,6 +102,7 @@ Prompt body:
   - update `metadata.granularity.carrier_glyph_policy`
   - update `metadata.granularity.background_expectation`
   - update `metadata.granularity.layer_independence`
+  - update `metadata.granularity.resource_family` when the branch narrows the semantic family being recorded
   - update `metadata.confirmation.granularity_alignment`
   - append `metadata.decision_log[]`
 

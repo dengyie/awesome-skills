@@ -72,6 +72,7 @@ If pause is not allowed, continue with the documented fallback and record the ra
   - if user intent is already durable, record `mode`, `scope_strategy`, `text_handling`, `carrier_glyph_policy`, `background_expectation`, `layer_independence`, `metadata.confirmation.granularity_alignment`, and a decision-log entry, then continue
   - if the image is straightforward and the split is clearly derivable, continue with the recorded rationale instead of asking again
   - ordinary editable text-like objects should continue on the `rebuild_downstream` path unless the recorded policy or later evidence explicitly upgrades them to visual assets
+  - record `resource_family` as part of the branch when the question is about semantic narrowing rather than only split granularity
 
 ### `generation_routing`
 

@@ -454,6 +454,20 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             "Final Promotion Acceptance Gate",
         ]:
             self.assertNotIn(retired, usage)
+    def test_skill_docs_forbid_broad_autonomy_as_semantic_scope_evidence(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("Global autonomy instructions", skill_text)
+        self.assertIn("do not by themselves satisfy", skill_text)
+        self.assertIn("resource_family", skill_text)
+    def test_shared_contract_exposes_resource_family_scope_fields(self):
+        contract = self._load_script_module("split_image_assets_contract.py")
+
+        self.assertIn("blueprint-modules", contract.ALLOWED_RESOURCE_FAMILIES)
+        self.assertIn("right-rail-hardware", contract.ALLOWED_RESOURCE_FAMILIES)
+        scope = contract.default_scope_selection()
+        self.assertEqual(scope["selected_family"], "")
+        self.assertEqual(scope["selection_source"], "unresolved")
 
 
 

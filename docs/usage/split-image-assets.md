@@ -59,6 +59,8 @@ For quality-first extraction, use a Grounded-SAM/SAM2 style pipeline: semantic a
 
 Start by recording a semantic layer hierarchy in `metadata.analysis.visual_hierarchy`. Split by meaning: background/backplate, frame or UI chrome, main subjects, connection paths, labels, buttons, decorations, shadows, and overlays. A rectangular crop is only acceptable as a tight storage bbox around a semantic mask; rectangular crop packages are not complete asset packages.
 
+When the question is semantic narrowing rather than a broad workflow preference, record the exact `resource_family` branch you are choosing. Global autonomy instructions do not by themselves satisfy that gate, and `inferred-from-user` must point at the exact branch being recorded.
+
 ## Default Execution Model
 
 The default execution model is conservative continuous execution. Keep running by default, and stop only when one of the three formal stop classes is justified by the next branch.
