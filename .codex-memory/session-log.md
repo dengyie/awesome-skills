@@ -888,6 +888,6 @@
 ## 2026-07-05 13:40
 - Task: Complete `split-image-assets` Task 1 rule-and-contract surface hardening.
 - Actions: Added red-green tests for the new semantic-scope contract surface; implemented `scripts/semantic_scope_lib.py` with `ALLOWED_RESOURCE_FAMILIES`, `default_scope_selection()`, and `is_weak_autonomy_evidence(...)`; re-exported the helper surface through `split_image_assets_contract.py`; updated the split-image-assets docs to say global autonomy instructions do not by themselves satisfy semantic gates and that `resource_family` is part of semantic narrowing; refreshed repo memory.
-- Results: Focused Task 1 regressions passed, the broader `split-image-assets.tests.test_docs_and_contract` file passed, and the new scope helper is available to later milestones without changing the allowed stop classes or weakening existing truth gates.
+- Results: Focused Task 1 regressions passed, the broader `split-image-assets.tests.test_docs_and_contract` file passed, and the new scope helper is available to later milestones without changing the allowed stop classes or weakening existing truth gates. Committed as `c1b7395` (`feat: add semantic scope contract`).
 - Next: Commit the Task 1 changes and hand back the report path.
 - Blockers: None.
