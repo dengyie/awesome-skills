@@ -52,10 +52,6 @@ def validate_scope_selection(scope_selection: dict) -> dict:
     elif selection_source != "unresolved":
         raise ValueError("selected_family is required when selection_source is not unresolved")
 
-    if len(candidate_families) > 1 and not selected_family:
-        raise ValueError(
-            "scope_selection.selected_family is required when multiple candidate families exist"
-        )
     if selection_source == "inferred-from-user":
         if not selection_evidence_ref:
             raise ValueError("selection_evidence_ref is required for inferred-from-user scope selection")
@@ -78,21 +74,21 @@ def parse_args() -> argparse.Namespace:
         "--candidate-family",
         action="append",
         dest="candidate_families",
-        default=[],
+        default=None,
         help="Candidate resource family for the package scope. Repeatable.",
     )
-    parser.add_argument("--selected-family", default="", help="Selected package resource family.")
+    parser.add_argument("--selected-family", default=None, help="Selected package resource family.")
     parser.add_argument(
         "--selection-source",
-        default="unresolved",
+        default=None,
         help="Selection source: unresolved, explicit-user-confirmed, or inferred-from-user.",
     )
     parser.add_argument(
         "--selection-evidence-ref",
-        default="",
+        default=None,
         help="Evidence ref supporting an inferred selection.",
     )
-    parser.add_argument("--selection-notes", default="", help="Optional scope selection notes.")
+    parser.add_argument("--selection-notes", default=None, help="Optional scope selection notes.")
     return parser.parse_args()
 
 
@@ -104,12 +100,16 @@ def main() -> int:
         raise ValueError("plan_manifest.json must exist before preparing scope selection")
 
     scope_selection = dict(plan_manifest.get("scope_selection") or {})
-    if args.candidate_families:
+    if args.candidate_families is not None:
         scope_selection["candidate_families"] = list(args.candidate_families)
-    scope_selection["selected_family"] = args.selected_family
-    scope_selection["selection_source"] = args.selection_source
-    scope_selection["selection_evidence_ref"] = args.selection_evidence_ref
-    scope_selection["selection_notes"] = args.selection_notes
+    if args.selected_family is not None:
+        scope_selection["selected_family"] = args.selected_family
+    if args.selection_source is not None:
+        scope_selection["selection_source"] = args.selection_source
+    if args.selection_evidence_ref is not None:
+        scope_selection["selection_evidence_ref"] = args.selection_evidence_ref
+    if args.selection_notes is not None:
+        scope_selection["selection_notes"] = args.selection_notes
     plan_manifest["scope_selection"] = validate_scope_selection(scope_selection)
     write_plan_manifest(package_dir, plan_manifest)
     return 0

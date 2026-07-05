@@ -31,7 +31,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "selection_notes": "",
                 },
             )
-    def test_prepare_plan_manifest_requires_selected_family_when_multiple_families_exist(self):
+    def test_prepare_plan_manifest_persists_unresolved_multi_family_stop_state(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -55,8 +55,18 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 check=False,
             )
 
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("selected_family", result.stderr)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                plan_manifest["scope_selection"],
+                {
+                    "candidate_families": ["blueprint-modules", "paper-scraps"],
+                    "selected_family": "",
+                    "selection_source": "unresolved",
+                    "selection_evidence_ref": "",
+                    "selection_notes": "",
+                },
+            )
     def test_prepare_plan_manifest_rejects_weak_inferred_selection_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
@@ -127,6 +137,62 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "selection_source": "explicit-user-confirmed",
                     "selection_evidence_ref": "",
                     "selection_notes": "",
+                },
+            )
+    def test_prepare_plan_manifest_preserves_existing_scope_selection_on_incremental_update(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            initial_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                    "--selected-family",
+                    "blueprint-modules",
+                    "--selection-source",
+                    "explicit-user-confirmed",
+                    "--selection-evidence-ref",
+                    "chat:family-confirmed",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(initial_result.returncode, 0, initial_result.stderr)
+
+            update_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--selection-notes",
+                    "Need object-level planning before choosing a route.",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(update_result.returncode, 0, update_result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                plan_manifest["scope_selection"],
+                {
+                    "candidate_families": ["blueprint-modules", "paper-scraps"],
+                    "selected_family": "blueprint-modules",
+                    "selection_source": "explicit-user-confirmed",
+                    "selection_evidence_ref": "chat:family-confirmed",
+                    "selection_notes": "Need object-level planning before choosing a route.",
                 },
             )
     def test_work_item_schema_lib_builders_return_machine_readable_shape(self):
