@@ -390,6 +390,80 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertEqual(metadata["granularity"]["carrier_glyph_policy"], "split")
             self.assertEqual(metadata["granularity"]["background_expectation"], "approximate-accepted")
             self.assertEqual(metadata["granularity"]["layer_independence"], "animation-ready")
+    def test_record_quality_review_rejects_weak_inferred_resource_family_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--granularity-mode",
+                    "atomic-layer",
+                    "--resource-family",
+                    "right-rail-hardware",
+                    "--resource-family-confirmed",
+                    "--confirmation-key",
+                    "granularity_alignment",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "inferred-from-user",
+                    "--pause-category",
+                    "user-decision",
+                    "--evidence-ref",
+                    "user said continue",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("exact branch", result.stderr)
+    def test_record_quality_review_accepts_explicit_resource_family_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--granularity-mode",
+                    "atomic-layer",
+                    "--resource-family",
+                    "right-rail-hardware",
+                    "--resource-family-confirmed",
+                    "--confirmation-key",
+                    "granularity_alignment",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "user-decision",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["granularity"]["resource_family"], "right-rail-hardware")
+            self.assertTrue(metadata["granularity"]["resource_family_confirmed"])
     def test_record_quality_review_records_text_routing_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

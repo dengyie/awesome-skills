@@ -22,6 +22,7 @@ from split_image_assets_contract import (
     ALLOWED_QA_STATUSES,
     ALLOWED_QUALITY_CHECK_STATUSES,
     ALLOWED_QUALITY_TARGET_TIERS,
+    ALLOWED_RESOURCE_FAMILIES,
     ALLOWED_REUSE_STATUSES,
     ALLOWED_ROUTING_ACTIONS,
     ALLOWED_ROUTING_DECISION_SOURCES,
@@ -34,6 +35,7 @@ from split_image_assets_contract import (
     STAGE_TO_CONFIRMATION_KEY,
     default_confirmation_entry,
     default_object_routing_fields,
+    is_weak_autonomy_evidence,
 )
 from validator_shared import package_requires_extraction_capability_for_pass
 from validate_asset_package import collect_validation_errors
@@ -202,6 +204,9 @@ def update_granularity(metadata: dict, args: argparse.Namespace) -> None:
         not args.granularity_mode
         and not args.granularity_confirmed
         and not args.granularity_note
+        and args.resource_family is None
+        and not args.resource_family_confirmed
+        and not args.resource_family_evidence_ref
         and args.scope_strategy is None
         and args.text_handling is None
         and args.carrier_glyph_policy is None
@@ -220,6 +225,13 @@ def update_granularity(metadata: dict, args: argparse.Namespace) -> None:
             granularity["notes"] = existing.rstrip() + "\n" + args.granularity_note
         else:
             granularity["notes"] = args.granularity_note
+    if args.resource_family is not None:
+        granularity["resource_family"] = args.resource_family
+    if args.resource_family_confirmed:
+        granularity["resource_family_confirmed"] = True
+    resource_family_evidence_ref = args.resource_family_evidence_ref or args.evidence_ref
+    if resource_family_evidence_ref:
+        granularity["resource_family_evidence_ref"] = resource_family_evidence_ref
     if args.scope_strategy is not None:
         granularity["scope_strategy"] = args.scope_strategy
     if args.text_handling is not None:
@@ -345,6 +357,25 @@ def parse_bool(value: str, flag_name: str) -> bool:
     if normalized in {"false", "no", "0"}:
         return False
     raise ValueError(f"{flag_name} must be true or false")
+
+
+def require_branch_specific_scope_evidence(
+    decision_source: str | None,
+    evidence_ref: str | None,
+    resource_family: str | None,
+) -> None:
+    if decision_source != "inferred-from-user" or not resource_family:
+        return
+    normalized_evidence = str(evidence_ref or "").strip().lower()
+    normalized_family = resource_family.strip().lower()
+    if is_weak_autonomy_evidence(normalized_evidence):
+        raise ValueError(
+            "inferred-from-user evidence must resolve the exact branch being recorded for resource_family"
+        )
+    if normalized_family not in normalized_evidence:
+        raise ValueError(
+            "inferred-from-user evidence must resolve the exact branch being recorded for resource_family"
+        )
 
 
 def update_capability(metadata: dict, args: argparse.Namespace) -> None:
@@ -674,6 +705,9 @@ def main() -> int:
     parser.add_argument("--granularity-mode", choices=sorted(ALLOWED_GRANULARITY_MODES))
     parser.add_argument("--granularity-confirmed", action="store_true")
     parser.add_argument("--granularity-note")
+    parser.add_argument("--resource-family", choices=sorted(ALLOWED_RESOURCE_FAMILIES))
+    parser.add_argument("--resource-family-confirmed", action="store_true")
+    parser.add_argument("--resource-family-evidence-ref")
     parser.add_argument("--scope-strategy", choices=sorted(ALLOWED_SCOPE_STRATEGIES))
     parser.add_argument("--text-handling", choices=sorted(ALLOWED_TEXT_HANDLING))
     parser.add_argument("--carrier-glyph-policy", choices=sorted(ALLOWED_CARRIER_GLYPH_POLICIES))
@@ -782,6 +816,19 @@ def main() -> int:
         parser.error(
             "--evidence-ref is required when --routing-decision-source is inferred-from-user"
         )
+    resource_family_evidence = args.resource_family_evidence_ref or args.evidence_ref
+    try:
+        require_branch_specific_scope_evidence(
+            args.confirmation_source,
+            resource_family_evidence,
+            args.resource_family if (args.resource_family or args.resource_family_confirmed) else None,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
+    if args.resource_family_confirmed and not args.resource_family:
+        parser.error("--resource-family-confirmed requires --resource-family")
+    if args.resource_family_evidence_ref and not args.resource_family:
+        parser.error("--resource-family-evidence-ref requires --resource-family")
 
     package_dir = Path(args.package_dir).resolve()
     metadata = read_metadata(package_dir, parser)
