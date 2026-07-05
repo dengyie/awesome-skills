@@ -111,14 +111,30 @@ def validate_metadata_fields(metadata: dict, errors: list[str], plan_manifest: d
     scope_selection = plan_manifest.get("scope_selection", {}) if isinstance(plan_manifest, dict) else {}
     if not isinstance(scope_selection, dict):
         scope_selection = {}
+    candidate_families = scope_selection.get("candidate_families", [])
+    has_candidate_families = isinstance(candidate_families, list) and any(
+        (
+            isinstance(entry, str) and entry.strip()
+        )
+        or (
+            isinstance(entry, dict)
+            and isinstance(entry.get("family_id"), str)
+            and entry.get("family_id", "").strip()
+        )
+        for entry in candidate_families
+    )
     selected_family = str(scope_selection.get("selected_family", "")).strip()
     selection_source = str(scope_selection.get("selection_source", "unresolved")).strip() or "unresolved"
     selection_evidence_ref = str(scope_selection.get("selection_evidence_ref", "")).strip()
-    if (
+    requires_resource_family = (
         granularity.get("scope_strategy") == "high-signal-subset"
-        and is_ui_like_package(metadata)
-        and not resource_family
-    ):
+        and (
+            is_ui_like_package(metadata)
+            or has_candidate_families
+            or bool(selected_family)
+        )
+    )
+    if requires_resource_family and not resource_family:
         errors.append("granularity.resource_family is required for dense high-signal-subset packages")
         if not selected_family:
             errors.append("semantic-family narrowing is unresolved: plan_manifest.scope_selection.selected_family is empty")

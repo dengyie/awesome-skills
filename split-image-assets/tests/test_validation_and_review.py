@@ -4851,7 +4851,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("granularity", result.stderr.lower())
             self.assertIn("confirmed", result.stderr.lower())
-    def test_validate_asset_package_rejects_dense_subset_without_resource_family(self):
+    def test_validate_asset_package_rejects_dense_non_ui_subset_without_resource_family(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -4862,20 +4862,20 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
 
             metadata = self._write_ready_validation_package(output)
             metadata["analysis"]["visual_hierarchy"] = [
-                "dashboard background",
-                "right rail tile",
-                "status glyph",
+                "blueprint background",
+                "paper scrap cluster",
+                "diagram fragment",
             ]
             metadata["analysis"]["recommended_split_plan"] = (
-                "Keep the right-rail tile and glyph as a narrow high-signal subset."
+                "Keep the blueprint fragments and paper scraps as a narrow high-signal subset."
             )
             metadata["granularity"].update(
                 {
                     "scope_strategy": "high-signal-subset",
-                    "text_handling": "rebuild-downstream",
-                    "carrier_glyph_policy": "split",
+                    "text_handling": "extract-as-image",
+                    "carrier_glyph_policy": "grouped",
                     "background_expectation": "approximate-accepted",
-                    "layer_independence": "animation-ready",
+                    "layer_independence": "static-reuse",
                     "resource_family": "",
                     "resource_family_confirmed": False,
                     "resource_family_evidence_ref": "",
@@ -4883,11 +4883,24 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             )
             metadata["confirmation"]["pilot_object"]["status"] = "not-required"
             metadata["confirmation"]["pilot_object"]["source"] = "explicit-user-confirmed"
-            metadata["objects"][0]["object_type"] = "ui-glyph"
-            metadata["objects"][0]["layer_kind"] = "status glyph"
-            metadata["objects"][0]["semantic_boundary"] = "Status glyph from the right rail."
+            metadata["objects"][0]["object_type"] = "generic-object"
+            metadata["objects"][0]["layer_kind"] = "diagram fragment"
+            metadata["objects"][0]["semantic_boundary"] = "Diagram fragment from a dense blueprint collage."
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            plan_manifest["scope_selection"] = {
+                "candidate_families": ["blueprint-modules", "paper-scraps"],
+                "selected_family": "",
+                "selection_source": "unresolved",
+                "selection_evidence_ref": "",
+                "selection_notes": "Dense blueprint collage still has multiple plausible non-text families.",
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
             )
 

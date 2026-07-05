@@ -95,3 +95,87 @@ Result: `Skill is valid!`
 ## Commit
 
 - `fix: harden granularity scope validation`
+
+---
+
+## Task 4 Fix Wave 2: Broaden Dense Non-UI Narrow-Package Resource Family Guard
+
+### Review Finding
+
+- The new `resource_family` validator path was too narrow: it only enforced the guard for `is_ui_like_package(...)`, while the Task 4 design/plan scope is broader and covers dense-image narrow `high-signal-subset` packages generally.
+
+### Scope Of This Fix
+
+- Kept the existing UI-path enforcement intact.
+- Broadened the validator so `resource_family` is also required when a `high-signal-subset` package already records dense semantic-family narrowing intent through `plan_manifest.scope_selection`.
+- Added a regression for a dense non-UI narrow package with multiple plausible candidate families and no recorded `resource_family`.
+
+### Files Changed
+
+- `split-image-assets/scripts/validator_metadata_lib.py`
+- `split-image-assets/tests/test_validation_and_review.py`
+
+### Red Evidence
+
+New failing regression added first:
+
+- `test_validate_asset_package_rejects_dense_non_ui_subset_without_resource_family`
+
+Focused red command:
+
+```powershell
+$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_validate_asset_package_rejects_dense_non_ui_subset_without_resource_family
+```
+
+Observed result before implementation:
+
+- FAIL
+- validator returned success (`0 == 0`) for a non-UI `high-signal-subset` package whose `plan_manifest.scope_selection` still showed unresolved family narrowing and whose `granularity.resource_family` was empty
+
+### Implementation
+
+#### `validator_metadata_lib.py`
+
+- Preserved the existing UI-like gate exactly as part of the broader condition.
+- Added `candidate_families` detection from `plan_manifest.scope_selection`.
+- Broadened the `resource_family` requirement so it now triggers for `high-signal-subset` packages when either:
+  - the package is UI-like, or
+  - planning truth already records semantic-family narrowing context through non-empty `candidate_families`, or
+  - a `selected_family` is already present
+- Kept the validator fail-closed by preserving the unresolved-family error when `selected_family` is still empty.
+
+#### `test_validation_and_review.py`
+
+- Reworked the prior dense-subset regression into a true non-UI scenario:
+  - non-UI `visual_hierarchy`
+  - non-UI object metadata
+  - `plan_manifest.scope_selection.candidate_families = ["blueprint-modules", "paper-scraps"]`
+  - empty `granularity.resource_family`
+
+### Green Evidence
+
+Focused Task 4 command:
+
+```powershell
+$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_validate_asset_package_rejects_dense_non_ui_subset_without_resource_family split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_validate_asset_package_rejects_weak_inferred_resource_family_evidence split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_validate_asset_package_rejects_micro_asset_dominated_narrow_package_without_rationale
+```
+
+Result:
+
+- PASS (`Ran 3 tests`)
+
+Minimum broader regression:
+
+```powershell
+$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review -v
+```
+
+Result:
+
+- PASS (`Ran 101 tests`)
+
+### Self-Review
+
+- The fix does not weaken the existing UI-path checks; it widens the same guard to include non-UI dense narrow packages when planning truth already says semantic-family narrowing is in play.
+- No other validator domains were relaxed.
+- `split-image-assets/tests/test_processing_scripts.py` was not needed for this review finding because the missing coverage and the behavior change both live in package validation.
