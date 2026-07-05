@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after provider capability mapping V1. Candidate directions: deeper generated-route provider support, broader fixture/package migration, or planning-helper depth.
+- [ ] Choose the next bounded `split-image-assets` milestone after provider bridge fail-closed hardening V1. Candidate directions: deeper generated-route provider support, broader fixture/package migration, or planning-helper depth.
 ## Done
+- [x] Close `split-image-assets` provider bridge fail-closed hardening V1: clean provider-bridge metadata failure handling, malformed plan-object rejection, focused regressions, and baseline sync.
 - [x] Close `split-image-assets` provider capability mapping V1: registry-backed capability fit, expected consume mode surfacing, provider plan/work-item doc sync, and regression coverage.
 - [x] Close `split-image-assets` shared schema registry V1: direct registry access surface, focused accessor tests, canonical plan sync, and regression coverage.
 - [x] Close `split-image-assets` shared task registry access V1: registry accessors, focused access tests, canonical plan sync, and regression coverage.

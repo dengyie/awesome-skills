@@ -1,4 +1,12 @@
 # Decisions
+## 2026-07-05 - Provider Planning Must Fail Closed On Broken Package Truth
+- Decision: Harden the provider bridge layer so missing or malformed `metadata.json` is converted into controlled CLI errors, and malformed `plan_manifest.objects[]` rows are rejected instead of being silently skipped.
+- Rationale: The provider bridge layer is now a package-owned planning surface, so partial or traceback-heavy behavior on bad package truth undermines the workflow's honesty guarantees more than it helps resilience.
+- Alternatives considered: Leave the provider layer permissive and rely on later validators, or silently skip malformed planning rows in the name of partial progress.
+- Impact: Provider planning and request generation now stop early on broken package truth with operator-readable errors, and provider-plan summaries no longer hide dropped objects behind apparently successful output.
+- Rollback trigger: If a future broader package-repair flow wants best-effort planning from damaged packages, it should live behind an explicit recovery mode rather than weakening the default provider bridge path.
+- Related files: `split-image-assets/scripts/provider_bridge_lib.py`, `split-image-assets/tests/test_processing_scripts.py`, `docs/superpowers/split-image-assets/implementation-plan.md`
+
 ## 2026-07-05 - Provider Planning Should Explain Capability Fit, Not Only Selection Outcome
 - Decision: Extend the local provider registry with route-required capability tags, provider capability tags, preferred/discouraged object types, and expected consume mode hints, then surface that capability-fit layer through `describe_provider_plan.py` and `describe_provider_work_items.py`.
 - Rationale: The bridge-first provider layer had become structurally strong, but its default path still forced operators to infer too much from a bare provider id. A small capability-fit surface lowers cognitive load without expanding runtime scope or weakening existing truth gates.

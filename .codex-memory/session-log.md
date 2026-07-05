@@ -879,3 +879,9 @@
 - Results: Provider planning artifacts now explain why a provider path was chosen and which consume path it expects, rather than surfacing only a provider id. Full package validation passed with 250 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-05 11:25
+- Task: Complete `split-image-assets` provider bridge fail-closed hardening V1.
+- Actions: Added failing regression tests for missing `metadata.json` and malformed `plan_manifest.objects[]`; hardened `provider_bridge_lib.py` so provider-plan/request entrypoints convert missing/malformed package truth into controlled `ValueError` paths; made provider planning reject malformed object rows instead of silently skipping them; synchronized the canonical implementation baseline and project memory.
+- Results: Provider bridge entrypoints now fail closed instead of tracebacking or emitting partial provider planning truth from malformed inputs. Full package validation passed with 254 tests, quick validation passed, `git diff --check` passed with CRLF warnings only, and the phase-gate review found no new P0/P1 blockers.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

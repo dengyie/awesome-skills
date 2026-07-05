@@ -55,7 +55,46 @@ def provider_work_item_status_path(package_dir: Path) -> Path:
 
 def _load_metadata(package_dir: Path) -> dict:
     metadata_path = package_dir / "metadata.json"
-    return json.loads(metadata_path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise ValueError(f"metadata.json is missing: {metadata_path}") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"metadata.json is not valid JSON: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("metadata.json must contain an object")
+    return data
+
+
+def _load_plan_manifest_for_provider_bridge(package_dir: Path) -> dict | None:
+    try:
+        return read_plan_manifest(package_dir)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"plan_manifest.json is not valid JSON: {exc}") from exc
+    except ValueError:
+        raise
+
+
+def _validated_provider_plan_objects(plan_manifest: dict) -> list[dict]:
+    objects = plan_manifest.get("objects", [])
+    if not isinstance(objects, list):
+        raise ValueError("plan_manifest.json objects must be a list")
+
+    normalized_objects: list[dict] = []
+    for index, obj in enumerate(objects):
+        if not isinstance(obj, dict):
+            raise ValueError(f"plan_manifest.json objects[{index}] must be an object")
+        object_id = str(obj.get("object_id", "")).strip()
+        if not object_id:
+            raise ValueError(f"plan_manifest.json objects[{index}].object_id must be non-empty")
+        planned_route = str(obj.get("planned_route", "")).strip()
+        if not planned_route:
+            raise ValueError(f"plan_manifest.json objects[{index}].planned_route must be non-empty")
+        object_type = str(obj.get("object_type", "")).strip()
+        if not object_type:
+            raise ValueError(f"plan_manifest.json objects[{index}].object_type must be non-empty")
+        normalized_objects.append(obj)
+    return normalized_objects
 
 
 def _preferred_provider_id(plan_manifest: dict, planned_route: str) -> str:
@@ -263,10 +302,18 @@ def build_provider_request(
     notes: str = "",
 ) -> dict:
     metadata = _load_metadata(package_dir)
-    plan_manifest = read_plan_manifest(package_dir)
+    plan_manifest = _load_plan_manifest_for_provider_bridge(package_dir)
     if plan_manifest is None:
         raise ValueError("plan_manifest.json must exist before building provider requests")
-    plan_object = find_plan_object(plan_manifest, object_id)
+    validated_objects = _validated_provider_plan_objects(plan_manifest)
+    plan_object = next(
+        (
+            item
+            for item in validated_objects
+            if str(item.get("object_id", "")).strip() == object_id
+        ),
+        None,
+    )
     if plan_object is None:
         raise ValueError(f"plan_manifest.json is missing object_id: {object_id}")
     planned_route = str(plan_object.get("planned_route", "")).strip()
@@ -305,21 +352,15 @@ def build_provider_request(
 
 def build_provider_plan_summary(package_dir: Path, object_id: str | None = None) -> dict:
     metadata = _load_metadata(package_dir)
-    plan_manifest = read_plan_manifest(package_dir)
+    plan_manifest = _load_plan_manifest_for_provider_bridge(package_dir)
     if plan_manifest is None:
         raise ValueError("plan_manifest.json must exist before building a provider plan summary")
-    objects = plan_manifest.get("objects", [])
-    if not isinstance(objects, list):
-        raise ValueError("plan_manifest.json objects must be a list")
+    objects = _validated_provider_plan_objects(plan_manifest)
 
     requested_object_id = object_id.strip() if isinstance(object_id, str) and object_id.strip() else ""
     summary_objects: list[dict] = []
     for obj in objects:
-        if not isinstance(obj, dict):
-            continue
         current_object_id = str(obj.get("object_id", "")).strip()
-        if not current_object_id:
-            continue
         if requested_object_id and current_object_id != requested_object_id:
             continue
         planned_route = str(obj.get("planned_route", "")).strip()

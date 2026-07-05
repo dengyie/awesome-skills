@@ -56,6 +56,7 @@ The current package baseline is:
 - shared work-item schema helper
 - shared task contract
 - provider capability mapping
+- provider bridge fail-closed hardening
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -64,6 +65,20 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `provider bridge fail-closed hardening V1`
+
+Closed status: complete
+
+What landed:
+
+- provider bridge entrypoints now fail cleanly when `metadata.json` is missing or malformed instead of surfacing raw Python tracebacks
+- provider planning now rejects malformed `plan_manifest.objects[]` rows instead of silently skipping bad entries and emitting partial provider-plan truth
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider capability mapping V1`
 
@@ -679,6 +694,7 @@ These are the important completed milestones that define the current architectur
 40. shared task registry versioning V1
 41. registered task bundle helper V1
 42. provider capability mapping V1
+43. provider bridge fail-closed hardening V1
 
 Treat these as delivered baseline, not as active checklist items.
 

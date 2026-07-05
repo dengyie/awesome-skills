@@ -878,6 +878,162 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             payload = json.loads(result.stdout)
             self.assertEqual(payload["object_count"], 1)
             self.assertEqual(payload["objects"][0]["object_id"], "secondary")
+    def test_describe_provider_plan_fails_cleanly_when_metadata_is_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            output = tmp_path / "package"
+            output.mkdir()
+            (output / "plan_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "objects": [
+                            {
+                                "object_id": "main_object",
+                                "object_type": "ui-carrier",
+                                "planned_route": "extract",
+                            }
+                        ]
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_plan.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("metadata.json", result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
+    def test_prepare_provider_request_fails_cleanly_when_metadata_is_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            output = tmp_path / "package"
+            output.mkdir()
+            (output / "plan_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "objects": [
+                            {
+                                "object_id": "main_object",
+                                "object_type": "ui-carrier",
+                                "planned_route": "extract",
+                            }
+                        ]
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_provider_request.py"),
+                    str(output),
+                    "--object-id",
+                    "main_object",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("metadata.json", result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
+    def test_describe_provider_plan_rejects_non_object_plan_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            (output / "plan_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "objects": [
+                            "bad-entry",
+                            {
+                                "object_id": "main_object",
+                                "object_type": "ui-carrier",
+                                "planned_route": "extract",
+                            },
+                        ]
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_plan.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("plan_manifest.json objects[0]", result.stderr)
+    def test_describe_provider_plan_rejects_plan_entries_without_object_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+            (output / "plan_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "objects": [
+                            {
+                                "object_type": "ui-carrier",
+                                "planned_route": "extract",
+                            }
+                        ]
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self._write_single_object_metadata(output)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "describe_provider_plan.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("plan_manifest.json objects[0].object_id", result.stderr)
     def test_describe_provider_work_items_recommends_prepare_generation_brief(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
