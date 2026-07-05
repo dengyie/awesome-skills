@@ -1,4 +1,20 @@
 # Decisions
+## 2026-07-05 - Granularity Hardening Needs Planning, Review, And Validator Enforcement Together
+- Decision: Treat semantic family narrowing as a three-surface contract: docs/contract text, review-adapter write path, planning surface (`scope_selection`), and validator gates must all agree before a dense-image narrow package can proceed cleanly.
+- Rationale: The reported bug was not only a docs bug or only a validator bug. It came from one semantic branch being under-specified across multiple workflow surfaces. Fixing just one layer would still leave a bypass path.
+- Alternatives considered: Harden only the docs and prompts, harden only `record_quality_review.py`, or limit `resource_family` checks to UI-like packages.
+- Impact: `resource_family` and `scope_selection` are now first-class truth surfaces, broad autonomy no longer satisfies semantic-family selection, unresolved multi-family ambiguity can persist as package-owned stop-state, and validator checks cover both UI and non-UI dense narrow packages.
+- Rollback trigger: If future workflow evidence shows the semantic-family contract is too heavy for ordinary cases, narrow the trigger predicate carefully, but keep the requirement that semantic-family truth be explicit whenever dense-image narrowing is in play.
+- Related files: `split-image-assets/SKILL.md`, `split-image-assets/references/workflow.md`, `split-image-assets/references/confirmation-prompts.md`, `split-image-assets/scripts/record_quality_review.py`, `split-image-assets/scripts/prepare_plan_manifest.py`, `split-image-assets/scripts/validator_metadata_lib.py`, `split-image-assets/scripts/validator_objects_lib.py`, `split-image-assets/tests/test_docs_and_contract.py`, `split-image-assets/tests/test_processing_scripts.py`, `split-image-assets/tests/test_validation_and_review.py`
+
+## 2026-07-05 - Review Adapter Semantic Family Writes Must Reject Weak Inferred Evidence
+- Decision: Allow `record_quality_review.py` to record `metadata.granularity.resource_family`, `resource_family_confirmed`, and `resource_family_evidence_ref`, but only accept `inferred-from-user` semantic family writes when the evidence resolves the exact recorded family branch.
+- Rationale: Task 2 hardens the review adapter so broad autonomy phrases such as `continue` or `use your default` cannot silently turn into semantic narrowing truth. The review path should stay conservative while preserving the existing stop classes and other QA/provider/promotion gates.
+- Alternatives considered: Accept any non-empty inferred evidence string, or push semantic-family enforcement to a later validator-only step.
+- Impact: The CLI now has explicit resource-family flags, inferred semantic-family writes fail closed on weak or branch-mismatched evidence, and explicit user-confirmed family writes remain low-friction.
+- Rollback trigger: If a later milestone centralizes semantic-family writes elsewhere, preserve the exact-branch evidence rule there rather than relaxing back to generic autonomy evidence.
+- Related files: `split-image-assets/scripts/record_quality_review.py`, `split-image-assets/tests/test_validation_and_review.py`
+
 ## 2026-07-05 - Provider Planning Must Fail Closed On Broken Package Truth
 - Decision: Harden the provider bridge layer so missing or malformed `metadata.json` is converted into controlled CLI errors, and malformed `plan_manifest.objects[]` rows are rejected instead of being silently skipped.
 - Rationale: The provider bridge layer is now a package-owned planning surface, so partial or traceback-heavy behavior on bad package truth undermines the workflow's honesty guarantees more than it helps resilience.

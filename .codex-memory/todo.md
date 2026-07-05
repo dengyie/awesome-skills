@@ -1,8 +1,11 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after provider bridge fail-closed hardening V1. Candidate directions: deeper generated-route provider support, broader fixture/package migration, or planning-helper depth.
+- [ ] Choose the next bounded `split-image-assets` milestone after granularity gate hardening V1. Candidate directions: deeper generated-route provider support, broader fixture/package migration, or planning-helper depth.
 ## Done
+- [x] Close `split-image-assets` Task 4 Validator And Regression Gate: validator-level semantic-family narrowing enforcement, dense non-UI subset coverage, micro-asset rationale guard, and full-package regression closure.
+- [x] Close `split-image-assets` Task 3 Planning Surface And Scope Selection Guard: package-owned `scope_selection`, unresolved multi-family stop-state persistence, incremental plan updates, and planning guard regressions.
+- [x] Close `split-image-assets` Task 2 Review Adapter Scope Enforcement: add review-adapter `resource_family` fields, reject weak inferred semantic-family evidence, cover the adapter path with red-green tests, and commit the scoped fix.
 - [x] Close `split-image-assets` Task 1 Rule And Contract Surface: add resource-family scope helpers, harden semantic-gate wording, and keep the docs/contract surface aligned.
 - [x] Close `split-image-assets` provider bridge fail-closed hardening V1: clean provider-bridge metadata failure handling, malformed plan-object rejection, focused regressions, and baseline sync.
 - [x] Close `split-image-assets` provider capability mapping V1: registry-backed capability fit, expected consume mode surfacing, provider plan/work-item doc sync, and regression coverage.

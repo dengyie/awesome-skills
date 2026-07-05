@@ -1,4 +1,12 @@
 # Session Log
+## 2026-07-05 19:40
+- Task: Close `split-image-assets` Task 2 by hardening the review adapter so semantic family truth cannot be recorded from weak inferred evidence.
+- Actions: Restored repo memory and the Task 2 brief, added failing red tests for weak inferred `resource_family` rejection and explicit-evidence acceptance, verified the focused red failure, then updated `record_quality_review.py` to accept resource-family CLI flags, persist `granularity.resource_family*` fields, and reject weak or branch-mismatched `inferred-from-user` evidence when semantic family truth is being written. Re-ran the focused tests, then ran the full `split-image-assets.tests.test_validation_and_review` module, reviewed the scoped diff, and committed the code change as `e2c4cf4`.
+- Results: The review adapter now treats semantic family selection as first-class package truth and fails closed on weak inferred branch selection without weakening the existing QA, candidate, generated reconstruction, or provider-bridge gates.
+- Validation: `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_rejects_weak_inferred_resource_family_evidence split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_accepts_explicit_resource_family_evidence` (2 tests OK after red-green) and `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review -v` (95 tests OK).
+- Next: Stop this milestone. Any follow-up should be a new bounded pass on top of the now-hardened semantic-family review path.
+- Blockers: None.
+
 ## 2026-07-04 13:15
 - Task: Close the next bounded `split-image-assets` generated-route lifecycle milestone by making generated compare selection provider-aware instead of candidate-count-only.
 - Actions: Opened `provider-aware generated compare selection V1` as a bounded milestone. Updated `compare_candidate_assets.py` so generated auto-discovery can inspect provider ids from staged provider manifests, prefer `plan_manifest.provider_preferences.generation_provider_class` when multiple providers are present, and otherwise fail closed until the operator supplies `--provider-id`. Extended generated compare candidate records and validator checks to carry provider identity paths (`provider_id`, `provider_request_path`, `provider_result_path`). Synced provider contract and canonical implementation plan, expanded processing and validation regressions for multi-provider auto-discovery plus missing provider identity failures, and reran full package validation with a production review brief.
@@ -890,4 +898,10 @@
 - Actions: Added red-green tests for the new semantic-scope contract surface; implemented `scripts/semantic_scope_lib.py` with `ALLOWED_RESOURCE_FAMILIES`, `default_scope_selection()`, and `is_weak_autonomy_evidence(...)`; re-exported the helper surface through `split_image_assets_contract.py`; updated the split-image-assets docs to say global autonomy instructions do not by themselves satisfy semantic gates and that `resource_family` is part of semantic narrowing; refreshed repo memory.
 - Results: Focused Task 1 regressions passed, the broader `split-image-assets.tests.test_docs_and_contract` file passed, and the new scope helper is available to later milestones without changing the allowed stop classes or weakening existing truth gates. Committed as `c1b7395` (`feat: add semantic scope contract`).
 - Next: Commit the Task 1 changes and hand back the report path.
+- Blockers: None.
+## 2026-07-05 18:35
+- Task: Complete `split-image-assets` granularity gate hardening V1.
+- Actions: Executed the four-task granularity hardening plan through task-scoped implementation and review loops; added semantic-scope contract helpers, hardened `record_quality_review.py`, introduced `plan_manifest.scope_selection` plus `prepare_plan_manifest.py`, and widened validator enforcement to cover dense non-UI narrow packages as well as micro-asset-dominated subsets; refreshed the canonical implementation baseline and project memory.
+- Results: Broad autonomy instructions can no longer satisfy semantic-family narrowing, unresolved multi-family ambiguity can persist as package-owned truth, and validator/review/planning surfaces now agree on first-class `resource_family` enforcement. Full package validation passed with 270 tests and `quick_validate.py` returned `Skill is valid!`.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.

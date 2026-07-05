@@ -4,6 +4,8 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` granularity gate hardening V1 is complete locally. Broad autonomy can no longer satisfy semantic family selection, `resource_family` and `scope_selection` are now first-class truth surfaces, and validator/review/planning guards fail closed on unresolved narrowing.
+- Current stage: `split-image-assets` Task 2 review-adapter scope enforcement is complete locally. `record_quality_review.py` now records `granularity.resource_family*` fields and rejects weak `inferred-from-user` evidence when semantic family truth is being written.
 - Current stage: `split-image-assets` Task 1 rule-and-contract surface hardening is complete locally. The package now exposes `resource_family` scope-selection helpers, the docs call out that global autonomy instructions do not satisfy semantic gates by themselves, and the focused docs/contract regressions are green.
 - Current stage: `split-image-assets` provider bridge fail-closed hardening V1 is complete locally. Provider plan/request entrypoints now reject missing metadata and malformed plan objects cleanly instead of tracebacking or silently dropping broken planning rows.
 - Current stage: `split-image-assets` provider capability mapping V1 is complete locally. The provider registry now exposes route-required capability tags, object-type fit, and expected consume mode hints, and the provider plan/work-item artifacts carry that explanation forward.
@@ -46,6 +48,8 @@
 - `main`
 
 ## Last Verified
+- 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (270 tests, granularity gate hardening V1)
+- 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, granularity gate hardening V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_docs_and_contract` (19 tests, Task 1 docs/contract surface)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_docs_and_contract.SplitImageAssetsPackageTests.test_skill_docs_forbid_broad_autonomy_as_semantic_scope_evidence split-image-assets.tests.test_docs_and_contract.SplitImageAssetsPackageTests.test_shared_contract_exposes_resource_family_scope_fields` (focused red-green check, Task 1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (254 tests, provider bridge fail-closed hardening V1)
@@ -440,6 +444,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Granularity gate hardening V1 closes the main semantic-scope bypass, but the current guardrails still rely on structured package/planning truth rather than automatic image semantics; broad family detection is still only as strong as the planning metadata recorded by the workflow.
 - Provider bridge fail-closed hardening V1 closes the most obvious provider-plan traceback and silent-drop gaps, but malformed provider result/request manifests outside the current entrypoint coverage still depend on the existing narrower script-level guards.
 - Provider capability mapping V1 makes default provider choice easier to explain, but it is still advisory metadata rather than a hard validator gate; provider quality truth still depends on downstream package evidence, compare, review, and promotion steps.
 - Shared schema registry V1 makes the registry easier to consume from the contract layer, but it is still intentionally an in-process local registry rather than a broader external schema registry.
@@ -501,10 +506,10 @@
 - None.
 
 ## Current Focus
-- The provider bridge fail-closed hardening milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The granularity gate hardening milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the provider bridge fail-closed hardening V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the granularity gate hardening V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

@@ -57,6 +57,7 @@ The current package baseline is:
 - shared task contract
 - provider capability mapping
 - provider bridge fail-closed hardening
+- granularity gate hardening
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -65,6 +66,22 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `granularity gate hardening V1`
+
+Closed status: complete
+
+What landed:
+
+- semantic-scope rule text now explicitly forbids using broad autonomy instructions as evidence for `Granularity Alignment Gate` or micro-asset family selection
+- `resource_family` and `scope_selection` are now first-class package/planning truth surfaces
+- `record_quality_review.py`, `prepare_plan_manifest.py`, and validator layers now fail closed when semantic-family narrowing is unresolved or weakly evidenced
+- validator coverage now protects dense non-UI narrow packages and micro-asset-dominated subsets in addition to UI-heavy paths
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `provider bridge fail-closed hardening V1`
 
@@ -695,6 +712,7 @@ These are the important completed milestones that define the current architectur
 41. registered task bundle helper V1
 42. provider capability mapping V1
 43. provider bridge fail-closed hardening V1
+44. granularity gate hardening V1
 
 Treat these as delivered baseline, not as active checklist items.
 
