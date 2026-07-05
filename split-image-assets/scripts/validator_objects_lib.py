@@ -97,6 +97,38 @@ def validate_objects(
             errors.append(
                 "metadata.confirmation.pilot_object must come from explicit-user-confirmed or inferred-from-user when confirmed"
             )
+    resource_family = str(granularity.get("resource_family", "")).strip()
+    scope_selection = plan_manifest.get("scope_selection", {}) if isinstance(plan_manifest, dict) else {}
+    if not isinstance(scope_selection, dict):
+        scope_selection = {}
+    selection_notes = str(scope_selection.get("selection_notes", "")).strip()
+    tiny_asset_count = 0
+    if granularity.get("scope_strategy") == "high-signal-subset":
+        for item in objects:
+            if not isinstance(item, dict):
+                continue
+            width = item.get("width")
+            height = item.get("height")
+            area_ratio = item.get("area_ratio")
+            if (
+                isinstance(width, int)
+                and isinstance(height, int)
+                and width <= 2
+                and height <= 2
+            ) or (isinstance(area_ratio, (int, float)) and area_ratio <= 0.07):
+                tiny_asset_count += 1
+    if tiny_asset_count >= 3 and not resource_family:
+        has_value_rationale = any(
+            isinstance(item, dict)
+            and isinstance(item.get("value_scoring"), dict)
+            and isinstance(item["value_scoring"].get("scoring_reason"), str)
+            and item["value_scoring"]["scoring_reason"].strip()
+            for item in objects
+        )
+        if not selection_notes and not has_value_rationale:
+            errors.append(
+                "micro-asset-dominated high-signal-subset package requires explicit resource-family or value rationale"
+            )
 
     has_carrier = False
     has_glyph = False

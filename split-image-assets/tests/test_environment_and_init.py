@@ -290,7 +290,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             }
             module.write_plan_manifest(tmp_path, plan_manifest)
             loaded = module.read_plan_manifest(tmp_path)
-            self.assertEqual(loaded, plan_manifest)
+            self.assertEqual(loaded, module.normalize_plan_manifest(plan_manifest))
             self.assertEqual(module.find_plan_object(loaded, "b"), {"object_id": "b", "planned_route": "generate"})
             self.assertIsNone(module.find_plan_object(loaded, "missing"))
     def test_provider_registry_exposes_default_route_chains(self):

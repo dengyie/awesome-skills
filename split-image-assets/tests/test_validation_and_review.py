@@ -2069,6 +2069,9 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 "carrier_glyph_policy": "split",
                 "background_expectation": "approximate-accepted",
                 "layer_independence": "animation-ready",
+                "resource_family": "right-rail-hardware",
+                "resource_family_confirmed": True,
+                "resource_family_evidence_ref": "chat:right-rail-hardware-confirmed",
             }
             metadata["extraction_pipeline"] = {
                 "recipe": "grounded-segmentation-matting-repair",
@@ -2238,6 +2241,18 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             metadata["qa"]["status"] = "pass"
             (output / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            plan_manifest["scope_selection"] = {
+                "candidate_families": ["right-rail-hardware", "component-panels"],
+                "selected_family": "right-rail-hardware",
+                "selection_source": "explicit-user-confirmed",
+                "selection_evidence_ref": "chat:right-rail-hardware-confirmed",
+                "selection_notes": "UI atomic fixture is intentionally scoped to right-rail hardware.",
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
                 encoding="utf-8",
             )
 
@@ -4836,6 +4851,275 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("granularity", result.stderr.lower())
             self.assertIn("confirmed", result.stderr.lower())
+    def test_validate_asset_package_rejects_dense_subset_without_resource_family(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            metadata = self._write_ready_validation_package(output)
+            metadata["analysis"]["visual_hierarchy"] = [
+                "dashboard background",
+                "right rail tile",
+                "status glyph",
+            ]
+            metadata["analysis"]["recommended_split_plan"] = (
+                "Keep the right-rail tile and glyph as a narrow high-signal subset."
+            )
+            metadata["granularity"].update(
+                {
+                    "scope_strategy": "high-signal-subset",
+                    "text_handling": "rebuild-downstream",
+                    "carrier_glyph_policy": "split",
+                    "background_expectation": "approximate-accepted",
+                    "layer_independence": "animation-ready",
+                    "resource_family": "",
+                    "resource_family_confirmed": False,
+                    "resource_family_evidence_ref": "",
+                }
+            )
+            metadata["confirmation"]["pilot_object"]["status"] = "not-required"
+            metadata["confirmation"]["pilot_object"]["source"] = "explicit-user-confirmed"
+            metadata["objects"][0]["object_type"] = "ui-glyph"
+            metadata["objects"][0]["layer_kind"] = "status glyph"
+            metadata["objects"][0]["semantic_boundary"] = "Status glyph from the right rail."
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("resource_family", result.stderr)
+    def test_validate_asset_package_rejects_weak_inferred_resource_family_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            metadata = self._write_ready_validation_package(output)
+            metadata["analysis"]["visual_hierarchy"] = [
+                "dashboard background",
+                "right rail tile",
+                "status glyph",
+            ]
+            metadata["analysis"]["recommended_split_plan"] = (
+                "Keep the right-rail tile and glyph as a narrow high-signal subset."
+            )
+            metadata["granularity"].update(
+                {
+                    "scope_strategy": "high-signal-subset",
+                    "text_handling": "rebuild-downstream",
+                    "carrier_glyph_policy": "split",
+                    "background_expectation": "approximate-accepted",
+                    "layer_independence": "animation-ready",
+                    "resource_family": "right-rail-hardware",
+                    "resource_family_confirmed": True,
+                    "resource_family_evidence_ref": "continue",
+                }
+            )
+            metadata["confirmation"]["pilot_object"]["status"] = "not-required"
+            metadata["confirmation"]["pilot_object"]["source"] = "explicit-user-confirmed"
+            metadata["objects"][0]["object_type"] = "ui-glyph"
+            metadata["objects"][0]["layer_kind"] = "status glyph"
+            metadata["objects"][0]["semantic_boundary"] = "Status glyph from the right rail."
+            metadata["confirmation"]["granularity_alignment"]["status"] = "confirmed"
+            metadata["confirmation"]["granularity_alignment"]["source"] = "inferred-from-user"
+            metadata["confirmation"]["granularity_alignment"]["evidence_ref"] = "continue"
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            plan_manifest["scope_selection"] = {
+                "candidate_families": ["right-rail-hardware", "component-panels"],
+                "selected_family": "right-rail-hardware",
+                "selection_source": "inferred-from-user",
+                "selection_evidence_ref": "continue",
+                "selection_notes": "",
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("exact branch", result.stderr)
+    def test_validate_asset_package_rejects_micro_asset_dominated_narrow_package_without_rationale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (8, 8), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            metadata = self._write_ready_validation_package(output)
+            metadata["analysis"]["visual_hierarchy"] = [
+                "dashboard background",
+                "status glyph set",
+                "right rail hardware",
+            ]
+            metadata["analysis"]["recommended_split_plan"] = (
+                "Extract only the smallest right-rail glyphs first."
+            )
+            metadata["granularity"].update(
+                {
+                    "scope_strategy": "high-signal-subset",
+                    "text_handling": "rebuild-downstream",
+                    "carrier_glyph_policy": "split",
+                    "background_expectation": "approximate-accepted",
+                    "layer_independence": "animation-ready",
+                    "resource_family": "",
+                    "resource_family_confirmed": False,
+                    "resource_family_evidence_ref": "",
+                    "notes": "Narrow first pass on tiny glyph assets.",
+                }
+            )
+            metadata["confirmation"]["pilot_object"]["status"] = "not-required"
+            metadata["confirmation"]["pilot_object"]["source"] = "explicit-user-confirmed"
+            metadata["objects"] = []
+            for index, object_id in enumerate(["glyph_a", "glyph_b", "glyph_c"], start=1):
+                asset_rel = f"assets/{object_id}_transparent.png"
+                mask_rel = f"masks/mask_{object_id}.png"
+                Image.new("RGBA", (2, 2), (255, 255, 255, 220)).save(output / asset_rel)
+                Image.new("L", (8, 8), 0).save(output / mask_rel)
+                metadata["objects"].append(
+                    {
+                        "id": object_id,
+                        "role": "secondary",
+                        "layer_kind": "status glyph",
+                        "composition_order": index * 10,
+                        "semantic_boundary": f"Tiny status glyph {index} from the right rail.",
+                        "asset_path": asset_rel,
+                        "mask_path": mask_rel,
+                        "mask_source": "manual",
+                        "alpha_source": "manual-rgba",
+                        "bbox": {"x": index, "y": index, "width": 2, "height": 2},
+                        "width": 2,
+                        "height": 2,
+                        "aspect_ratio": 1.0,
+                        "area_ratio": 0.0625,
+                        "extraction_method": "manual",
+                        "confidence": "high",
+                        "edge_complexity": "hard",
+                        "manual_review_flags": [],
+                        "asset_class": "atomic",
+                        "reuse_status": "production-ready",
+                        "delivery_class": "clean-extraction",
+                        "current_asset_revision": "initial-import",
+                        "selected_candidate_id": "",
+                        "repair_history": [],
+                        "active_reconstruction_method": "",
+                        "value_scoring": {
+                            "editability_score": "high",
+                            "visual_complexity_score": "low",
+                            "asset_value_score": "high",
+                            "scoring_reason": "",
+                        },
+                        "decision_routing": {
+                            "recommended_action": "extract_asset",
+                            "final_action": "extract_asset",
+                            "decision_source": "explicit-user-confirmed",
+                        },
+                        "rebuild_intent": {
+                            "rebuildable_downstream": False,
+                            "rebuild_notes": "",
+                        },
+                        "text_semantics": {
+                            "text_role": "non-text",
+                            "text_render_class": "non-text",
+                        },
+                        "quality_checks": {
+                            "mask_alignment": "pass",
+                            "alpha_edges": "pass",
+                            "background_residue": "pass",
+                            "reuse_readiness": "pass",
+                        },
+                        "object_type": "ui-glyph",
+                    }
+                )
+            (output / "metadata.json").write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(preview_result.returncode, 0, preview_result.stderr)
+            quality_preview_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_quality_previews.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(quality_preview_result.returncode, 0, quality_preview_result.stderr)
+
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            plan_manifest["scope_selection"] = {
+                "candidate_families": ["right-rail-hardware", "component-panels"],
+                "selected_family": "",
+                "selection_source": "unresolved",
+                "selection_evidence_ref": "",
+                "selection_notes": "",
+            }
+            (output / "plan_manifest.json").write_text(
+                json.dumps(plan_manifest, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_asset_package.py"),
+                    str(output),
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("micro-asset-dominated", result.stderr)
     def test_validate_asset_package_rejects_paths_outside_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

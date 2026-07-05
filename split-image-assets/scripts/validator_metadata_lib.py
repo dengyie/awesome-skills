@@ -1,4 +1,5 @@
 from split_image_assets_contract import (
+    ALLOWED_RESOURCE_FAMILIES,
     ALLOWED_BACKGROUND_EXPECTATIONS,
     ALLOWED_BLOCKING_VALUES,
     ALLOWED_CAPABILITY_CHOICES,
@@ -17,6 +18,7 @@ from split_image_assets_contract import (
     NON_DEFAULT_CONFIRMATION_SOURCES,
     REQUIRED_CONFIRMATION_KEYS,
 )
+from semantic_scope_lib import is_weak_autonomy_evidence
 from validator_shared import (
     ALLOWED_AUDIT_CODES,
     REQUIRED_ASSET_SUMMARY_FIELDS,
@@ -25,11 +27,12 @@ from validator_shared import (
     REQUIRED_PIPELINE_STAGES,
     decision_answer,
     has_affirmative_decision,
+    is_ui_like_package,
     package_requires_extraction_capability_for_pass,
 )
 
 
-def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
+def validate_metadata_fields(metadata: dict, errors: list[str], plan_manifest: dict | None = None) -> None:
     for field in [
         "schema_version",
         "package_name",
@@ -87,6 +90,38 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
         value = granularity.get(field_name, "unset")
         if value not in allowed:
             errors.append(f"metadata.granularity.{field_name} must be one of: {', '.join(sorted(allowed))}")
+    resource_family = granularity.get("resource_family", "")
+    if not isinstance(resource_family, str):
+        errors.append("metadata.granularity.resource_family must be a string")
+        resource_family = ""
+    else:
+        resource_family = resource_family.strip()
+        if resource_family and resource_family not in ALLOWED_RESOURCE_FAMILIES:
+            errors.append(
+                "metadata.granularity.resource_family must be one of: "
+                + ", ".join(sorted(ALLOWED_RESOURCE_FAMILIES))
+            )
+    resource_family_confirmed = granularity.get("resource_family_confirmed", False)
+    if resource_family_confirmed not in {True, False}:
+        errors.append("metadata.granularity.resource_family_confirmed must be true or false when present")
+    resource_family_evidence_ref = granularity.get("resource_family_evidence_ref", "")
+    if not isinstance(resource_family_evidence_ref, str):
+        errors.append("metadata.granularity.resource_family_evidence_ref must be a string")
+        resource_family_evidence_ref = ""
+    scope_selection = plan_manifest.get("scope_selection", {}) if isinstance(plan_manifest, dict) else {}
+    if not isinstance(scope_selection, dict):
+        scope_selection = {}
+    selected_family = str(scope_selection.get("selected_family", "")).strip()
+    selection_source = str(scope_selection.get("selection_source", "unresolved")).strip() or "unresolved"
+    selection_evidence_ref = str(scope_selection.get("selection_evidence_ref", "")).strip()
+    if (
+        granularity.get("scope_strategy") == "high-signal-subset"
+        and is_ui_like_package(metadata)
+        and not resource_family
+    ):
+        errors.append("granularity.resource_family is required for dense high-signal-subset packages")
+        if not selected_family:
+            errors.append("semantic-family narrowing is unresolved: plan_manifest.scope_selection.selected_family is empty")
     decision_log = metadata.get("decision_log", [])
     if not isinstance(decision_log, list):
         errors.append("metadata.decision_log must be a list")
@@ -192,6 +227,25 @@ def validate_metadata_fields(metadata: dict, errors: list[str]) -> None:
                     errors.append(
                         "metadata.confirmation.pilot_object.object_id must be non-empty when the pilot gate is confirmed"
                     )
+    if resource_family:
+        granularity_alignment = confirmation.get("granularity_alignment", {}) if isinstance(confirmation, dict) else {}
+        decision_source = ""
+        evidence_ref = resource_family_evidence_ref
+        if isinstance(granularity_alignment, dict):
+            decision_source = str(granularity_alignment.get("source", "")).strip()
+            if not evidence_ref:
+                evidence_ref = str(granularity_alignment.get("evidence_ref", "")).strip()
+        if selection_source == "inferred-from-user":
+            decision_source = selection_source
+            if not evidence_ref:
+                evidence_ref = selection_evidence_ref
+        if decision_source == "inferred-from-user":
+            normalized_evidence = evidence_ref.strip().lower()
+            normalized_family = resource_family.lower()
+            if is_weak_autonomy_evidence(normalized_evidence) or normalized_family not in normalized_evidence:
+                errors.append(
+                    "inferred-from-user evidence must resolve the exact branch being recorded for resource_family"
+                )
     asset_summary = metadata.get("asset_summary")
     if not isinstance(asset_summary, dict):
         errors.append("metadata.asset_summary must be an object")

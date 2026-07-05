@@ -96,7 +96,7 @@ def collect_validation_errors(package_dir: Path, metadata: dict | None = None) -
     candidate_metadata = metadata if isinstance(metadata, dict) else load_metadata(package_dir, errors)
     plan_manifest = load_plan_manifest(package_dir, errors)
     validate_required_layout(package_dir, errors)
-    validate_metadata_fields(candidate_metadata, errors)
+    validate_metadata_fields(candidate_metadata, errors, plan_manifest=plan_manifest)
     validate_extraction_pipeline(candidate_metadata, errors)
     source_size = validate_source(package_dir, candidate_metadata, errors)
     validate_objects(package_dir, candidate_metadata, source_size, errors, plan_manifest=plan_manifest)
