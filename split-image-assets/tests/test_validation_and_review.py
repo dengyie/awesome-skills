@@ -509,6 +509,88 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
             metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["granularity"]["resource_family"], "right-rail-hardware")
             self.assertTrue(metadata["granularity"]["resource_family_confirmed"])
+    def test_record_quality_review_persists_explicit_resource_family_evidence_ref(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--granularity-mode",
+                    "atomic-layer",
+                    "--resource-family",
+                    "right-rail-hardware",
+                    "--resource-family-confirmed",
+                    "--resource-family-evidence-ref",
+                    "user explicitly confirmed right-rail-hardware extraction scope",
+                    "--confirmation-key",
+                    "granularity_alignment",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "user-decision",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                metadata["granularity"]["resource_family_evidence_ref"],
+                "user explicitly confirmed right-rail-hardware extraction scope",
+            )
+    def test_record_quality_review_falls_back_to_evidence_ref_for_resource_family_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "record_quality_review.py"),
+                    str(output),
+                    "--granularity-mode",
+                    "atomic-layer",
+                    "--resource-family",
+                    "right-rail-hardware",
+                    "--resource-family-confirmed",
+                    "--confirmation-key",
+                    "granularity_alignment",
+                    "--confirmation-status",
+                    "confirmed",
+                    "--confirmation-source",
+                    "explicit-user-confirmed",
+                    "--pause-category",
+                    "user-decision",
+                    "--evidence-ref",
+                    "user explicitly confirmed right-rail-hardware extraction scope",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            metadata = json.loads((output / "metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                metadata["granularity"]["resource_family_evidence_ref"],
+                "user explicitly confirmed right-rail-hardware extraction scope",
+            )
     def test_record_quality_review_records_text_routing_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)

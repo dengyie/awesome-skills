@@ -128,3 +128,50 @@
 
 ### Concerns
 - None.
+
+---
+
+## Review Fix Wave 3: Resource Family Evidence Ref Persistence Coverage
+
+### Status
+- Done with concerns
+
+### Reviewer Finding
+- `metadata.granularity.resource_family_evidence_ref` persistence existed in `record_quality_review.py`, but Task 2 did not prove it with a focused failing-first regression.
+
+### Scope
+- Added focused persistence coverage in:
+  - `split-image-assets/tests/test_validation_and_review.py`
+- No production-code change was required after verification.
+
+### Tests Added
+- `test_record_quality_review_persists_explicit_resource_family_evidence_ref`
+- `test_record_quality_review_falls_back_to_evidence_ref_for_resource_family_evidence`
+
+### Red Evidence
+- Command:
+  - `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_persists_explicit_resource_family_evidence_ref split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_falls_back_to_evidence_ref_for_resource_family_evidence`
+- Result:
+  - The new tests passed immediately against the current implementation.
+  - This means the persistence behavior gap was already closed in code before this fix wave, so this pass could only close the missing regression coverage, not reproduce a current red production failure.
+
+### Green Evidence
+- Focused command:
+  - `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_persists_explicit_resource_family_evidence_ref split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_falls_back_to_evidence_ref_for_resource_family_evidence`
+- Focused result:
+  - 2 tests passed.
+- Minimum broader regression command:
+  - `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_records_granularity_alignment split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_rejects_weak_inferred_resource_family_evidence split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_rejects_weak_inferred_resource_family_evidence_via_decision_stage split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_accepts_explicit_resource_family_evidence split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_persists_explicit_resource_family_evidence_ref split-image-assets.tests.test_validation_and_review.SplitImageAssetsPackageTests.test_record_quality_review_falls_back_to_evidence_ref_for_resource_family_evidence`
+- Minimum broader regression result:
+  - 6 tests passed.
+
+### Code Changes
+#### `split-image-assets/tests/test_validation_and_review.py`
+- Added a persistence regression that proves `--resource-family-evidence-ref` is written to `metadata.granularity.resource_family_evidence_ref`.
+- Added a fallback regression that proves `--evidence-ref` is persisted into the same field when the dedicated flag is omitted.
+
+#### `split-image-assets/scripts/record_quality_review.py`
+- No change required. Existing implementation already persisted the explicit field and the fallback path correctly.
+
+### Concerns
+- The requested failing-first proof could not be reproduced against the current working implementation because the behavior was already present. This wave closes the review finding by adding the missing regression coverage and documenting that the code path was already green.
