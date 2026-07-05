@@ -176,7 +176,7 @@ Progress-only anti-example: “Preview generation is done and validation is next
 
 Use a professional segmenter or matting pipeline as the primary source for production masks. Pillow, OpenCV, and skimage are helpers for alpha compositing, source-space mask persistence, preview generation, repair, and packaging; they are not a substitute for SAM2/SAM/Grounded-SAM/rembg/BiRefNet/RMBG-style extraction.
 
-For complex UI screenshots, start with a high-signal subset such as logo, nav icon, status dot, pin, checkbox, chart mark, badge, or row glyph. For icon-in-tile or glyph-on-plate elements, split the tile/badge/panel background from the foreground glyph when reuse or edge cleanup benefits from separate layers.
+For complex UI screenshots, start with a high-signal subset such as logo, nav icon, status dot, pin, checkbox, chart mark, badge, or row glyph. High-signal subset examples do not by themselves authorize choosing a micro-asset package; the package still has to match the confirmed semantic branch and `resource_family`. For icon-in-tile or glyph-on-plate elements, split the tile/badge/panel background from the foreground glyph when reuse or edge cleanup benefits from separate layers.
 
 For UI repair workflows, prefer the dedicated helper scripts:
 

@@ -73,6 +73,7 @@ If pause is not allowed, continue with the documented fallback and record the ra
   - if the image is straightforward and the split is clearly derivable, continue with the recorded rationale instead of asking again
   - ordinary editable text-like objects should continue on the `rebuild_downstream` path unless the recorded policy or later evidence explicitly upgrades them to visual assets
   - record `resource_family` as part of the branch when the question is about semantic narrowing rather than only split granularity
+  - high-signal subset examples do not by themselves authorize choosing a micro-asset package; they only help identify candidate first-pass targets inside the already confirmed semantic branch
 
 ### `generation_routing`
 

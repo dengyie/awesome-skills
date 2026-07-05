@@ -103,7 +103,7 @@ For UI or dense compositions, `granularity` must also record:
 - `background_expectation`: `exact-recovery`, `approximate-accepted`, or `unset`
 - `layer_independence`: `static-reuse`, `animation-ready`, or `unset`
 
-When semantic narrowing is part of the branch, record the chosen `resource_family` there as well. Global autonomy instructions do not by themselves satisfy that choice; `inferred-from-user` must resolve the exact branch being recorded.
+When semantic narrowing is part of the branch, record the chosen `resource_family` there as well. Global autonomy instructions do not by themselves satisfy that choice; `inferred-from-user` must resolve the exact branch being recorded. High-signal subset examples do not by themselves authorize choosing a micro-asset package.
 
 `capability` records the tooling preflight result before extraction. `production_capable` is the extraction-capable flag for non-generated reusable layers. `missing_for_production` lists missing upstream roles/tools such as `SAM2 or grounded detector` or `matting/refinement`. `user_choice` records `install-or-activate-tools`, `external-professional-outputs`, `draft-packaging-only`, `production-capable`, or `unset`. `notes` explains the quality implication of the choice.
 

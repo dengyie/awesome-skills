@@ -120,6 +120,7 @@ This is a normal running stage, not a default pause gate. Ordinary text defaults
    - exact background recovery required or approximate `background_clean.png` accepted as `needs-review`
    - animation-ready independent layers required or static reuse enough
 7. For complex UI or graphic compositions, start with a high-signal subset instead of trying to atomize the entire image at once. Good first-pass targets are logos, nav icons, status dots, pins, checkboxes, chart marks, badges, and other small foreground elements whose masks can be inspected clearly.
+   - high-signal subset examples do not by themselves authorize choosing a micro-asset package; keep the package aligned to the confirmed semantic branch and `resource_family`
    - for complex UI, run a pilot object first and stop for confirmation unless the pilot gate is explicitly recorded as `not-required`
 8. For UI, dashboard, badge, tile/glyph, or dense interface images, read `references/ui-atomic-split.md` and create a semantic split plan before extraction.
    - classify each target as `ui-carrier`, `ui-glyph`, `carrier-glyph-pair`, `soft-edge-logo-brand-mark`, `outlined-illustration-logo`, `flat-support-plate`, or `photo-object-matte`

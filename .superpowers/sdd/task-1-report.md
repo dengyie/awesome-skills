@@ -39,3 +39,63 @@ All verification passed.
   - `docs/superpowers/plans/2026-07-05-split-image-assets-granularity-gate-hardening.md`
   - `docs/superpowers/specs/2026-07-05-split-image-assets-granularity-gate-hardening-design.md`
 - I left those alone.
+
+## Fix Wave: Review Findings Follow-Up
+
+### Scope
+- Task 1 only.
+- Owned files touched in this wave:
+  - `split-image-assets/SKILL.md`
+  - `split-image-assets/references/workflow.md`
+  - `split-image-assets/references/confirmation-prompts.md`
+  - `split-image-assets/references/asset-package-contract.md`
+  - `docs/usage/split-image-assets.md`
+  - `split-image-assets/tests/test_docs_and_contract.py`
+
+### Findings Addressed
+1. Added the missing anti-bypass rule that high-signal subset examples do not authorize choosing a micro-asset package by themselves.
+2. Expanded Task 1 docs/tests coverage so the rule-layer hardening is checked on the owned reference/doc surfaces, not only `SKILL.md` and the shared contract helper surface.
+
+### Red Evidence
+- Added `test_task1_reference_docs_harden_semantic_scope_rules` to `split-image-assets/tests/test_docs_and_contract.py` before changing docs.
+- Ran:
+
+```powershell
+$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_docs_and_contract.SplitImageAssetsPackageTests.test_task1_reference_docs_harden_semantic_scope_rules -v
+```
+
+- Result: `FAIL`
+- Expected failure reason: the owned Task 1 reference docs were missing the hardened wording, first surfacing at `references/confirmation-prompts.md` where `exact branch being recorded` was not yet present in the prompt surface.
+
+### Green Implementation
+- Added the anti-bypass sentence to the high-signal subset guidance in:
+  - `split-image-assets/SKILL.md`
+  - `split-image-assets/references/workflow.md`
+  - `split-image-assets/references/confirmation-prompts.md`
+  - `split-image-assets/references/asset-package-contract.md`
+  - `docs/usage/split-image-assets.md`
+- Expanded `split-image-assets/tests/test_docs_and_contract.py` with a multi-surface assertion that covers:
+  - semantic narrowing via `resource_family`
+  - exact-branch evidence language
+  - the new micro-asset anti-bypass rule across the owned Task 1 doc surfaces
+
+### Green Verification
+- Focused Task 1 tests:
+
+```powershell
+$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_docs_and_contract.SplitImageAssetsPackageTests.test_skill_docs_forbid_broad_autonomy_as_semantic_scope_evidence split-image-assets.tests.test_docs_and_contract.SplitImageAssetsPackageTests.test_task1_reference_docs_harden_semantic_scope_rules split-image-assets.tests.test_docs_and_contract.SplitImageAssetsPackageTests.test_shared_contract_exposes_resource_family_scope_fields -v
+```
+
+- Result: `OK` (3 tests)
+
+- Minimum broader regression:
+
+```powershell
+$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_docs_and_contract -v
+```
+
+- Result: `OK` (20 tests)
+
+### Notes
+- No unrelated tracked files were reverted.
+- Existing untracked planning/spec artifacts outside this fix-wave scope were left untouched.

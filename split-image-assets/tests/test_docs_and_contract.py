@@ -460,6 +460,27 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
         self.assertIn("Global autonomy instructions", skill_text)
         self.assertIn("do not by themselves satisfy", skill_text)
         self.assertIn("resource_family", skill_text)
+    def test_task1_reference_docs_harden_semantic_scope_rules(self):
+        workflow = (ROOT / "references" / "workflow.md").read_text(
+            encoding="utf-8"
+        ).lower()
+        prompts = (ROOT / "references" / "confirmation-prompts.md").read_text(
+            encoding="utf-8"
+        ).lower()
+        contract = (ROOT / "references" / "asset-package-contract.md").read_text(
+            encoding="utf-8"
+        ).lower()
+        usage = (REPO / "docs" / "usage" / "split-image-assets.md").read_text(
+            encoding="utf-8"
+        ).lower()
+
+        self.assertIn("resource_family", workflow)
+        self.assertIn("exact branch being recorded", prompts)
+        self.assertIn("global autonomy instructions do not by themselves satisfy", contract)
+        self.assertIn("high-signal subset examples do not by themselves authorize choosing a micro-asset package", workflow)
+        self.assertIn("high-signal subset examples do not by themselves authorize choosing a micro-asset package", prompts)
+        self.assertIn("high-signal subset examples do not by themselves authorize choosing a micro-asset package", contract)
+        self.assertIn("high-signal subset examples do not by themselves authorize choosing a micro-asset package", usage)
     def test_shared_contract_exposes_resource_family_scope_fields(self):
         contract = self._load_script_module("split_image_assets_contract.py")
 

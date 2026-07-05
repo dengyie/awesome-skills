@@ -110,6 +110,7 @@ Prompt body:
 
 - `Why This Needs a Human`: Different split choices would produce materially different asset boundaries and downstream editing behavior.
 - `Recommendation`: Prefer `atomic-layer` for reusable UI assets and `production-editable` when downstream rebuild matters.
+- `Rule Guardrail`: `inferred-from-user` must resolve the exact branch being recorded, and high-signal subset examples do not by themselves authorize choosing a micro-asset package.
 - `Options and Impact`:
   - `component`: faster draft review, less downstream flexibility
   - `atomic-layer`: better reuse, recolor, animation, and inspection
