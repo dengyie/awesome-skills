@@ -823,6 +823,12 @@ def main() -> int:
             resource_family_evidence,
             args.resource_family if (args.resource_family or args.resource_family_confirmed) else None,
         )
+        if args.decision_stage == "granularity-alignment":
+            require_branch_specific_scope_evidence(
+                args.decision_source,
+                resource_family_evidence,
+                args.resource_family if (args.resource_family or args.resource_family_confirmed) else None,
+            )
     except ValueError as exc:
         parser.error(str(exc))
     if args.resource_family_confirmed and not args.resource_family:
