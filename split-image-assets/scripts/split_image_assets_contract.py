@@ -236,6 +236,7 @@ def default_plan_manifest(source_path: str, package_name: str, width: int, heigh
             "generation_provider_class": "unset",
             "segmentation_provider_class": "unset",
         },
+        "scope_selection": default_scope_selection(),
         "objects": [],
         "batch_groups": [],
         "summary": {

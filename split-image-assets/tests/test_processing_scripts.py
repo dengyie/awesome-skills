@@ -10,6 +10,125 @@ from skill_package_testlib import Image, REPO, ROOT, SplitImageAssetsTestBase, j
 
 
 class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
+    def test_init_asset_package_writes_default_scope_selection_to_plan_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+
+            result = self._run_init(source, output)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                plan_manifest["scope_selection"],
+                {
+                    "candidate_families": [],
+                    "selected_family": "",
+                    "selection_source": "unresolved",
+                    "selection_evidence_ref": "",
+                    "selection_notes": "",
+                },
+            )
+    def test_prepare_plan_manifest_requires_selected_family_when_multiple_families_exist(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("selected_family", result.stderr)
+    def test_prepare_plan_manifest_rejects_weak_inferred_selection_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                    "--selected-family",
+                    "blueprint-modules",
+                    "--selection-source",
+                    "inferred-from-user",
+                    "--selection-evidence-ref",
+                    "chat:continue with your default",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("insufficient evidence", result.stderr)
+    def test_prepare_plan_manifest_accepts_explicit_selected_family(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                    "--selected-family",
+                    "blueprint-modules",
+                    "--selection-source",
+                    "explicit-user-confirmed",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                plan_manifest["scope_selection"],
+                {
+                    "candidate_families": ["blueprint-modules", "paper-scraps"],
+                    "selected_family": "blueprint-modules",
+                    "selection_source": "explicit-user-confirmed",
+                    "selection_evidence_ref": "",
+                    "selection_notes": "",
+                },
+            )
     def test_work_item_schema_lib_builders_return_machine_readable_shape(self):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")

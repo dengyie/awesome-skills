@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from semantic_scope_lib import ALLOWED_RESOURCE_FAMILIES, default_scope_selection
+
 
 ASSET_SUMMARY_DEFAULT = {
     "production_ready_assets": 0,
@@ -50,6 +52,35 @@ def plan_manifest_path(package_dir: Path) -> Path:
     return package_dir / "plan_manifest.json"
 
 
+def normalize_scope_selection(scope_selection: dict | None) -> dict:
+    normalized = default_scope_selection()
+    if not isinstance(scope_selection, dict):
+        return normalized
+    for key in normalized:
+        value = scope_selection.get(key, normalized[key])
+        if key == "candidate_families":
+            if not isinstance(value, list):
+                value = []
+            deduped: list[str] = []
+            for item in value:
+                family = str(item).strip()
+                if family and family in ALLOWED_RESOURCE_FAMILIES and family not in deduped:
+                    deduped.append(family)
+            value = deduped
+        else:
+            value = str(value or "").strip()
+            if key == "selection_source" and not value:
+                value = normalized[key]
+        normalized[key] = value
+    return normalized
+
+
+def normalize_plan_manifest(plan_manifest: dict) -> dict:
+    normalized = dict(plan_manifest)
+    normalized["scope_selection"] = normalize_scope_selection(plan_manifest.get("scope_selection"))
+    return normalized
+
+
 def read_plan_manifest(package_dir: Path) -> dict | None:
     path = plan_manifest_path(package_dir)
     if not path.exists():
@@ -57,12 +88,12 @@ def read_plan_manifest(package_dir: Path) -> dict | None:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("plan_manifest.json must contain an object")
-    return data
+    return normalize_plan_manifest(data)
 
 
 def write_plan_manifest(package_dir: Path, data: dict) -> None:
     plan_manifest_path(package_dir).write_text(
-        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        json.dumps(normalize_plan_manifest(data), indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
