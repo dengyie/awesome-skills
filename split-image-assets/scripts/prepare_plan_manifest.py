@@ -89,17 +89,28 @@ def parse_args() -> argparse.Namespace:
         help="Evidence ref supporting an inferred selection.",
     )
     parser.add_argument("--selection-notes", default=None, help="Optional scope selection notes.")
+    parser.add_argument(
+        "--clear-candidate-families",
+        action="store_true",
+        help="Clear scope_selection.candidate_families before applying explicit updates.",
+    )
+    parser.add_argument(
+        "--clear-selection",
+        action="store_true",
+        help="Clear selected_family, selection_source, selection_evidence_ref, and selection_notes before applying explicit updates.",
+    )
     return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
-    package_dir = Path(args.package_dir).resolve()
-    plan_manifest = read_plan_manifest(package_dir)
-    if plan_manifest is None:
-        raise ValueError("plan_manifest.json must exist before preparing scope selection")
-
-    scope_selection = dict(plan_manifest.get("scope_selection") or {})
+def apply_scope_selection_update(existing: dict, args: argparse.Namespace) -> dict:
+    scope_selection = dict(existing)
+    if args.clear_candidate_families:
+        scope_selection["candidate_families"] = []
+    if args.clear_selection:
+        scope_selection["selected_family"] = ""
+        scope_selection["selection_source"] = "unresolved"
+        scope_selection["selection_evidence_ref"] = ""
+        scope_selection["selection_notes"] = ""
     if args.candidate_families is not None:
         scope_selection["candidate_families"] = list(args.candidate_families)
     if args.selected_family is not None:
@@ -110,6 +121,20 @@ def main() -> int:
         scope_selection["selection_evidence_ref"] = args.selection_evidence_ref
     if args.selection_notes is not None:
         scope_selection["selection_notes"] = args.selection_notes
+    return scope_selection
+
+
+def main() -> int:
+    args = parse_args()
+    package_dir = Path(args.package_dir).resolve()
+    plan_manifest = read_plan_manifest(package_dir)
+    if plan_manifest is None:
+        raise ValueError("plan_manifest.json must exist before preparing scope selection")
+
+    scope_selection = apply_scope_selection_update(
+        dict(plan_manifest.get("scope_selection") or {}),
+        args,
+    )
     plan_manifest["scope_selection"] = validate_scope_selection(scope_selection)
     write_plan_manifest(package_dir, plan_manifest)
     return 0

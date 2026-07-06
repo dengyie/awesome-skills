@@ -195,6 +195,203 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "selection_notes": "Need object-level planning before choosing a route.",
                 },
             )
+    def test_prepare_plan_manifest_clear_candidate_families_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            initial_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                    "--selected-family",
+                    "blueprint-modules",
+                    "--selection-source",
+                    "explicit-user-confirmed",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(initial_result.returncode, 0, initial_result.stderr)
+
+            clear_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--clear-candidate-families",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(clear_result.returncode, 0, clear_result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(plan_manifest["scope_selection"]["candidate_families"], [])
+            self.assertEqual(plan_manifest["scope_selection"]["selected_family"], "blueprint-modules")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_source"], "explicit-user-confirmed")
+    def test_prepare_plan_manifest_clear_selection_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            initial_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                    "--selected-family",
+                    "blueprint-modules",
+                    "--selection-source",
+                    "explicit-user-confirmed",
+                    "--selection-evidence-ref",
+                    "chat:family-confirmed",
+                    "--selection-notes",
+                    "keep hardware family",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(initial_result.returncode, 0, initial_result.stderr)
+
+            clear_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--clear-selection",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(clear_result.returncode, 0, clear_result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(plan_manifest["scope_selection"]["candidate_families"], ["blueprint-modules", "paper-scraps"])
+            self.assertEqual(plan_manifest["scope_selection"]["selected_family"], "")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_source"], "unresolved")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_evidence_ref"], "")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_notes"], "")
+    def test_prepare_plan_manifest_preserves_selection_when_adding_note(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            initial_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                    "--selected-family",
+                    "blueprint-modules",
+                    "--selection-source",
+                    "explicit-user-confirmed",
+                    "--selection-evidence-ref",
+                    "chat:family-confirmed",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(initial_result.returncode, 0, initial_result.stderr)
+
+            update_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--selection-notes",
+                    "added note only",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(update_result.returncode, 0, update_result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(plan_manifest["scope_selection"]["selected_family"], "blueprint-modules")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_source"], "explicit-user-confirmed")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_evidence_ref"], "chat:family-confirmed")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_notes"], "added note only")
+    def test_prepare_plan_manifest_clear_then_replace_selection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            source = tmp_path / "source.png"
+            Image.new("RGBA", (4, 3), (10, 20, 30, 255)).save(source)
+            output = tmp_path / "package"
+            init_result = self._run_init(source, output)
+            self.assertEqual(init_result.returncode, 0, init_result.stderr)
+
+            initial_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--candidate-family",
+                    "blueprint-modules",
+                    "--candidate-family",
+                    "paper-scraps",
+                    "--selected-family",
+                    "blueprint-modules",
+                    "--selection-source",
+                    "explicit-user-confirmed",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(initial_result.returncode, 0, initial_result.stderr)
+
+            update_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "prepare_plan_manifest.py"),
+                    str(output),
+                    "--clear-selection",
+                    "--selected-family",
+                    "paper-scraps",
+                    "--selection-source",
+                    "explicit-user-confirmed",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(update_result.returncode, 0, update_result.stderr)
+            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(plan_manifest["scope_selection"]["selected_family"], "paper-scraps")
+            self.assertEqual(plan_manifest["scope_selection"]["selection_source"], "explicit-user-confirmed")
     def test_work_item_schema_lib_builders_return_machine_readable_shape(self):
         module = self._load_script_module("work_item_schema_lib.py")
         contract = self._load_script_module("work_item_schema_contract.py")
