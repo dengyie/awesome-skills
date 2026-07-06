@@ -41,7 +41,7 @@
 - [ ] **Step 1: Write the failing tests**
 
 ```python
-def test_prepare_plan_manifest_clear_candidate_families_only(self):
+def test_prepare_plan_manifest_rejects_clear_candidate_families_when_selection_would_be_orphaned(self):
     result = subprocess.run(
         [
             sys.executable,
@@ -53,10 +53,8 @@ def test_prepare_plan_manifest_clear_candidate_families_only(self):
         capture_output=True,
         check=False,
     )
-    self.assertEqual(result.returncode, 0, result.stderr)
-    plan = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
-    self.assertEqual(plan["scope_selection"]["candidate_families"], [])
-    self.assertEqual(plan["scope_selection"]["selected_family"], "blueprint-modules")
+    self.assertNotEqual(result.returncode, 0)
+    self.assertIn("selected_family requires candidate_families", result.stderr)
 
 
 def test_prepare_plan_manifest_clear_selection_only(self):
@@ -85,7 +83,7 @@ Run:
 $env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_processing_scripts.SplitImageAssetsPackageTests.test_prepare_plan_manifest_clear_candidate_families_only split-image-assets.tests.test_processing_scripts.SplitImageAssetsPackageTests.test_prepare_plan_manifest_clear_selection_only
 ```
 
-Expected: FAIL because the CLI does not yet support explicit clear semantics.
+Expected: FAIL because the helper currently allows candidate-family clearing to orphan an existing selection.
 
 - [ ] **Step 3: Implement the minimal helper changes**
 
@@ -107,6 +105,13 @@ def apply_scope_selection_update(existing: dict, args: argparse.Namespace) -> di
         scope["selection_notes"] = ""
     # then apply explicit replacement args only
     return scope
+```
+
+Add an invariant guard after merge:
+
+```python
+if not scope["candidate_families"] and scope["selected_family"]:
+    raise ValueError("selected_family requires candidate_families unless selection is also cleared or replaced")
 ```
 
 Use the same preserve-by-default behavior for all non-cleared fields.

@@ -45,6 +45,10 @@ def validate_scope_selection(scope_selection: dict) -> dict:
             raise ValueError(
                 f"selected_family must be one of: {', '.join(sorted(ALLOWED_RESOURCE_FAMILIES))}"
             )
+        if not candidate_families:
+            raise ValueError(
+                "selected_family requires candidate_families unless selection is also cleared or replaced"
+            )
         if candidate_families and selected_family not in candidate_families:
             raise ValueError("selected_family must be included in scope_selection.candidate_families")
         if selection_source == "unresolved":

@@ -154,7 +154,7 @@ V1 should use this write contract:
 
 For this pass:
 
-- `--clear-candidate-families` clears only `candidate_families[]`
+- `--clear-candidate-families` clears only `candidate_families[]`, but it must not leave an orphaned `selected_family`; if the caller wants no candidate families and no selection, it must also clear selection or replace the candidate set in the same call
 - `--clear-selection` clears:
   - `selected_family`
   - `selection_source`
@@ -276,6 +276,12 @@ This pass is complete when:
 - start from valid selected family
 - call helper with explicit clear flag
 - assert selection fields are intentionally reset
+
+### Test F: candidate clear cannot orphan selection
+
+- start from valid selected family
+- call helper with only `--clear-candidate-families`
+- assert helper fails closed unless selection is also cleared or replaced coherently
 
 ## Risks
 

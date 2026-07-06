@@ -195,7 +195,7 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                     "selection_notes": "Need object-level planning before choosing a route.",
                 },
             )
-    def test_prepare_plan_manifest_clear_candidate_families_only(self):
+    def test_prepare_plan_manifest_rejects_clear_candidate_families_when_selection_would_be_orphaned(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
             source = tmp_path / "source.png"
@@ -236,11 +236,8 @@ class SplitImageAssetsPackageTests(SplitImageAssetsTestBase):
                 check=False,
             )
 
-            self.assertEqual(clear_result.returncode, 0, clear_result.stderr)
-            plan_manifest = json.loads((output / "plan_manifest.json").read_text(encoding="utf-8"))
-            self.assertEqual(plan_manifest["scope_selection"]["candidate_families"], [])
-            self.assertEqual(plan_manifest["scope_selection"]["selected_family"], "blueprint-modules")
-            self.assertEqual(plan_manifest["scope_selection"]["selection_source"], "explicit-user-confirmed")
+            self.assertNotEqual(clear_result.returncode, 0)
+            self.assertIn("selected_family requires candidate_families", clear_result.stderr)
     def test_prepare_plan_manifest_clear_selection_only(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = pathlib.Path(tmp)
