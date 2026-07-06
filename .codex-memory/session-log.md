@@ -905,3 +905,9 @@
 - Results: Broad autonomy instructions can no longer satisfy semantic-family narrowing, unresolved multi-family ambiguity can persist as package-owned truth, and validator/review/planning surfaces now agree on first-class `resource_family` enforcement. Full package validation passed with 270 tests and `quick_validate.py` returned `Skill is valid!`.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-07-06 00:30
+- Task: Complete `split-image-assets` planning-helper depth V1.
+- Actions: Wrote a focused design and implementation plan for planning-helper depth; enhanced `prepare_plan_manifest.py` with explicit `--clear-candidate-families` and `--clear-selection` semantics; preserved-by-default scope-selection updates; added round-trip planning tests and reran the full `split-image-assets` suite plus `quick_validate.py`; refreshed the implementation baseline and project memory.
+- Results: `prepare_plan_manifest.py` now behaves like a safer low-friction planning helper without weakening the semantic truth contract. Full package validation passed with 274 tests and `quick_validate.py` returned `Skill is valid!`.
+- Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
+- Blockers: None.

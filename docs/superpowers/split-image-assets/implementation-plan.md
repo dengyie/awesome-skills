@@ -58,6 +58,7 @@ The current package baseline is:
 - provider capability mapping
 - provider bridge fail-closed hardening
 - granularity gate hardening
+- planning-helper depth
 - generated-reconstruction delivery semantics
 - decomposed validator architecture
 - decomposed test architecture
@@ -66,6 +67,20 @@ The current package baseline is:
 This means the package is no longer primarily a packaging helper with extraction-adjacent notes. It is now a route-controlled asset workflow with package truth gates.
 
 ## Most Recent Closed Milestone
+
+### `planning-helper depth V1`
+
+Closed status: complete
+
+What landed:
+
+- `prepare_plan_manifest.py` now supports explicit clear semantics for `scope_selection` through `--clear-candidate-families` and `--clear-selection`
+- planning updates now preserve prior selection truth by default, while still allowing deliberate replacement and unresolved multi-family stop-state persistence
+
+Verification completed:
+
+- `python -B -m unittest discover split-image-assets\tests -v`
+- `python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets`
 
 ### `granularity gate hardening V1`
 
@@ -713,6 +728,7 @@ These are the important completed milestones that define the current architectur
 42. provider capability mapping V1
 43. provider bridge fail-closed hardening V1
 44. granularity gate hardening V1
+45. planning-helper depth V1
 
 Treat these as delivered baseline, not as active checklist items.
 

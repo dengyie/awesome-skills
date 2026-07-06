@@ -4,6 +4,7 @@
 - Keep the shipped `awesome-skills` skill packages and repository-navigation workstreams complete, validated, and traceable.
 
 ## Current Phase
+- Current stage: `split-image-assets` planning-helper depth V1 is complete locally. `prepare_plan_manifest.py` now supports explicit clear paths and preserve-by-default scope-selection updates without weakening the existing semantic truth gates.
 - Current stage: `split-image-assets` granularity gate hardening V1 is complete locally. Broad autonomy can no longer satisfy semantic family selection, `resource_family` and `scope_selection` are now first-class truth surfaces, and validator/review/planning guards fail closed on unresolved narrowing.
 - Current stage: `split-image-assets` Task 2 review-adapter scope enforcement is complete locally. `record_quality_review.py` now records `granularity.resource_family*` fields and rejects weak `inferred-from-user` evidence when semantic family truth is being written.
 - Current stage: `split-image-assets` Task 1 rule-and-contract surface hardening is complete locally. The package now exposes `resource_family` scope-selection helpers, the docs call out that global autonomy instructions do not satisfy semantic gates by themselves, and the focused docs/contract regressions are green.
@@ -48,6 +49,8 @@
 - `main`
 
 ## Last Verified
+- 2026-07-06: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (274 tests, planning-helper depth V1)
+- 2026-07-06: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, planning-helper depth V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest discover split-image-assets\tests -v` (270 tests, granularity gate hardening V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python C:\Users\mango\.codex\skills\.system\skill-creator\scripts\quick_validate.py E:\project\blog\awesome-skills\split-image-assets` (`Skill is valid!`, granularity gate hardening V1)
 - 2026-07-05: `$env:PYTHONUTF8='1'; python -B -m unittest split-image-assets.tests.test_docs_and_contract` (19 tests, Task 1 docs/contract surface)
@@ -444,6 +447,7 @@
 - 2026-06-18: `python E:\project\blog\awesome-skills\production-code-quality-review\scripts\review-entrypoint.py --repo E:\project\blog\awesome-skills --base HEAD --scope working_tree --format markdown`
 
 ## Active Risks
+- Planning-helper depth V1 lowers scope-selection write friction, but it still assumes callers understand when to preserve versus explicitly clear planning truth; this is a helper ergonomics improvement, not a semantic-policy relaxation.
 - Granularity gate hardening V1 closes the main semantic-scope bypass, but the current guardrails still rely on structured package/planning truth rather than automatic image semantics; broad family detection is still only as strong as the planning metadata recorded by the workflow.
 - Provider bridge fail-closed hardening V1 closes the most obvious provider-plan traceback and silent-drop gaps, but malformed provider result/request manifests outside the current entrypoint coverage still depend on the existing narrower script-level guards.
 - Provider capability mapping V1 makes default provider choice easier to explain, but it is still advisory metadata rather than a hard validator gate; provider quality truth still depends on downstream package evidence, compare, review, and promotion steps.
@@ -506,10 +510,10 @@
 - None.
 
 ## Current Focus
-- The granularity gate hardening milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
+- The planning-helper depth milestone is complete locally on top of the generated-route and bridge baseline. There is no active follow-up in flight until a new bounded provider/runtime or planning milestone is chosen.
 
 ## Next Milestone
-- No active next milestone. Resume only after choosing a new bounded follow-up on top of the granularity gate hardening V1 baseline.
+- No active next milestone. Resume only after choosing a new bounded follow-up on top of the planning-helper depth V1 baseline.
 
 ## Key Artifacts
 - `docs/superpowers/split-image-assets/README.md`

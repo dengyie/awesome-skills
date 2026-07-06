@@ -1,8 +1,9 @@
 # TODO
 ## In Progress
 ## Next
-- [ ] Choose the next bounded `split-image-assets` milestone after granularity gate hardening V1. Candidate directions: deeper generated-route provider support, broader fixture/package migration, or planning-helper depth.
+- [ ] Choose the next bounded `split-image-assets` milestone after planning-helper depth V1. Candidate directions: deeper generated-route provider support, broader fixture/package migration, or workflow-entry simplification.
 ## Done
+- [x] Close `split-image-assets` planning-helper depth V1: explicit `scope_selection` clear paths, preserve-by-default updates, round-trip safety, and focused planning-helper regressions.
 - [x] Close `split-image-assets` Task 4 Validator And Regression Gate: validator-level semantic-family narrowing enforcement, dense non-UI subset coverage, micro-asset rationale guard, and full-package regression closure.
 - [x] Close `split-image-assets` Task 3 Planning Surface And Scope Selection Guard: package-owned `scope_selection`, unresolved multi-family stop-state persistence, incremental plan updates, and planning guard regressions.
 - [x] Close `split-image-assets` Task 2 Review Adapter Scope Enforcement: add review-adapter `resource_family` fields, reject weak inferred semantic-family evidence, cover the adapter path with red-green tests, and commit the scoped fix.
