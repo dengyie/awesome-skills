@@ -5,14 +5,11 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
-SKILLS = [
-    "best-project-memory",
-    "evidence-driven-bugfix",
-    "little-lighthouse-blog-publisher",
-    "production-code-quality-review",
-    "split-image-assets",
-    "zero-to-website-design",
-]
+SKILLS = sorted(
+    path.name
+    for path in ROOT.iterdir()
+    if path.is_dir() and (path / "SKILL.md").exists()
+)
 
 USAGE_GUIDES = [
     "docs/usage/best-project-memory.md",
@@ -137,6 +134,14 @@ class RepositoryDocsTests(unittest.TestCase):
 
         for skill in SKILLS:
             self.assertIn(f"`{skill}`", zh_readme)
+
+    def test_repository_layout_lists_all_skill_packages(self):
+        readme = _read(ROOT / "README.md")
+        zh_readme = _read(ROOT / "docs" / "zh" / "README.zh-CN.md")
+
+        for skill in SKILLS:
+            self.assertIn(f"{skill}/", readme)
+            self.assertIn(f"{skill}/", zh_readme)
 
     def test_landing_links_resolve(self):
         for path in LANDING_FILES:
