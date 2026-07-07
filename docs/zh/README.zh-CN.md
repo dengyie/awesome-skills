@@ -10,9 +10,10 @@
 
 这个仓库不是单一 skill，而是一组可复用的 Codex skill 包，重点面向证据优先、生产导向的真实项目工作流。
 
-当前包含 6 个主要 skill：
+当前包含 7 个主要 skill：
 
 - `best-project-memory`
+- `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
 - `little-lighthouse-blog-publisher`
 - `production-code-quality-review`
@@ -26,6 +27,7 @@
 | Skill | 何时使用 | 最适合处理 | 文档 |
 | --- | --- | --- | --- |
 | `best-project-memory` | 需要跨会话保存项目状态 | 上下文恢复、决策记录、TODO 和交接 | [Guide](../usage/best-project-memory.md) |
+| `codex-agent-worktree-setup` | 需要创建 Codex UI 可见且绑定分支的 agent | 新线程、独立 worktree、分支固定、detached HEAD 修复 | [Skill](../../codex-agent-worktree-setup/SKILL.md) |
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
 | `little-lighthouse-blog-publisher` | 需要发布 Little Lighthouse 博客内容 | 文章包创建、元数据确认、发布校验 | [Guide](../usage/little-lighthouse-blog-publisher.md) |
 | `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
@@ -78,6 +80,7 @@ cp -R <skill-folder> ~/.agents/skills/
 
 ```text
 best-project-memory/                 skill 包
+codex-agent-worktree-setup/          skill 包
 evidence-driven-bugfix/             skill 包
 little-lighthouse-blog-publisher/   skill 包
 production-code-quality-review/     skill 包

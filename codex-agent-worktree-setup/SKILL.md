@@ -48,12 +48,20 @@ git rev-parse --show-toplevel
 git branch --show-current
 git status --short --branch
 git worktree list --porcelain
+```
+
+If the primary worktree is dirty, stop here and clarify ownership. If it is clean, refresh remote refs before deciding branch existence:
+
+```bash
+git remote get-url origin
+git fetch --prune origin
 git show-ref --verify --quiet refs/heads/<branch>
 git show-ref --verify --quiet refs/remotes/origin/<branch>
 ```
 
 Interpretation:
 
+- If `origin` is unavailable or fetch fails, do not treat a missing `origin/<branch>` ref as proof the remote branch does not exist. Report the fetch blocker and use an explicit user-approved base.
 - Local branch check exits `0`: local branch exists.
 - Remote branch check exits `0`: `origin/<branch>` exists.
 - Both branch checks fail: create a local branch ref before calling `create_thread`.
@@ -89,6 +97,20 @@ git branch <branch> <base>
 4. Create the Codex thread.
    - Call `create_thread`.
    - Target must specify the project, an isolated worktree, and a branch starting state for `<branch>`.
+   - Use this target shape for a branch-bound worktree:
+
+```text
+target: {
+  type: "project",
+  projectId: "<projectId>",
+  environment: {
+    type: "worktree",
+    startingState: { type: "branch", branchName: "<branch>" }
+  }
+}
+```
+
+   - Do not use a local environment when the user asked for an isolated agent.
    - If the tool returns a pending worktree setup id, report that state and verify once the worktree becomes available.
 
 5. Confirm the thread exists.
@@ -164,6 +186,7 @@ Use these outcomes instead of forcing progress:
 | Situation | Required response |
 | --- | --- |
 | User wants Codex UI visibility but only a git branch/worktree exists | Create or locate a Codex thread; explain the distinction. |
+| Remote branch refs may be stale | Fetch before deciding branch existence; if fetch fails, report the blocker and use an explicit base. |
 | `create_thread` may fail because the branch does not exist | Create a local branch ref first with `git branch <branch> <base>`, without checking out main away from its branch. |
 | Codex thread appears but cwd is the primary worktree | Treat setup as invalid; create or repair an isolated worktree before development. |
 | Codex worktree is detached HEAD | Repair with `git switch <branch>` only after clean/unoccupied checks. |
