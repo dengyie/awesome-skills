@@ -9,6 +9,7 @@ If you are still deciding which package to install, start with the [Skill Matrix
 Pick the package folder you actually need:
 
 - `best-project-memory`
+- `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
 - `little-lighthouse-blog-publisher`
 - `production-code-quality-review`

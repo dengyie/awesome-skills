@@ -5,8 +5,13 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
-SKILLS = [
+DISCOVERED_SKILLS = sorted(
+    path.parent.name for path in ROOT.glob("*/SKILL.md") if path.parent.parent == ROOT
+)
+
+DOCUMENTED_SKILLS = [
     "best-project-memory",
+    "codex-agent-worktree-setup",
     "evidence-driven-bugfix",
     "little-lighthouse-blog-publisher",
     "production-code-quality-review",
@@ -16,6 +21,7 @@ SKILLS = [
 
 USAGE_GUIDES = [
     "docs/usage/best-project-memory.md",
+    "docs/usage/codex-agent-worktree-setup.md",
     "docs/usage/evidence-driven-bugfix.md",
     "docs/usage/little-lighthouse-blog-publisher.md",
     "docs/usage/split-image-assets.md",
@@ -54,6 +60,9 @@ def _iter_repo_relative_links(path: pathlib.Path) -> list[pathlib.Path]:
 
 
 class RepositoryDocsTests(unittest.TestCase):
+    def test_all_top_level_skills_are_in_the_documented_catalog(self):
+        self.assertEqual(DISCOVERED_SKILLS, DOCUMENTED_SKILLS)
+
     def test_readme_is_a_short_landing_page(self):
         readme = _read(ROOT / "README.md")
 
@@ -70,7 +79,7 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertNotIn("Review context collection", readme)
         self.assertNotIn("cp -R evidence-driven-bugfix ~/.agents/skills/", readme)
 
-        for skill in SKILLS:
+        for skill in DOCUMENTED_SKILLS:
             self.assertIn(f"`{skill}`", readme)
 
     def test_quickstart_is_repository_level(self):
@@ -104,7 +113,7 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertIn("## Pick By Problem Type", skill_matrix)
         self.assertIn("## Prompt Starters", skill_matrix)
 
-        for skill in SKILLS:
+        for skill in DOCUMENTED_SKILLS:
             self.assertIn(f"`{skill}`", skill_matrix)
 
         for guide in USAGE_GUIDES:
@@ -112,7 +121,9 @@ class RepositoryDocsTests(unittest.TestCase):
 
     def test_usage_guides_link_back_to_shared_navigation(self):
         for guide in USAGE_GUIDES:
-            body = _read(ROOT / guide)
+            guide_path = ROOT / guide
+            self.assertTrue(guide_path.exists(), guide)
+            body = _read(guide_path)
             self.assertIn("skill-matrix.md", body, guide)
             self.assertIn("quickstart.md", body, guide)
 
@@ -135,7 +146,7 @@ class RepositoryDocsTests(unittest.TestCase):
         self.assertIn("review-workflows.zh-CN.md", zh_readme)
         self.assertIn("../../README.md", zh_readme)
 
-        for skill in SKILLS:
+        for skill in DOCUMENTED_SKILLS:
             self.assertIn(f"`{skill}`", zh_readme)
 
     def test_landing_links_resolve(self):

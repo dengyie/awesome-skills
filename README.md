@@ -9,6 +9,7 @@ This repository ships independent skill packages. Start by choosing the one that
 | Skill | When to use | Best for | Docs |
 | --- | --- | --- | --- |
 | `best-project-memory` | You need durable repo memory across long-running work | restoring context, recording decisions, keeping TODOs and handoffs current | [Guide](docs/usage/best-project-memory.md) |
+| `codex-agent-worktree-setup` | You need an isolated Codex development thread bound to a branch | protected main worktrees, branch-bound agents, detached HEAD repair | [Guide](docs/usage/codex-agent-worktree-setup.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
 | `little-lighthouse-blog-publisher` | You are publishing content into the Little Lighthouse blog repo | staged blog package creation, validation, and publication | [Guide](docs/usage/little-lighthouse-blog-publisher.md) |
 | `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
@@ -57,6 +58,7 @@ If you want help deciding which folder to copy, start with the [Skill Matrix](do
 
 ```text
 best-project-memory/                 skill package
+codex-agent-worktree-setup/         skill package
 evidence-driven-bugfix/             skill package
 little-lighthouse-blog-publisher/   skill package
 production-code-quality-review/     skill package

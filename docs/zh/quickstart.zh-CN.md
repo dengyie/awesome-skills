@@ -9,6 +9,7 @@
 当前仓库里常用的包有：
 
 - `best-project-memory`
+- `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
 - `little-lighthouse-blog-publisher`
 - `production-code-quality-review`
