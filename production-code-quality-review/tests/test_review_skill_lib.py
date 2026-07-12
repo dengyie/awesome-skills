@@ -169,6 +169,38 @@ rename to src/new_name.ts
         self.assertIn("python", result["detected_stack"])
         self.assertIn("python.md", result["suggested_references"])
 
+    def test_detect_stack_ignores_migration_documentation(self):
+        module = load_module()
+
+        result = module.detect_stack(
+            ["docs/superpowers/split-image-assets/migration.md"]
+        )
+
+        self.assertNotIn("database", result["detected_stack"])
+        self.assertNotIn("database.md", result["suggested_references"])
+
+    def test_select_repo_stack_markers_ignores_migration_documentation(self):
+        module = load_module()
+
+        markers = module.select_repo_stack_markers(
+            [
+                "docs/superpowers/split-image-assets/migration.md",
+                "migrations/001_init.py",
+                "database/schema.sql",
+            ]
+        )
+
+        self.assertEqual(markers, ["migrations/001_init.py", "database/schema.sql"])
+
+    def test_risk_flags_ignore_migration_documentation(self):
+        module = load_module()
+
+        flags = module.derive_risk_flags(
+            ["docs/superpowers/split-image-assets/migration.md"], diff_text=""
+        )
+
+        self.assertNotIn("database_migration", flags)
+
     def test_risk_flags_cover_sensitive_surfaces(self):
         module = load_module()
         paths = [
