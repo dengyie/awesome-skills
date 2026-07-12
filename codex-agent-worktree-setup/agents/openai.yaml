@@ -1,0 +1,4 @@
+display_name: "Codex Agent Worktree Setup"
+description: "Create and repair Codex-visible, branch-bound worktrees while protecting the primary main or master checkout."
+trigger_phrases:
+  - "$codex-agent-worktree-setup"

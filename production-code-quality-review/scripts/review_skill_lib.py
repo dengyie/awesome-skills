@@ -224,6 +224,18 @@ def parse_unified_zero_diff(diff_text: str) -> Dict[str, Dict[str, List[Dict[str
     return result
 
 
+DATABASE_MIGRATION_DIR_NAMES = {"migration", "migrations"}
+
+
+def is_database_path(path: str) -> bool:
+    normalized = pathlib.PurePosixPath(normalize_repo_path(path).lower())
+    return (
+        normalized.suffix in {".sql", ".sqlite"}
+        or normalized.name == "schema.prisma"
+        or any(part in DATABASE_MIGRATION_DIR_NAMES for part in normalized.parts[:-1])
+    )
+
+
 def detect_stack(paths: Iterable[str]) -> Dict[str, List[str]]:
     path_list = list(paths)
     lower_paths = [path.lower() for path in path_list]
@@ -243,7 +255,7 @@ def detect_stack(paths: Iterable[str]) -> Dict[str, List[str]]:
             add_stack("python")
         if path.endswith(".go") or path == "go.mod":
             add_stack("go")
-        if path.endswith((".sql", ".sqlite")) or "migration" in path or "schema.prisma" in path:
+        if is_database_path(path):
             add_stack("database")
         if path.endswith("dockerfile") or "docker-compose" in path or path == "compose.yaml":
             add_stack("docker")
@@ -289,7 +301,7 @@ def derive_risk_flags(paths: Iterable[str], diff_text: str) -> List[str]:
         add_flag("auth_or_access_control")
     if any(token in path for path in lower_paths for token in ["payment", "billing", "invoice", "stripe"]):
         add_flag("payments_or_billing")
-    if any("migration" in path or path.endswith(".sql") or "schema.prisma" in path for path in lower_paths):
+    if any(is_database_path(path) for path in lower_paths):
         add_flag("database_migration")
     if any(path.startswith(".github/workflows/") or "deploy" in path or "release" in path for path in lower_paths):
         add_flag("ci_cd_or_deploy")
@@ -821,8 +833,7 @@ def select_repo_stack_markers(files: Iterable[str]) -> List[str]:
         if (
             lower_path in marker_names
             or lower_path.startswith(".github/workflows/")
-            or "migration" in lower_path
-            or lower_path.endswith(".sql")
+            or is_database_path(path)
         ):
             markers.append(path)
 
