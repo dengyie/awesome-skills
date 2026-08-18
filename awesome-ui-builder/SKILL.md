@@ -1,0 +1,76 @@
+---
+name: awesome-ui-builder
+description: >
+  Use when building AI-native Web interfaces, AI chat applications, RAG search result pages,
+  DeepSeek R1/OpenAI o1 reasoning viewers, Agent tool invocation monitors, or split-pane Canvas/Artifacts.
+  Guides the agent to select and copy standard, zero-blackbox single-file components from
+  the awesome-ui repository (React/Vue/Vanilla) instead of reinventing AI UI primitives.
+---
+
+# Awesome UI Builder (AI 原生前端页面装配规范)
+
+## 🎯 核心使命 (Mission)
+使用 `awesome-ui` 标准组件库快速装配现代 AI 页面。禁止 AI 从零手写易出错的流式渲染、思维链折叠、自动跟底或工具调用状态卡片。必须直接引用或复用 `awesome-ui` 中经过验证的原子单文件组件。
+
+---
+
+## ⚡ 触发场景 (When to Trigger)
+当用户提出以下需求时触发本 Skill：
+- 开发类似 ChatGPT / Claude / Perplexity / v0 的 AI 网页或聊天对话界面
+- 需要展示 DeepSeek R1 / OpenAI o1 思维链（Thinking / Reasoning）过程
+- 需要展示 Agent 工具调用过程（Tool Calls / Function Calling Traces）
+- 需要展示 RAG / AI 搜索来源引文（Sources & Citations）
+- 需要实现分屏实时预览沙盒（Artifacts / Canvas）
+- 用户明确提及 "使用 awesome-ui" 或 "帮我写个 AI 页面"
+
+---
+
+## 🛠️ 标准装配执行工作流 (Standard Workflow)
+
+### 第一步：确认技术栈 (Stack Selection)
+根据用户当前项目环境选择对应源码目录：
+- **React / Next.js / Vite** ➔ 使用 `awesome-ui/react/*.tsx`
+- **Vue 3 / Nuxt / Vite** ➔ 使用 `awesome-ui/vue/*.vue`
+- **原生 HTML / Web Components** ➔ 使用 `awesome-ui/vanilla/*.js`
+
+### 第二步：场景装配配方 (Choose Page Recipe)
+
+#### 配方 A：经典 AI 助手 / 对话流 (Standard AI Chatbot)
+- 顶部/主区：`StreamMarkdown` + `ThinkingBlock` + `ToolCallBadge` + `MessageActionToolbar`
+- 底部：`AutoScrollAnchor` + `PromptChips` + `ChatPromptInput`
+
+#### 配方 B：Perplexity 风格深度搜索 / RAG 问答 (RAG & Search)
+- 顶部：`SourcesCitation`（展示引文来源网格）
+- 中部：`ThinkingBlock` + `StreamMarkdown`（带引用角标跳转）
+- 底部：`PromptChips` + `ChatPromptInput`
+
+#### 配方 C：Claude Artifacts / v0 即时预览画布 (Generative Canvas)
+- 左侧（主对话流）：配方 A 对话区
+- 右侧（预览面板）：`ArtifactCanvas`（支持 Code 源码模式与 iframe 沙盒渲染一键切换）
+
+#### 配方 D：Agent 自动化执行与调用流 (Agent Task Console)
+- 流程列表：多个 `ToolCallBadge`（实时展示 running/success/error 状态及参数返回值抽屉）
+- 实时日志：`StreamMarkdown`
+
+---
+
+## 📋 组件检索与 Props 规范
+
+| 组件 | 对应单文件路径 | 核心扁平 Props |
+|---|---|---|
+| **`ChatPromptInput`** | `<stack>/ChatPromptInput.*` | `value`, `onChange`, `onSubmit`, `onStop`, `isGenerating`, `allowAttachments`, `attachments` |
+| **`StreamMarkdown`** | `<stack>/StreamMarkdown.*` | `content`, `isStreaming` |
+| **`ThinkingBlock`** | `<stack>/ThinkingBlock.*` | `content`, `isThinking`, `durationSeconds`, `defaultExpanded` |
+| **`ToolCallBadge`** | `<stack>/ToolCallBadge.*` | `name`, `status ('running'\|'success'\|'error')`, `args`, `output`, `error` |
+| **`SourcesCitation`** | `<stack>/SourcesCitation.*` | `sources: [{ title, url, snippet, siteName }]` |
+| **`AutoScrollAnchor`** | `<stack>/AutoScrollAnchor.*` | `isStreaming` |
+| **`ArtifactCanvas`** | `<stack>/ArtifactCanvas.*` | `title`, `code`, `language`, `isOpen`, `onClose` |
+| **`MessageActionToolbar`**| `<stack>/MessageActionToolbar.*`| `content`, `role`, `onRetry`, `onFeedback`, `branchIndex`, `totalBranches`, `onBranchChange` |
+| **`PromptChips`** | `<stack>/PromptChips.*` | `suggestions: string[]`, `onSelect` |
+
+---
+
+## 🚫 禁忌事项 (Anti-Patterns)
+1. **严禁重新造轮子**：不要在用户代码里手写 `textarea` 的高度自适应或重新写一段包含 Bug 的 Markdown 流式打字逻辑，直接复制对应单文件。
+2. **严禁引入复杂第三方重黑盒库**：不随意引入需要复杂 Context Provider 包裹的重量级组件库。
+3. **保持 Tailwind 纯洁度**：各组件均基于标准 Tailwind CSS 工具类，尽量通过外部 `className` 传递覆盖，不要破坏组件内部的原子结构。
