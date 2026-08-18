@@ -1,13 +1,14 @@
 ---
-name: awesome-ui-builder
+name: awesome-ui-kit
 description: >
   Use when building AI-native Web interfaces, AI chat applications, RAG search result pages,
-  DeepSeek R1/OpenAI o1 reasoning viewers, Agent tool invocation monitors, or split-pane Canvas/Artifacts.
+  DeepSeek R1/OpenAI o1 reasoning viewers, Agent tool invocation monitors, split-pane Canvas/Artifacts,
+  or modernizing existing pages with self-contained Web Components.
   Guides the agent to select and copy standard, zero-blackbox single-file components from
   the awesome-ui repository (React/Vue/Vanilla) instead of reinventing AI UI primitives.
 ---
 
-# Awesome UI Builder (AI 原生前端页面装配规范)
+# Awesome UI Kit (AI 原生前端页面装配规范)
 
 ## 🎯 核心使命 (Mission)
 使用 `awesome-ui` 标准组件库快速装配现代 AI 页面。禁止 AI 从零手写易出错的流式渲染、思维链折叠、自动跟底或工具调用状态卡片。必须直接引用或复用 `awesome-ui` 中经过验证的原子单文件组件。
@@ -50,7 +51,12 @@ description: >
 
 #### 配方 D：Agent 自动化执行与调用流 (Agent Task Console)
 - 流程列表：多个 `ToolCallBadge`（实时展示 running/success/error 状态及参数返回值抽屉）
+- 节点状态：`StatusIndicator` + `ThemeToggle`
 - 实时日志：`StreamMarkdown`
+
+#### 配方 E：存量 SSR / PHP / Go / 静态 HTML 渐进式增强 (In-Place Modernization)
+- 引入 `<script type="module" src=".../vanilla/<component>.js"></script>`
+- 在现有模板中直接使用对应 Web Component（如 `<chat-prompt-input>`、`<theme-toggle>`、`<status-indicator>`），零打包构建侵入。
 
 ---
 

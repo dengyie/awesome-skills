@@ -12,7 +12,7 @@
 
 当前包含 9 个主要 skill：
 
-- `awesome-ui-builder`
+- `awesome-ui-kit`
 - `best-project-memory`
 - `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
@@ -28,7 +28,7 @@
 
 | Skill | 何时使用 | 最适合处理 | 文档 |
 | --- | --- | --- | --- |
-| `awesome-ui-builder` | 需要组装 AI 聊天、RAG、Canvas 分屏或 Agent 控制台页面 | 复制即用 AI 网页原子组件、多前端框架对齐 | [Guide](../usage/awesome-ui-builder.md) |
+| `awesome-ui-kit` | 需要组装 AI 聊天、RAG、Canvas 分屏或 Agent 控制台页面 | 复制即用 AI 网页原子组件、多前端框架对齐 | [Guide](../usage/awesome-ui-kit.md) |
 | `best-project-memory` | 需要跨会话保存项目状态 | 上下文恢复、决策记录、TODO 和交接 | [Guide](../usage/best-project-memory.md) |
 | `codex-agent-worktree-setup` | 需要创建与分支绑定的隔离 Codex 工作线程 | 保护主工作树、创建隔离 agent、修复 detached HEAD | [Guide](../usage/codex-agent-worktree-setup.md) |
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
@@ -83,7 +83,7 @@ cp -R <skill-folder> ~/.agents/skills/
 ## 仓库结构
 
 ```text
-awesome-ui-builder/                 skill 包
+awesome-ui-kit/                     skill 包
 best-project-memory/                 skill 包
 codex-agent-worktree-setup/         skill 包
 evidence-driven-bugfix/             skill 包

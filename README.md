@@ -8,7 +8,7 @@ This repository ships independent skill packages. Start by choosing the one that
 
 | Skill | When to use | Best for | Docs |
 | --- | --- | --- | --- |
-| `awesome-ui-builder` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | [Guide](docs/usage/awesome-ui-builder.md) |
+| `awesome-ui-kit` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | [Guide](docs/usage/awesome-ui-kit.md) |
 | `best-project-memory` | You need durable repo memory across long-running work | restoring context, recording decisions, keeping TODOs and handoffs current | [Guide](docs/usage/best-project-memory.md) |
 | `codex-agent-worktree-setup` | You need an isolated Codex development thread bound to a branch | protected main worktrees, branch-bound agents, detached HEAD repair | [Guide](docs/usage/codex-agent-worktree-setup.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
@@ -59,7 +59,7 @@ If you want help deciding which folder to copy, start with the [Skill Matrix](do
 ## Repository Layout
 
 ```text
-awesome-ui-builder/                 skill package
+awesome-ui-kit/                     skill package
 best-project-memory/                 skill package
 codex-agent-worktree-setup/         skill package
 evidence-driven-bugfix/             skill package

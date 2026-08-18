@@ -1,6 +1,6 @@
-# awesome-ui-builder Usage Guide
+# awesome-ui-kit Usage Guide
 
-The `awesome-ui-builder` skill guides AI coding assistants (Cursor, Claude Code, Codex, Pi) to assemble modern AI-native web pages (chat interfaces, RAG search engines, generative canvas, and agent consoles) using atomic, zero-blackbox single-file components from the `awesome-ui` repository.
+The `awesome-ui-kit` skill guides AI coding assistants (Cursor, Claude Code, Codex, Pi) to assemble modern AI-native web pages (chat interfaces, RAG search engines, generative canvas, and agent consoles) using atomic, zero-blackbox single-file components from the `awesome-ui` repository.
 
 ## Core Capabilities
 

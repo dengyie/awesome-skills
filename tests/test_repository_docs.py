@@ -10,7 +10,7 @@ DISCOVERED_SKILLS = sorted(
 )
 
 DOCUMENTED_SKILLS = [
-    "awesome-ui-builder",
+    "awesome-ui-kit",
     "best-project-memory",
     "codex-agent-worktree-setup",
     "evidence-driven-bugfix",
@@ -22,7 +22,7 @@ DOCUMENTED_SKILLS = [
 ]
 
 USAGE_GUIDES = [
-    "docs/usage/awesome-ui-builder.md",
+    "docs/usage/awesome-ui-kit.md",
     "docs/usage/best-project-memory.md",
     "docs/usage/codex-agent-worktree-setup.md",
     "docs/usage/evidence-driven-bugfix.md",

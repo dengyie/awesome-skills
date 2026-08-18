@@ -8,7 +8,7 @@ For installation only, use the [Quickstart](quickstart.md).
 
 | Skill | When to use | Best for | Avoid when | Typical outputs | Docs |
 | --- | --- | --- | --- | --- | --- |
-| `awesome-ui-builder` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | you need backend LLM integration or generic CRUD admin tables | assembled AI pages, copy-ready component files | `docs/usage/awesome-ui-builder.md` |
+| `awesome-ui-kit` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | you need backend LLM integration or generic CRUD admin tables | assembled AI pages, copy-ready component files | `docs/usage/awesome-ui-kit.md` |
 | `best-project-memory` | You need durable project continuity across sessions | restoring context, keeping TODOs current, recording decisions, leaving handoffs | the work is a one-shot task with no continuity value | updated `.codex-memory/` files, session summaries, handoffs | `docs/usage/best-project-memory.md` |
 | `codex-agent-worktree-setup` | You need a Codex-visible process isolated from the primary checkout | branch-bound worktrees, protected main branches, detached HEAD repair | you only need a branch in the current checkout or no new Codex thread was requested | Codex thread, isolated worktree, verified branch mapping | `docs/usage/codex-agent-worktree-setup.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
@@ -20,7 +20,7 @@ For installation only, use the [Quickstart](quickstart.md).
 
 ## Pick By Problem Type
 
-- Need to assemble AI chat, RAG search, canvas, or agent interfaces: `awesome-ui-builder`
+- Need to assemble AI chat, RAG search, canvas, or agent interfaces: `awesome-ui-kit`
 - Need continuity and handoff discipline: `best-project-memory`
 - Need an isolated Codex thread or detached worktree repaired: `codex-agent-worktree-setup`
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
@@ -32,7 +32,7 @@ For installation only, use the [Quickstart](quickstart.md).
 
 ## Pick By Expected Output
 
-- assembled AI pages, copy-ready component files: `awesome-ui-builder`
+- assembled AI pages, copy-ready component files: `awesome-ui-kit`
 - `.codex-memory/` updates, durable TODOs, handoff notes: `best-project-memory`
 - Codex thread, isolated worktree, verified branch mapping: `codex-agent-worktree-setup`
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
@@ -44,10 +44,10 @@ For installation only, use the [Quickstart](quickstart.md).
 
 ## Prompt Starters
 
-`awesome-ui-builder`
+`awesome-ui-kit`
 
 ```text
-Use $awesome-ui-builder to assemble a modern AI chat interface with streaming markdown and thinking blocks.
+Use $awesome-ui-kit to assemble a modern AI chat interface with streaming markdown and thinking blocks.
 ```
 
 `best-project-memory`

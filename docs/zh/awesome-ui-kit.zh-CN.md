@@ -1,6 +1,6 @@
-# awesome-ui-builder 使用指南
+# awesome-ui-kit 使用指南
 
-`awesome-ui-builder` 专门指导 AI 编程助手（Cursor、Claude Code、Codex、Pi 等）使用 `awesome-ui` 标准组件库快速装配现代 AI 原生页面（包括对话助手、RAG 搜索结果页、分屏实时画布、Agent 调用控制台等）。
+`awesome-ui-kit` 专门指导 AI 编程助手（Cursor、Claude Code、Codex、Pi 等）使用 `awesome-ui` 标准组件库快速装配现代 AI 原生页面（包括对话助手、RAG 搜索结果页、分屏实时画布、Agent 调用控制台等）。
 
 ## 核心能力
 
