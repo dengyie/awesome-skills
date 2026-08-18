@@ -11,6 +11,7 @@ Pick the package folder you actually need:
 - `best-project-memory`
 - `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
+- `grok-search`
 - `little-lighthouse-blog-publisher`
 - `production-code-quality-review`
 - `split-image-assets`

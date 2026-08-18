@@ -8,9 +8,11 @@ This repository ships independent skill packages. Start by choosing the one that
 
 | Skill | When to use | Best for | Docs |
 | --- | --- | --- | --- |
+| `awesome-ui-builder` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | [Guide](docs/usage/awesome-ui-builder.md) |
 | `best-project-memory` | You need durable repo memory across long-running work | restoring context, recording decisions, keeping TODOs and handoffs current | [Guide](docs/usage/best-project-memory.md) |
 | `codex-agent-worktree-setup` | You need an isolated Codex development thread bound to a branch | protected main worktrees, branch-bound agents, detached HEAD repair | [Guide](docs/usage/codex-agent-worktree-setup.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
+| `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
 | `little-lighthouse-blog-publisher` | You are publishing content into the Little Lighthouse blog repo | staged blog package creation, validation, and publication | [Guide](docs/usage/little-lighthouse-blog-publisher.md) |
 | `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
 | `split-image-assets` | You need to turn one image into reusable package assets | masks, transparent layers, previews, metadata, QA | [Guide](docs/usage/split-image-assets.md) |
@@ -57,9 +59,11 @@ If you want help deciding which folder to copy, start with the [Skill Matrix](do
 ## Repository Layout
 
 ```text
+awesome-ui-builder/                 skill package
 best-project-memory/                 skill package
 codex-agent-worktree-setup/         skill package
 evidence-driven-bugfix/             skill package
+grok-search/                        skill package
 little-lighthouse-blog-publisher/   skill package
 production-code-quality-review/     skill package
 split-image-assets/                 skill package
@@ -75,5 +79,6 @@ tests/                              repository-level regression checks
 
 - Run repository-level docs checks with `python3 -m unittest discover tests -v`
 - Run package tests from the relevant skill directory before release work
+- Maintain Grok Search from `grok-search/` in this repository; local installed copies are downstream deployments
 - Keep release history in [docs/releases/README.md](docs/releases/README.md)
 - Keep design and implementation history in `docs/superpowers/` and `docs/dev/`

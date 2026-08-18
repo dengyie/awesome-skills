@@ -8,9 +8,11 @@ For installation only, use the [Quickstart](quickstart.md).
 
 | Skill | When to use | Best for | Avoid when | Typical outputs | Docs |
 | --- | --- | --- | --- | --- | --- |
+| `awesome-ui-builder` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | you need backend LLM integration or generic CRUD admin tables | assembled AI pages, copy-ready component files | `docs/usage/awesome-ui-builder.md` |
 | `best-project-memory` | You need durable project continuity across sessions | restoring context, keeping TODOs current, recording decisions, leaving handoffs | the work is a one-shot task with no continuity value | updated `.codex-memory/` files, session summaries, handoffs | `docs/usage/best-project-memory.md` |
 | `codex-agent-worktree-setup` | You need a Codex-visible process isolated from the primary checkout | branch-bound worktrees, protected main branches, detached HEAD repair | you only need a branch in the current checkout or no new Codex thread was requested | Codex thread, isolated worktree, verified branch mapping | `docs/usage/codex-agent-worktree-setup.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
+| `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
 | `little-lighthouse-blog-publisher` | You are publishing content into the Little Lighthouse blog repo | staged post packaging, metadata confirmation, verification, publish-ready handoff | the target is a generic CMS or a non-Little-Lighthouse site | Markdown package, metadata plan, verification results, publish flow | `docs/usage/little-lighthouse-blog-publisher.md` |
 | `production-code-quality-review` | You need production-minded judgment on changed code | PR review, diff triage, merge readiness, architecture-sensitive review | you need implementation or debugging instead of review | review brief, findings, risk summary, verification guidance | `docs/usage/quickstart.md`, `docs/usage/review-workflows.md` |
 | `split-image-assets` | You need reusable assets instead of one flat image | object layers, masks, previews, asset manifests, QA evidence | you only need a quick crop or a fully automatic segmenter | transparent PNGs, masks, `metadata.json`, `qa_report.md`, previews | `docs/usage/split-image-assets.md` |
@@ -18,9 +20,11 @@ For installation only, use the [Quickstart](quickstart.md).
 
 ## Pick By Problem Type
 
+- Need to assemble AI chat, RAG search, canvas, or agent interfaces: `awesome-ui-builder`
 - Need continuity and handoff discipline: `best-project-memory`
 - Need an isolated Codex thread or detached worktree repaired: `codex-agent-worktree-setup`
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
+- Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
 - Need a production review of changed code: `production-code-quality-review`
 - Need a source image turned into reusable package assets: `split-image-assets`
 - Need to publish into the Little Lighthouse blog: `little-lighthouse-blog-publisher`
@@ -28,15 +32,23 @@ For installation only, use the [Quickstart](quickstart.md).
 
 ## Pick By Expected Output
 
+- assembled AI pages, copy-ready component files: `awesome-ui-builder`
 - `.codex-memory/` updates, durable TODOs, handoff notes: `best-project-memory`
 - Codex thread, isolated worktree, verified branch mapping: `codex-agent-worktree-setup`
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
+- search answer with cited sources, page content, candidate URLs: `grok-search`
 - review findings and merge-readiness guidance: `production-code-quality-review`
 - blog post package and publication verification: `little-lighthouse-blog-publisher`
 - transparent assets, masks, previews, QA report: `split-image-assets`
 - design docs, implementation map, browser QA: `zero-to-website-design`
 
 ## Prompt Starters
+
+`awesome-ui-builder`
+
+```text
+Use $awesome-ui-builder to assemble a modern AI chat interface with streaming markdown and thinking blocks.
+```
 
 `best-project-memory`
 
@@ -54,6 +66,12 @@ Use $codex-agent-worktree-setup to create an isolated Codex worktree on the requ
 
 ```text
 Use $evidence-driven-bugfix to fix this failure by first capturing logs, securing failing evidence, tracing the root cause, and only reporting success after fresh verification.
+```
+
+`grok-search`
+
+```text
+Use $grok-search to find the current answer to this question and give me the sources you relied on.
 ```
 
 `little-lighthouse-blog-publisher`

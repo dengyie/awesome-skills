@@ -10,9 +10,11 @@ DISCOVERED_SKILLS = sorted(
 )
 
 DOCUMENTED_SKILLS = [
+    "awesome-ui-builder",
     "best-project-memory",
     "codex-agent-worktree-setup",
     "evidence-driven-bugfix",
+    "grok-search",
     "little-lighthouse-blog-publisher",
     "production-code-quality-review",
     "split-image-assets",
@@ -20,9 +22,11 @@ DOCUMENTED_SKILLS = [
 ]
 
 USAGE_GUIDES = [
+    "docs/usage/awesome-ui-builder.md",
     "docs/usage/best-project-memory.md",
     "docs/usage/codex-agent-worktree-setup.md",
     "docs/usage/evidence-driven-bugfix.md",
+    "docs/usage/grok-search.md",
     "docs/usage/little-lighthouse-blog-publisher.md",
     "docs/usage/split-image-assets.md",
     "docs/usage/zero-to-website-design.md",

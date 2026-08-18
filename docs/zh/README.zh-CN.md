@@ -10,11 +10,13 @@
 
 这个仓库不是单一 skill，而是一组可复用的 Codex skill 包，重点面向证据优先、生产导向的真实项目工作流。
 
-当前包含 7 个主要 skill：
+当前包含 9 个主要 skill：
 
+- `awesome-ui-builder`
 - `best-project-memory`
 - `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
+- `grok-search`
 - `little-lighthouse-blog-publisher`
 - `production-code-quality-review`
 - `split-image-assets`
@@ -26,9 +28,11 @@
 
 | Skill | 何时使用 | 最适合处理 | 文档 |
 | --- | --- | --- | --- |
+| `awesome-ui-builder` | 需要组装 AI 聊天、RAG、Canvas 分屏或 Agent 控制台页面 | 复制即用 AI 网页原子组件、多前端框架对齐 | [Guide](../usage/awesome-ui-builder.md) |
 | `best-project-memory` | 需要跨会话保存项目状态 | 上下文恢复、决策记录、TODO 和交接 | [Guide](../usage/best-project-memory.md) |
 | `codex-agent-worktree-setup` | 需要创建与分支绑定的隔离 Codex 工作线程 | 保护主工作树、创建隔离 agent、修复 detached HEAD | [Guide](../usage/codex-agent-worktree-setup.md) |
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
+| `grok-search` | 需要联网搜索、抓取网页或发现站点页面 | 最新事实核查、URL 正文抓取、站点候选页发现 | [Guide](../usage/grok-search.md) |
 | `little-lighthouse-blog-publisher` | 需要发布 Little Lighthouse 博客内容 | 文章包创建、元数据确认、发布校验 | [Guide](../usage/little-lighthouse-blog-publisher.md) |
 | `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
 | `split-image-assets` | 需要把单张图拆成可复用资产包 | mask、透明图层、预览、metadata、QA | [Guide](../usage/split-image-assets.md) |
@@ -79,9 +83,11 @@ cp -R <skill-folder> ~/.agents/skills/
 ## 仓库结构
 
 ```text
+awesome-ui-builder/                 skill 包
 best-project-memory/                 skill 包
 codex-agent-worktree-setup/         skill 包
 evidence-driven-bugfix/             skill 包
+grok-search/                        skill 包
 little-lighthouse-blog-publisher/   skill 包
 production-code-quality-review/     skill 包
 split-image-assets/                 skill 包
@@ -96,6 +102,7 @@ tests/                              仓库级回归测试
 ## 维护者入口
 
 - 仓库级文档检查：`python3 -m unittest discover tests -v`
+- `grok-search/` 是 Grok Search 的维护源，本机 skill 安装目录仅作为下游副本
 - 发布历史入口：[`docs/releases/README.md`](../releases/README.md)
 - 中文发布说明：[`releases/README.zh-CN.md`](releases/README.zh-CN.md)
 - 设计与开发历史主要保存在 `docs/superpowers/` 和 `docs/dev/`
