@@ -10,7 +10,7 @@ export class ConfigError extends Error {
   }
 }
 
-const DEFAULT_MODEL = "grok-4.3";
+const DEFAULT_MODEL = "grok-4.6";
 const DEFAULT_EXTRA = 6;
 const DEFAULT_SOURCE_CHARS = 400;
 const DEFAULT_TAVILY_API_URL = "https://api.tavily.com";

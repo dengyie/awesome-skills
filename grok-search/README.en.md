@@ -71,7 +71,7 @@ Full configuration example:
   "apiUrl": "https://api.x.ai/v1",
   "apiKey": "your-grok-api-key",
   "apiProvider": "xai",
-  "model": "grok-4.3",
+  "model": "grok-4.6",
   "responsesMaxTurns": 3,
   "responsesReasoningEffort": "low",
   "responsesAllowedDomains": [],
@@ -156,7 +156,7 @@ Supported variables:
 | `GROK_API_URL` | `apiUrl` | Yes for search | `search.js` | Base URL that supports `/responses`. |
 | `GROK_API_KEY` | `apiKey` | Yes for search | `search.js` | API key for `GROK_API_URL`. |
 | `GROK_API_PROVIDER` | `apiProvider` | No | `search.js` | Selects the Responses tool request format, not an additional search source. Accepts `xai`, `openrouter`, or `openai-compatible`; inferred from the URL when omitted. |
-| `GROK_MODEL` | `model` | No | `search.js` | Defaults to `grok-4.3`. |
+| `GROK_MODEL` | `model` | No | `search.js` | Defaults to `grok-4.6`. |
 | `GROK_RESPONSES_MAX_TURNS` | `responsesMaxTurns` | No | Responses | Responses agentic turn limit. Default: `3`. |
 | `GROK_RESPONSES_REASONING_EFFORT` | `responsesReasoningEffort` | No | Responses | Default: `low`. |
 | `GROK_RESPONSES_ALLOWED_DOMAINS` | `responsesAllowedDomains` | No | Responses | Comma-separated domain allow-list, max 5; mutually exclusive with excluded domains. |

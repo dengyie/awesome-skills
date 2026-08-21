@@ -453,6 +453,88 @@ await withServer(
   }
 );
 
+// #2（noUsable）：Grok Responses 200 + output_text + 空 annotations + 无 search call（stateless echo）
+// → 即使 --extra 有 Tavily 兜底，也降级不 throw，status=degraded_success。
+// 用 --extra 1：extraAllocation(1) 只给 tavily 分配 1（firecrawl 拿到 0），避免 firecrawl 内置默认 URL
+// 恒 truthy 导致其被分配配额而打真实网络（测试不稳定）。
+await withServer(
+  (req, res) => {
+    readJson(req, () => {
+      if (req.url === "/responses") {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(
+          JSON.stringify({
+            object: "response",
+            status: "completed",
+            output: [
+              {
+                type: "message",
+                content: [{ type: "output_text", annotations: [], text: "OpenAI news as of my training data..." }],
+              },
+            ],
+            usage: { input_tokens: 10, output_tokens: 5 },
+          })
+        );
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({ results: [{ title: "Echo fallback", url: "https://tavily.example/fallback", published_date: "2026-08-19", description: "news" }] })
+      );
+    });
+  },
+  async (_server, port) => {
+    const searchResult = await runNode(["scripts/search.js", "--extra", "1", "mock echo"], baseGrokEnv(port, {
+      TAVILY_API_KEY: "tavily-key",
+      TAVILY_API_URL: `http://127.0.0.1:${port}/tavily`,
+      GROK_RETRY_MAX_ATTEMPTS: "1",
+    }));
+    assert.equal(searchResult.code, 0);
+    const output = parseJson(searchResult.stdout);
+    assert.equal(output.diagnostics.degraded, true);
+    assert.equal(output.diagnostics.grok_error.code, "GROK_NO_USABLE");
+    assert.equal(output.diagnostics.status, "degraded_success");
+    assert.deepEqual(output.sources.grok, []);
+    assert.equal(output.sources.extra.length, 1);
+    assert.match(output.answer.text, /原始搜索结果/);
+  }
+);
+
+// #2（noUsable + --no-extra）：stateless echo 时保底不 throw，exit 0 + degraded，status=degraded（非 total_failure）。
+await withServer(
+  (req, res) => {
+    assert.equal(req.url, "/responses");
+    readJson(req, () => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          object: "response",
+          status: "completed",
+          output: [
+            {
+              type: "message",
+              content: [{ type: "output_text", annotations: [], text: "OpenAI news as of my training data..." }],
+            },
+          ],
+          usage: { input_tokens: 10, output_tokens: 5 },
+        })
+      );
+    });
+  },
+  async (_server, port) => {
+    const searchResult = await runNode(["scripts/search.js", "--no-extra", "mock echo"], baseGrokEnv(port, {
+      GROK_RETRY_MAX_ATTEMPTS: "1",
+    }));
+    assert.equal(searchResult.code, 0);
+    const output = parseJson(searchResult.stdout);
+    assert.equal(output.diagnostics.degraded, true);
+    assert.equal(output.diagnostics.grok_error.code, "GROK_NO_USABLE");
+    assert.equal(output.diagnostics.status, "degraded");
+    assert.deepEqual(output.sources.grok, []);
+    assert.match(output.answer.text, /无任何兜底源/);
+  }
+);
+
 await withServer(
   (req, res) => {
     readJson(req, () => {

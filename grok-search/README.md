@@ -71,7 +71,7 @@ chmod 600 ~/.config/grok-search/config.json
   "apiUrl": "https://api.x.ai/v1",
   "apiKey": "your-grok-api-key",
   "apiProvider": "xai",
-  "model": "grok-4.3",
+  "model": "grok-4.6",
   "responsesMaxTurns": 3,
   "responsesReasoningEffort": "low",
   "responsesAllowedDomains": [],
@@ -167,7 +167,7 @@ Node 原生 `fetch` 默认不会可靠读取终端代理变量。本项目会在
 | `GROK_API_URL` | `apiUrl` | search 必需 | `search.js` | 支持 `/responses` 的 base URL。 |
 | `GROK_API_KEY` | `apiKey` | search 必需 | `search.js` | `GROK_API_URL` 对应的 API key。 |
 | `GROK_API_PROVIDER` | `apiProvider` | 否 | `search.js` | 选择 Responses tool 请求格式，而不是额外的搜索源；可选 `xai`、`openrouter` 或 `openai-compatible`。未配置时按 URL 推断。 |
-| `GROK_MODEL` | `model` | 否 | `search.js` | 默认 `grok-4.3`。 |
+| `GROK_MODEL` | `model` | 否 | `search.js` | 默认 `grok-4.6`。 |
 | `GROK_RESPONSES_MAX_TURNS` | `responsesMaxTurns` | 否 | Responses | 默认 `3`，控制 Responses agentic turn 上限。 |
 | `GROK_RESPONSES_REASONING_EFFORT` | `responsesReasoningEffort` | 否 | Responses | 默认 `low`。 |
 | `GROK_RESPONSES_ALLOWED_DOMAINS` | `responsesAllowedDomains` | 否 | Responses | 逗号分隔 domain allow-list，最多 5 个；与 excluded 互斥。 |

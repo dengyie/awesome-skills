@@ -32,7 +32,7 @@ Environment:
   GROK_API_URL         Responses-compatible base URL; required
   GROK_API_KEY         API key for GROK_API_URL; required
   GROK_API_PROVIDER    Optional provider: xai, openrouter, or openai-compatible
-  GROK_MODEL           Optional default model; default grok-4.3
+  GROK_MODEL           Optional default model; default grok-4.6
   GROK_RESPONSES_MAX_TURNS
                        Optional Responses max_turns; default 3
   GROK_DEFAULT_EXTRA   Optional total Tavily/Firecrawl/Fathom/MCP Tavily source count; default 6
@@ -568,13 +568,17 @@ async function publicResult(args, config) {
   } else if (noUsable) {
     degraded = true;
     grokError = { code: "GROK_NO_USABLE", message: grokResult.error.message };
-    const degradedWarning =
-      `Grok Responses 返回文本但无可用 URL 卡片（或空应答，代理 stateless 回显）；当前 answer 仅包含 Tavily/Firecrawl/Fathom/MCP Tavily 原始搜索结果，未经 Grok 综合生成。错误: ${grokResult.error.message}`;
+    // #3：文案按实际兜底源数量动态化——--no-extra（extra.sources 空）时 answer 无任何搜索结果，
+    // 硬编码"仅包含原始搜索结果"会误导下游；0 条时明确说明"无兜底源、降级保底不报错"。
+    const extraCount = extra.sources.length;
+    const degradedWarning = extraCount > 0
+      ? `Grok Responses 返回文本但无可用 URL 卡片（或空应答，代理 stateless 回显）；当前 answer 仅包含 Tavily/Firecrawl/Fathom/MCP Tavily 的 ${extraCount} 条原始搜索结果，未经 Grok 综合生成。错误: ${grokResult.error.message}`
+      : `Grok Responses 返回文本但无可用 URL 卡片（或空应答，代理 stateless 回显），且无任何兜底源（--no-extra / 兜底未返回）；已降级返回空 answer 保底不报错。错误: ${grokResult.error.message}`;
     const warnings = [degradedWarning, ...(extra?.warnings || []), ...(grokResult.error?.diagnostics?.warnings || [])];
     grok = {
       endpoint: "responses",
       model: searchOptions.model,
-      answer: degradedAnswer(extra.sources),
+      answer: extraCount > 0 ? degradedAnswer(extra.sources) : degradedWarning,
       sources: [],
       warnings,
       provider_attempts: [
@@ -657,13 +661,18 @@ async function publicResult(args, config) {
 
   const grokSucceeded = !degraded;
   const extraSucceeded = extra.sources.length > 0;
+  // #5：noUsable + 无兜底源（--no-extra）时，是"成功降级、保底不报错"，不是 total_failure。
+  // quota/真实错误路径在 591-602 已 throw，到这里的 !grokSucceeded && !extraSucceeded 只可能是
+  // noUsable 降级分支（grok 文本但无卡）——给它独立状态 "degraded"，与失败脱钩、语义如实。
   const status = grokSucceeded && extraSucceeded
     ? "success"
     : grokSucceeded && !extraSucceeded
       ? "partial_success"
       : !grokSucceeded && extraSucceeded
         ? "degraded_success"
-        : "total_failure";
+        : degraded
+          ? "degraded"
+          : "total_failure";
 
   return {
     query: args.query,

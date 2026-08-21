@@ -20,7 +20,7 @@
 
 ```json
 {
-  "model": "grok-4.3",
+  "model": "grok-4.6",
   "input": [
     { "role": "system", "content": "..." },
     { "role": "user", "content": "..." }

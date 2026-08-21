@@ -366,6 +366,10 @@ export async function searchGrokResponses(query, options, config) {
   const defaultTool = config.apiProvider === "openrouter" ? "openrouter:web_search" : "web_search";
   const parsed = parseGrokResponses(data, { defaultTool });
   if (!parsed.text.trim()) {
+    // 取舍声明（#4）：GROK_RESPONSES_EMPTY 只可能在"200 + 空 content"时触发——quota/限流必然带 HTTP
+    // 非 2xx status（requestJson 在 !response.ok 就抛，带了 error.status），不会走到这层。因此 EMPTY
+    // 本质就是 stateless 代理空回显，归入 noUsable 降级不会掩盖额度耗尽信号；若未来有代理用 200+空
+    // content 表达限流（非标准），那是该代理的协议损坏，降级仍是最安全的行为。
     const error = new Error("Grok Responses 返回空内容");
     error.code = "GROK_RESPONSES_EMPTY";
     error.diagnostics = parsed.diagnostics;

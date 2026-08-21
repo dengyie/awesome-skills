@@ -15,7 +15,7 @@
 
 默认 Responses 参数：
 
-- model：`grok-4.3`
+- model：`grok-4.6`
 - `max_turns=3`
 - `reasoning.effort=low`
 - xAI/openai-compatible：`web_search`
@@ -88,7 +88,7 @@ Direct Map 只检查 `/sitemap.xml` 和首页同域链接。
 | `GROK_API_URL` | 支持 `/responses` 的 base URL |
 | `GROK_API_KEY` | 对应 endpoint 的 API key |
 | `GROK_API_PROVIDER` | `xai`、`openrouter` 或 `openai-compatible` |
-| `GROK_MODEL` | 默认 `grok-4.3` |
+| `GROK_MODEL` | 默认 `grok-4.6` |
 | `GROK_RESPONSES_MAX_TURNS` | 默认 `3` |
 | `GROK_RESPONSES_REASONING_EFFORT` | 默认 `low` |
 | `GROK_RESPONSES_ALLOWED_DOMAINS` | Web Search allow-list，最多 5 个 |
