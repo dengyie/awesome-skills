@@ -16,6 +16,7 @@ DOCUMENTED_SKILLS = [
     "evidence-driven-bugfix",
     "grok-search",
     "little-lighthouse-blog-publisher",
+    "obsidian-doc-router",
     "production-code-quality-review",
     "split-image-assets",
     "zero-to-website-design",
@@ -28,6 +29,7 @@ USAGE_GUIDES = [
     "docs/usage/evidence-driven-bugfix.md",
     "docs/usage/grok-search.md",
     "docs/usage/little-lighthouse-blog-publisher.md",
+    "docs/usage/obsidian-doc-router.md",
     "docs/usage/split-image-assets.md",
     "docs/usage/zero-to-website-design.md",
 ]

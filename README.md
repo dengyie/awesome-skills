@@ -14,6 +14,7 @@ This repository ships independent skill packages. Start by choosing the one that
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
 | `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
 | `little-lighthouse-blog-publisher` | You are publishing content into the Little Lighthouse blog repo | staged blog package creation, validation, and publication | [Guide](docs/usage/little-lighthouse-blog-publisher.md) |
+| `obsidian-doc-router` | You are reading/writing Obsidian vault ops notes or topologies | router-first queries, anti-orphan documentation workflow | [Guide](docs/usage/obsidian-doc-router.md) |
 | `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
 | `split-image-assets` | You need to turn one image into reusable package assets | masks, transparent layers, previews, metadata, QA | [Guide](docs/usage/split-image-assets.md) |
 | `zero-to-website-design` | You need to go from vague website brief to delivery workflow | website design direction, route plans, implementation, QA | [Guide](docs/usage/zero-to-website-design.md) |
@@ -65,6 +66,7 @@ codex-agent-worktree-setup/         skill package
 evidence-driven-bugfix/             skill package
 grok-search/                        skill package
 little-lighthouse-blog-publisher/   skill package
+obsidian-doc-router/                skill package
 production-code-quality-review/     skill package
 split-image-assets/                 skill package
 zero-to-website-design/             skill package
