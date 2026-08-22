@@ -2,14 +2,17 @@
 name: obsidian-doc-router
 description: >
   MANDATORY documentation router for the user's Obsidian vault and any ops/deploy/infra
-  task, or when reading/writing knowledge base documents.
+  task, or ANY action involving reading, writing, creating, updating, or refactoring
+  knowledge base notes in Obsidian.
   BEFORE answering ops questions from memory or grepping the vault, you MUST Read
   00.MOC/AI-DOC-ROUTER.md and open only the canonical entry it names.
-  WHEN writing or updating docs, you MUST follow the Anti-Orphan Recording SOP so
-  new notes never get lost.
+  WHENEVER writing/creating/modifying Obsidian docs or notes, you MUST strictly follow
+  the Anti-Orphan Recording SOP (frontmatter, path, summary, and two-way link mounting
+  to AI-DOC-ROUTER and MOC).
   Triggers when: user mentions ainovel, ai-novel, novel 部署/备份/生产, CPA, tebi,
-  pxed, Bohrium, google-vps, novel.mangoq, ainovel.mangoq, 查文档, Obsidian 运维,
-  部署手册, 备份仓, 记录文档, 写笔记, supervisord, cloudflared token, /personal/pxed.
+  pxed, Bohrium, google-vps, novel.mangoq, ainovel.mangoq, 查文档, 查知识库, Obsidian,
+  运维文档, 部署手册, 备份仓, 记录文档, 写笔记, 记录到obsidian, 更新文档, 记到知识库,
+  新建笔记, 整理文档, supervisord, cloudflared token, /personal/pxed.
 ---
 
 # Obsidian 文档路由与记录规范（强制）
@@ -151,3 +154,4 @@ python3 .local/bin/scan-stale-docs
 
 - 本 skill 管 **「读哪篇文档」** 与 **「文档如何写入防丢」**；不替代 systematic-debugging / 写代码 skill。  
 - 若 using-superpowers 也适用：先满足 skill 检查，其中涉及 vault 运维文档时 **必须包含本路由流程**。
+
