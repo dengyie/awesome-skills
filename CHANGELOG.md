@@ -6,6 +6,10 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ## Unreleased
 
+### Changed
+
+- updated `obsidian-doc-router` SKILL.md: multi-platform vault paths (macOS iCloud + Windows), vault-real recording directories (`Note/Project/`, `Note/AI/经验/`, `Note/Accounts/`) replacing non-existent `01.项目/`/`02.技术/`, TLDR header contract `## 速读（当前有效 · 维护于 …）`, trigger-word budget (≤15 distinctive keywords, no synonym/version enumeration), quick-section length cap (≤200 chars), and removal of stale cross-skill references
+
 ### Added
 
 - added `best-project-memory`, a repo-native continuity skill for project-state restoration, decision capture, TODO maintenance, and handoff generation

@@ -17,9 +17,9 @@
 1. **Deterministic Reading Path**:
    - `00.MOC/AI-DOC-ROUTER.md` (or `.local/bin/doc-lookup`) -> Canonical Entry note -> Main handbook.
 2. **Anti-Orphan Doc Recording**:
-   - Standardized pathing under `Note/Infra/` or `01.项目/`.
+   - Standardized pathing under `Note/Infra/`, `Note/Project/`, or `Note/AI/经验/` (never non-existent dirs).
    - Frontmatter metadata (`canonical`, `updated`, `aliases`).
-   - Standardized structure with a high-visibility summary block (`> **速读 / 生产真相**`).
+   - Standardized structure with a `## 速读（当前有效 · 维护于 YYYY-MM-DD）` summary section (the header format is a parsing contract for `doc-lookup` and `scan-stale-docs --strict-tldr`).
    - Mandatory two-way link mounting back to `AI-DOC-ROUTER.md` and related MOC index files.
 3. **Automated Consistency Check**:
    - Runs `python3 .local/bin/scan-stale-docs` after changes.
