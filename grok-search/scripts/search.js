@@ -40,7 +40,11 @@ Environment:
   GROK_PROVIDER_WEIGHTS
                        Optional JSON {"tavily":N,"firecrawl":N,"fathom":N,"mcpTavily":N}
                        controlling how GROK_DEFAULT_EXTRA is split across providers
-  TAVILY_API_KEY       Optional Tavily parallel source provider
+  TAVILY_API_KEY       Optional official Tavily parallel source provider
+  TAVILY_PROXY_URL     Optional third-party Tavily-compatible base URL; tried first
+  TAVILY_PROXY_KEY     Optional third-party Tavily key used with TAVILY_PROXY_URL
+  TAVILY_PROXY_TIMEOUT_MS
+                       Optional proxy fail-fast timeout in ms; default 12000, no retry
   FIRECRAWL_API_KEY    Optional Firecrawl key; keyless search works without it
   MCP_TAVILY_URL       Optional MCP-HTTP Tavily proxy URL; default https://search.604020.xyz/mcp
   MCP_TAVILY_TOKEN     Optional Bearer token for MCP_TAVILY_URL (MCP Tavily provider)
@@ -258,9 +262,12 @@ function providerAttempt(result) {
     ...(result.skipped ? { skipped: true } : {}),
     ...(result.auth_mode ? { auth_mode: result.auth_mode } : {}),
     ...(result.credits_used == null ? {} : { credits_used: result.credits_used }),
+    ...(result.tavily_backend ? { tavily_backend: result.tavily_backend } : {}),
     ...(result.tavily_key_index == null ? {} : { tavily_key_index: result.tavily_key_index }),
     ...(result.tavily_key_total == null ? {} : { tavily_key_total: result.tavily_key_total }),
     ...(result.tavily_keys_tried == null ? {} : { tavily_keys_tried: result.tavily_keys_tried }),
+    ...(result.tavily_proxy_tried ? { tavily_proxy_tried: true } : {}),
+    ...(result.tavily_proxy_error ? { tavily_proxy_error: result.tavily_proxy_error } : {}),
     ...(result.error ? { error: result.error } : {}),
   };
 }
@@ -545,7 +552,7 @@ function failureDiagnostics(config, searchOptions, extraOptions, extra, error, {
   };
 }
 
-async function publicResult(args, config) {
+export async function publicResult(args, config) {
   const searchOptions = resolveSearchOptions(args, config);
   const sourceChars = args.sourceChars ?? config.sourceChars;
   const extraOptions = resolveExtra(args, config);
@@ -725,21 +732,26 @@ function errorOutput(error, code, diagnostics = {}) {
   };
 }
 
-let stage = "argument";
-try {
-  const args = parseArgs(process.argv.slice(2));
-  if (args.help) {
-    console.log(usage());
-    process.exit(0);
+const isMain =
+  typeof process !== "undefined" && process.argv?.[1] &&
+  process.argv[1].endsWith("scripts/search.js");
+if (isMain) {
+  let stage = "argument";
+  try {
+    const args = parseArgs(process.argv.slice(2));
+    if (args.help) {
+      console.log(usage());
+      process.exit(0);
+    }
+    stage = "config";
+    const config = await loadConfig({ requireGrok: true });
+    await cleanupOutputDir(config);
+    stage = "search";
+    printJson(await publicResult(args, config));
+  } catch (error) {
+    const code = error.code || (stage === "argument" ? "ARGUMENT_ERROR" : stage === "search" ? "SEARCH_ERROR" : "RUNTIME_ERROR");
+    printJson(errorOutput(error, code, error.diagnostics));
+    console.error(error.message);
+    process.exitCode = stage === "argument" ? 2 : 1;
   }
-  stage = "config";
-  const config = await loadConfig({ requireGrok: true });
-  await cleanupOutputDir(config);
-  stage = "search";
-  printJson(await publicResult(args, config));
-} catch (error) {
-  const code = error.code || (stage === "argument" ? "ARGUMENT_ERROR" : stage === "search" ? "SEARCH_ERROR" : "RUNTIME_ERROR");
-  printJson(errorOutput(error, code, error.diagnostics));
-  console.error(error.message);
-  process.exitCode = stage === "argument" ? 2 : 1;
 }

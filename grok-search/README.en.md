@@ -84,6 +84,9 @@ Full configuration example:
   "sourceChars": 400,
   "tavilyApiKey": "",
   "tavilyApiUrl": "https://api.tavily.com",
+  "tavilyProxyUrl": "",
+  "tavilyProxyKey": "",
+  "tavilyProxyTimeoutMs": 12000,
   "firecrawlApiKey": "",
   "firecrawlApiUrl": "https://api.firecrawl.dev/v2",
   "outputDir": ""
@@ -101,7 +104,7 @@ Common configuration rules:
 - `model` must be an ID supported by that endpoint. `responsesMaxTurns` is an integer of at least 1. Common `responsesReasoningEffort` values are `low`, `medium`, and `high`, but support depends on the selected model and provider.
 - `responsesAllowedDomains`, `responsesExcludedDomains`, `responsesAllowedXHandles`, and `responsesExcludedXHandles` are arrays and may contain multiple values, for example `["github.com", "docs.python.org"]`. The allowed and excluded forms of the same filter are mutually exclusive. In environment variables, separate multiple values with commas.
 - `responsesOpenRouterEngine` accepts `auto`, `native`, `exa`, `firecrawl`, `parallel`, or `perplexity`, and only applies when `apiProvider` is `openrouter`.
-- `tavilyApiKey` is optional. `firecrawlApiKey` may also be empty to use Firecrawl Keyless. An empty `outputDir` uses `~/.cache/grok-search/outputs/`.
+- `tavilyApiKey` is optional. `tavilyProxyUrl` + `tavilyProxyKey` enable a third-party Tavily-compatible proxy, which is tried first; official keys are used only if the proxy request fails. The proxy path fail-fasts at **12 seconds with no retry** (`tavilyProxyTimeoutMs` / `TAVILY_PROXY_TIMEOUT_MS`); an empty search result from the proxy also falls back. Official keys keep the 90s timeout and up to 3 retries. `firecrawlApiKey` may also be empty to use Firecrawl Keyless. An empty `outputDir` uses `~/.cache/grok-search/outputs/`.
 
 For OpenRouter, replace the core fields with:
 
@@ -167,8 +170,10 @@ Supported variables:
 | `GROK_RESPONSES_OPENROUTER_ENGINE` | `responsesOpenRouterEngine` | No | OpenRouter Responses | `auto`, `native`, `exa`, `firecrawl`, `parallel`, or `perplexity`. Default: `auto`. |
 | `GROK_DEFAULT_EXTRA` | `defaultExtra` | No | `search.js` | Combined Tavily/Firecrawl source target. Default: `6`. |
 | `GROK_SOURCE_CHARS` | `sourceChars` | No | `search.js` | Per-source stdout snippet limit. Default: `400`; `0` omits snippets. |
-| `TAVILY_API_KEY` | `tavilyApiKey` | No | `search.js`, `fetch.js`, `map.js` | Enables Tavily Search/Extract/Map. Without it, search/fetch still use Firecrawl Keyless and map uses Direct Map. |
-| `TAVILY_API_URL` | `tavilyApiUrl` | No | Tavily paths | Defaults to `https://api.tavily.com`. |
+| `TAVILY_API_KEY` | `tavilyApiKey` | No | `search.js`, `fetch.js`, `map.js` | Official Tavily Search/Extract/Map. Without a proxy or this key, search/fetch still use Firecrawl Keyless and map uses Direct Map. |
+| `TAVILY_API_URL` | `tavilyApiUrl` | No | Tavily paths | Official Tavily base URL. Defaults to `https://api.tavily.com`. |
+| `TAVILY_PROXY_URL` | `tavilyProxyUrl` | No | Tavily proxy | Third-party Tavily-compatible base URL. Tried before official keys. |
+| `TAVILY_PROXY_KEY` | `tavilyProxyKey` | No | Tavily proxy | Bearer token for `TAVILY_PROXY_URL`. |
 | `FIRECRAWL_API_KEY` | `firecrawlApiKey` | No | `search.js`, `fetch.js` | Optional. Uses Firecrawl Keyless when absent; a key provides account-scoped credits and higher rate limits. |
 | `FIRECRAWL_API_URL` | `firecrawlApiUrl` | No | Firecrawl paths | Defaults to `https://api.firecrawl.dev/v2`. |
 | `GROK_OUTPUT_DIR` | `outputDir` | No | all scripts | Overrides long-output storage. Default: `~/.cache/grok-search/outputs/`. |

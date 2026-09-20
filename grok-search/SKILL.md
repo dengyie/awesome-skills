@@ -43,7 +43,7 @@ Use `./scripts/fetch.js --max-chars 50000 URL` only for an explicit deep read af
 ./scripts/map.js https://docs.example.com --instructions "only API reference pages" --max-depth 2
 ```
 
-Search is Responses-only. It runs Grok Responses alongside independent Tavily and Firecrawl searches. Tavily is used when its key is configured; Firecrawl works keyless and automatically uses `FIRECRAWL_API_KEY` when available. The default combined extra target is 6. Add `--extra 10` only for a broader candidate-source sweep. Extras are never fed into Grok.
+Search is Responses-only. It runs Grok Responses alongside independent Tavily and Firecrawl searches. Tavily is used when a third-party proxy (`TAVILY_PROXY_URL` + `TAVILY_PROXY_KEY`) or an official key is configured. The proxy is tried first and fail-fasts (12s, no retry; empty search results count as failure); if that request fails, official `TAVILY_API_KEY` / `tavilyApiKeys` are used. Firecrawl works keyless and automatically uses `FIRECRAWL_API_KEY` when available. The default combined extra target is 6. Add `--extra 10` only for a broader candidate-source sweep. Extras are never fed into Grok.
 
 If Grok quota is explicitly exhausted, `search.js` may return a visibly marked degraded answer made from raw Tavily/Firecrawl results. Check `diagnostics.degraded` and `diagnostics.grok_error`. Other Grok failures remain errors. `--no-extra` disables this fallback as well as the external searches.
 
