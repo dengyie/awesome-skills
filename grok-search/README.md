@@ -91,6 +91,9 @@ chmod 600 ~/.config/grok-search/config.json
   "tavilyApiKey": "",
   "tavilyApiKeys": [],
   "tavilyApiUrl": "https://api.tavily.com",
+  "tavilyProxyUrl": "",
+  "tavilyProxyKey": "",
+  "tavilyProxyTimeoutMs": 12000,
   "firecrawlApiKey": "",
   "firecrawlApiUrl": "https://api.firecrawl.dev/v2",
   "fathomApiKey": "",
@@ -116,7 +119,7 @@ chmod 600 ~/.config/grok-search/config.json
 - `responsesAllowedDomains`、`responsesExcludedDomains`、`responsesAllowedXHandles`、`responsesExcludedXHandles` 都是数组，可以填写多个值，例如 `["github.com", "docs.python.org"]`；同一组 allowed 与 excluded 不能同时使用。环境变量中的多值使用逗号分隔。
 - `responsesOpenRouterEngine` 可选 `auto`、`native`、`exa`、`firecrawl`、`parallel` 或 `perplexity`，仅在 `apiProvider` 为 `openrouter` 时生效。
 - `providerWeights` 控制 Tavily/Firecrawl/Fathom/MCP Tavily 四个独立搜索源的配额分配比例。权重会被归一化，例如 `{"tavily": 40, "firecrawl": 30, "fathom": 15, "mcpTavily": 15}` 或 `{"tavily": 4, "firecrawl": 3, "fathom": 1.5, "mcpTavily": 1.5}` 效果相同。显式写 `0` 会把该 provider 的配额清零（想停用某 provider 不用删 key）；未列入此对象或未启用（无 key）的 provider 不会参与分配。省略此字段时使用等权重分配；若显式权重全为 0，同样退化为等权重。
-- `tavilyApiKey` 可留空；`tavilyApiKeys` 是 API key 数组，配置多个 key 时会轮询使用以分散配额消耗。`firecrawlApiKey` 也可留空并使用 Firecrawl Keyless。
+- `tavilyApiKey` 可留空；`tavilyApiKeys` 是官方 API key 数组，配置多个 key 时会轮询使用以分散配额消耗。`tavilyProxyUrl` + `tavilyProxyKey` 启用第三方 Tavily 兼容代理；配置后会**先打代理，失败再回落到官方 key**。代理路径默认 **12 秒超时且不重试**（`tavilyProxyTimeoutMs` / `TAVILY_PROXY_TIMEOUT_MS`），search 空结果也算失败并回落；官方路径仍是 90 秒 + 最多 3 次重试。`firecrawlApiKey` 也可留空并使用 Firecrawl Keyless。
 - `fathomApiKey` 曾用于启用 Fathom 搜索源（通过 MCP 协议）。**当前未启用**：其 MCP 服务器包（`@fathom-search/mcp-server`）在 npm 上不存在，key 暂不加载，该 provider 处于休眠。
 - `mcpTavilyToken` 启用 MCP Tavily 搜索源（HTTP MCP 代理 Tavily 的独立通道）。`mcpTavilyUrl` 默认 `https://search.604020.xyz/mcp`，`mcpTavilyTool` 默认 `search_proxy_tavily_search`。返回结果按 `provider: "mcpTavily"` 标记。传输层瞬时失败（连接重置 / 拒绝等）会自动重试一次，失败信息会带上底层 cause 便于排查。
 - `outputDir` 留空时使用默认目录 `~/.cache/grok-search/outputs/`。
@@ -179,9 +182,11 @@ Node 原生 `fetch` 默认不会可靠读取终端代理变量。本项目会在
 | `GROK_DEFAULT_EXTRA` | `defaultExtra` | 否 | `search.js` | Tavily/Firecrawl/Fathom/MCP Tavily 合计的默认 extra source 数量。默认 `6`。 |
 | `GROK_SOURCE_CHARS` | `sourceChars` | 否 | `search.js` | 每条 source stdout snippet 长度。默认 `400`；`0` 表示不输出 snippet。 |
 | `GROK_PROVIDER_WEIGHTS` | `providerWeights` | 否 | `search.js` | Provider 权重配置对象，例如 `{"tavily":40,"firecrawl":30,"fathom":15,"mcpTavily":15}`。未配置时等权重分配。 |
-| `TAVILY_API_KEY` | `tavilyApiKey` | 否 | `search.js`、`fetch.js`、`map.js` | 启用 Tavily Search / Extract / Map。没有它时，search/fetch 仍可使用 Firecrawl Keyless，map 使用 Direct Map。 |
-| `TAVILY_API_KEYS` | `tavilyApiKeys` | 否 | `search.js`、`fetch.js`、`map.js` | Tavily API key 数组，配置多个 key 时会轮询使用以分散配额消耗。优先级高于 `tavilyApiKey`。 |
-| `TAVILY_API_URL` | `tavilyApiUrl` | 否 | Tavily 路径 | 默认 `https://api.tavily.com`。 |
+| `TAVILY_API_KEY` | `tavilyApiKey` | 否 | `search.js`、`fetch.js`、`map.js` | 官方 Tavily Search / Extract / Map。没有代理也没有它时，search/fetch 仍可使用 Firecrawl Keyless，map 使用 Direct Map。 |
+| `TAVILY_API_KEYS` | `tavilyApiKeys` | 否 | `search.js`、`fetch.js`、`map.js` | 官方 Tavily API key 数组，配置多个 key 时会轮询使用以分散配额消耗。优先级高于 `tavilyApiKey`。 |
+| `TAVILY_API_URL` | `tavilyApiUrl` | 否 | Tavily 路径 | 官方 Tavily base URL。默认 `https://api.tavily.com`。 |
+| `TAVILY_PROXY_URL` | `tavilyProxyUrl` | 否 | Tavily 代理 | 第三方 Tavily 兼容 base URL，例如 `https://tavily.ivanli.cc/api/tavily`。配置后优先于官方 key。 |
+| `TAVILY_PROXY_KEY` | `tavilyProxyKey` | 否 | Tavily 代理 | 第三方代理的 Bearer token。必须与 `TAVILY_PROXY_URL` 一起配置。 |
 | `FIRECRAWL_API_KEY` | `firecrawlApiKey` | 否 | `search.js`、`fetch.js` | 可选。未配置时使用 Firecrawl Keyless；配置后使用独立账户额度和更高限流。 |
 | `FIRECRAWL_API_URL` | `firecrawlApiUrl` | 否 | Firecrawl 路径 | 默认 `https://api.firecrawl.dev/v2`。 |
 | `FATHOM_API_KEY` | `fathomApiKey` | 否 | `search.js` | **当前未启用**（MCP 包不可用，key 暂不加载）。 |
