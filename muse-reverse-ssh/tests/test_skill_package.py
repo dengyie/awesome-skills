@@ -12,6 +12,7 @@ class MuseReverseSshPackageTests(unittest.TestCase):
             ROOT / "SKILL.md",
             ROOT / "agents" / "openai.yaml",
             ROOT / "scripts" / "reverse-ssh-keepalive.sh",
+            ROOT / "scripts" / "reverse-ssh-boot.service",
             ROOT.parent / "docs" / "usage" / "muse-reverse-ssh.md",
         ]
         missing = [
@@ -43,6 +44,27 @@ class MuseReverseSshPackageTests(unittest.TestCase):
             "PasswordAuthentication no",
             "flock -n",
             "StrictHostKeyChecking",
+        ]:
+            self.assertIn(expected, skill_text)
+
+    def test_boot_service_template_is_consistent(self):
+        unit = ROOT / "scripts" / "reverse-ssh-boot.service"
+        content = unit.read_text(encoding="utf-8")
+        for expected in [
+            "reverse-ssh-keepalive.sh",
+            "Restart=always",
+            "Environment=HOME=",
+            "WantedBy=multi-user.target",
+        ]:
+            self.assertIn(expected, content)
+
+    def test_boot_persistence_is_documented(self):
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        for expected in [
+            "Boot Persistence",
+            "reverse-ssh-boot.service",
+            "@reboot",
+            "Environment=HOME",
         ]:
             self.assertIn(expected, skill_text)
 

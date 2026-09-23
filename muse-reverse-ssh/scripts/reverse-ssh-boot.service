@@ -1,0 +1,19 @@
+[Unit]
+Description=Reverse SSH tunnel keepalive (muse-reverse-ssh)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Run as the user that owns the tunnel key and state dir.
+User=OPERATOR_USER
+# HOME must point at the home holding the script, keys, and state dir.
+# A unit running as root gets HOME=/root by default, which silently breaks
+# every $HOME-relative path in the keepalive script. Set it explicitly.
+Environment=HOME=/home/OPERATOR_USER
+ExecStart=/home/OPERATOR_USER/.reverse-ssh/reverse-ssh-keepalive.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -147,6 +147,30 @@ Key options and why they matter:
   ssh -p <REMOTE_PORT> -i access-key.pem <INNER_USER>@<VPS_IP>
   ```
 
+## Boot Persistence
+
+The keepalive supervisor only survives network drops. A machine reboot kills it silently — `nohup ... &` does not persist across boots, and without autostart the "server" stays down after every reboot with no alert. This is the most common cause of a tunnel that "just stops working" days later.
+
+Pick one mechanism (template: `scripts/reverse-ssh-boot.service`):
+
+**systemd (preferred, when PID 1 is systemd):** install the unit, replace the placeholders, then:
+
+```bash
+sudo systemctl enable --now reverse-ssh-boot.service
+```
+
+**cron `@reboot` (when systemd is unavailable):**
+
+```text
+@reboot /home/<USER>/.reverse-ssh/reverse-ssh-keepalive.sh
+```
+
+Pitfalls:
+
+- `HOME` must resolve to the home holding the script, keys, and state dir. A unit running as root gets `HOME=/root` by default, which silently breaks every `$HOME`-relative path. Set `Environment=HOME=...` explicitly.
+- The keepalive's `flock` guard makes boot restarts safe: the lock is released when the old process dies (and children never inherit it via `9>&-`), so a fresh instance after an unclean shutdown always takes over cleanly instead of exiting as "another instance running".
+- On cloud VMs that get reimaged (not just rebooted), a boot unit is not enough — the setup steps themselves must be re-runnable. Keep a single restore script that reinstalls sshd, restores keys, and restarts the keepalive, and point the boot mechanism at that script.
+
 ## Verification
 
 From a third machine (the operator's laptop):
@@ -169,6 +193,8 @@ pgrep -f "ssh.*-R <REMOTE_PORT>:localhost:22" | wc -l   # expect 1
 
 Then kill the tunnel ssh once and confirm it reconnects within ~10s and the endpoint works again.
 
+Finally, reboot the inner machine (or restart the boot unit) and confirm the tunnel and endpoint recover without manual intervention — this is the test that catches missing boot persistence.
+
 ## Safety Boundaries
 
 - `GatewayPorts yes` is global on the VPS: any user with ssh access can bind public ports. Prefer `GatewayPorts clientspecified` with an explicit `-R 0.0.0.0:<REMOTE_PORT>:...`, or restrict the port with firewall source-IP rules.
@@ -185,5 +211,6 @@ Then kill the tunnel ssh once and confirm it reconnects within ~10s and the endp
 | Tunnel connects but forwards nowhere | port already bound on the VPS; without `ExitOnForwardFailure` ssh stays up silently | add `ExitOnForwardFailure=yes`; pick a free port |
 | Tunnel hangs after a network blip, never recovers | no liveness probing on a half-open TCP connection | `ServerAliveInterval` / `ServerAliveCountMax` plus the supervisor loop |
 | Two tunnel processes fight over the port | duplicate keepalive instances | `flock -n` single-instance guard; kill-and-restart for takeover |
+| Tunnel never comes back after a reboot | no boot autostart; `nohup &` does not survive reboots | systemd unit or `@reboot` cron (see Boot Persistence); verify with a real reboot |
 | `Permission denied (publickey)` on the tunnel leg | tunnel public key missing from the VPS user's `authorized_keys` | reinstall `tunnel-key.pub` |
 | `Permission denied (publickey)` on the access leg | access public key missing from the inner user's `authorized_keys` | reinstall `access-key.pub` |

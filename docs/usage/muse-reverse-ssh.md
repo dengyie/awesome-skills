@@ -30,7 +30,8 @@ Do not use it when the machine already has a public IP (run sshd directly with f
 2. On the VPS: create the tunnel user, install the tunnel public key, set `GatewayPorts yes`, reload sshd, open the port in the firewall.
 3. On the inner machine: install openssh-server, create the login user, install the access public key, harden sshd (`PermitRootLogin prohibit-password`, `PasswordAuthentication no`), place the tunnel private key at mode `600`.
 4. Install `scripts/reverse-ssh-keepalive.sh`, replace the placeholders, start it with `nohup`.
-5. Verify from a third machine through the public endpoint; kill the tunnel ssh once and confirm it reconnects and the endpoint works again.
+5. Add boot persistence: install `scripts/reverse-ssh-boot.service` (or a `@reboot` cron entry) so the tunnel survives machine reboots — `nohup` alone does not. Remember `Environment=HOME=...` when the unit runs as a different user.
+6. Verify from a third machine through the public endpoint; kill the tunnel ssh once and confirm it reconnects and the endpoint works again; then reboot the inner machine and confirm everything recovers without manual intervention.
 
 ## Verification
 
