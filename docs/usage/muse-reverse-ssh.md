@@ -33,13 +33,41 @@ Do not use it when the machine already has a public IP (run sshd directly with f
 5. Add boot persistence: install `scripts/reverse-ssh-boot.service` (or a `@reboot` cron entry) so the tunnel survives machine reboots — `nohup` alone does not. Remember `Environment=HOME=...` when the unit runs as a different user.
 6. Verify from a third machine through the public endpoint; kill the tunnel ssh once and confirm it reconnects and the endpoint works again; then reboot the inner machine and confirm everything recovers without manual intervention.
 
+## Boot Persistence
+
+The keepalive script from step 4 only survives network drops. A machine reboot kills it silently — `nohup ... &` does not persist across boots, and without autostart the tunnel stays down after every reboot with no alert. This is the most common reason a tunnel "just stops working" days later. Do not skip this section.
+
+**systemd (preferred, when PID 1 is systemd):**
+
+1. Copy `muse-reverse-ssh/scripts/reverse-ssh-boot.service` to `/etc/systemd/system/reverse-ssh-boot.service`.
+2. Replace `OPERATOR_USER` and the `HOME` path with the user that owns the tunnel key.
+3. Enable and start it:
+
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now reverse-ssh-boot.service
+   ```
+
+**cron `@reboot` (when systemd is unavailable):**
+
+```text
+@reboot /home/<USER>/.reverse-ssh/reverse-ssh-keepalive.sh
+```
+
+Watch out for:
+
+- `HOME` must point at the home holding the script, keys, and state dir. A unit running as root gets `HOME=/root` by default, which silently breaks every `$HOME`-relative path in the keepalive script. Set `Environment=HOME=...` explicitly in the unit.
+- The keepalive's `flock` single-instance guard makes boot restarts safe: the lock is released when the old process dies, so a fresh instance after an unclean shutdown takes over cleanly instead of exiting as "another instance running".
+- On cloud VMs that get reimaged (not just rebooted), a boot unit is not enough — the setup steps themselves must be re-runnable. Keep a single restore script that reinstalls sshd, restores keys, and restarts the keepalive, and point the boot mechanism at that script.
+
 ## Verification
 
 - `ssh -p <REMOTE_PORT> -i access-key.pem <INNER_USER>@<VPS_IP>` reaches the inner machine.
 - `ss -tlnp | grep <REMOTE_PORT>` on the VPS shows `0.0.0.0:<REMOTE_PORT>`.
 - Exactly one tunnel ssh process on the inner machine; it recovers within ~10s after being killed.
 - The endpoint file (`current-endpoint.txt`) contains the working access command.
+- Reboot the inner machine and confirm the tunnel and endpoint recover without manual intervention — this is the test that catches missing boot persistence.
 
 ## Failure Modes
 
-See `SKILL.md` for the full table: public-port timeouts (`GatewayPorts` / firewall), tunnels that connect but forward nowhere (`ExitOnForwardFailure`), half-open hangs (`ServerAliveInterval`), duplicate keepalive instances (`flock -n`), and `publickey` denials on either leg.
+See `SKILL.md` for the full table: public-port timeouts (`GatewayPorts` / firewall), tunnels that connect but forward nowhere (`ExitOnForwardFailure`), half-open hangs (`ServerAliveInterval`), duplicate keepalive instances (`flock -n`), `publickey` denials on either leg, and tunnels that never come back after a reboot (missing boot persistence).
