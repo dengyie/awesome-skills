@@ -12,10 +12,8 @@
 - `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
 - `grok-search`
-- `little-lighthouse-blog-publisher`
 - `production-code-quality-review`
 - `split-image-assets`
-- `zero-to-website-design`
 
 如果你不确定该选哪个，回到 [Skill Matrix](../usage/skill-matrix.md) 先做选型。
 

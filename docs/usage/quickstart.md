@@ -12,10 +12,8 @@ Pick the package folder you actually need:
 - `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
 - `grok-search`
-- `little-lighthouse-blog-publisher`
 - `production-code-quality-review`
 - `split-image-assets`
-- `zero-to-website-design`
 
 Use the [Skill Matrix](skill-matrix.md) when the choice is unclear.
 
@@ -33,7 +31,7 @@ mkdir -p ~/.agents/skills
 cp -R <skill-folder> ~/.agents/skills/
 ```
 
-Replace `<skill-folder>` with the package you chose, for example `evidence-driven-bugfix` or `zero-to-website-design`.
+Replace `<skill-folder>` with the package you chose, for example `evidence-driven-bugfix` or `muse-reverse-ssh`.
 
 ## 3. Reload Codex
 

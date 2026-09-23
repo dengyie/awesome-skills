@@ -227,7 +227,7 @@ Shipped integration levels in this repository today:
 - Level 1: `production-code-quality-review` reads project memory and relevant workstreams into review context
 - Level 2: `production-code-quality-review` can opt in to append review sessions and merge follow-up TODO items
 - Level 2 hardening: explicit `P1:`, `Blocker:`, and `Urgent:` follow-ups route into `## In Progress`, while normalized duplicates are skipped across active TODO sections
-- Level 3: `zero-to-website-design` uses workstreams, session continuity, delivery-state templates, and handoff-oriented project memory behavior
+- Level 3: full workstream-driven integration — workstreams, session continuity, delivery-state templates, and handoff-oriented project memory behavior
 
 ## Package contents
 

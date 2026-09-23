@@ -99,15 +99,3 @@ Suggested use:
 
 - read `project-state.md`
 - read relevant workstream state for sensitive review context
-
-### `zero-to-website-design`
-
-Recommended starting level:
-
-- Level 3
-
-Suggested use:
-
-- keep route or delivery work in a workstream
-- promote key design decisions
-- generate handoff packs for interrupted design or QA work

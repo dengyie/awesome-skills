@@ -13,12 +13,10 @@ For installation only, use the [Quickstart](quickstart.md).
 | `codex-agent-worktree-setup` | You need a Codex-visible process isolated from the primary checkout | branch-bound worktrees, protected main branches, detached HEAD repair | you only need a branch in the current checkout or no new Codex thread was requested | Codex thread, isolated worktree, verified branch mapping | `docs/usage/codex-agent-worktree-setup.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
 | `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
-| `little-lighthouse-blog-publisher` | You are publishing content into the Little Lighthouse blog repo | staged post packaging, metadata confirmation, verification, publish-ready handoff | the target is a generic CMS or a non-Little-Lighthouse site | Markdown package, metadata plan, verification results, publish flow | `docs/usage/little-lighthouse-blog-publisher.md` |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive supervision | the machine already has a public IP or you need HTTPS/browser access | working public SSH endpoint, keepalive supervisor, verification results | `docs/usage/muse-reverse-ssh.md` |
 | `obsidian-doc-router` | You need accurate ops facts or are writing docs in an Obsidian vault | router-first queries, anti-orphan documentation workflow | the query is unrelated to your vault or ops notes | verified ops answers with cited notes, anti-orphan canonical entries | `docs/usage/obsidian-doc-router.md` |
 | `production-code-quality-review` | You need production-minded judgment on changed code | PR review, diff triage, merge readiness, architecture-sensitive review | you need implementation or debugging instead of review | review brief, findings, risk summary, verification guidance | `docs/usage/quickstart.md`, `docs/usage/review-workflows.md` |
 | `split-image-assets` | You need reusable assets instead of one flat image | object layers, masks, previews, asset manifests, QA evidence | you only need a quick crop or a fully automatic segmenter | transparent PNGs, masks, `metadata.json`, `qa_report.md`, previews | `docs/usage/split-image-assets.md` |
-| `zero-to-website-design` | You need a design-first website workflow | direction setting, route planning, implementation guidance, browser QA | the change is a tiny component edit or a backend-only task | design docs, route plans, implementation map, QA artifacts | `docs/usage/zero-to-website-design.md` |
 
 ## Pick By Problem Type
 
@@ -29,10 +27,8 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
 - Need a production review of changed code: `production-code-quality-review`
 - Need a source image turned into reusable package assets: `split-image-assets`
-- Need to publish into the Little Lighthouse blog: `little-lighthouse-blog-publisher`
 - Need a machine without a public IP reachable over SSH from the internet: `muse-reverse-ssh`
 - Need router-first vault reading or anti-orphan doc recording: `obsidian-doc-router`
-- Need to design and deliver a website from a vague brief or references: `zero-to-website-design`
 
 ## Pick By Expected Output
 
@@ -43,10 +39,8 @@ For installation only, use the [Quickstart](quickstart.md).
 - search answer with cited sources, page content, candidate URLs: `grok-search`
 - review findings and merge-readiness guidance: `production-code-quality-review`
 - working public SSH endpoint, keepalive supervisor, verification results: `muse-reverse-ssh`
-- blog post package and publication verification: `little-lighthouse-blog-publisher`
 - verified ops answers, anti-orphan canonical docs: `obsidian-doc-router`
 - transparent assets, masks, previews, QA report: `split-image-assets`
-- design docs, implementation map, browser QA: `zero-to-website-design`
 
 ## Prompt Starters
 
@@ -80,12 +74,6 @@ Use $evidence-driven-bugfix to fix this failure by first capturing logs, securin
 Use $grok-search to find the current answer to this question and give me the sources you relied on.
 ```
 
-`little-lighthouse-blog-publisher`
-
-```text
-Use $little-lighthouse-blog-publisher to publish this Little Lighthouse Markdown draft as a blog post.
-```
-
 `muse-reverse-ssh`
 
 ```text
@@ -104,17 +92,10 @@ Use $obsidian-doc-router to query our infrastructure topology or record a newly 
 Use $production-code-quality-review to review this change for production correctness, robustness, and merge readiness.
 ```
 
-
 `split-image-assets`
 
 ```text
 Use $split-image-assets to turn this source image into a reusable asset package with transparent layers, masks, previews, metadata, and QA.
-```
-
-`zero-to-website-design`
-
-```text
-Use $zero-to-website-design to turn this website brief and reference set into design docs, implementation guidance, and browser QA.
 ```
 
 ## Go Next
