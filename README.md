@@ -1,8 +1,14 @@
 # Awesome Skills
 
+[![LINUX DO](https://img.shields.io/badge/Community-LINUX%20DO-2563eb.svg?logo=linux&logoColor=white)](https://linux.do/)
+
 Reusable Codex skills for evidence-first, production-minded project work.
 
 This repository ships independent skill packages. Start by choosing the one that matches your problem, then install only what you need.
+
+## 🌟 Acknowledgments: LINUX DO
+
+> 🐧 **This project recognizes and thanks the [LINUX DO](https://linux.do/) community.** Many of the ideas, techniques, and production-hardened lessons behind these skills — evidence-first debugging, production-minded review, and real-world ops workflows — were inspired by the generous sharing of the LINUX DO community. Salute to the open-source spirit and pure technical exploration!
 
 ## Choose a Skill
 

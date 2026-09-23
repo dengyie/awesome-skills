@@ -1,10 +1,16 @@
 # Awesome Skills 中文说明
 
+[![LINUX DO](https://img.shields.io/badge/Community-LINUX%20DO-2563eb.svg?logo=linux&logoColor=white)](https://linux.do/)
+
 这是 `awesome-skills` 的中文入口页，目标是帮你先回答三件事：
 
 - 这个仓库里有什么
 - 我该先用哪个 skill
 - 接下来该去看哪篇文档
+
+## 🌟 致谢：LINUX DO
+
+> 🐧 **本项目致谢 [LINUX DO](https://linux.do/) 社区。** 这些 skill 背后的许多思路、技巧与生产级工程经验——证据优先的排障、生产视角的评审、真实世界的运维工作流——都汲取自 LINUX DO 社区佬友们的无私分享。致敬开源精神与纯粹的技术探索！
 
 ## 仓库定位
 
