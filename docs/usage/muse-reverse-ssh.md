@@ -1,6 +1,6 @@
-# Reverse SSH Server
+# Muse Reverse SSH
 
-Use `reverse-ssh-server` when a machine without a public IP (cloud VM, container, home server) must be SSH-reachable from the internet, and its network cannot accept inbound connections.
+Use `muse-reverse-ssh` when a machine without a public IP (cloud VM, container, home server) must be SSH-reachable from the internet, and its network cannot accept inbound connections.
 
 A reverse tunnel makes the inner machine dial out to a VPS; the VPS listens on a public port and forwards it back to the inner machine's sshd. No inbound firewall rules are needed on the inner network, and the inner machine needs no public IP.
 

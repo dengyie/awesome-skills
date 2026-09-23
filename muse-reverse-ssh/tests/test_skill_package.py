@@ -6,13 +6,13 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
-class ReverseSshServerPackageTests(unittest.TestCase):
+class MuseReverseSshPackageTests(unittest.TestCase):
     def test_required_skill_files_are_present(self):
         required_paths = [
             ROOT / "SKILL.md",
             ROOT / "agents" / "openai.yaml",
             ROOT / "scripts" / "reverse-ssh-keepalive.sh",
-            ROOT.parent / "docs" / "usage" / "reverse-ssh-server.md",
+            ROOT.parent / "docs" / "usage" / "muse-reverse-ssh.md",
         ]
         missing = [
             str(path.relative_to(ROOT.parent))
@@ -27,12 +27,12 @@ class ReverseSshServerPackageTests(unittest.TestCase):
         self.assertIsNotNone(match)
         frontmatter = match.group(1)
 
-        self.assertIn("name: reverse-ssh-server", frontmatter)
+        self.assertIn("name: muse-reverse-ssh", frontmatter)
         self.assertIn("reverse SSH tunnel", frontmatter)
 
         metadata = (ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
-        self.assertIn('display_name: "Reverse SSH Server"', metadata)
-        self.assertIn("$reverse-ssh-server", metadata)
+        self.assertIn('display_name: "Muse Reverse SSH"', metadata)
+        self.assertIn("$muse-reverse-ssh", metadata)
 
     def test_core_safety_and_keepalive_are_documented(self):
         skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
@@ -55,6 +55,7 @@ class ReverseSshServerPackageTests(unittest.TestCase):
             "ExitOnForwardFailure",
             "ServerAliveInterval",
             "flock -n 9",
+            "9>&-",  # ssh must not inherit the supervisor's lock fd
         ]:
             self.assertIn(expected, content)
 

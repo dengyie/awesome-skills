@@ -18,9 +18,9 @@
 - `evidence-driven-bugfix`
 - `grok-search`
 - `little-lighthouse-blog-publisher`
+- `muse-reverse-ssh`
 - `obsidian-doc-router`
 - `production-code-quality-review`
-- `reverse-ssh-server`
 - `split-image-assets`
 - `zero-to-website-design`
 
@@ -36,9 +36,9 @@
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
 | `grok-search` | 需要联网搜索、抓取网页或发现站点页面 | 最新事实核查、URL 正文抓取、站点候选页发现 | [Guide](../usage/grok-search.md) |
 | `little-lighthouse-blog-publisher` | 需要发布 Little Lighthouse 博客内容 | 文章包创建、元数据确认、发布校验 | [Guide](../usage/little-lighthouse-blog-publisher.md) |
+| `muse-reverse-ssh` | 需要让无公网 IP 的机器从公网经 SSH 访问 | 反向 SSH 隧道、VPS 端口转发、隧道保活 | [Guide](../usage/muse-reverse-ssh.md) |
 | `obsidian-doc-router` | 需要查阅或记录 Obsidian 知识库运维事实与拓扑 | 权威路由表首查、防孤岛文档闭环记录 | [Guide](../usage/obsidian-doc-router.md) |
 | `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
-| `reverse-ssh-server` | 需要让无公网 IP 的机器从公网经 SSH 访问 | 反向 SSH 隧道、VPS 端口转发、隧道保活 | [Guide](../usage/reverse-ssh-server.md) |
 | `split-image-assets` | 需要把单张图拆成可复用资产包 | mask、透明图层、预览、metadata、QA | [Guide](../usage/split-image-assets.md) |
 | `zero-to-website-design` | 需要从模糊网站需求走到交付 | 视觉方向、路由规划、实现与 QA | [Guide](../usage/zero-to-website-design.md) |
 

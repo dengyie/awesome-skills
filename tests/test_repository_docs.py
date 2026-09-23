@@ -16,9 +16,9 @@ DOCUMENTED_SKILLS = [
     "evidence-driven-bugfix",
     "grok-search",
     "little-lighthouse-blog-publisher",
+    "muse-reverse-ssh",
     "obsidian-doc-router",
     "production-code-quality-review",
-    "reverse-ssh-server",
     "split-image-assets",
     "zero-to-website-design",
 ]
@@ -30,8 +30,8 @@ USAGE_GUIDES = [
     "docs/usage/evidence-driven-bugfix.md",
     "docs/usage/grok-search.md",
     "docs/usage/little-lighthouse-blog-publisher.md",
+    "docs/usage/muse-reverse-ssh.md",
     "docs/usage/obsidian-doc-router.md",
-    "docs/usage/reverse-ssh-server.md",
     "docs/usage/split-image-assets.md",
     "docs/usage/zero-to-website-design.md",
 ]

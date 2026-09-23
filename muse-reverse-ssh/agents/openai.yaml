@@ -1,4 +1,4 @@
-display_name: "Reverse SSH Server"
+display_name: "Muse Reverse SSH"
 description: "Expose a machine without a public IP as a publicly reachable SSH server through a persistent reverse SSH tunnel via a VPS."
 trigger_phrases:
-  - "$reverse-ssh-server"
+  - "$muse-reverse-ssh"

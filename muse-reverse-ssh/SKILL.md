@@ -1,9 +1,9 @@
 ---
-name: reverse-ssh-server
+name: muse-reverse-ssh
 description: Use when exposing a machine without a public IP (cloud VM, container, home server) as a publicly reachable SSH server via a reverse SSH tunnel through a VPS; setting up a persistent keepalive supervisor for the tunnel; or diagnosing dropped tunnels, GatewayPorts binding failures, and forwarded-port access problems.
 ---
 
-# Reverse SSH Server
+# Muse Reverse SSH
 
 ## Core Principle
 

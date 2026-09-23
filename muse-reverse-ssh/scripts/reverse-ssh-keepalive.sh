@@ -23,8 +23,9 @@ LOG="$STATE_DIR/reverse-ssh-tunnel.log"
 LOCK="$STATE_DIR/reverse-ssh-keepalive.lock"
 ENDPOINT_FILE="$STATE_DIR/current-endpoint.txt"
 
-# Single instance: only the supervisor holds the lock. Children started
-# below must not inherit fd 9, so killing the supervisor always releases it.
+# Single instance: only the supervisor holds the lock. The ssh child is
+# started with 9>&- so it never inherits the lock fd; killing the
+# supervisor always releases the lock, even if an ssh child is orphaned.
 exec 9>"$LOCK" || exit 1
 flock -n 9 || { echo "another instance running"; exit 0; }
 
@@ -37,7 +38,7 @@ while true; do
       -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
       -o ServerAliveInterval=20 -o ServerAliveCountMax=3 \
       -o ExitOnForwardFailure=yes \
-      -N -R "$REMOTE_PORT:localhost:22" "$VPS_USER@$VPS_IP" >> "$LOG" 2>&1
+      -N -R "$REMOTE_PORT:localhost:22" "$VPS_USER@$VPS_IP" 9>&- >> "$LOG" 2>&1
   echo "$(date -u): tunnel dropped, reconnecting in 5s" >> "$LOG"
   sleep 5
 done

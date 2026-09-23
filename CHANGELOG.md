@@ -12,7 +12,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Added
 
-- added `reverse-ssh-server`, a reproducible skill for exposing a machine without a public IP as a publicly reachable SSH server via a persistent reverse SSH tunnel through a VPS (two-keypair model, `GatewayPorts` setup, keepalive supervisor template, verification and failure-mode table)
+- added `muse-reverse-ssh`, a reproducible skill for exposing a machine without a public IP as a publicly reachable SSH server via a persistent reverse SSH tunnel through a VPS (two-keypair model, `GatewayPorts` setup, keepalive supervisor template, verification and failure-mode table)
 
 - added `best-project-memory`, a repo-native continuity skill for project-state restoration, decision capture, TODO maintenance, and handoff generation
 - added deterministic project-memory helper scripts for memory initialization, session-log appends, and handoff pack creation
