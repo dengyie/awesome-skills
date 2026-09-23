@@ -184,8 +184,18 @@ Pitfalls:
 Containers, reset-on-boot VMs, and spot instances wipe the root filesystem on reboot: no unit file, no cron entry, no installed package survives — only a designated data disk persists, if any. Layer 2 cannot work there because there is nothing durable left to trigger it. Use instead:
 
 - **Idempotent restore script on the persistent disk.** One script that reinstalls packages, recreates users and keys, and restarts the keepalive — and is safe to run repeatedly (`id <user> || useradd ...`, `apt-get install -y` is idempotent, kill-and-restart supervisors rather than start-if-absent).
-- **External watchdog.** A scheduler or monitor *outside* the ephemeral machine polls for liveness and runs the restore path when it goes dark. Detection latency equals the poll interval — state that honestly instead of promising instant recovery.
+- **External watchdog.** A scheduler or monitor *outside* the ephemeral machine polls for liveness and runs the restore path when it goes dark. Detection latency equals the poll interval — state that honestly instead of promising instant recovery. A 1-minute poll is a good default: detection within ~1 min, recovery dominated by the restore script itself (2–4 min), so total downtime per incident is typically under 5 minutes. Polling faster (e.g. every 30s) barely shortens recovery while doubling check cost and raising the chance of catching a transient self-healing moment (tunnel reconnect, sshd restart) and triggering a needless restore.
+  - Guard the restore path with `flock -n <restore.lock>`: if a restore is already running, the new check exits silently instead of stacking restores.
+  - Check more than the tunnel: the tunnel ssh process (`pgrep -f "[s]sh.*-R <REMOTE_PORT>"` — note the bracket trick below), `sshd`, the supervisor script itself, and — for agents that can hang silently — log freshness (restart the agent if its log hasn't grown in N minutes).
 - **VPS-side detection.** The VPS is usually a normal persistent machine. A tiny check there — `ss -tlnp | grep <REMOTE_PORT>` or a TCP connect attempt against the forwarded port — notices the tunnel disappearing before any human does, and is the cheapest layer-3 signal.
+
+### Watchdog and restore pitfalls (learned the hard way)
+
+- **`pgrep -f` matches the checker itself.** `pgrep -f "ssh.*-R <REMOTE_PORT>"` also matches the very command running the check, because the pattern text appears in the checker's own command line — a dead tunnel then looks healthy forever. Use the bracket trick: `pgrep -f "[s]sh.*-R <REMOTE_PORT>"`. The regex `[s]sh` matches `ssh` in the target but not the literal `[s]sh` in your own command line. (Same reason supervisor self-checks use `[/]`, as in `pgrep -f "[/]keepalive.sh"`.)
+- **PIDs get reused after a reboot.** A pidfile alone can lie: after a reset, an unrelated process may hold the recorded PID. When validating a pidfile, also compare `/proc/<pid>/cmdline` against the expected program name before trusting it — and before killing it.
+- **Never `pkill -f <supervisor-name>` to stop supervisors.** The pattern matches your own management shell when its command line contains the name (e.g. you launched the restore from a shell whose command includes it), killing your own session mid-restore. Stop via the pidfile: read the PID, verify `/proc/<pid>/cmdline`, then `kill` exactly that PID.
+- **After a platform reboot, `apt`/`dpkg` may be locked** by the platform's own reconciliation for several minutes. A restore script that fails on the lock turns one outage into two. Loop-wait on the lock (e.g. up to ~10 min, checking every 30s) before giving up.
+- **Supervisors should also watch `sshd`.** If the tunnel supervisor notices `sshd` gone but the `sshd` binary still exists, restarting sshd directly is a seconds-level fix — no full restore needed.
 
 Verify each layer separately: kill the tunnel ssh (layer 1), reboot the machine (layer 2), and for ephemeral setups simulate a full reset and confirm the watchdog restores service within one poll interval (layer 3).
 
@@ -230,5 +240,8 @@ Finally, reboot the inner machine (or restart the boot unit) and confirm the tun
 | Tunnel hangs after a network blip, never recovers | no liveness probing on a half-open TCP connection | `ServerAliveInterval` / `ServerAliveCountMax` plus the supervisor loop |
 | Two tunnel processes fight over the port | duplicate keepalive instances | `flock -n` single-instance guard; kill-and-restart for takeover |
 | Tunnel never comes back after a reboot | no boot autostart; `nohup &` does not survive reboots | systemd unit or `@reboot` cron (see Boot Persistence); verify with a real reboot |
+| Watchdog never fires even though the tunnel is dead | `pgrep -f "ssh.*-R <PORT>"` matches the checker's own command line | use the bracket trick: `pgrep -f "[s]sh.*-R <PORT>"` |
+| Restore fails right after a reboot with apt/dpkg lock errors | platform reconciliation holds the package lock for minutes after boot | loop-wait on the lock (up to ~10 min) instead of failing immediately |
+| Restore kills your own SSH session mid-run | `pkill -f <supervisor-name>` matched your management shell's command line | stop supervisors via pidfile + `/proc/<pid>/cmdline` verification, never broad `pkill -f` |
 | `Permission denied (publickey)` on the tunnel leg | tunnel public key missing from the VPS user's `authorized_keys` | reinstall `tunnel-key.pub` |
 | `Permission denied (publickey)` on the access leg | access public key missing from the inner user's `authorized_keys` | reinstall `access-key.pub` |
