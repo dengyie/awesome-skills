@@ -16,6 +16,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `little-lighthouse-blog-publisher` | You are publishing content into the Little Lighthouse blog repo | staged post packaging, metadata confirmation, verification, publish-ready handoff | the target is a generic CMS or a non-Little-Lighthouse site | Markdown package, metadata plan, verification results, publish flow | `docs/usage/little-lighthouse-blog-publisher.md` |
 | `obsidian-doc-router` | You need accurate ops facts or are writing docs in an Obsidian vault | router-first queries, anti-orphan documentation workflow | the query is unrelated to your vault or ops notes | verified ops answers with cited notes, anti-orphan canonical entries | `docs/usage/obsidian-doc-router.md` |
 | `production-code-quality-review` | You need production-minded judgment on changed code | PR review, diff triage, merge readiness, architecture-sensitive review | you need implementation or debugging instead of review | review brief, findings, risk summary, verification guidance | `docs/usage/quickstart.md`, `docs/usage/review-workflows.md` |
+| `reverse-ssh-server` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive supervision | the machine already has a public IP or you need HTTPS/browser access | working public SSH endpoint, keepalive supervisor, verification results | `docs/usage/reverse-ssh-server.md` |
 | `split-image-assets` | You need reusable assets instead of one flat image | object layers, masks, previews, asset manifests, QA evidence | you only need a quick crop or a fully automatic segmenter | transparent PNGs, masks, `metadata.json`, `qa_report.md`, previews | `docs/usage/split-image-assets.md` |
 | `zero-to-website-design` | You need a design-first website workflow | direction setting, route planning, implementation guidance, browser QA | the change is a tiny component edit or a backend-only task | design docs, route plans, implementation map, QA artifacts | `docs/usage/zero-to-website-design.md` |
 
@@ -27,6 +28,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
 - Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
 - Need a production review of changed code: `production-code-quality-review`
+- Need a machine without a public IP reachable over SSH from the internet: `reverse-ssh-server`
 - Need a source image turned into reusable package assets: `split-image-assets`
 - Need to publish into the Little Lighthouse blog: `little-lighthouse-blog-publisher`
 - Need router-first vault reading or anti-orphan doc recording: `obsidian-doc-router`
@@ -40,6 +42,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
 - search answer with cited sources, page content, candidate URLs: `grok-search`
 - review findings and merge-readiness guidance: `production-code-quality-review`
+- working public SSH endpoint, keepalive supervisor, verification results: `reverse-ssh-server`
 - blog post package and publication verification: `little-lighthouse-blog-publisher`
 - verified ops answers, anti-orphan canonical docs: `obsidian-doc-router`
 - transparent assets, masks, previews, QA report: `split-image-assets`
@@ -93,6 +96,12 @@ Use $obsidian-doc-router to query our infrastructure topology or record a newly 
 
 ```text
 Use $production-code-quality-review to review this change for production correctness, robustness, and merge readiness.
+```
+
+`reverse-ssh-server`
+
+```text
+Use $reverse-ssh-server to expose this machine without a public IP as a publicly reachable SSH server through a reverse SSH tunnel via my VPS.
 ```
 
 `split-image-assets`
