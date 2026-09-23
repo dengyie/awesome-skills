@@ -149,27 +149,45 @@ Key options and why they matter:
 
 ## Boot Persistence
 
-The keepalive supervisor only survives network drops. A machine reboot kills it silently — `nohup ... &` does not persist across boots, and without autostart the "server" stays down after every reboot with no alert. This is the most common cause of a tunnel that "just stops working" days later.
+The keepalive supervisor only survives network drops. A machine reboot kills it silently — `nohup ... &` does not persist across boots, and without autostart the "server" stays down after every reboot with no alert. This is the most common cause of a tunnel that "just stops working" days later. Protect three layers independently:
 
-Pick one mechanism (template: `scripts/reverse-ssh-boot.service`):
+### Layer 1 — process supervision (ssh dies, machine stays up)
 
-**systemd (preferred, when PID 1 is systemd):** install the unit, replace the placeholders, then:
+Covered by `scripts/reverse-ssh-keepalive.sh` (flock-guarded restart loop). Alternatively, `autossh` is a drop-in replacement:
 
 ```bash
-sudo systemctl enable --now reverse-ssh-boot.service
+autossh -M 0 -N -o "ServerAliveInterval 30" -o "ServerAliveCountMax 3" \
+  -o ExitOnForwardFailure=yes -i tunnel-key.pem \
+  -R 0.0.0.0:<REMOTE_PORT>:localhost:22 <TUNNEL_USER>@<VPS_IP>
 ```
 
-**cron `@reboot` (when systemd is unavailable):**
+`-M 0` disables autossh's legacy monitor port and relies on SSH keepalives. Either way, something must (re)start the supervisor itself after a reboot — that is layer 2.
 
-```text
-@reboot /home/<USER>/.reverse-ssh/reverse-ssh-keepalive.sh
-```
+### Layer 2 — boot autostart (machine reboots, disk persists)
+
+Pick the mechanism the platform actually persists (template: `scripts/reverse-ssh-boot.service`):
+
+| Platform | Mechanism |
+|---|---|
+| systemd (most Linux servers / VPS) | unit file + `systemctl enable`, `Restart=always` |
+| Linux without systemd | `@reboot` cron entry, or executable `/etc/rc.local` |
+| macOS | `launchd` plist in `~/Library/LaunchAgents` with `RunAtLoad` |
+| Windows | Task Scheduler task with an "At startup" trigger |
 
 Pitfalls:
 
 - `HOME` must resolve to the home holding the script, keys, and state dir. A unit running as root gets `HOME=/root` by default, which silently breaks every `$HOME`-relative path. Set `Environment=HOME=...` explicitly.
 - The keepalive's `flock` guard makes boot restarts safe: the lock is released when the old process dies (and children never inherit it via `9>&-`), so a fresh instance after an unclean shutdown always takes over cleanly instead of exiting as "another instance running".
-- On cloud VMs that get reimaged (not just rebooted), a boot unit is not enough — the setup steps themselves must be re-runnable. Keep a single restore script that reinstalls sshd, restores keys, and restarts the keepalive, and point the boot mechanism at that script.
+
+### Layer 3 — ephemeral machines (disk resets on reboot)
+
+Containers, reset-on-boot VMs, and spot instances wipe the root filesystem on reboot: no unit file, no cron entry, no installed package survives — only a designated data disk persists, if any. Layer 2 cannot work there because there is nothing durable left to trigger it. Use instead:
+
+- **Idempotent restore script on the persistent disk.** One script that reinstalls packages, recreates users and keys, and restarts the keepalive — and is safe to run repeatedly (`id <user> || useradd ...`, `apt-get install -y` is idempotent, kill-and-restart supervisors rather than start-if-absent).
+- **External watchdog.** A scheduler or monitor *outside* the ephemeral machine polls for liveness and runs the restore path when it goes dark. Detection latency equals the poll interval — state that honestly instead of promising instant recovery.
+- **VPS-side detection.** The VPS is usually a normal persistent machine. A tiny check there — `ss -tlnp | grep <REMOTE_PORT>` or a TCP connect attempt against the forwarded port — notices the tunnel disappearing before any human does, and is the cheapest layer-3 signal.
+
+Verify each layer separately: kill the tunnel ssh (layer 1), reboot the machine (layer 2), and for ephemeral setups simulate a full reset and confirm the watchdog restores service within one poll interval (layer 3).
 
 ## Verification
 

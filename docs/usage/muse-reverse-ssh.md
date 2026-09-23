@@ -35,30 +35,25 @@ Do not use it when the machine already has a public IP (run sshd directly with f
 
 ## Boot Persistence
 
-The keepalive script from step 4 only survives network drops. A machine reboot kills it silently — `nohup ... &` does not persist across boots, and without autostart the tunnel stays down after every reboot with no alert. This is the most common reason a tunnel "just stops working" days later. Do not skip this section.
+The keepalive script from step 4 only survives network drops. A machine reboot kills it silently — `nohup ... &` does not persist across boots, and without autostart the tunnel stays down after every reboot with no alert. This is the most common reason a tunnel "just stops working" days later. Do not skip this section. Protect three layers:
 
-**systemd (preferred, when PID 1 is systemd):**
+**Layer 1 — process supervision.** If the ssh tunnel itself drops while the machine stays up, the keepalive script (or `autossh -M 0` as an alternative) restarts it. This is step 4.
 
-1. Copy `muse-reverse-ssh/scripts/reverse-ssh-boot.service` to `/etc/systemd/system/reverse-ssh-boot.service`.
-2. Replace `OPERATOR_USER` and the `HOME` path with the user that owns the tunnel key.
-3. Enable and start it:
+**Layer 2 — boot autostart.** For machines whose disk survives reboots, register the keepalive to start at boot:
 
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable --now reverse-ssh-boot.service
-   ```
-
-**cron `@reboot` (when systemd is unavailable):**
-
-```text
-@reboot /home/<USER>/.reverse-ssh/reverse-ssh-keepalive.sh
-```
+- **systemd** (most Linux servers/VPS): copy `muse-reverse-ssh/scripts/reverse-ssh-boot.service` to `/etc/systemd/system/`, replace `OPERATOR_USER` and the `HOME` path, then `sudo systemctl daemon-reload && sudo systemctl enable --now reverse-ssh-boot.service`.
+- **No systemd**: a `@reboot` cron entry (`@reboot /home/<USER>/.reverse-ssh/reverse-ssh-keepalive.sh`), an executable `/etc/rc.local`, a macOS `launchd` plist with `RunAtLoad`, or a Windows Task Scheduler "At startup" task.
 
 Watch out for:
 
 - `HOME` must point at the home holding the script, keys, and state dir. A unit running as root gets `HOME=/root` by default, which silently breaks every `$HOME`-relative path in the keepalive script. Set `Environment=HOME=...` explicitly in the unit.
 - The keepalive's `flock` single-instance guard makes boot restarts safe: the lock is released when the old process dies, so a fresh instance after an unclean shutdown takes over cleanly instead of exiting as "another instance running".
-- On cloud VMs that get reimaged (not just rebooted), a boot unit is not enough — the setup steps themselves must be re-runnable. Keep a single restore script that reinstalls sshd, restores keys, and restarts the keepalive, and point the boot mechanism at that script.
+
+**Layer 3 — ephemeral machines.** Containers, reset-on-boot VMs, and spot instances wipe the root filesystem on reboot: no unit file, no cron entry, no installed package survives. Boot autostart cannot work there because there is nothing durable left to trigger it. Instead:
+
+- Keep a single **idempotent restore script on the persistent disk** — one script that reinstalls packages, recreates users/keys, and restarts the keepalive, safe to run repeatedly.
+- Run an **external watchdog** (a scheduler or monitor outside the ephemeral machine) that polls for liveness and runs the restore script when the tunnel goes dark. Recovery takes about one poll interval — plan for that honestly.
+- Add **VPS-side detection**: the VPS is usually a normal persistent machine, so a tiny check there (`ss -tlnp | grep <REMOTE_PORT>`) notices the forwarded port disappearing before any human does.
 
 ## Verification
 
@@ -66,7 +61,8 @@ Watch out for:
 - `ss -tlnp | grep <REMOTE_PORT>` on the VPS shows `0.0.0.0:<REMOTE_PORT>`.
 - Exactly one tunnel ssh process on the inner machine; it recovers within ~10s after being killed.
 - The endpoint file (`current-endpoint.txt`) contains the working access command.
-- Reboot the inner machine and confirm the tunnel and endpoint recover without manual intervention — this is the test that catches missing boot persistence.
+- Reboot the inner machine and confirm the tunnel and endpoint recover without manual intervention — this is the test that catches missing boot persistence (layer 2).
+- For ephemeral machines: simulate a full reset and confirm the external watchdog restores service within one poll interval (layer 3).
 
 ## Failure Modes
 

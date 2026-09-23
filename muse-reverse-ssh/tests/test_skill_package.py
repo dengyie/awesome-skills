@@ -65,6 +65,12 @@ class MuseReverseSshPackageTests(unittest.TestCase):
             "reverse-ssh-boot.service",
             "@reboot",
             "Environment=HOME",
+            "Layer 1",
+            "Layer 2",
+            "Layer 3",
+            "autossh",
+            "External watchdog",
+            "VPS-side detection",
         ]:
             self.assertIn(expected, skill_text)
 
