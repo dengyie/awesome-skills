@@ -159,7 +159,7 @@ The keepalive supervisor only survives network drops. A machine reboot kills it 
 
 ### Layer 1 — process supervision (ssh dies, machine stays up)
 
-Covered by `scripts/reverse-ssh-keepalive.sh` (flock-guarded restart loop). Alternatively, `autossh` is a drop-in replacement:
+Covered by `scripts/reverse-ssh-keepalive.sh` (atomic-`mkdir`-lock-guarded restart loop). Alternatively, `autossh` is a drop-in replacement:
 
 ```bash
 autossh -M 0 -N -o "ServerAliveInterval 30" -o "ServerAliveCountMax 3" \
@@ -229,11 +229,14 @@ On the VPS, confirm the public listener:
 ss -tlnp | grep <REMOTE_PORT>   # expect 0.0.0.0:<REMOTE_PORT>
 ```
 
-On the inner machine, confirm exactly one tunnel process:
+On the inner machine, confirm exactly one tunnel process *with a live socket*
+(a wedged tunnel passes a process check but forwards nothing):
 
 ```bash
-pgrep -f "ssh.*-R <REMOTE_PORT>:localhost:22" | wc -l   # expect 1
-```
+pgrep -f "[s]sh.*-R <REMOTE_PORT>:localhost:22" | wc -l   # expect 1 (bracket trick: plain "ssh" would also match the checker itself)
+for pid in $(pgrep -f "[s]sh.*-R <REMOTE_PORT>" 2>/dev/null); do
+  ss -tnp 2>/dev/null | grep -q "pid=$pid" && echo "tunnel alive (pid $pid)"
+done
 
 Then kill the tunnel ssh once and confirm it reconnects within ~10s and the endpoint works again.
 
@@ -254,7 +257,7 @@ Finally, reboot the inner machine (or restart the boot unit) and confirm the tun
 | `ssh -p <PORT>` times out from outside | VPS firewall blocks the port, or `GatewayPorts` is not `yes` (bound to 127.0.0.1) | open the firewall; set `GatewayPorts yes` and reload sshd |
 | Tunnel connects but forwards nowhere | port already bound on the VPS; without `ExitOnForwardFailure` ssh stays up silently | add `ExitOnForwardFailure=yes`; pick a free port |
 | Tunnel hangs after a network blip, never recovers | no liveness probing on a half-open TCP connection | `ServerAliveInterval` / `ServerAliveCountMax` plus the supervisor loop |
-| Two tunnel processes fight over the port | duplicate keepalive instances | `flock -n` single-instance guard; kill-and-restart for takeover |
+| Two tunnel processes fight over the port | duplicate keepalive instances | atomic `mkdir` single-instance guard; kill-and-restart for takeover |
 | Tunnel never comes back after a reboot | no boot autostart; `nohup &` does not survive reboots | systemd unit or `@reboot` cron (see Boot Persistence); verify with a real reboot |
 | Watchdog never fires even though the tunnel is dead | `pgrep -f "ssh.*-R <PORT>"` matches the checker's own command line | use the bracket trick: `pgrep -f "[s]sh.*-R <PORT>"` |
 | Restore fails right after a reboot with apt/dpkg lock errors | platform reconciliation holds the package lock for minutes after boot | loop-wait on the lock (up to ~10 min) instead of failing immediately |

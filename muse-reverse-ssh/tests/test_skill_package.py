@@ -42,7 +42,8 @@ class MuseReverseSshPackageTests(unittest.TestCase):
             "ExitOnForwardFailure",
             "ServerAliveInterval",
             "PasswordAuthentication no",
-            "flock -n",
+            "flock -n",  # still documented: as the thing NOT to use for long-lived supervisors
+            "mkdir",  # atomic mkdir lockdir is the recommended single-instance guard
             "StrictHostKeyChecking",
         ]:
             self.assertIn(expected, skill_text)
