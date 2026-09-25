@@ -144,7 +144,14 @@ Key options and why they matter:
   use `flock -n` on a lock file here: the lock fd is inherited by the foreground
   `ssh` child, so killing the supervisor leaves an orphaned ssh holding the lock
   forever and no new supervisor instance can ever start (observed in production).
-  A directory cannot be inherited — with PID/timestamp stale-lock reclaim,
+  A directory cannot be inherited — with PID/cmdline stale-lock reclaim (the
+  claim is verified via `/proc/<pid>/cmdline`; reclaim takes the stale lock
+  aside with an atomic rename and re-verifies it *after* the rename, moving it
+  back if it turned out to be alive — so two contenders can never both win. If
+  the move-back itself loses to a fresh claimant, the displaced live owner is a
+  ghost (alive but directory-less, possibly blocked in foreground ssh and never
+  reaching its ownership check) and is terminated after a cmdline re-verify;
+  its orphaned ssh child is reaped by the new holder's stale-tunnel cleanup),
   takeover is always kill-and-restart via the pidfile (`$STATE_DIR/keepalive.pid`,
   verify `/proc/<pid>/cmdline` before killing).
 - Write the operator-facing endpoint to a file (e.g. `current-endpoint.txt`) so the access command stays discoverable:
@@ -185,9 +192,16 @@ Pitfalls:
 - `HOME` must resolve to the home holding the script, keys, and state dir. A unit running as root gets `HOME=/root` by default, which silently breaks every `$HOME`-relative path. Set `Environment=HOME=...` explicitly.
 - The keepalive's atomic `mkdir` single-instance lock makes boot restarts safe: a
   directory lock cannot be inherited by orphaned children, and stale locks (dead
-  PID or older than the max age) are reclaimed — so a fresh instance after an
-  unclean shutdown always takes over cleanly instead of exiting as "another
-  instance running".
+  PID, or a PID whose cmdline is no longer the keepalive script) are reclaimed
+  by taking the stale lockdir aside with an atomic rename and re-verifying it
+  *after* the rename (moved back if it was actually alive) — so a fresh
+  instance after an unclean shutdown always takes over cleanly instead of
+  exiting as "another instance running". There is deliberately no "older than N
+  seconds" rule for the keepalive: a healthy supervisor runs for weeks, so its
+  timestamp is always old — an age rule would let any second instance steal the
+  lock from a healthy first one and leave two supervisors fighting over the VPS
+  port. (The restore script in Layer 3 is different: restores are time-bounded
+  operations, so an age cap there is valid.)
 
 ### Layer 3 — ephemeral machines (disk resets on reboot)
 

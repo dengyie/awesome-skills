@@ -66,4 +66,4 @@ Watch out for:
 
 ## Failure Modes
 
-See `SKILL.md` for the full table: public-port timeouts (`GatewayPorts` / firewall), tunnels that connect but forward nowhere (`ExitOnForwardFailure`), half-open hangs (`ServerAliveInterval`), duplicate keepalive instances (`flock -n`), `publickey` denials on either leg, and tunnels that never come back after a reboot (missing boot persistence).
+See `SKILL.md` for the full table: public-port timeouts (`GatewayPorts` / firewall), tunnels that connect but forward nowhere (`ExitOnForwardFailure`), half-open hangs (`ServerAliveInterval`), duplicate keepalive instances (atomic `mkdir` lockdir — never `flock -n`, whose fd is inherited by the ssh child), `publickey` denials on either leg, and tunnels that never come back after a reboot (missing boot persistence).
