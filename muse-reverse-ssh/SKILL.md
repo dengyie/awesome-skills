@@ -140,7 +140,13 @@ Key options and why they matter:
 - `-o ServerAliveInterval=20 -o ServerAliveCountMax=3`: detect a dead TCP connection within ~60s instead of hanging forever on a half-open socket.
 - `-o ExitOnForwardFailure=yes`: fail fast if the VPS port cannot be bound (e.g. already taken) instead of sitting on a tunnel that forwards nowhere.
 - `-o BatchMode=yes -o ConnectTimeout=20`: never prompt for input, never hang on connect.
-- `flock -n` on a lock file: single instance. Takeover is kill-and-restart: the lock is held only by the supervisor, children must not inherit the lock fd, so killing the supervisor always releases it.
+- Atomic `mkdir` lockdir for single instance (see the template script). Do **not**
+  use `flock -n` on a lock file here: the lock fd is inherited by the foreground
+  `ssh` child, so killing the supervisor leaves an orphaned ssh holding the lock
+  forever and no new supervisor instance can ever start (observed in production).
+  A directory cannot be inherited — with PID/timestamp stale-lock reclaim,
+  takeover is always kill-and-restart via the pidfile (`$STATE_DIR/keepalive.pid`,
+  verify `/proc/<pid>/cmdline` before killing).
 - Write the operator-facing endpoint to a file (e.g. `current-endpoint.txt`) so the access command stays discoverable:
 
   ```text
@@ -177,7 +183,11 @@ Pick the mechanism the platform actually persists (template: `scripts/reverse-ss
 Pitfalls:
 
 - `HOME` must resolve to the home holding the script, keys, and state dir. A unit running as root gets `HOME=/root` by default, which silently breaks every `$HOME`-relative path. Set `Environment=HOME=...` explicitly.
-- The keepalive's `flock` guard makes boot restarts safe: the lock is released when the old process dies (and children never inherit it via `9>&-`), so a fresh instance after an unclean shutdown always takes over cleanly instead of exiting as "another instance running".
+- The keepalive's atomic `mkdir` single-instance lock makes boot restarts safe: a
+  directory lock cannot be inherited by orphaned children, and stale locks (dead
+  PID or older than the max age) are reclaimed — so a fresh instance after an
+  unclean shutdown always takes over cleanly instead of exiting as "another
+  instance running".
 
 ### Layer 3 — ephemeral machines (disk resets on reboot)
 
@@ -192,13 +202,16 @@ Containers, reset-on-boot VMs, and spot instances wipe the root filesystem on re
 
 ### Watchdog and restore pitfalls (learned the hard way)
 
-- **Never guard the restore script with an outer `flock -n <restore.lock>`.** This was the old advice in this very skill — and it silently disabled a production watchdog for ~2.5 hours before anyone noticed. The flock file descriptor is inherited by every long-lived daemon the restore script starts (keepalive, agent, ssh), so the advisory lock is held forever by those background processes and never released; every later watchdog run then believes "a restore is already in progress" and quietly skips recovery. The watchdog keeps polling, logging healthy runs, but can never recover anything again. Fix: put the mutual exclusion *inside* the restore script as an atomic `mkdir` lockdir — a directory cannot be inherited by children, so it can only be held by the script itself — with PID/timestamp stale-lock reclaim (see the Layer 3 bullet above). Note this is the opposite situation from the keepalive supervisor, where `flock -n 9` plus `9>&-` is correct: there the lock is held by one short-lived supervisor, children are explicitly denied the fd, and kill-and-restart releases it.
+- **Never guard the restore script with an outer `flock -n <restore.lock>`.** This was the old advice in this very skill — and it silently disabled a production watchdog for ~2.5 hours before anyone noticed. The flock file descriptor is inherited by every long-lived daemon the restore script starts (keepalive, agent, ssh), so the advisory lock is held forever by those background processes and never released; every later watchdog run then believes "a restore is already in progress" and quietly skips recovery. The watchdog keeps polling, logging healthy runs, but can never recover anything again. Fix: put the mutual exclusion *inside* the restore script as an atomic `mkdir` lockdir — a directory cannot be inherited by children, so it can only be held by the script itself — with PID/timestamp stale-lock reclaim (see the Layer 3 bullet above). The keepalive supervisor needs the same treatment: use the atomic `mkdir` lockdir there too. `flock -n 9` plus `9>&-` looks correct on paper, but in production the foreground `ssh` child inherited the lock fd anyway; after the supervisor was killed, the orphaned ssh held the lock forever and permanently disabled recovery.
 - **`pgrep -f` matches the checker itself.** `pgrep -f "ssh.*-R <REMOTE_PORT>"` also matches the very command running the check, because the pattern text appears in the checker's own command line — a dead tunnel then looks healthy forever. Use the bracket trick: `pgrep -f "[s]sh.*-R <REMOTE_PORT>"`. The regex `[s]sh` matches `ssh` in the target but not the literal `[s]sh` in your own command line. (Same reason supervisor self-checks use `[/]`, as in `pgrep -f "[/]keepalive.sh"`.)
 - **PIDs get reused after a reboot.** A pidfile alone can lie: after a reset, an unrelated process may hold the recorded PID. When validating a pidfile, also compare `/proc/<pid>/cmdline` against the expected program name before trusting it — and before killing it.
 - **Never `pkill -f <supervisor-name>` to stop supervisors.** The pattern matches your own management shell when its command line contains the name (e.g. you launched the restore from a shell whose command includes it), killing your own session mid-restore. Stop via the pidfile: read the PID, verify `/proc/<pid>/cmdline`, then `kill` exactly that PID. (Same self-match hazard as the `pgrep` pitfall above — the bracket trick works for `pkill` too.)
 - **`dpkg -i` can still ask questions.** Reinstalling a package whose config file you modified (e.g. `sshd_config`) makes `ucf` prompt interactively about which version to keep — under a non-interactive restore this hangs forever (observed: stuck 7+ min in `openssh-server.postinst`). Always run restore installs as `DEBIAN_FRONTEND=noninteractive dpkg --force-confdef --force-confold -i ...`.
 - **After a platform reboot, `apt`/`dpkg` may be locked** by the platform's own reconciliation for several minutes. A restore script that fails on the lock turns one outage into two. Loop-wait on the lock (e.g. up to ~10 min, checking every 30s) before giving up.
-- **Supervisors should also watch `sshd`.** If the tunnel supervisor notices `sshd` gone but the `sshd` binary still exists, restarting sshd directly is a seconds-level fix — no full restore needed.
+- **Supervisors should also watch `sshd`.** If the tunnel supervisor notices `sshd` gone but the `sshd` binary still exists, recreate `/run/sshd` if needed and restart sshd directly — a seconds-level fix, no full restore needed. If the binary is gone too (ephemeral rootfs, see below), reinstall from the offline deb cache first.
+- **On ephemeral machines, the `sshd` binary itself is gone after a reboot.** `openssh-server` is apt-installed, so on overlay / reset-on-boot root filesystems `/usr/sbin/sshd` vanishes along with everything else. A watchdog sshd-repair that only recreates `/run/sshd` and host keys, then runs `[ -x /usr/sbin/sshd ] && /usr/sbin/sshd`, silently does nothing — the `-x` guard skips the start and the check fails again, forcing a full restore every single time. Fix it at the root: in the watchdog's sshd repair, if the binary is missing, reinstall from the offline deb cache first (`DEBIAN_FRONTEND=noninteractive dpkg --force-confdef --force-confold -i <cachedir>/openssh-*.deb`, no network needed), then recreate `/run/sshd`, regenerate host keys (`ssh-keygen -A`), align `sshd_config`, start, and re-check in a short retry loop (e.g. 3 × 2s) before declaring failure — a single check immediately after boot is racy under load.
+- **A live tunnel process does not mean a live tunnel.** A wedged `ssh` (dead TCP, live process) passes `pgrep -f "[s]sh.*-R <REMOTE_PORT>"` — pgrep only proves the process exists. Tunnel health checks must also confirm a real socket: iterate the candidate pids and require `ss -tnp` to show an ESTABLISHED socket owned by that pid.
+- **Never silence repair diagnostics.** Redirecting every repair step to `/dev/null` turns "still failed" into a mystery — one sshd outage was only diagnosable via `dpkg.log` because `sshd`'s stderr had been discarded. Append repair output to the watchdog log instead; a quiet success costs nothing, a silent failure costs hours.
 
 Verify each layer separately: kill the tunnel ssh (layer 1), reboot the machine (layer 2), and for ephemeral setups simulate a full reset and confirm the watchdog restores service within one poll interval (layer 3).
 
@@ -248,3 +261,5 @@ Finally, reboot the inner machine (or restart the boot unit) and confirm the tun
 | Restore kills your own SSH session mid-run | `pkill -f <supervisor-name>` matched your management shell's command line | stop supervisors via pidfile + `/proc/<pid>/cmdline` verification, never broad `pkill -f` |
 | `Permission denied (publickey)` on the tunnel leg | tunnel public key missing from the VPS user's `authorized_keys` | reinstall `tunnel-key.pub` |
 | `Permission denied (publickey)` on the access leg | access public key missing from the inner user's `authorized_keys` | reinstall `access-key.pub` |
+| Watchdog sshd repair does nothing after a reboot; always escalates to full restore | `openssh-server` binary wiped with the ephemeral rootfs; `[ -x /usr/sbin/sshd ] &&` guard silently skips the start | reinstall openssh from the offline deb cache inside the repair path, before recreating `/run/sshd` and host keys |
+| Tunnel checks green but the forwarded port is dead | wedged tunnel: dead TCP with a live ssh process fools `pgrep` | verify an ESTABLISHED socket per pid with `ss -tnp`, not just the process |

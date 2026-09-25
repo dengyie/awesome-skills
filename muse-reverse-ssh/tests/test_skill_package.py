@@ -82,8 +82,8 @@ class MuseReverseSshPackageTests(unittest.TestCase):
             "-R ",
             "ExitOnForwardFailure",
             "ServerAliveInterval",
-            "flock -n 9",
-            "9>&-",  # ssh must not inherit the supervisor's lock fd
+            ".keepalive.lockdir",  # atomic mkdir lock, not flock (fd inheritance hazard)
+            'mkdir "$LOCKDIR"',
         ]:
             self.assertIn(expected, content)
 

@@ -47,7 +47,7 @@ The keepalive script from step 4 only survives network drops. A machine reboot k
 Watch out for:
 
 - `HOME` must point at the home holding the script, keys, and state dir. A unit running as root gets `HOME=/root` by default, which silently breaks every `$HOME`-relative path in the keepalive script. Set `Environment=HOME=...` explicitly in the unit.
-- The keepalive's `flock` single-instance guard makes boot restarts safe: the lock is released when the old process dies, so a fresh instance after an unclean shutdown takes over cleanly instead of exiting as "another instance running".
+- The keepalive's atomic `mkdir` single-instance lock makes boot restarts safe: a directory lock cannot be inherited by orphaned children, and stale locks are reclaimed, so a fresh instance after an unclean shutdown takes over cleanly instead of exiting as "another instance running".
 
 **Layer 3 — ephemeral machines.** Containers, reset-on-boot VMs, and spot instances wipe the root filesystem on reboot: no unit file, no cron entry, no installed package survives. Boot autostart cannot work there because there is nothing durable left to trigger it. Instead:
 
