@@ -49,16 +49,18 @@ class GrokSearchPackageTests(unittest.TestCase):
             "scripts/map.js",
             "scripts/search.js",
             "references/planning.md",
-            "Each script writes a single JSON object to stdout",
-            "--full-path",
+            "Every script prints one JSON object",
+            "content.full_path",
         ]:
             self.assertIn(expected, skill_text)
 
-    def test_fetch_full_path_is_explicitly_opt_in(self):
+    def test_fetch_writes_full_path_when_truncated(self):
         fetch_script = (ROOT / "scripts" / "fetch.js").read_text(encoding="utf-8")
+        skill_text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
 
-        self.assertIn('arg === "--full-path"', fetch_script)
-        self.assertIn("args.fullPath ? { full_path:", fetch_script)
+        self.assertIn("full_path: contentInfo.full_output_path", fetch_script)
+        self.assertNotIn("--full-path", fetch_script)
+        self.assertIn("content.full_path", skill_text)
 
     def test_example_config_carries_no_real_credentials(self):
         config = json.loads((ROOT / "config.example.json").read_text(encoding="utf-8"))

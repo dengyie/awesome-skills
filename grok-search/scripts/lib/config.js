@@ -10,20 +10,24 @@ export class ConfigError extends Error {
   }
 }
 
-const DEFAULT_MODEL = "grok-4.6";
+const DEFAULT_MODEL = "grok-4.20-multi-agent-0309";
 const DEFAULT_EXTRA = 6;
-const DEFAULT_SOURCE_CHARS = 400;
+export const DEFAULT_SOURCE_CHARS = 400;
+export const DEFAULT_MAX_SOURCES = 12;
+const DEFAULT_DEADLINE_SECONDS = 240;
 const DEFAULT_TAVILY_API_URL = "https://api.tavily.com";
-const DEFAULT_TAVILY_PROXY_TIMEOUT_MS = 12_000;
 const DEFAULT_FIRECRAWL_API_URL = "https://api.firecrawl.dev/v2";
-const DEFAULT_MCP_TAVILY_URL = "https://search.604020.xyz/mcp";
-const DEFAULT_OUTPUT_DIR = path.join(homedir(), ".cache", "grok-search", "outputs");
+const DEFAULT_STATE_DIR = path.join(homedir(), ".cache", "grok-search");
+const DEFAULT_OUTPUT_DIR = path.join(DEFAULT_STATE_DIR, "outputs");
 const DEFAULT_OUTPUT_RETENTION_DAYS = 30;
 const DEFAULT_RESPONSES_MAX_TURNS = 3;
 const DEFAULT_RESPONSES_REASONING_EFFORT = "low";
 const DEFAULT_RESPONSES_OPENROUTER_ENGINE = "auto";
+const DEFAULT_SEARCH_SOURCE = "web";
 const API_PROVIDERS = new Set(["xai", "openrouter", "openai-compatible"]);
 const OPENROUTER_SEARCH_ENGINES = new Set(["auto", "native", "exa", "firecrawl", "parallel", "perplexity"]);
+const SEARCH_SOURCES = new Set(["web", "x", "both"]);
+export const X_HANDLE_LIMIT = 20;
 
 function env(name) {
   const value = process.env[name];
@@ -75,10 +79,17 @@ export function configFilePath() {
 }
 
 export async function loadConfigFile() {
+  let text;
   try {
-    return JSON.parse(await readFile(configFilePath(), "utf8"));
-  } catch {
-    return {};
+    text = await readFile(configFilePath(), "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT" || error.code === "ENOTDIR") return {};
+    throw new ConfigError(`无法读取配置文件 ${configFilePath()}: ${error.message}`, "CONFIG_FILE_INVALID");
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new ConfigError(`配置文件 ${configFilePath()} 不是有效 JSON: ${error.message}`, "CONFIG_FILE_INVALID");
   }
 }
 
@@ -133,40 +144,11 @@ function dedupeStrings(items) {
   return out;
 }
 
-function parseProviderWeights(value) {
-  if (value == null) return undefined;
-  if (typeof value === "object" && !Array.isArray(value)) {
-    const out = {};
-    for (const [key, weight] of Object.entries(value)) {
-      if (Number.isFinite(weight)) out[key] = Number(weight);
-    }
-    return Object.keys(out).length ? out : undefined;
-  }
-  if (typeof value !== "string") return undefined;
-  try {
-    const parsed = JSON.parse(value);
-    return parseProviderWeights(parsed);
-  } catch {
-    return undefined;
-  }
-}
-
-function resolveProviderWeights(fileConfig, getEnv) {
-  const fromEnv = parseProviderWeights(getEnv("GROK_PROVIDER_WEIGHTS"));
-  if (fromEnv) return fromEnv;
-  for (const key of ["providerWeights", "provider_weights", "GROK_PROVIDER_WEIGHTS"]) {
-    const fromFile = parseProviderWeights(fileConfig?.[key]);
-    if (fromFile) return fromFile;
-  }
-  return undefined;
-}
-
 /**
- * Collect Tavily keys.
+ * Collect official Tavily keys.
  * Priority: TAVILY_API_KEYS env → TAVILY_API_KEY env → merge file tavilyApiKeys + tavilyApiKey.
  * Empty tavilyApiKeys: [] does NOT suppress a valid tavilyApiKey.
- * @param {object} fileConfig
- * @param {(name: string) => string|undefined} [getEnv] injectable for tests
+ * Proxy credentials are a different field and never land in this list.
  */
 export function resolveTavilyApiKeys(fileConfig, getEnv = env) {
   const fromEnvMulti = getEnv("TAVILY_API_KEYS");
@@ -206,6 +188,20 @@ export function normalizeApiProvider(value, grokApiUrl) {
   throw new ConfigError(`GROK_API_PROVIDER 必须是: ${[...API_PROVIDERS].join(", ")}`, "GROK_API_PROVIDER_INVALID");
 }
 
+export function normalizeSearchSource(value) {
+  const source = String(value || DEFAULT_SEARCH_SOURCE).trim().toLowerCase();
+  if (SEARCH_SOURCES.has(source)) return source;
+  throw new ConfigError(`search source 必须是: ${[...SEARCH_SOURCES].join(", ")}`, "SEARCH_SOURCE_INVALID");
+}
+
+export function usesXSearch(searchSource) {
+  return searchSource === "x" || searchSource === "both";
+}
+
+export function usesWebSearch(searchSource) {
+  return searchSource === "web" || searchSource === "both";
+}
+
 export function normalizeOpenRouterSearchEngine(value) {
   const engine = String(value || DEFAULT_RESPONSES_OPENROUTER_ENGINE).trim().toLowerCase();
   if (OPENROUTER_SEARCH_ENGINES.has(engine)) return engine;
@@ -215,8 +211,27 @@ export function normalizeOpenRouterSearchEngine(value) {
   );
 }
 
+// Options removed after a deprecation window. A truthy value used to change results (it
+// attached X search), so ignoring it would fail silently; refuse to start instead. A false or
+// missing value never did anything and stays accepted.
+const REMOVED_OPTIONS = [
+  {
+    env: "GROK_RESPONSES_INCLUDE_X_SEARCH",
+    keys: ["responsesIncludeXSearch", "responses_include_x_search", "GROK_RESPONSES_INCLUDE_X_SEARCH"],
+    replacement: 'searchSource: "both"（或 GROK_SEARCH_SOURCE=both / --source both）',
+  },
+];
+
+function rejectRemovedOptions(fileConfig) {
+  for (const option of REMOVED_OPTIONS) {
+    if (!envOrFileBool(option.env, fileConfig, option.keys, false)) continue;
+    throw new ConfigError(`${option.keys[0]} / ${option.env} 已移除，请改用 ${option.replacement}`, "CONFIG_OPTION_REMOVED");
+  }
+}
+
 export async function loadConfig({ requireGrok = false } = {}) {
   const fileConfig = await loadConfigFile();
+  rejectRemovedOptions(fileConfig);
   const grokApiUrl = envOrFile("GROK_API_URL", fileConfig, ["GROK_API_URL", "grokApiUrl", "grok_api_url", "apiUrl", "api_url"]);
   const grokApiKey = envOrFile("GROK_API_KEY", fileConfig, ["GROK_API_KEY", "grokApiKey", "grok_api_key", "apiKey", "api_key"]);
   const rawApiProvider = envOrFile("GROK_API_PROVIDER", fileConfig, [
@@ -244,6 +259,11 @@ export async function loadConfig({ requireGrok = false } = {}) {
   const outputDir = resolveUserPath(
     envOrFile("GROK_OUTPUT_DIR", fileConfig, ["GROK_OUTPUT_DIR", "outputDir", "output_dir"], DEFAULT_OUTPUT_DIR)
   );
+  // Small cross-command state (provider cooldowns). Kept outside outputDir so the retention
+  // sweep never deletes it.
+  const stateDir = resolveUserPath(
+    envOrFile("GROK_STATE_DIR", fileConfig, ["GROK_STATE_DIR", "stateDir", "state_dir"], DEFAULT_STATE_DIR)
+  );
 
   return {
     grokApiUrl,
@@ -256,6 +276,13 @@ export async function loadConfig({ requireGrok = false } = {}) {
       ["GROK_RESPONSES_MAX_TURNS", "responsesMaxTurns", "responses_max_turns"],
       DEFAULT_RESPONSES_MAX_TURNS,
       { min: 1 }
+    ),
+    // null = not sent; the relay decides. false is a cost lever where the relay passes it through.
+    responsesParallelToolCalls: envOrFileBool(
+      "GROK_RESPONSES_PARALLEL_TOOL_CALLS",
+      fileConfig,
+      ["GROK_RESPONSES_PARALLEL_TOOL_CALLS", "responsesParallelToolCalls", "responses_parallel_tool_calls"],
+      null
     ),
     responsesReasoningEffort: envOrFile(
       "GROK_RESPONSES_REASONING_EFFORT",
@@ -273,11 +300,12 @@ export async function loadConfig({ requireGrok = false } = {}) {
       "responsesExcludedDomains",
       "responses_excluded_domains",
     ]),
-    responsesIncludeXSearch: envOrFileBool("GROK_RESPONSES_INCLUDE_X_SEARCH", fileConfig, [
-      "GROK_RESPONSES_INCLUDE_X_SEARCH",
-      "responsesIncludeXSearch",
-      "responses_include_x_search",
-    ], false),
+    responsesSearchSource: envOrFile(
+      "GROK_SEARCH_SOURCE",
+      fileConfig,
+      ["GROK_SEARCH_SOURCE", "searchSource", "search_source"],
+      ""
+    ),
     responsesAllowedXHandles: envOrFileList("GROK_RESPONSES_ALLOWED_X_HANDLES", fileConfig, [
       "GROK_RESPONSES_ALLOWED_X_HANDLES",
       "responsesAllowedXHandles",
@@ -288,6 +316,16 @@ export async function loadConfig({ requireGrok = false } = {}) {
       "responsesExcludedXHandles",
       "responses_excluded_x_handles",
     ]),
+    responsesXImageUnderstanding: envOrFileBool("GROK_X_IMAGE_UNDERSTANDING", fileConfig, [
+      "GROK_X_IMAGE_UNDERSTANDING",
+      "xImageUnderstanding",
+      "x_image_understanding",
+    ], false),
+    responsesXVideoUnderstanding: envOrFileBool("GROK_X_VIDEO_UNDERSTANDING", fileConfig, [
+      "GROK_X_VIDEO_UNDERSTANDING",
+      "xVideoUnderstanding",
+      "x_video_understanding",
+    ], false),
     responsesOpenRouterEngine: envOrFile(
       "GROK_RESPONSES_OPENROUTER_ENGINE",
       fileConfig,
@@ -295,16 +333,18 @@ export async function loadConfig({ requireGrok = false } = {}) {
       DEFAULT_RESPONSES_OPENROUTER_ENGINE
     ),
     tavilyApiUrl: envOrFile("TAVILY_API_URL", fileConfig, ["TAVILY_API_URL", "tavilyApiUrl", "tavily_api_url"], DEFAULT_TAVILY_API_URL),
+    // Third-party Tavily-compatible base. Never put this URL in tavilyApiUrl: proxy tokens
+    // and official tvly-* keys are not interchangeable.
     tavilyProxyUrl: envOrFile("TAVILY_PROXY_URL", fileConfig, ["TAVILY_PROXY_URL", "tavilyProxyUrl", "tavily_proxy_url"]),
     tavilyProxyKey: envOrFile("TAVILY_PROXY_KEY", fileConfig, ["TAVILY_PROXY_KEY", "tavilyProxyKey", "tavily_proxy_key"]),
     tavilyProxyTimeoutMs: envOrFileInt(
       "TAVILY_PROXY_TIMEOUT_MS",
       fileConfig,
       ["TAVILY_PROXY_TIMEOUT_MS", "tavilyProxyTimeoutMs", "tavily_proxy_timeout_ms"],
-      DEFAULT_TAVILY_PROXY_TIMEOUT_MS,
+      12_000,
       { min: 1 }
     ),
-    // Multi-key: tavilyApiKeys[] (persistent RR). tavilyApiKey = first key for back-compat.
+    // Multi-key official pool. tavilyApiKey stays the first key for callers that still read one.
     ...((tavilyApiKeys) => ({
       tavilyApiKeys,
       tavilyApiKey: tavilyApiKeys[0],
@@ -318,21 +358,6 @@ export async function loadConfig({ requireGrok = false } = {}) {
     ),
     firecrawlApiKey: envOrFile("FIRECRAWL_API_KEY", fileConfig, ["FIRECRAWL_API_KEY", "firecrawlApiKey", "firecrawl_api_key"]),
 
-    mcpTavilyUrl: envOrFile(
-      "MCP_TAVILY_URL",
-      fileConfig,
-      ["MCP_TAVILY_URL", "mcpTavilyUrl", "mcp_tavily_url"],
-      DEFAULT_MCP_TAVILY_URL
-    ),
-    mcpTavilyToken: envOrFile("MCP_TAVILY_TOKEN", fileConfig, ["MCP_TAVILY_TOKEN", "mcpTavilyToken", "mcp_tavily_token"]),
-    mcpTavilyTool: envOrFile(
-      "MCP_TAVILY_TOOL",
-      fileConfig,
-      ["MCP_TAVILY_TOOL", "mcpTavilyTool", "mcp_tavily_tool"],
-      "search_proxy_tavily_search"
-    ),
-    providerWeights: resolveProviderWeights(fileConfig, env),
-
     retryMaxAttempts: envInt("GROK_RETRY_MAX_ATTEMPTS", 3, { min: 1 }),
     retryMultiplier: envFloat("GROK_RETRY_MULTIPLIER", 1, { min: 0 }),
     retryMaxWait: envFloat("GROK_RETRY_MAX_WAIT", 10, { min: 0 }),
@@ -342,8 +367,24 @@ export async function loadConfig({ requireGrok = false } = {}) {
     sourceChars: envOrFileInt("GROK_SOURCE_CHARS", fileConfig, ["GROK_SOURCE_CHARS", "sourceChars", "source_chars"], DEFAULT_SOURCE_CHARS, {
       min: 0,
     }),
+    maxSources: envOrFileInt("GROK_MAX_SOURCES", fileConfig, ["GROK_MAX_SOURCES", "maxSources", "max_sources"], DEFAULT_MAX_SOURCES, {
+      min: 1,
+    }),
+    deadlineSeconds: envOrFileInt(
+      "GROK_DEADLINE_SECONDS",
+      fileConfig,
+      ["GROK_DEADLINE_SECONDS", "deadlineSeconds", "deadline_seconds"],
+      DEFAULT_DEADLINE_SECONDS,
+      { min: 0 }
+    ),
     outputDir,
+    stateDir,
     outputRetentionDays: DEFAULT_OUTPUT_RETENTION_DAYS,
+    // One JSON record per command (query, options, answer, sources, usage, errors) so a run
+    // can be replayed without a session export. `GROK_RUN_LOG=off` disables it.
+    runLog: envOrFileBool("GROK_RUN_LOG", fileConfig, ["GROK_RUN_LOG", "runLog", "run_log"], true),
+    // Also keep the raw Grok Responses body inside the run record.
+    debugRaw: envBool("GROK_DEBUG_RAW", false),
     debug: envBool("GROK_DEBUG", false),
   };
 }

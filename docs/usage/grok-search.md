@@ -55,11 +55,7 @@ Check `error` first. If it is present, read `error.message`, `error.code`, and `
 
 On success, read `answer.text` and `sources.merged` for search, `content.text` for fetch, and `urls` for map. Also inspect `diagnostics.warnings`, `diagnostics.degraded`, and `sources.grok[].source_type` before treating sources as evidence: a degraded answer is built from raw Tavily and Firecrawl results when Grok quota is exhausted, and it is marked as such.
 
-Search source payloads are referenced by `sources.raw_path`. Fetch writes complete truncated content to disk but omits the machine-local path by default; rerun with `--full-path` only when the path is needed, then read the file in chunks.
-
-```bash
-./scripts/fetch.js --full-path https://example.com
-```
+Search source payloads are referenced by `sources.raw_path`. When fetch truncates, `content.full_path` points at the complete file; read it in chunks or rerun once with a larger `--max-chars`.
 
 ## Providers And Limits
 
