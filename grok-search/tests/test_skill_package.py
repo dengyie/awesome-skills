@@ -62,6 +62,13 @@ class GrokSearchPackageTests(unittest.TestCase):
         self.assertNotIn("--full-path", fetch_script)
         self.assertIn("content.full_path", skill_text)
 
+    def test_usage_guide_reads_current_search_sources(self):
+        usage = (ROOT.parent / "docs" / "usage" / "grok-search.md").read_text(encoding="utf-8")
+
+        self.assertIn("sources.items", usage)
+        self.assertNotIn("sources.merged", usage)
+        self.assertNotIn("sources.grok[]", usage)
+
     def test_example_config_carries_no_real_credentials(self):
         config = json.loads((ROOT / "config.example.json").read_text(encoding="utf-8"))
 

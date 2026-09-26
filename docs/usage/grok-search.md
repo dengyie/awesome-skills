@@ -53,7 +53,7 @@ Run the fewest commands that answer the question. Do not chain map, fetch, and s
 
 Check `error` first. If it is present, read `error.message`, `error.code`, and `diagnostics.provider_attempts`, then change something before retrying: a sharper query, a different `--provider` for fetch and map, or a different `--model` for search. Rerunning the same command is not a retry strategy.
 
-On success, read `answer.text` and `sources.merged` for search, `content.text` for fetch, and `urls` for map. Also inspect `diagnostics.warnings`, `diagnostics.degraded`, and `sources.grok[].source_type` before treating sources as evidence: a degraded answer is built from raw Tavily and Firecrawl results when Grok quota is exhausted, and it is marked as such.
+On success, read `answer.text` and `sources.items` for search, `content.text` for fetch, and `urls` for map. Also inspect `diagnostics.warnings` and `diagnostics.degraded` before treating sources as evidence: a degraded answer is built from raw Tavily and Firecrawl results when Grok quota is exhausted, and it is marked as such. Grok's own source list is in the run record at `sources.raw_path`, not on stdout.
 
 Search source payloads are referenced by `sources.raw_path`. When fetch truncates, `content.full_path` points at the complete file; read it in chunks or rerun once with a larger `--max-chars`.
 
