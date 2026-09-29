@@ -9,6 +9,9 @@ The format is intentionally lightweight and optimized for small skill releases.
 ### Added
 
 - added `cloudphone-adb-tunnel` skill package: FRP STCP ADB tunnel deployment and troubleshooting for non-root Android cloud phones (Termux frpc with termux-chroot DNS, desktop visitor, phantom-process hardening), with usage guide and matrix entries
+- made `cloudphone-adb-tunnel` self-contained: bundled sanitized Termux installer (v9, visitor bind port parameterized to 55556) plus spawn/keepalive scripts, frps server setup reference, and the full pitfall runbook
+- added `cloudphone-adb-tunnel` consistency guard tests: bundled scripts must stay byte-identical to the installer-embedded heredocs, and the package must contain no credential literals
+- hardened `cloudphone-adb-tunnel` installer (v10): early input validation for connection secrets, atomic resolv.conf write, real-frpc PID capture with procps-less fallback, spawn log preservation and keepalive.log rotation, plus a visitor-port consistency guard test
 
 ### Removed
 

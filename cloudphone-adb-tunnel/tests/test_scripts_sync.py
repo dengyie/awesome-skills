@@ -52,6 +52,12 @@ class NoCredentialMaterialTests(unittest.TestCase):
             # sha256 校验值是 64 位十六进制, 词边界下不会命中 32 位; 命中即疑似凭据
             self.assertEqual([], pattern.findall(path.read_text(encoding="utf-8", errors="ignore")), str(path))
 
+    def test_visitor_port_default_matches_skill_md(self):
+        m = re.search(r'VISITOR_BIND_PORT="\$\{VISITOR_BIND_PORT:-(\d+)\}"', INSTALLER.read_text(encoding="utf-8"))
+        self.assertIsNotNone(m, "VISITOR_BIND_PORT default missing in installer")
+        self.assertIn(f"bindPort = {m.group(1)}", (ROOT / "SKILL.md").read_text(encoding="utf-8"),
+                      "SKILL.md visitor template drifted from the installer default port")
+
     def test_no_unexpected_ipv4_literals(self):
         for path in sorted((ROOT / "scripts").glob("*.sh")) + [ROOT / "SKILL.md"]:
             for ip in re.findall(r"(\d{1,3}(?:\.\d{1,3}){3})", path.read_text(encoding="utf-8")):

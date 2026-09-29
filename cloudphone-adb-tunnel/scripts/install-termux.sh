@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ══════════════════════════════════════════════════════════
-#  云手机 ADB 隧道一键部署 · Termux v9 (FRP STCP)
+#  云手机 ADB 隧道一键部署 · Termux v10 (FRP STCP)
 #
 #  用法: bash install-termux.sh   (或整块粘贴进 Termux 回车)
 #  幂等: 可重复执行, 失败重跑即可
@@ -11,7 +11,7 @@
 #  写入 $PREFIX/etc/resolv.conf, 并经 termux-chroot(proot) 拉起
 #  frpc —— chroot 内 /etc 即 $PREFIX/etc, Go 解析器因此读得到。
 #  【临时目录】Termux 无根目录 /tmp, 统一用 ~/frp/tmp
-#  【入口格式】支持 域名 / IP / IP:端口 / http://IP:端口/
+#  【入口格式】支持 域名 / IP / IP:端口 / http://IP:端口/ (IPv6 字面量暂不支持)
 #  【分享版】连接信息三项 (入口/token/secretKey) 运行时手动输入,
 #  脚本本体不含任何私人信息; frpc 二进制官方源优先, 全失败时回落公共 CDN。
 #  分享方式: 把连接信息单独发给对方, 脚本本体可直接给下载链接:
@@ -27,6 +27,8 @@ PUB_MIRROR="${PUB_MIRROR:-https://download.mangoqwq.com/pub/frpc-0.71.0-linux-ar
 # 电脑端 visitor 本地绑定端口 (单一定义源: 下方模板与连接命令都引用它)
 # 默认 55556: 部分 Mac 上 55555 被隐形 root 进程占用(报 bind in use); 新机器空闲可改回 55555
 VISITOR_BIND_PORT="${VISITOR_BIND_PORT:-55556}"
+# frps 通信端口默认值 (SERVER_URL 未带端口时使用)
+SERVER_PORT_DEFAULT=48721
 # ─────────────────────────────────────────────────────
 
 set -o pipefail
@@ -39,9 +41,9 @@ PARSED_ADDR="${SERVER_URL#*://}"; PARSED_ADDR="${PARSED_ADDR%%/*}"
 if [[ "$PARSED_ADDR" == *:* ]]; then
   SERVER_PORT="${PARSED_ADDR##*:}"; SERVER_ADDR="${PARSED_ADDR%:*}"
 else
-  SERVER_PORT=48721; SERVER_ADDR="$PARSED_ADDR"
+  SERVER_PORT="$SERVER_PORT_DEFAULT"; SERVER_ADDR="$PARSED_ADDR"
 fi
-[ -z "$SERVER_PORT" ] && SERVER_PORT=48721
+[ -z "$SERVER_PORT" ] && SERVER_PORT="$SERVER_PORT_DEFAULT"
 
 G='\033[32m'; R='\033[31m'; Y='\033[33m'; C='\033[36m'; B='\033[1m'; D='\033[2m'; N='\033[0m'
 SPINNER='|/-\'; _s=0; STEP=0; TOTAL=5
@@ -52,6 +54,20 @@ warn()  { printf "  ${Y}!${N} %s\n" "$1"; }
 die()   { printf "\n${R}${B}==== [FAIL] %s ====${N}\n" "$1"; [ -n "$2" ] && tail -12 "$2" 2>/dev/null; exit 1; }
 human() { local b=$1; if [ "$b" -ge 1048576 ]; then printf "%d.%dMB" $((b/1048576)) $(( (b%1048576)*10/1048576 )); elif [ "$b" -ge 1024 ]; then printf "%dKB" $((b/1024)); else printf "%dB" "$b"; fi; }
 bar()   { local f=$(( $1 * ${2:-26} / 100 )) s="" i; for ((i=0;i<${2:-26};i++)); do if (( i<f )); then s+="█"; else s+="░"; fi; done; printf "%s" "$s"; }
+
+# ── 输入校验: 空值/非法字符尽早失败, 不拖到 40s 健康检查之后 ──
+case "$SERVER_ADDR" in
+  ""|*[!A-Za-z0-9._-]*) die "服务器入口无效: \"${SERVER_ADDR}\" (仅支持 域名/IP[:端口], IPv6 字面量暂不支持)" ;;
+esac
+case "$SERVER_PORT" in
+  ""|*[!0-9]*) die "端口无效: \"${SERVER_PORT}\"" ;;
+esac
+for pair in "token:$FRPS_TOKEN" "secretKey:$STCP_SK"; do
+  label="${pair%%:*}"; val="${pair#*:}"
+  case "$val" in
+    ""|*'"'*|*"\\"*|*' '*|*$'\t'*|*$'\n'*) die "$label 不能为空, 且不得含引号/反斜杠/空白 (将写入 TOML)" ;;
+  esac
+done
 
 TMPD="$HOME/frp/tmp"
 trap 'rm -rf "$TMPD" 2>/dev/null' EXIT
@@ -136,10 +152,11 @@ command -v pgrep >/dev/null 2>&1 && ok "procps 就绪 (pgrep/pkill)" || warn "pr
 # Go 静态二进制只认 /etc/resolv.conf; chroot 内 /etc = $PREFIX/etc
 RES="$PREFIX/etc/resolv.conf"
 [ -f "$RES" ] && [ ! -f "$RES.bak.frp" ] && cp "$RES" "$RES.bak.frp" 2>/dev/null
-cat > "$RES" <<'DNS_EOF'
+cat > "$RES.tmp.frp" <<'DNS_EOF'
 nameserver 223.5.5.5
 nameserver 119.29.29.29
 DNS_EOF
+mv -f "$RES.tmp.frp" "$RES"
 ok "虚拟 DNS 就绪 ($RES → chroot 内映射为 /etc/resolv.conf)"
 termux-wake-lock >/dev/null 2>&1 && ok "CPU wake-lock 已持有" || warn "wake-lock 不可用（不阻塞；ADB 通后做加固可长期常驻）"
 
@@ -184,11 +201,17 @@ if ! command -v termux-chroot >/dev/null 2>&1; then
   exit 1
 fi
 [ -f frpc.pid ] && kill "$(cat frpc.pid 2>/dev/null)" 2>/dev/null
-command -v pkill >/dev/null 2>&1 && pkill -f "frp/frpc" 2>/dev/null
+if command -v pkill >/dev/null 2>&1; then
+  pkill -f "frp/frpc" 2>/dev/null
+else
+  for p in $(ps -A 2>/dev/null | awk '/[f]rpc/{print $1}'); do kill "$p" 2>/dev/null; done
+fi
 sleep 1
-: > logs/frpc.log
+[ -f logs/frpc.log ] && mv -f logs/frpc.log logs/frpc.log.1
 termux-chroot "$HOME/frp/frpc" -c "$HOME/frp/frpc.toml" >> logs/frpc.log 2>&1 &
-echo $! > frpc.pid
+sleep 1
+# frpc.pid 取真实 frpc 进程 (proot exec 后 pgrep 可见); pgrep 缺失/未捕获时退回包装进程 PID
+echo "$(pgrep -nf "frp/frpc" 2>/dev/null || echo $!)" > frpc.pid
 echo "[$(date '+%F %T')] frpc 已拉起 (termux-chroot)"
 SEOF
 chmod +x ~/frp/spawn.sh
@@ -197,6 +220,8 @@ cat > ~/frp/keepalive.sh <<'KEOF'
 termux-wake-lock 2>/dev/null
 mkdir -p "$HOME/frp/logs"
 while true; do
+    KL="$HOME/frp/logs/keepalive.log"
+    [ -f "$KL" ] && [ "$(wc -c < "$KL" 2>/dev/null || echo 0)" -gt 1048576 ] && mv -f "$KL" "$KL.1"
     if command -v pgrep >/dev/null 2>&1; then
         pgrep -f "frp/frpc" >/dev/null 2>&1 || "$HOME/frp/spawn.sh" >> "$HOME/frp/logs/keepalive.log" 2>&1
     elif ! ps -A 2>/dev/null | grep -q "[f]rpc"; then
@@ -210,7 +235,11 @@ ok "spawn.sh / keepalive.sh 已写入 (每 15s 自愈; pgrep 缺失时 ps 探活
 
 step "启动隧道服务"
 [ -f ~/frp/keepalive.pid ] && kill "$(cat ~/frp/keepalive.pid 2>/dev/null)" 2>/dev/null
-command -v pkill >/dev/null 2>&1 && { pkill -f "frp/frpc" 2>/dev/null; pkill -f "keepalive.sh" 2>/dev/null; }
+if command -v pkill >/dev/null 2>&1; then
+  pkill -f "frp/frpc" 2>/dev/null; pkill -f "keepalive.sh" 2>/dev/null
+else
+  for p in $(ps -A 2>/dev/null | awk '/[k]eepalive\.sh|[f]rpc/{print $1}'); do kill "$p" 2>/dev/null; done
+fi
 sleep 1
 : > ~/frp/logs/frpc.log
 : > ~/frp/logs/keepalive.log
