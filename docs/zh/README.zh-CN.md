@@ -20,6 +20,7 @@
 
 - `awesome-ui-kit`
 - `best-project-memory`
+- `cloudphone-adb-tunnel`
 - `codex-agent-worktree-setup`
 - `evidence-driven-bugfix`
 - `grok-search`
@@ -36,6 +37,7 @@
 | --- | --- | --- | --- |
 | `awesome-ui-kit` | 需要组装 AI 聊天、RAG、Canvas 分屏或 Agent 控制台页面 | 复制即用 AI 网页原子组件、多前端框架对齐 | [Guide](../usage/awesome-ui-kit.md) |
 | `best-project-memory` | 需要跨会话保存项目状态 | 上下文恢复、决策记录、TODO 和交接 | [Guide](../usage/best-project-memory.md) |
+| `cloudphone-adb-tunnel` | 需要从公网远程 ADB/投屏无 root 云手机 | FRP STCP 隧道、Termux frpc 保活、Android 13 加固 | [Guide](../usage/cloudphone-adb-tunnel.md) |
 | `codex-agent-worktree-setup` | 需要创建与分支绑定的隔离 Codex 工作线程 | 保护主工作树、创建隔离 agent、修复 detached HEAD | [Guide](../usage/codex-agent-worktree-setup.md) |
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
 | `grok-search` | 需要联网搜索、抓取网页或发现站点页面 | 最新事实核查、URL 正文抓取、站点候选页发现 | [Guide](../usage/grok-search.md) |

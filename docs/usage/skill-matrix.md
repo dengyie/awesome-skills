@@ -10,6 +10,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | --- | --- | --- | --- | --- | --- |
 | `awesome-ui-kit` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | you need backend LLM integration or generic CRUD admin tables | assembled AI pages, copy-ready component files | `docs/usage/awesome-ui-kit.md` |
 | `best-project-memory` | You need durable project continuity across sessions | restoring context, keeping TODOs current, recording decisions, leaving handoffs | the work is a one-shot task with no continuity value | updated `.codex-memory/` files, session summaries, handoffs | `docs/usage/best-project-memory.md` |
+| `cloudphone-adb-tunnel` | You need ADB/scrcpy to a non-root Android cloud phone from anywhere | FRP STCP tunnels, Termux frpc keepalive, Android 13 hardening | the device is on the same LAN, or you need HTTPS/browser access to the phone | registered tunnel, `adb devices` showing `device`, hardened device | `docs/usage/cloudphone-adb-tunnel.md` |
 | `codex-agent-worktree-setup` | You need a Codex-visible process isolated from the primary checkout | branch-bound worktrees, protected main branches, detached HEAD repair | you only need a branch in the current checkout or no new Codex thread was requested | Codex thread, isolated worktree, verified branch mapping | `docs/usage/codex-agent-worktree-setup.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
 | `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
@@ -22,6 +23,7 @@ For installation only, use the [Quickstart](quickstart.md).
 
 - Need to assemble AI chat, RAG search, canvas, or agent interfaces: `awesome-ui-kit`
 - Need continuity and handoff discipline: `best-project-memory`
+- Need ADB or screen mirroring to a cloud phone over the internet: `cloudphone-adb-tunnel`
 - Need an isolated Codex thread or detached worktree repaired: `codex-agent-worktree-setup`
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
 - Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
@@ -34,6 +36,7 @@ For installation only, use the [Quickstart](quickstart.md).
 
 - assembled AI pages, copy-ready component files: `awesome-ui-kit`
 - `.codex-memory/` updates, durable TODOs, handoff notes: `best-project-memory`
+- working ADB tunnel to a non-root cloud phone, verified hardening: `cloudphone-adb-tunnel`
 - Codex thread, isolated worktree, verified branch mapping: `codex-agent-worktree-setup`
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
 - search answer with cited sources, page content, candidate URLs: `grok-search`

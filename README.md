@@ -16,6 +16,7 @@ This repository ships independent skill packages. Start by choosing the one that
 | --- | --- | --- | --- |
 | `awesome-ui-kit` | You are assembling AI chat, RAG, canvas, or agent interfaces | copy-paste AI web components, multi-framework support | [Guide](docs/usage/awesome-ui-kit.md) |
 | `best-project-memory` | You need durable repo memory across long-running work | restoring context, recording decisions, keeping TODOs and handoffs current | [Guide](docs/usage/best-project-memory.md) |
+| `cloudphone-adb-tunnel` | You need ADB/scrcpy to a non-root cloud phone over the internet | FRP STCP relay, Termux frpc deployment, phantom-process hardening | [Guide](docs/usage/cloudphone-adb-tunnel.md) |
 | `codex-agent-worktree-setup` | You need an isolated Codex development thread bound to a branch | protected main worktrees, branch-bound agents, detached HEAD repair | [Guide](docs/usage/codex-agent-worktree-setup.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
 | `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
@@ -67,6 +68,7 @@ If you want help deciding which folder to copy, start with the [Skill Matrix](do
 ```text
 awesome-ui-kit/                     skill package
 best-project-memory/                 skill package
+cloudphone-adb-tunnel/              skill package
 codex-agent-worktree-setup/         skill package
 evidence-driven-bugfix/             skill package
 grok-search/                        skill package

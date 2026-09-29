@@ -6,6 +6,10 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ## Unreleased
 
+### Added
+
+- added `cloudphone-adb-tunnel` skill package: FRP STCP ADB tunnel deployment and troubleshooting for non-root Android cloud phones (Termux frpc with termux-chroot DNS, desktop visitor, phantom-process hardening), with usage guide and matrix entries
+
 ### Removed
 
 - removed `little-lighthouse-blog-publisher` and `zero-to-website-design` skill packages, their usage guides, and all landing-page/matrix references

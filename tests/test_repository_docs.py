@@ -12,6 +12,7 @@ DISCOVERED_SKILLS = sorted(
 DOCUMENTED_SKILLS = [
     "awesome-ui-kit",
     "best-project-memory",
+    "cloudphone-adb-tunnel",
     "codex-agent-worktree-setup",
     "evidence-driven-bugfix",
     "grok-search",
@@ -24,6 +25,7 @@ DOCUMENTED_SKILLS = [
 USAGE_GUIDES = [
     "docs/usage/awesome-ui-kit.md",
     "docs/usage/best-project-memory.md",
+    "docs/usage/cloudphone-adb-tunnel.md",
     "docs/usage/codex-agent-worktree-setup.md",
     "docs/usage/evidence-driven-bugfix.md",
     "docs/usage/grok-search.md",
