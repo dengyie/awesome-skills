@@ -25,6 +25,15 @@ Avoid when the device is on the same LAN (plain `adb connect <ip>:5555` is simpl
 
 The relay only ever sees encrypted frp traffic; the ADB port is never published. The phone side runs frpc under `termux-chroot` (proot) so the Go binary can read a resolv.conf — Android apps have no `/etc/resolv.conf`, and without this the Go resolver falls back to `[::1]:53` and dies with `connection refused`.
 
+## What's Bundled
+
+The skill is self-contained — credentials stay with the operator:
+
+- `scripts/install-termux.sh` — sanitized Termux installer (interactive for the three connection secrets): visible dependency repair, chroot-based DNS for the Go binary, GitHub-first download chain with pinned sha256 and stall detection, 15 s self-healing keepalive.
+- `scripts/spawn.sh` / `scripts/keepalive.sh` — the chroot spawn wrapper and dual-path (pgrep/ps) keepalive loop installed on the phone.
+- `references/frps-setup.md` — VPS relay template (frps.toml, systemd, firewall, domain notes, v0.71 dashboard health checks).
+- `references/pitfalls.md` — the full production pitfall runbook: missing `/tmp`, Go resolver `[::1]:53` fallback and the termux-chroot fix, curl symbol mismatch, silent pkg installs, heredoc paste collisions, phantom process killer, invisible port holders, Clash TUN fake handshakes, CDN cache purge discipline.
+
 ## Deploy
 
 The skill ships the runbook; the operator keeps credentials and pre-filled scripts in a private local directory (never committed). End to end:

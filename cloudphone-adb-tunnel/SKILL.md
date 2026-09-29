@@ -1,73 +1,142 @@
 ---
 name: cloudphone-adb-tunnel
-description: Use when connecting a non-root Android cloud phone or device to a computer over the internet for ADB or scrcpy screen mirroring — deploying the Termux frpc tunnel (FRP STCP mode), running the VPS blind relay and desktop visitor, hardening against the Android 13 phantom process killer, or diagnosing Termux failures such as missing /tmp, Go binary DNS "[::1]:53 connection refused", curl OpenSSL symbol errors, silent pkg hangs, and long-paste truncation. Triggers: 云手机 adb, termux frp, scrcpy 投屏, adb 隧道打不通, adb offline, 幽灵进程.
+description: Use when connecting a non-root Android cloud phone or device to a computer over the internet for ADB or scrcpy screen mirroring — deploying the Termux frpc tunnel (FRP STCP mode), setting up the VPS blind relay (frps), connecting the desktop visitor, hardening against the Android 13 phantom process killer, or diagnosing Termux failures such as missing /tmp, Go binary DNS "[::1]:53 connection refused", curl OpenSSL symbol errors, silent pkg hangs, and long-paste truncation. Triggers: 云手机 adb, termux frp, scrcpy 投屏, adb 隧道打不通, adb offline, 幽灵进程, frps 中继.
 ---
 
-# 云手机 ADB 公网隧道（FRP STCP）部署与排障
+# 云手机 ADB 公网隧道（FRP STCP）
 
-零信任远程 ADB：手机 Termux 内 frpc（stcp proxy → 设备 adbd 127.0.0.1:5555）→ VPS frps 盲中继（专用域名:48721）→ 电脑 frpc visitor → `adb connect 127.0.0.1:55556`。VPS 只转发加密流量，不暴露 ADB。
+零信任远程 ADB：手机 Termux 内 frpc（stcp proxy → 设备 adbd `127.0.0.1:5555`）→ VPS frps 盲中继（只转发加密流量，不暴露 ADB）→ 电脑 frpc visitor → `adb connect 127.0.0.1:55556`。无需 root、无需公网 IP、无需在防火墙开 ADB 端口。
 
-> 本 skill 的密钥与权威脚本在本机私有目录（见「生产真相」），不入库、不进任何分享物。
+本 skill **自包含**：`scripts/` 是可直接使用的脱敏安装器与自愈脚本，`references/` 是服务端搭建与全量踩坑手册。深度细节按需读取：
 
-## 0. 先读生产真相，别凭记忆行动
+- `references/frps-setup.md` — 服务端 frps 模板、systemd、防火墙、域名、健康检查
+- `references/pitfalls.md` — 全量踩坑手册（每条都实机踩过），SKILL.md 只留速查表
 
-- **密钥与权威脚本**：`~/project/cloudphone-frp/`（README 有生产真相、密钥表、全部命令；**目录含 token/secretKey，绝不入库、绝不写入任何分享物**）。
-- **vault 权威手册**：`Note/Infra/云手机 ADB 中继运维手册.md`。改动了流程/脚本/端口后，按 obsidian-doc-router 规则回写手册与路由表。
-- 修改 Termux 脚本时改 `phone/install-termux.sh`（自用预填），同步派生 `install-termux-share.sh`，跑无密钥断言后再发布到下载站。
+> **密钥纪律**：本 skill 一律使用 `<占位符>` 与交互输入，不含任何真实凭据。真实实例的密钥只存放在操作者本机的私有部署目录（如 `~/project/cloudphone-frp/`），不提交任何仓库；改动流程后按 obsidian-doc-router 规则回写 vault 权威手册。
 
-## 1. 标准接入流程
+## 端口与角色约定
 
-### 手机端（新手机/重装 Termux）
-两种给法，脚本幂等、失败重跑即可：
-1. **自用**：把 `phone/install-termux.sh` 用 `cat << 'INSTALL_EOF' > ~/install-termux.sh` … `INSTALL_EOF` 包装整块粘贴 Termux，末尾接 `bash ~/install-termux.sh`。成功标志：`start proxy success`。
-2. **分享**：`curl -fsSL https://<下载站>/pub/install-termux.sh -o ~/install-termux.sh && bash ~/install-termux.sh`，按提示输入三要素（服务器入口/token/secretKey，从自用脚本配置区或 README 密钥表取）。
+| 角色 | 端口 | 说明 |
+|---|---|---|
+| frps 盲中继 | `48721`（TCP，公网唯一暴露面） | token + 强制 TLS + allowPorts 限幅 |
+| 设备 adbd | `127.0.0.1:5555`（仅设备本机） | 云手机需已开启 ADB 调试 |
+| visitor 绑定 | `127.0.0.1:55556` | **默认不用 55555**：实机上 55555 常被隐形 root 进程占用（见 pitfalls §2.1） |
+| frps dashboard | `127.0.0.1:7500`（仅环回） | SSH 隧道查看，不开公网 |
 
-### 电脑端（Mac）
-```bash
-cd ~/project/cloudphone-frp
-nohup ./bin/frpc-macos-arm64 -c pc/frpc-visitor.toml > /tmp/frpc-visitor.log 2>&1 &
-grep "start visitor success" /tmp/frpc-visitor.log
-adb connect 127.0.0.1:55556 && adb devices   # 期望 device 状态
+## 第一步：VPS 服务端 frps
+
+已跑过 frps 的只需放行 `bindPort`；新部署用最小模板（完整说明、systemd 单元、防火墙与域名注意事项见 `references/frps-setup.md`）：
+
+```toml
+# /etc/frp/frps.toml
+bindPort = 48721
+auth.method = "token"
+auth.token = "<openssl rand -hex 32 生成，绝不入库>"
+transport.tls.force = true
+allowPorts = [{ start = 48000, end = 48999 }]
+webServer.addr = "127.0.0.1"
+webServer.port = 7500
+webServer.user = "admin"
+webServer.password = "<openssl rand -hex 16>"
 ```
 
-### ADB 通了立即做加固（防 Termux 被杀，否则 frpc/keepalive 活不长）
+验证：`systemctl is-active frps`；云防火墙放行该 TCP 端口（注意 Clash TUN 会让 `nc` 假通，须从外部主机实测）。
+
+## 第二步：手机 Termux 部署
+
+本仓库自带脱敏安装器 `scripts/install-termux.sh`（GitHub 官方/镜像优先、自建 CDN 兜底、固定 sha256 校验、15s 卡死换源、自动修复 curl 动态库、termux-chroot 解 Go DNS、15s 自愈 keepalive）。运行时交互输入三要素：**服务器入口**（域名/IP[:端口]）、**frps token**、**STCP secretKey**。
+
+给法二选一：
+
 ```bash
+# A. 免粘贴（推荐）：把 scripts/install-termux.sh 放到任意可下载处后
+curl -fsSL <你的脚本URL> -o ~/install-termux.sh && bash ~/install-termux.sh
+
+# B. 粘贴整段：必须用 cat 包装且外层定界符不能叫 EOF
+#    （脚本内 frpc.toml 的 heredoc 也用 EOF，重名会被提前截断）
+cat << 'INSTALL_EOF' > ~/install-termux.sh
+<粘贴 scripts/install-termux.sh 全文>
+INSTALL_EOF
+bash ~/install-termux.sh
+```
+
+成功标志：`start proxy success`。脚本幂等，失败重跑即可。
+
+## 第三步：电脑端 visitor
+
+任一系统下载 [frp 客户端](https://github.com/fatedier/frp/releases)，配置（三要素与服务端/手机端一致）：
+
+```toml
+serverAddr = "<frps 域名或 IP>"
+serverPort = 48721
+auth.method = "token"
+auth.token = "<与服务端一致>"
+
+[[visitors]]
+name = "cloudphone-adb-visitor"
+type = "stcp"
+serverName = "cloudphone-adb"
+secretKey = "<与手机端一致>"
+bindAddr = "127.0.0.1"
+bindPort = 55556
+```
+
+```bash
+./frpc -c frpc.toml        # 等 "start visitor success"
+```
+
+## 第四步：连接 + Android 13 加固（通了立即做）
+
+```bash
+adb connect 127.0.0.1:55556 && adb devices   # 期望 device（首次在手机屏上点"始终允许"）
+
+# 防幽灵进程查杀 + 电池白名单（不做则 frpc/keepalive 活不长）
 adb -s 127.0.0.1:55556 shell device_config set_sync_disabled_for_tests persistent
 adb -s 127.0.0.1:55556 shell device_config put activity_manager max_phantom_processes 2147483647
 adb -s 127.0.0.1:55556 shell dumpsys deviceidle whitelist +com.termux
 adb -s 127.0.0.1:55556 shell cmd appops set com.termux RUN_IN_BACKGROUND allow
 adb -s 127.0.0.1:55556 shell cmd appops set com.termux START_FOREGROUND allow
 ```
-做完用 `device_config get`/`dumpsys`/`appops get` 逐项回读验证，不要只看命令不报错。
 
-### 投屏
-`scrcpy -s 127.0.0.1:55556 --video-codec=h265 --video-bit-rate=2M --max-size=1280 --max-fps=30`。VPS 出口仅 3Mbps，码率 ≤2M、卡顿降 1.5M。
+**每一条都要回读验证**（`device_config get` / `appops get` / `dumpsys deviceidle whitelist`），不要只看命令不报错。
 
-## 2. Termux 硬坑（每条都实机踩过，按症状对号）
+## 投屏
 
-| 症状 | 根因 | 解法 |
+```bash
+scrcpy -s 127.0.0.1:55556 --video-codec=h265 --video-bit-rate=2M --max-size=1280 --max-fps=30
+```
+
+中继出口仅 3Mbps 时码率 ≤2M，卡顿降到 1.5M。
+
+## 排障速查（全量细节见 references/pitfalls.md）
+
+| 症状 | 方向 | 详情 |
 |---|---|---|
-| 脚本写 `/tmp/xxx` 后所有源下载全失败 | **Termux 无根目录 /tmp**（临时目录是 `$TMPDIR`=$PREFIX/tmp），curl 建不了输出文件 | 一律用 `~/frp/tmp` |
-| Go 程序报 `lookup 域名 on [::1]:53: connection refused` | frpc 是 CGO 关闭的 Go 静态二进制，只认 `/etc/resolv.conf`；Android 应用没有此文件，Go 回退查环回 53 端口被拒。bionic 链接的 curl/apt 走 netd 不受影响——所以「curl 能用但 frpc 解析不了」 | 把 `nameserver 223.5.5.5 / 119.29.29.29` 写入 `$PREFIX/etc/resolv.conf`，并经 `termux-chroot`（proot 包）拉起 frpc——chroot 内 `/etc` 即 `$PREFIX/etc` |
-| `CANNOT LINK EXECUTABLE "curl": cannot locate symbol "SSL_set_quic_tls_early_data_enabled"` | openssl 与 libcurl 版本错配（长期未升级的 Termux 常见） | 换清华源后 `apt install -y openssl libcurl curl`；安装脚本已内置自动修复 |
-| `pkg install` 黑屏"没动静" | 输出被 `>/dev/null` 吞掉 + 软件源未配置/不通 | 依赖按 `command -v` 逐项检测、缺啥装啥、安装过程输出可见；默认源不通自动换清华镜像 |
-| 粘贴长脚本回车没反应 / 跑一半崩 | 粘贴缓冲 + **heredoc 定界符撞车**：外层 `cat << 'EOF'` 会被脚本内 frpc.toml 的 `EOF` 提前截断 | 外层包装定界符用 `INSTALL_EOF`；或用 CDN 一行命令免粘贴 |
-| 下载源全失败且分不清原因 | 墙/DNS 污染/文件写不了混在一起 | 固定 sha256 校验 + 单源 15s 均速 <1KB/s 判卡死换源。源链顺序：**GitHub 官方 → ghfast.top → ghproxy.net → gh-proxy.com → 自建下载站 CDN（兜底，最后才动用）** |
+| 所有下载源全失败 | Termux 无 `/tmp`，产物路径改 `~/frp/tmp` | pitfalls §1.1 |
+| Go 程序 `[::1]:53: connection refused` | `$PREFIX/etc/resolv.conf` + `termux-chroot` 拉起（curl 能用而 frpc 不能用即此症） | pitfalls §1.2 |
+| curl `cannot locate symbol "SSL_set_quic…"` | openssl/libcurl 错配，换清华源重装 | pitfalls §1.3 |
+| pkg 安装黑屏无输出 | 输出被吞 + 源未配置；按需装 + 实时输出 + 自动换镜像 | pitfalls §1.4 |
+| 粘贴脚本跑一半崩 | 外层 heredoc 定界符撞内层 `EOF`，改 `INSTALL_EOF` | pitfalls §1.5 |
+| frpc 进程越积越多 | keepalive 探活缺 procps 时误判，需 ps 兜底 + pid 管理 | pitfalls §1.6 |
+| 后台跑一阵被杀 | 幽灵进程 + 电池限制，回读验证加固 | pitfalls §1.7 |
+| visitor `bind in use` 但 adb refused | 55555 被隐形 root 进程占用，用 55556 | pitfalls §2.1 |
+| adb offline/假死 | `adb disconnect && connect`；再两端重启 frpc | pitfalls §2.2 |
+| `nc` 通但业务不通 | Clash TUN 假握手，看应用层或外部主机实测 | pitfalls §2.3 |
+| 发布脚本后对方拿到旧版 | `/pub/` 边缘缓存 24h，必须 CF purge；升级用新文件名 | pitfalls §3.3 |
 
-## 3. 电脑端与网络坑
+## 健康判据（全链路）
 
-- **visitor 端口用 55556，不是 55555**：实机上 55555 被一个 lsof/netstat 均不可见的 root 进程占住（裸 bind 报 Errno 48，adb 侧表现为「bind in use 与 connection refused 并存」）。换新电脑时 55555 可用则可改回。
-- **Clash TUN 假握手**：TUN 会替目标完成 TCP 握手，`nc` 通 ≠ 真通；判定连通性必须看应用层数据（TLS 首字节、HTTP 状态码）或从外部主机实测。VPS IP 已加 Clash DIRECT 双写（订阅更新不丢）。
-- adb 假死自愈：`adb disconnect 127.0.0.1:55556 && adb connect 127.0.0.1:55556`；还不行就两端重启 frpc（手机端 keepalive 15s 会自动拉起）。厂商客户端自己的本地中继（如 127.0.0.1:16384）与本隧道无关，offline 残留直接 disconnect。
+```bash
+adb devices                                        # 127.0.0.1:55556 device
+adb -s 127.0.0.1:55556 shell getprop ro.build.version.release
+adb -s 127.0.0.1:55556 shell "ps -A | grep -c [f]rpc"    # ≥1，设备内 frpc 存活
+ssh <vps> 'curl -su <user>:<pw> http://127.0.0.1:7500/api/serverinfo'
+# clientCounts=2（两端 frpc）、proxyTypeCount.stcp=1、curConns>=1
+# 注意: /api/proxy 在 frp v0.71 恒 404，不能用作健康判断
+```
 
-## 4. 分发与发布纪律
+## 二次分发纪律
 
-- 分享版脚本**发布前必须跑断言**：不含 token、secretKey、frps 域名、私网 IPv4（127.0.0.1/公共 DNS 白名单除外）。自用版含密钥，绝不外发。
-- 脚本发布到下载站 `/pub/` 后**必须 CF purge 该 URL**（/pub/ 有 24h 边缘缓存，同名覆盖不清缓存则对方拿到的还是旧版）；frpc 二进制升级用新版本号文件名可免 purge。
-- 下载站 `/pub/` 走 CF 边缘缓存（zone cache rule，edge TTL 1d override_origin + 源站 nginx Cache-Control），边缘 HIT 比回源快数倍。
-
-## 5. 排障速查
-
-- **手机未注册**（脚本健康检查超时）：看 `~/frp/logs/frpc.log`（DNS/端口/token 错误）和 `~/frp/logs/keepalive.log`（chroot/解析失败会记在这）。
-- **visitor 登录成功但 adb 连不上**：确认 listener 在 `lsof -nP -iTCP:55556 -sTCP:LISTEN`；frps 侧看 proxy 状态（dashboard 仅本机，走 SSH 隧道）。
-- **全链路健康判据**：`adb devices` 显示 device；`adb shell getprop ro.build.version.release`；`adb shell "ps -A | grep -c [f]rpc"` ≥1。
+1. 分享版发布前必跑**无密钥断言**：不含 token、secretKey、frps 域名、私网 IPv4（环回/公共 DNS 白名单除外）。
+2. 脚本发布到 CDN 同名覆盖后**必须 purge**，否则边缘 24h 内是旧版。
+3. 改动流程/端口/脚本后：更新私有部署目录 README + vault 权威手册（按 obsidian-doc-router），并回写本 skill 的速查表与 references。
