@@ -11,6 +11,7 @@ description: Use when connecting a non-root Android cloud phone or device to a c
 
 - `references/frps-setup.md` — 服务端 frps 模板、systemd、防火墙、域名、健康检查
 - `references/pitfalls.md` — 全量踩坑手册（每条都实机踩过），SKILL.md 只留速查表
+- `tests/test_scripts_sync.py` — 一致性守卫：打包副本必须与安装器内嵌 heredoc 逐字节一致；包内不得出现凭据字面量（32 位十六进制/意外 IPv4）。改动 `scripts/` 后必须运行
 
 > **密钥纪律**：本 skill 一律使用 `<占位符>` 与交互输入，不含任何真实凭据。真实实例的密钥只存放在操作者本机的私有部署目录（如 `~/project/cloudphone-frp/`），不提交任何仓库；改动流程后按 obsidian-doc-router 规则回写 vault 权威手册。
 

@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ══════════════════════════════════════════════════════════
-#  云手机 ADB 隧道一键部署 · Termux v8 (FRP STCP)
+#  云手机 ADB 隧道一键部署 · Termux v9 (FRP STCP)
 #
 #  用法: bash install-termux.sh   (或整块粘贴进 Termux 回车)
 #  幂等: 可重复执行, 失败重跑即可
@@ -24,6 +24,9 @@ FRPS_TOKEN="${FRPS_TOKEN:-}"
 STCP_SK="${STCP_SK:-}"
 # 自建下载源 (官方源全失败时的兜底; CF 边缘缓存直发 frpc 二进制)
 PUB_MIRROR="${PUB_MIRROR:-https://download.mangoqwq.com/pub/frpc-0.71.0-linux-arm64}"
+# 电脑端 visitor 本地绑定端口 (单一定义源: 下方模板与连接命令都引用它)
+# 默认 55556: 部分 Mac 上 55555 被隐形 root 进程占用(报 bind in use); 新机器空闲可改回 55555
+VISITOR_BIND_PORT="${VISITOR_BIND_PORT:-55556}"
 # ─────────────────────────────────────────────────────
 
 set -o pipefail
@@ -246,11 +249,11 @@ type = "stcp"
 serverName = "cloudphone-adb"
 secretKey = "${STCP_SK}"
 bindAddr = "127.0.0.1"
-bindPort = 55555
+bindPort = ${VISITOR_BIND_PORT}
 PC_EOF
   echo -e "${C}──────────────────────────────────────────${N}"
   echo ""
-  echo -e "电脑终端启动 visitor 后连接: ${Y}adb connect 127.0.0.1:55555${N}"
+  echo -e "电脑终端启动 visitor 后连接: ${Y}adb connect 127.0.0.1:${VISITOR_BIND_PORT}${N}"
 else
   printf "\r  ${R}✘%s\n" "                        "
   warn "frpc.log 末尾:"; tail -6 ~/frp/logs/frpc.log 2>/dev/null | sed 's/^/    /'
