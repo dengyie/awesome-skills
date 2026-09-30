@@ -24,6 +24,7 @@ This repository ships independent skill packages. Start by choosing the one that
 | `obsidian-doc-router` | You are reading/writing Obsidian vault ops notes or topologies | router-first queries, anti-orphan documentation workflow | [Guide](docs/usage/obsidian-doc-router.md) |
 | `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
 | `split-image-assets` | You need to turn one image into reusable package assets | masks, transparent layers, previews, metadata, QA | [Guide](docs/usage/split-image-assets.md) |
+| `windows-ssh-stcp` | You need SSH to a Windows host with no inbound public port | reuse an existing frps over STCP, loopback-only sshd, NSSM keepalive | [Guide](docs/usage/windows-ssh-stcp.md) |
 
 If you are not sure which one to use, go straight to the [Skill Matrix](docs/usage/skill-matrix.md).
 
@@ -76,6 +77,7 @@ muse-reverse-ssh/                     skill package
 obsidian-doc-router/                skill package
 production-code-quality-review/     skill package
 split-image-assets/                 skill package
+windows-ssh-stcp/                   skill package
 docs/usage/                         newcomer and usage guides
 docs/zh/                            Chinese entry docs
 docs/releases/                      release notes

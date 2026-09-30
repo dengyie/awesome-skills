@@ -20,6 +20,7 @@ DOCUMENTED_SKILLS = [
     "obsidian-doc-router",
     "production-code-quality-review",
     "split-image-assets",
+    "windows-ssh-stcp",
 ]
 
 USAGE_GUIDES = [
@@ -32,6 +33,7 @@ USAGE_GUIDES = [
     "docs/usage/muse-reverse-ssh.md",
     "docs/usage/obsidian-doc-router.md",
     "docs/usage/split-image-assets.md",
+    "docs/usage/windows-ssh-stcp.md",
 ]
 
 LANDING_FILES = [

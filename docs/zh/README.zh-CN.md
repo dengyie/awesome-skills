@@ -16,7 +16,7 @@
 
 这个仓库不是单一 skill，而是一组可复用的 Codex skill 包，重点面向证据优先、生产导向的真实项目工作流。
 
-当前包含 9 个主要 skill：
+当前包含 11 个主要 skill：
 
 - `awesome-ui-kit`
 - `best-project-memory`
@@ -28,6 +28,7 @@
 - `obsidian-doc-router`
 - `production-code-quality-review`
 - `split-image-assets`
+- `windows-ssh-stcp`
 
 英文 GitHub 首页仍然是默认入口：[`README.md`](../../README.md)。
 
@@ -45,6 +46,7 @@
 | `obsidian-doc-router` | 需要查阅或记录 Obsidian 知识库运维事实与拓扑 | 权威路由表首查、防孤岛文档闭环记录 | [Guide](../usage/obsidian-doc-router.md) |
 | `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
 | `split-image-assets` | 需要把单张图拆成可复用资产包 | mask、透明图层、预览、metadata、QA | [Guide](../usage/split-image-assets.md) |
+| `windows-ssh-stcp` | 需要 SSH 登录一台没有公网入站端口的 Windows | 复用已有 frps 的 STCP、只听环回的 sshd、NSSM 保活 | [Guide](../usage/windows-ssh-stcp.md) |
 
 如果你还不确定该选哪个，优先看 [Skill Matrix](../usage/skill-matrix.md)。
 
@@ -93,12 +95,15 @@ cp -R <skill-folder> ~/.agents/skills/
 ```text
 awesome-ui-kit/                     skill 包
 best-project-memory/                 skill 包
+cloudphone-adb-tunnel/              skill 包
 codex-agent-worktree-setup/         skill 包
 evidence-driven-bugfix/             skill 包
 grok-search/                        skill 包
+muse-reverse-ssh/                     skill 包
 obsidian-doc-router/                skill 包
 production-code-quality-review/     skill 包
 split-image-assets/                 skill 包
+windows-ssh-stcp/                   skill 包
 docs/usage/                         英文 usage 与导航页
 docs/zh/                            中文入口与辅助文档
 docs/releases/                      发布说明

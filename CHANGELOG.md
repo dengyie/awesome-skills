@@ -8,6 +8,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Added
 
+- added `windows-ssh-stcp` skill package: SSH into a Windows host with no inbound public port by reusing an existing frps over STCP, with loopback-only OpenSSH, NSSM keepalive, a macOS/Linux visitor, and a production pitfall runbook
 - added `cloudphone-adb-tunnel` skill package: FRP STCP ADB tunnel deployment and troubleshooting for non-root Android cloud phones (Termux frpc with termux-chroot DNS, desktop visitor, phantom-process hardening), with usage guide and matrix entries
 - made `cloudphone-adb-tunnel` self-contained: bundled sanitized Termux installer (v9, visitor bind port parameterized to 55556) plus spawn/keepalive scripts, frps server setup reference, and the full pitfall runbook
 - added `cloudphone-adb-tunnel` consistency guard tests: bundled scripts must stay byte-identical to the installer-embedded heredocs, and the package must contain no credential literals
