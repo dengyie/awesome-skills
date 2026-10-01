@@ -21,6 +21,7 @@ DOCUMENTED_SKILLS = [
     "production-code-quality-review",
     "split-image-assets",
     "windows-ssh-stcp",
+    "yunzhi-cloudphone-checkin",
 ]
 
 USAGE_GUIDES = [
@@ -34,6 +35,7 @@ USAGE_GUIDES = [
     "docs/usage/obsidian-doc-router.md",
     "docs/usage/split-image-assets.md",
     "docs/usage/windows-ssh-stcp.md",
+    "docs/usage/yunzhi-cloudphone-checkin.md",
 ]
 
 LANDING_FILES = [

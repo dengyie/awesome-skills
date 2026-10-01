@@ -25,6 +25,7 @@ This repository ships independent skill packages. Start by choosing the one that
 | `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
 | `split-image-assets` | You need to turn one image into reusable package assets | masks, transparent layers, previews, metadata, QA | [Guide](docs/usage/split-image-assets.md) |
 | `windows-ssh-stcp` | You need SSH to a Windows host with no inbound public port | reuse an existing frps over STCP, loopback-only sshd, NSSM keepalive | [Guide](docs/usage/windows-ssh-stcp.md) |
+| `yunzhi-cloudphone-checkin` | You need automated check-in and cloud phone renewal for Yunzhi Cloudphone | browser console one-click script, Chrome CDP automation, direct CLI | [Guide](docs/usage/yunzhi-cloudphone-checkin.md) |
 
 If you are not sure which one to use, go straight to the [Skill Matrix](docs/usage/skill-matrix.md).
 

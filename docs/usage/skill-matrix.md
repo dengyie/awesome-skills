@@ -19,6 +19,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `production-code-quality-review` | You need production-minded judgment on changed code | PR review, diff triage, merge readiness, architecture-sensitive review | you need implementation or debugging instead of review | review brief, findings, risk summary, verification guidance | `docs/usage/quickstart.md`, `docs/usage/review-workflows.md` |
 | `split-image-assets` | You need reusable assets instead of one flat image | object layers, masks, previews, asset manifests, QA evidence | you only need a quick crop or a fully automatic segmenter | transparent PNGs, masks, `metadata.json`, `qa_report.md`, previews | `docs/usage/split-image-assets.md` |
 | `windows-ssh-stcp` | You need SSH to a Windows host that has no inbound public port | reusing an existing frps over STCP, loopback-only OpenSSH, NSSM keepalive | the host is on the same LAN, you need browser/HTTPS access, or no frps exists yet | working SSH over `127.0.0.1:2222`, supervised frpc on both ends, loopback-only sshd | `docs/usage/windows-ssh-stcp.md` |
+| `yunzhi-cloudphone-checkin` | You need daily check-in and cloud phone space benefit card renewal for Yunzhi Cloudphone | browser console one-click script, Chrome CDP automation, direct CLI, 100% WAF pass | you need ADB/scrcpy tunnel management on the device (use `cloudphone-adb-tunnel`) | auto-claimed 2-day space card, renewed active cloud phone expiration | `docs/usage/yunzhi-cloudphone-checkin.md` |
 
 ## Pick By Problem Type
 
@@ -33,6 +34,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need a machine without a public IP reachable over SSH from the internet: `muse-reverse-ssh`
 - Need router-first vault reading or anti-orphan doc recording: `obsidian-doc-router`
 - Need SSH into a Windows host that cannot accept inbound connections: `windows-ssh-stcp`
+- Need automated daily check-in or space renewal for Yunzhi Cloudphone: `yunzhi-cloudphone-checkin`
 
 ## Pick By Expected Output
 
@@ -47,6 +49,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - verified ops answers, anti-orphan canonical docs: `obsidian-doc-router`
 - transparent assets, masks, previews, QA report: `split-image-assets`
 - SSH to a NAT-bound Windows host through an existing frps, with sshd kept on loopback: `windows-ssh-stcp`
+- claimed 2-day cloudphone space card and renewed active device: `yunzhi-cloudphone-checkin`
 
 ## Prompt Starters
 
@@ -108,6 +111,12 @@ Use $split-image-assets to turn this source image into a reusable asset package 
 
 ```text
 Use $windows-ssh-stcp to reach this Windows machine over SSH through my existing frps, without opening a new public port or exposing sshd beyond loopback.
+```
+
+`yunzhi-cloudphone-checkin`
+
+```text
+Use $yunzhi-cloudphone-checkin to automatically claim the daily login cloud phone space benefit card and renew the running cloud device.
 ```
 
 ## Go Next

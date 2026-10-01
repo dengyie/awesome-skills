@@ -4,8 +4,8 @@ description: >
   Use when building AI-native Web interfaces, AI chat applications, RAG search result pages,
   DeepSeek R1/OpenAI o1 reasoning viewers, Agent tool invocation monitors, split-pane Canvas/Artifacts,
   or modernizing existing pages with self-contained Web Components.
-  Guides the agent to select and copy standard, zero-blackbox single-file components from
-  the awesome-ui repository (React/Vue/Vanilla) instead of reinventing AI UI primitives.
+  Guides the agent to select and copy standard, zero-blackbox single-file components and the shared icon system from
+  the awesome-ui repository (React/Vue/Vanilla) instead of reinventing UI primitives.
 ---
 
 # Awesome UI Kit (AI 原生前端页面装配规范)
@@ -25,6 +25,13 @@ description: >
 - 用户明确提及 "使用 awesome-ui" 或 "帮我写个 AI 页面"
 
 ---
+
+## 🎨 组件与图标优先级 (Component & Icon Priority)
+1. 先检索 `awesome-ui/react/`、`awesome-ui/vue/` 或 `awesome-ui/vanilla/`，复用现成单文件组件。
+2. 所有界面图标优先使用对应技术栈的 `UiIcon`：`react/UiIcon.tsx`、`vue/UiIcon.vue`、`vanilla/UiIcon.js`。
+3. React 命名图标从 `react/UiIcon.tsx` 导入，例如 `Sparkles`、`Check`、`X`、`ChevronRight`；Vue 使用 `<UiIcon name="sparkles" />`；Vanilla 使用 `uiIcon('sparkles')`。
+4. 禁止用 emoji、Unicode 字符（如 `✓`、`▶`、`✕`）或临时手写 SVG 代替 UI 图标。品牌 Logo 使用品牌官方资源。
+5. 只有仓库没有匹配图标时，才允许引入外部开源图标库；新增依赖前必须说明原因和许可证。
 
 ## 🛠️ 标准装配执行工作流 (Standard Workflow)
 
@@ -64,6 +71,7 @@ description: >
 
 | 组件 | 对应单文件路径 | 核心扁平 Props |
 |---|---|---|
+| **`UiIcon`** | `<stack>/UiIcon.*` | React: `name`, `size`, `strokeWidth`; Vue: `name`, `size`, `strokeWidth`; Vanilla: `uiIcon(name, options)` |
 | **`ChatPromptInput`** | `<stack>/ChatPromptInput.*` | `value`, `onChange`, `onSubmit`, `onStop`, `isGenerating`, `allowAttachments`, `attachments` |
 | **`StreamMarkdown`** | `<stack>/StreamMarkdown.*` | `content`, `isStreaming` |
 | **`ThinkingBlock`** | `<stack>/ThinkingBlock.*` | `content`, `isThinking`, `durationSeconds`, `defaultExpanded` |

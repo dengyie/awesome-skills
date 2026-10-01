@@ -16,7 +16,7 @@
 
 这个仓库不是单一 skill，而是一组可复用的 Codex skill 包，重点面向证据优先、生产导向的真实项目工作流。
 
-当前包含 11 个主要 skill：
+当前包含 12 个主要 skill：
 
 - `awesome-ui-kit`
 - `best-project-memory`
@@ -29,6 +29,7 @@
 - `production-code-quality-review`
 - `split-image-assets`
 - `windows-ssh-stcp`
+- `yunzhi-cloudphone-checkin`
 
 英文 GitHub 首页仍然是默认入口：[`README.md`](../../README.md)。
 
@@ -47,6 +48,7 @@
 | `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
 | `split-image-assets` | 需要把单张图拆成可复用资产包 | mask、透明图层、预览、metadata、QA | [Guide](../usage/split-image-assets.md) |
 | `windows-ssh-stcp` | 需要 SSH 登录一台没有公网入站端口的 Windows | 复用已有 frps 的 STCP、只听环回的 sshd、NSSM 保活 | [Guide](../usage/windows-ssh-stcp.md) |
+| `yunzhi-cloudphone-checkin` | 需要云智手机每日签到与云机空间自动续期 | 浏览器控制台一键脚本、Chrome CDP 无感自动化、直连 CLI | [Guide](../usage/yunzhi-cloudphone-checkin.md) |
 
 如果你还不确定该选哪个，优先看 [Skill Matrix](../usage/skill-matrix.md)。
 
