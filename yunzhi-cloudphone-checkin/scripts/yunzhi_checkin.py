@@ -233,7 +233,6 @@ class YunzhiClient:
         self._created_new_page = False
         self._browser = None
         self._playwright = None
-        self._tab_id = None
 
     async def init(self) -> bool:
         """初始化连接：若指定 CDP 则连入浏览器读取 Token 并准备页面"""
@@ -242,8 +241,7 @@ class YunzhiClient:
             try:
                 from playwright.async_api import async_playwright
             except ImportError:
-                log("未检测到 playwright 依赖，正在以轻量 CDP HTTP 接口连接...", "WARN", self.json_mode)
-                log("建议在运行环境执行: pip install playwright", "WARN", self.json_mode)
+                log("未检测到 playwright 依赖，无法通过 CDP 连入浏览器 (请先执行: pip install playwright)", "ERROR", self.json_mode)
                 return False
 
             try:
@@ -369,20 +367,36 @@ class YunzhiClient:
         # 尝试使用 curl_cffi 模拟 Chrome 120 规避 WAF TLS 指纹审查
         try:
             from curl_cffi.requests import AsyncSession
-            async with AsyncSession(impersonate="chrome120") as s:
-                r = await s.request(method, url, headers=headers, data=body_bytes, timeout=15)
-                if r.status_code == 503:
-                    return {}, "WAF 拦截 (HTTP 503): 直连被边缘防火墙 TLS 指纹拦截，请改用 --cdp 模式运行"
-                if r.status_code != 200:
-                    return {}, f"HTTP {r.status_code} 错误"
-                try:
-                    data = r.json()
-                except Exception:
-                    return {}, "响应非有效 JSON"
-                code = data.get("code")
-                if code not in (0, 200):
-                    return data, data.get("message") or f"业务错误 (code={code})"
-                return data.get("data") or {}, ""
+            try:
+                async with AsyncSession(impersonate="chrome120") as s:
+                    r = await s.request(method, url, headers=headers, data=body_bytes, timeout=15)
+                    if r.status_code == 503:
+                        return {}, "WAF 拦截 (HTTP 503): 直连被边缘防火墙 TLS 指纹拦截，请改用 --cdp 模式运行"
+                    if r.status_code != 200:
+                        return {}, f"HTTP {r.status_code} 错误"
+
+                    # 提取并同步轮换新 Authorization Token
+                    new_auth = r.headers.get("authorization")
+                    if new_auth and new_auth != self.token:
+                        self.token = new_auth
+
+                    try:
+                        data = r.json()
+                    except Exception:
+                        return {}, "响应非有效 JSON"
+
+                    if not isinstance(data, dict):
+                        return {}, f"响应非有效 JSON 结构: {str(data)[:60]}"
+
+                    code = data.get("code")
+                    if code not in (0, 200):
+                        return data, data.get("message") or f"业务错误 (code={code})"
+
+                    res_data = data.get("data")
+                    return res_data if isinstance(res_data, dict) else {}, ""
+            except Exception as e:
+                if self.verbose:
+                    log(f"curl_cffi 请求异常 ({e})，正在尝试标准 urllib 兜底...", "WARN", self.json_mode)
         except ImportError:
             pass
 
@@ -390,13 +404,35 @@ class YunzhiClient:
         ctx = ssl.create_default_context()
         req = urllib.request.Request(url, data=body_bytes, headers=headers, method=method)
         try:
-            loop = asyncio.get_event_loop()
-            res = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, context=ctx, timeout=15).read())
-            data = json.loads(res.decode("utf-8"))
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.get_event_loop()
+
+            def _send():
+                with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
+                    resp_headers = dict(resp.headers)
+                    new_auth = resp_headers.get("authorization") or resp_headers.get("Authorization")
+                    return resp.read(), new_auth
+
+            res_bytes, new_auth = await loop.run_in_executor(None, _send)
+            if new_auth and new_auth != self.token:
+                self.token = new_auth
+
+            try:
+                data = json.loads(res_bytes.decode("utf-8"))
+            except Exception:
+                return {}, "响应非有效 JSON"
+
+            if not isinstance(data, dict):
+                return {}, f"响应非有效 JSON 结构: {str(data)[:60]}"
+
             code = data.get("code")
             if code not in (0, 200):
                 return data, data.get("message") or f"业务错误 (code={code})"
-            return data.get("data") or {}, ""
+
+            res_data = data.get("data")
+            return res_data if isinstance(res_data, dict) else {}, ""
         except urllib.error.HTTPError as e:
             if e.code == 503:
                 return {}, "WAF 拦截 (HTTP 503): 直连被边缘防火墙拦截！解决方案：使用 --cdp 模式或使用浏览器一键脚本"
@@ -642,14 +678,19 @@ async def run_checkin_flow(client: YunzhiClient) -> Dict[str, Any]:
         pass
 
     if activated:
-        result["status"] = "OK"
+        if all("(已开通)" in a for a in activated) and not failures and "领取成功" not in popup_note:
+            result["status"] = "ALREADY"
+        else:
+            result["status"] = "OK"
         detail_parts = [popup_note] + activated
         if result["new_expire_time"]:
             detail_parts.append(f"云机有效期更新至: {result['new_expire_time']}")
         if failures:
             detail_parts.append("部分开通异常: " + "; ".join(failures))
         result["detail"] = " | ".join(detail_parts)
-        log(f"签到成功！{result['detail']}", "SUCCESS", client.json_mode)
+        log_type = "SUCCESS" if result["status"] in ("OK", "ALREADY") else "WARN"
+        prefix = "今日已在保！" if result["status"] == "ALREADY" else "签到成功！"
+        log(f"{prefix}{result['detail']}", log_type, client.json_mode)
     elif failures:
         result["detail"] = "; ".join(failures)
         log(f"签到失败: {result['detail']}", "ERROR", client.json_mode)

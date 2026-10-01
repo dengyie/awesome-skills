@@ -97,14 +97,23 @@ async def main():
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
             print(f" <- [RES] {resp.status} {url[:80]} ({len(body)} bytes)", flush=True)
 
+        def attach_page(p):
+            p.on("request", handle_request)
+            p.on("response", handle_response)
+
         for ctx in browser.contexts:
             for page in ctx.pages:
-                page.on("request", handle_request)
-                page.on("response", handle_response)
+                attach_page(page)
+            ctx.on("page", attach_page)
 
-        start_time = time.time()
-        while time.time() - start_time < timeout_s:
-            await asyncio.sleep(1)
+        print(f"[*] 流量监听已挂载至现有及后续新建标签页，监听中 (按 Ctrl+C 可提前退出)...", flush=True)
+
+        try:
+            start_time = time.time()
+            while time.time() - start_time < timeout_s:
+                await asyncio.sleep(1)
+        except (asyncio.CancelledError, KeyboardInterrupt):
+            print("\n[!] 捕获已手动停止", flush=True)
 
         print(f"[+] 抓包完成，结果已保存至: {OUT_FILE.resolve()}")
 

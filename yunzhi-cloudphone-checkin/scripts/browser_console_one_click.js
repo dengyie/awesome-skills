@@ -262,7 +262,16 @@
     const newAuth = resp.headers.get("authorization");
     if (newAuth) token = newAuth;
 
-    const resJson = await resp.json();
+    if (!resp.ok && resp.status === 503) {
+      throw new Error("WAF 拦截 (HTTP 503): 接口请求被拒绝，请确认当前网络环境");
+    }
+
+    let resJson;
+    try {
+      resJson = await resp.json();
+    } catch {
+      throw new Error(`响应非有效 JSON 格式 (HTTP ${resp.status})`);
+    }
     return resJson;
   }
 
@@ -322,7 +331,12 @@
       });
 
       if (claimRes.code !== 0 && claimRes.code !== 200) {
-        console.log(`%c⚠️ 卡片开通响应: ${claimRes.message}`, STYLE_WARN);
+        const msg = claimRes.message || "";
+        if (msg.includes("已领取") || msg.includes("已开通") || msg.includes("已使用") || msg.includes("重复")) {
+          console.log(`%cℹ️ 卡片 ${item.userItemId} 今日已处于开通状态 (${msg})`, STYLE_INFO);
+        } else {
+          console.log(`%c⚠️ 卡片开通响应: ${msg}`, STYLE_WARN);
+        }
         continue;
       }
 

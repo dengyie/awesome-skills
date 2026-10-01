@@ -131,5 +131,53 @@ class YunzhiSignaturesTest(unittest.TestCase):
                         )
 
 
+    def test_clean_unused_attributes(self):
+        """测试 Client 无废弃 _tab_id 残留字段"""
+        client = yz.YunzhiClient()
+        self.assertFalse(hasattr(client, "_tab_id"))
+
+    def test_direct_http_handles_invalid_json(self):
+        """测试 Direct HTTP 模式在非 JSON 或非字典响应下的防御能力"""
+        import asyncio
+        from unittest.mock import patch, MagicMock
+
+        client = yz.YunzhiClient(token="TEST_TOKEN", device_no="TEST_DEV")
+
+        # 模拟返回非 JSON 文本 (如 502 HTML)
+        mock_resp = MagicMock()
+        mock_resp.headers = {}
+        mock_resp.read.return_value = b"<html>502 Bad Gateway</html>"
+        mock_resp.__enter__.return_value = mock_resp
+
+        with patch("urllib.request.urlopen", return_value=mock_resp):
+            data, err = asyncio.run(client._direct_http_request("GET", "http://example.com", {}, None))
+            self.assertEqual(data, {})
+            self.assertIn("响应非有效 JSON", err)
+
+        # 模拟返回 JSON 数组而非字典
+        mock_resp.read.return_value = b'["not", "a", "dict"]'
+        with patch("urllib.request.urlopen", return_value=mock_resp):
+            data, err = asyncio.run(client._direct_http_request("GET", "http://example.com", {}, None))
+            self.assertEqual(data, {})
+            self.assertIn("响应非有效 JSON 结构", err)
+
+    def test_direct_http_token_rotation(self):
+        """测试 Direct HTTP 模式下服务端响应头返回新 Token 时的自动轮换"""
+        import asyncio
+        from unittest.mock import patch, MagicMock
+
+        client = yz.YunzhiClient(token="OLD_TOKEN", device_no="TEST_DEV")
+        mock_resp = MagicMock()
+        mock_resp.headers = {"authorization": "NEW_ROTATED_TOKEN"}
+        mock_resp.read.return_value = b'{"code": 0, "message": "success", "data": {"status": 1}}'
+        mock_resp.__enter__.return_value = mock_resp
+
+        with patch("urllib.request.urlopen", return_value=mock_resp):
+            data, err = asyncio.run(client._direct_http_request("GET", "http://example.com", {}, None))
+            self.assertEqual(err, "")
+            self.assertEqual(data, {"status": 1})
+            self.assertEqual(client.token, "NEW_ROTATED_TOKEN")
+
+
 if __name__ == "__main__":
     unittest.main()
