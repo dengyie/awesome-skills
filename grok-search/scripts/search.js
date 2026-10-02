@@ -13,7 +13,7 @@ import {
 } from "./lib/config.js";
 import { activeFirecrawlCooldown, cooldownSkipMessage } from "./lib/cooldown.js";
 import { startDeadline } from "./lib/deadline.js";
-import { searchGrokResponses } from "./lib/grok-responses.js";
+import { grokRequestTimeoutMs, searchGrokResponses } from "./lib/grok-responses.js";
 import { cleanupOutputDir, previewText, printJson, runRecordBase, writeRunRecord, writeRunRecordSync } from "./lib/output.js";
 import { SEARCH_BUDGET_TOTAL, SEARCH_BUDGET_X } from "./lib/prompts.js";
 import { firecrawlAuthMode, firecrawlSearch } from "./lib/firecrawl.js";
@@ -27,6 +27,10 @@ const QUOTA_MESSAGE_PATTERN = /quota|credits?|balance|billing|insufficient|额�
 const GROK_FAILURE_LABELS = {
   quota: { code: "QUOTA_EXHAUSTED", errorCode: "GROK_QUOTA_EXHAUSTED", label: "额度已耗尽", warning: "Grok Responses quota was exhausted." },
   rate_limit: { code: "RATE_LIMITED", errorCode: "GROK_RATE_LIMITED", label: "触发限流", warning: "Grok Responses was rate limited." },
+  no_search: { code: "NO_SEARCH", errorCode: "GROK_RESPONSES_NO_SEARCH", label: "未执行服务端搜索", warning: "Grok Responses returned an answer without server-side web_search." },
+  empty: { code: "EMPTY", errorCode: "GROK_RESPONSES_EMPTY", label: "返回空内容", warning: "Grok Responses returned empty content." },
+  timeout: { code: "TIMEOUT", errorCode: "GROK_TIMEOUT", label: "请求超时", warning: "Grok Responses timed out." },
+  upstream: { code: "UPSTREAM", errorCode: "GROK_UPSTREAM", label: "上游不可用", warning: "Grok Responses upstream failed." },
 };
 
 function usage() {
@@ -749,7 +753,7 @@ function searchBudget(searchSource, diagnostics) {
   };
 }
 
-async function grokChannel(args, config, searchOptions) {
+async function grokChannel(args, config, searchOptions, { timeoutMs } = {}) {
   const grok = await searchGrokResponses(
     args.query,
     {
@@ -769,6 +773,7 @@ async function grokChannel(args, config, searchOptions) {
       xVideoUnderstanding: searchOptions.xVideoUnderstanding,
       openRouterEngine: searchOptions.openRouterEngine,
       instructions: searchOptions.instructions,
+      timeoutMs,
     },
     config
   );
@@ -798,10 +803,10 @@ async function grokChannel(args, config, searchOptions) {
 }
 
 /**
- * Only two Grok failures are worth degrading to raw extras for: an exhausted quota (nothing
- * will change until someone pays) and a rate limit that survived the retries. They must be
- * reported as what they are, though; calling a transient 429 "quota exhausted" sends the
- * user to check billing for nothing.
+ * Quota and rate-limit are named even without extras. Relays that drop web_search,
+ * Cloudflare 524, timeouts and 5xx are not billing events, but they still leave
+ * Tavily/Firecrawl extras on the table. Auth and protocol errors (401/403/422)
+ * stay hard failures even when extras exist.
  */
 function classifyGrokFailure(error) {
   if (error?.status === 402) return "quota";
@@ -809,6 +814,15 @@ function classifyGrokFailure(error) {
   if (QUOTA_CODE_PATTERN.test(codeText)) return "quota";
   if (error?.status !== 429) return null;
   return QUOTA_MESSAGE_PATTERN.test(String(error?.message || "")) ? "quota" : "rate_limit";
+}
+
+function grokDegradeKind(error) {
+  if (error?.code === "GROK_RESPONSES_NO_SEARCH") return "no_search";
+  if (error?.code === "GROK_RESPONSES_EMPTY") return "empty";
+  if (error?.timedOut || error?.status === 408 || error?.status === 504 || error?.status === 524) return "timeout";
+  if (/超时|timed?\s*out|timeout/i.test(String(error?.message || ""))) return "timeout";
+  if (Number.isInteger(error?.status) && error.status >= 500) return "upstream";
+  return null;
 }
 
 function grokFailureAttempt(config, error) {
@@ -875,7 +889,10 @@ async function publicResult(args, config) {
   const sourceChars = args.sourceChars ?? config.sourceChars;
   const maxSources = args.maxSources ?? config.maxSources;
   const extraOptions = resolveExtra(args, config, searchOptions.searchSource);
-  const grokPromise = grokChannel(args, config, searchOptions).then(
+  const deadlineSeconds = args.deadline ?? config.deadlineSeconds;
+  const grokPromise = grokChannel(args, config, searchOptions, {
+    timeoutMs: grokRequestTimeoutMs(deadlineSeconds),
+  }).then(
     (value) => ({ ok: true, value }),
     (error) => ({ ok: false, error })
   );
@@ -893,13 +910,15 @@ async function publicResult(args, config) {
   if (grokResult.ok) {
     grok = grokResult.value;
   } else {
-    const failure = classifyGrokFailure(grokResult.error);
+    const extrasReady = extraOptions.limit > 0 && extra.sources.length > 0;
+    const named = classifyGrokFailure(grokResult.error);
+    const failure = extrasReady ? named || grokDegradeKind(grokResult.error) : named;
     if (!failure) {
       grokResult.error.diagnostics = failureDiagnostics(config, searchOptions, extraOptions, extra, grokResult.error);
       throw grokResult.error;
     }
     const labels = GROK_FAILURE_LABELS[failure];
-    if (extraOptions.limit <= 0 || !extra.sources.length) {
+    if (!extrasReady) {
       const error = new Error(
         extraOptions.mode === "off-x-only"
           ? `Grok Responses ${labels.label}；--source x 下 extra sources 默认关闭（传 --extra N 可开启），无法降级`

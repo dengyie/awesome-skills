@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 import { inferApiProvider } from "../scripts/lib/config.js";
-import { buildResponsesBody, parseGrokResponses } from "../scripts/lib/grok-responses.js";
+import { buildResponsesBody, grokRequestTimeoutMs, GROK_REQUEST_TIMEOUT_MS, parseGrokResponses } from "../scripts/lib/grok-responses.js";
+
+assert.equal(grokRequestTimeoutMs(0), GROK_REQUEST_TIMEOUT_MS);
+assert.equal(grokRequestTimeoutMs(-1), GROK_REQUEST_TIMEOUT_MS);
+assert.equal(grokRequestTimeoutMs(240), GROK_REQUEST_TIMEOUT_MS);
+assert.equal(grokRequestTimeoutMs(90), 70_000);
+assert.equal(grokRequestTimeoutMs(120), 100_000);
+assert.equal(grokRequestTimeoutMs(5), 8_000);
 
 const baseOptions = {
   platform: "",

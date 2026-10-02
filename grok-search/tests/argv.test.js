@@ -45,10 +45,14 @@ async function runNode(args, env = {}) {
 
 const linkDir = await mkdtemp(path.join(tmpdir(), "grok-search-symlink-"));
 const searchLink = path.join(linkDir, "search.js");
-await symlink(path.resolve("scripts/search.js"), searchLink);
-const linkedHelp = await runNode([searchLink, "--help"]);
-assert.equal(linkedHelp.code, 0, linkedHelp.stderr);
-assert.match(linkedHelp.stdout, /^Usage:/, "a symlinked search.js must still print help");
+try {
+  await symlink(path.resolve("scripts/search.js"), searchLink);
+  const linkedHelp = await runNode([searchLink, "--help"]);
+  assert.equal(linkedHelp.code, 0, linkedHelp.stderr);
+  assert.match(linkedHelp.stdout, /^Usage:/, "a symlinked search.js must still print help");
+} catch (error) {
+  if (error.code !== "EPERM" && error.code !== "EACCES") throw error;
+}
 
 function parseJson(stdout) {
   return JSON.parse(stdout);
@@ -1142,6 +1146,112 @@ for (const [status, message] of [
         GROK_RETRY_MAX_ATTEMPTS: "1",
       }));
       assert.equal(searchResult.code, 1);
+      const output = parseJson(searchResult.stdout);
+      assertCommandErrorSchema(output, "searched_at", "SEARCH_ERROR");
+      assert.equal(output.diagnostics.degraded, undefined);
+    }
+  );
+}
+
+function extraFirecrawlFallback(req, res, grokHandler) {
+  readJson(req, (body) => {
+    if (req.url === "/responses") {
+      grokHandler(req, res, body);
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        data: { web: [{ title: "Fallback source", url: "https://fallback.example/a", description: "raw result" }] },
+      })
+    );
+  });
+}
+
+function extraGrokEnv(port) {
+  return baseGrokEnv(port, {
+    FIRECRAWL_API_URL: `http://127.0.0.1:${port}/firecrawl`,
+    GROK_RETRY_MAX_ATTEMPTS: "1",
+  });
+}
+
+// Relays that drop tools still return prose. With extras in hand that is a degraded
+// search, not a hard failure — otherwise Tavily/Firecrawl results are thrown away.
+await withServer(
+  (req, res) => {
+    extraFirecrawlFallback(req, res, (_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          output: [{ type: "message", content: [{ type: "output_text", text: "Answer from memory." }] }],
+          usage: { server_side_tool_usage_details: { web_search_calls: 0, x_search_calls: 0 } },
+        })
+      );
+    });
+  },
+  async (_server, port) => {
+    const searchResult = await runNode(["scripts/search.js", "--extra", "2", "mock query"], extraGrokEnv(port));
+    assert.equal(searchResult.code, 0, searchResult.stdout);
+    const output = parseJson(searchResult.stdout);
+    assert.equal(output.diagnostics.degraded, true);
+    assert.equal(output.diagnostics.grok_error.code, "NO_SEARCH");
+    assert.match(output.answer.text, /未执行服务端搜索/);
+    assert.match(output.answer.text, /Fallback source/);
+    assert.equal(output.sources.items.length, 1);
+    assert.equal(output.sources.items[0].provider, "firecrawl");
+  }
+);
+
+await withServer(
+  (req, res) => {
+    extraFirecrawlFallback(req, res, (_req, res) => {
+      res.writeHead(524, { "content-type": "text/plain" });
+      res.end("error code: 524");
+    });
+  },
+  async (_server, port) => {
+    const searchResult = await runNode(["scripts/search.js", "--extra", "2", "mock query"], extraGrokEnv(port));
+    assert.equal(searchResult.code, 0, searchResult.stdout);
+    const output = parseJson(searchResult.stdout);
+    assert.equal(output.diagnostics.degraded, true);
+    assert.equal(output.diagnostics.grok_error.code, "TIMEOUT");
+    assert.match(output.answer.text, /请求超时/);
+    assert.equal(output.sources.items[0].provider, "firecrawl");
+  }
+);
+
+await withServer(
+  (req, res) => {
+    extraFirecrawlFallback(req, res, (_req, res) => {
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "upstream unavailable" }));
+    });
+  },
+  async (_server, port) => {
+    const searchResult = await runNode(["scripts/search.js", "--extra", "2", "mock query"], extraGrokEnv(port));
+    assert.equal(searchResult.code, 0, searchResult.stdout);
+    const output = parseJson(searchResult.stdout);
+    assert.equal(output.diagnostics.degraded, true);
+    assert.equal(output.diagnostics.grok_error.code, "UPSTREAM");
+    assert.equal(output.sources.items[0].provider, "firecrawl");
+  }
+);
+
+for (const [status, message] of [
+  [401, "invalid API key"],
+  [403, "forbidden"],
+  [422, "responses protocol unsupported"],
+]) {
+  await withServer(
+    (req, res) => {
+      extraFirecrawlFallback(req, res, (_req, res) => {
+        res.writeHead(status, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: message }));
+      });
+    },
+    async (_server, port) => {
+      const searchResult = await runNode(["scripts/search.js", "--extra", "2", "mock query"], extraGrokEnv(port));
+      assert.equal(searchResult.code, 1, searchResult.stdout);
       const output = parseJson(searchResult.stdout);
       assertCommandErrorSchema(output, "searched_at", "SEARCH_ERROR");
       assert.equal(output.diagnostics.degraded, undefined);

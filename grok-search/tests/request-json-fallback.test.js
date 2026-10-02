@@ -42,6 +42,36 @@ try {
   }
   assert.equal(backoffMs({ retryMaxWait: undefined, retryMultiplier: undefined }, 0), 1000);
 
+  let hungHits = 0;
+  const hung = createServer((_req) => {
+    hungHits += 1;
+    // Never respond: the client AbortController must fire, and retryOnTimeout:false
+    // must not start a second attempt (a hung Grok POST is still billing).
+  });
+  await new Promise((resolve) => hung.listen(0, "127.0.0.1", resolve));
+  try {
+    const hungUrl = `http://127.0.0.1:${hung.address().port}`;
+    await assert.rejects(
+      () =>
+        requestJson(hungUrl, {
+          headers: { "content-type": "application/json" },
+          body: { q: "x" },
+          timeoutMs: 50,
+          config: { retryMaxAttempts: 3, retryMultiplier: 0, retryMaxWait: 0.01 },
+          retry: true,
+          retryOnTimeout: false,
+        }),
+      (err) => {
+        assert.equal(err.timedOut, true, `expected timedOut, got: ${String(err)}`);
+        assert.equal(err.retryable, false);
+        return true;
+      }
+    );
+    assert.ok(hungHits <= 1, `retryOnTimeout:false must not start a second hung POST, got ${hungHits}`);
+  } finally {
+    hung.close();
+  }
+
   console.log("request-json-fallback.test.js: ok");
 } finally {
   server.close();

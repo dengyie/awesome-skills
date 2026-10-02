@@ -528,13 +528,24 @@ export function parseGrokResponses(data, { defaultTool = "web_search", xEnabled 
   };
 }
 
+export const GROK_REQUEST_TIMEOUT_MS = 180_000;
+const GROK_TIMEOUT_RESERVE_MS = 20_000;
+const GROK_MIN_TIMEOUT_MS = 8_000;
+
+export function grokRequestTimeoutMs(deadlineSeconds) {
+  if (!Number.isFinite(deadlineSeconds) || deadlineSeconds <= 0) return GROK_REQUEST_TIMEOUT_MS;
+  return Math.max(GROK_MIN_TIMEOUT_MS, Math.min(GROK_REQUEST_TIMEOUT_MS, deadlineSeconds * 1000 - GROK_TIMEOUT_RESERVE_MS));
+}
+
 export async function searchGrokResponses(query, options, config) {
   const endpoint = responsesEndpoint(config);
   const body = buildResponsesBody(query, options, config);
+  const timeoutMs =
+    Number.isFinite(options.timeoutMs) && options.timeoutMs > 0 ? options.timeoutMs : GROK_REQUEST_TIMEOUT_MS;
   const data = await requestJson(endpoint, {
     headers: authHeaders(config.grokApiKey),
     body,
-    timeoutMs: 180_000,
+    timeoutMs,
     config,
     retry: true,
     retryOnTimeout: false,
