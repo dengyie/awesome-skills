@@ -17,6 +17,7 @@ class MuseReverseSshPackageTests(unittest.TestCase):
             ROOT / "agents" / "openai.yaml",
             ROOT / "scripts" / "reverse-ssh-keepalive.sh",
             ROOT / "scripts" / "reverse-ssh-boot.service",
+            ROOT / "scripts" / "health-watch-loop.sh",
             ROOT.parent / "docs" / "usage" / "muse-reverse-ssh.md",
         ]
         missing = [
@@ -122,8 +123,29 @@ class MuseReverseSshPackageTests(unittest.TestCase):
             "the `sshd` binary itself is gone after a reboot",  # offline deb reinstall
             "ss -tnp",  # zombie tunnel: a live process does not mean a live tunnel
             "Never silence repair diagnostics",  # keep repair stderr in the log
+            "Never `set -e` in the resident loop",  # degraded exit code would kill the loop
+            "clear first-pass failures",  # post-restore re-verify must not stick at failed
         ]:
             self.assertIn(expected, skill_text)
+
+    def test_health_watch_loop_template_is_valid_and_safe(self):
+        script = ROOT / "scripts" / "health-watch-loop.sh"
+        content = script.read_text(encoding="utf-8")
+        self.assertTrue(content.startswith("#!/bin/bash"))
+        for expected in [
+            "health-watch-loop.pid",  # supervisor verifies loop liveness via this pidfile
+            "timeout 300",  # a hung check must never serialize the loop
+            "tail -n 200",  # stderr stays bounded
+        ]:
+            self.assertIn(expected, content)
+        # The check script exits 1 when degraded by design; `set -e` would let
+        # the first degraded run kill the loop. `set -u` only.
+        self.assertIn("set -u", content)
+        self.assertNotIn("\nset -e", content)
+        result = subprocess.run(
+            ["bash", "-n", str(script)], capture_output=True, text=True, timeout=30
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class KeepaliveLockBehaviorTests(unittest.TestCase):

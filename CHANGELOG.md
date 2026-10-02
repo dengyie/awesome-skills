@@ -21,6 +21,8 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Changed
 
+- updated `muse-reverse-ssh` SKILL.md Layer 3 watchdog guidance to the production two-tier pattern: a zero-cost resident loop (`scripts/health-watch-loop.sh`, new template) runs minute-level checks and self-heals on the ephemeral machine, while the external supervisor polls sparsely (5 min default) to verify loop liveness (pidfile + `/proc/<pid>/cmdline`), relaunch it detached, and read the JSON status with one fixed command — silent when healthy, logs only anomalies. Replaces the old "1-minute external poll" default after production measurement showed a 1-minute agent-driven poll burning ~7% of a weekly free quota on an idle machine (resident loop + 5-min supervisor ≈ 1/5 the usage). Added pitfalls: never `set -e` in the resident loop (degraded exit code kills it), wrap each run in `timeout`, and the post-restore re-verify must clear first-pass failures to `fixed` instead of sticking at `failed`
+
 - updated `obsidian-doc-router` SKILL.md: multi-platform vault paths (macOS iCloud + Windows), vault-real recording directories (`Note/Project/`, `Note/AI/经验/`, `Note/Accounts/`) replacing non-existent `01.项目/`/`02.技术/`, TLDR header contract `## 速读（当前有效 · 维护于 …）`, trigger-word budget (≤15 distinctive keywords, no synonym/version enumeration), quick-section length cap (≤200 chars), and removal of stale cross-skill references
 
 ### Added
