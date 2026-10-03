@@ -83,6 +83,12 @@ YUNZHI_CREDS_JS = """
             if (m) token = decodeURIComponent(m[1]);
         } catch (e) {}
     }
+    if (!token) {
+        try {
+            const u = new URL(location.href);
+            token = u.searchParams.get('access_token') || '';
+        } catch (e) {}
+    }
     let deviceNo = '';
     try { deviceNo = localStorage.getItem('cloud_phone_device_no') || ''; } catch (e) {}
     return { token: token, deviceNo: deviceNo };
