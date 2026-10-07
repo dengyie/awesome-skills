@@ -1,13 +1,13 @@
 ---
 name: cue-sandbox
-description: Cue 沙盒的 SSH、EasyTier mango-mesh TUN、Komari 探针与 overlay 挖矿接入 SOP。用于用户提到 cue、mesh-cue、cue-tunnel、Cue 探针、Cue EasyTier、Cue reverse-ssh、10.144.144.81、easytire/easytier Cue、印度 2222 兜底，或要把无公网入站的 Cue 接到 mesh / Komari / 挖矿中枢时。日常走 mesh，不要把印度 VPS 当登录机。没有 Obsidian vault / doc-lookup 也能执行：先探测本机，再一次性向操作者要齐输入。
+description: Cue 沙盒的 SSH、EasyTier mango-mesh TUN、Komari 探针与 overlay 挖矿接入 SOP。用于用户提到 cue、mesh-cue、cue-tunnel、Cue 探针、Cue EasyTier、Cue reverse-ssh、10.144.144.81、easytire/easytier Cue、印度中继兜底，或要把无公网入站的 Cue 接到 mesh / Komari / 挖矿中枢时。日常走 mesh，不要把印度 VPS 当登录机。自包含执行：先探测本机，一次性向操作者索取所需配置，直接落地。
 ---
 
 # Cue 沙盒接入（SSH / EasyTier / 探针）
 
 Cue 没有公网入站。日常登录走 EasyTier TUN。印度 VPS 只反弹 SSH 兜底。探针跑在 Cue 本机。挖矿走 Hub overlay 口，不走公网 7019。
 
-本 skill 必须能在**没有 vault、没有 doc-lookup、没有操作者笔记本**的 Cue 本机上执行。vault 只是可选加速，不是开工门禁。缺 vault 时：探测本机 → 一次性列出缺的输入 → 操作者补齐后继续。不要停下来要 canonical 全文。
+本 skill 是**完全自包含的独立操作规程**。所有配置均由本机探测结果与操作者输入的参数构成，无需任何外部文档库或知识库。探测本机 → 一次性列出缺的输入 → 操作者补齐后立即落地。严禁停下来索取外部文档。
 
 ```text
 操作者  ssh mesh-cue  ──EasyTier──►  Cue ubuntu@<CUE_OVERLAY>:22
@@ -25,7 +25,7 @@ Cue ssh -R 0.0.0.0:<TUNNEL_REMOTE_PORT>:localhost:22 ─► 印度 <INDIA_USER>@
 - `references/easytier.md`：TUN 模板、systemd 单元、验收命令
 - `references/probe.md`：token 签发、ICMP、挖矿三件套（默认跳过）
 
-## 先探测，不要先问 vault
+## 步骤 1：探测本机环境
 
 在当前机器上跑，保存输出，用来决定自己是 Cue 还是操作者本机：
 
@@ -41,13 +41,13 @@ ss -tlnp | grep -E ':22 |:2222 ' || true
 
 判定：
 
-- 有 `/dev/net/tun`、用户是 `ubuntu`（或即将成为 Cue 的 Linux 沙盒）→ **你在 Cue 上**。按下面「Cue 本机落地」做，不要要求 `doc-lookup`。
+- 有 `/dev/net/tun`、用户是 `ubuntu`（或即将成为 Cue 的 Linux 沙盒）→ **你在 Cue 上**。直接按下面「Cue 本机落地」步骤执行。
 - 有 `ssh mesh-cue` / `~/.ssh/cue-access-key` → **你在操作者本机**。写 SSH config、装访问钥，不要在本机起 EasyTier 当 Cue。
 - 两边都不是 → 问操作者：目标是「把当前这台接成 Cue」还是「从这台登录已有 Cue」。只问这一句。
 
 **挖矿默认跳过。** 只有用户明确说挖矿 / srb-xel / overlay 7019 才读 `references/probe.md` 的矿池段。已在跑的矿不要重装。
 
-## 一次性收集，不要连环追问
+## 步骤 2：一次性收集所需配置
 
 把缺的项列成一张表，一次发给操作者。已探测到的不要再问。私钥、token、mesh secret、钱包只写路径或让操作者在目标机本地粘贴，**不要**让他们发到聊天。
 
@@ -65,8 +65,6 @@ ss -tlnp | grep -E ':22 |:2222 ' || true
 | Komari token | Hub `admin:addClient`，只写入 Cue env | 探针 | 已有 `/etc/komari-agent.env` |
 | `<HUB_OVERLAY>` | 矿池宿主 Overlay IP，默认 `10.144.144.2` | 仅用户明确要求挖矿 | 默认跳过挖矿 |
 | 钱包 / worker | 操作者 | 仅用户明确要求挖矿 | 默认跳过挖矿 |
-
-vault 若碰巧可用，可以 `doc-lookup "cue"` 填表，**填完就干活**。填不了就用上表，不要停。
 
 ## 先决定
 
@@ -94,7 +92,7 @@ vault 若碰巧可用，可以 `doc-lookup "cue"` 填表，**填完就干活**�
 - 挖矿节点禁止 `AGENT_DISABLE_WEB_SSH=true`。
 - 白名单用 Hub `tcpdump` 和 `_static_ips`，不用 ipify，不改 `hub.env`。
 - GitHub `releases/latest` 对 prerelease 404，二进制钉 snapshot 标签。
-- 没有 vault 不是失败。连环追问 vault / canonical 全文才是失败。
+- 严禁停工索取外部文档或知识库。直接依据探测结果与操作者提供的参数执行配置。
 
 ## 验收
 

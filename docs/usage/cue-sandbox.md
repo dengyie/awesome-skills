@@ -2,7 +2,7 @@
 
 Use `cue-sandbox` when a Cue cloud sandbox with no inbound public SSH must join EasyTier mango-mesh, stay reachable over `ssh mesh-cue`, keep an India reverse-SSH fallback, and optionally run a Komari probe (overlay mining only when the user asks).
 
-The skill is executable on the Cue host itself. An Obsidian vault or `doc-lookup` is optional cache, not a gate. If vault is missing: probe the current machine, ask once for missing inputs, then continue. Do not stop to request canonical docs.
+The skill is completely self-contained and executable directly on the Cue host. All configurations are derived from local machine probing and operator-provided inputs. Probe the current machine, ask once for missing inputs, and continue setup without stopping for external documents.
 
 If you are still choosing among skills, use the [Skill Matrix](skill-matrix.md). For installation only, use the [Quickstart](quickstart.md).
 
@@ -39,11 +39,11 @@ The skill is a runbook. Credentials stay with the operator and are never committ
 - `references/easytier.md` — TUN template, unit `easytier-mango-mesh.service`, peer placeholders, systemd unit
 - `references/probe.md` — Hub loopback `admin:addClient`, ICMP, optional mining env triad, overlay pool
 
-Live numbers (fingerprints, Hub addresses, snapshot tags) come from the operator in one batch, or from vault if it happens to be available.
+Live numbers (fingerprints, Hub addresses, snapshot tags) come from the operator in one batch.
 
 ## Deploy
 
-1. **Probe the current machine.** Decide Cue vs operator laptop from `tun0` / `ubuntu` / `cue-access-key`. Do not ask for vault first.
+1. **Probe the current machine.** Decide Cue vs operator laptop from `tun0` / `ubuntu` / `cue-access-key`. Do not stop to request external documentation.
 2. **Collect missing inputs once.** Instance name, unique overlay IP, mesh secret, two Hub `host:11010`, access pubkey line, optional India IP and port, optional Komari endpoint. Never ask for private keys in chat.
 3. **EasyTier TUN.** Copy the template; do not hand-edit `network_secret`. Accept Cue-side `tun0` + unit active when Hub CLI is unreachable.
 4. **Access key on Cue only.** Install the operator pubkey on Cue, write `Host mesh-cue` with `IdentitiesOnly yes`. Prove `ssh mesh-cue` before touching India.
@@ -56,7 +56,7 @@ Live numbers (fingerprints, Hub addresses, snapshot tags) come from the operator
 - Cue public-facing sshd keeps `PasswordAuthentication no`.
 - GitHub `releases/latest` 404s on prerelease tags — pin a snapshot.
 - Do not `journalctl` SRBMiner or run `SRBMiner --version` during troubleshooting.
-- Missing vault is not a failure. Stopping to demand canonical docs is.
+- Do not halt execution to request external documentation. Complete setup using local probing and operator inputs.
 
 ## Related
 
