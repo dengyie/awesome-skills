@@ -22,7 +22,8 @@ from phone_playwright.api.async_api import AsyncPhonePlaywright
 
 async def inspect_ui(device_id: str, save_screenshot: str | None = None) -> None:
     async with AsyncPhonePlaywright() as pw:
-        page = await pw.connect(device_id=device_id)
+        device = await pw.connect(device_id)
+        page = device.page
         snap = await page.snapshot(include_screenshot=bool(save_screenshot))
         
         print("=" * 80)

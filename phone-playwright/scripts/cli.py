@@ -29,7 +29,8 @@ from phone_playwright.mcp.server import PhonePlaywrightMcpServer
 
 async def run_snapshot(device_id: str, screenshot: bool = False) -> None:
     async with AsyncPhonePlaywright() as pw:
-        page = await pw.connect(device_id=device_id)
+        device = await pw.connect(device_id)
+        page = device.page
         snap = await page.snapshot(include_screenshot=screenshot)
         print(f"=== 设备快照 (包名: {snap.package_name}, 活动: {snap.activity_name}) ===")
         print(f"视口元素数量: {len(snap.elements)}")
@@ -40,21 +41,24 @@ async def run_snapshot(device_id: str, screenshot: bool = False) -> None:
 
 async def run_click(device_id: str, selector: str, timeout: float) -> None:
     async with AsyncPhonePlaywright() as pw:
-        page = await pw.connect(device_id=device_id)
+        device = await pw.connect(device_id)
+        page = device.page
         result = await page.locator(selector).click(timeout_s=timeout)
         print(f"[成功] 点击完成: 目标 '{selector}', 耗时 {result.time_taken_ms}ms, 坐标范围: {result.executed_at_bounds}")
 
 
 async def run_fill(device_id: str, selector: str, text: str, timeout: float) -> None:
     async with AsyncPhonePlaywright() as pw:
-        page = await pw.connect(device_id=device_id)
+        device = await pw.connect(device_id)
+        page = device.page
         result = await page.locator(selector).fill(text, timeout_s=timeout)
         print(f"[成功] 文本输入完成: 目标 '{selector}', 输入内容 '{text}', 耗时 {result.time_taken_ms}ms")
 
 
 async def run_scroll(device_id: str, selector: str, max_swipes: int, direction: str) -> None:
     async with AsyncPhonePlaywright() as pw:
-        page = await pw.connect(device_id=device_id)
+        device = await pw.connect(device_id)
+        page = device.page
         loc = await page.locator(selector).scroll_into_view(max_swipes=max_swipes, direction=direction)  # type: ignore[arg-type]
         is_vis = await loc.is_visible()
         if is_vis:
@@ -65,7 +69,8 @@ async def run_scroll(device_id: str, selector: str, max_swipes: int, direction: 
 
 async def run_swipe(device_id: str, direction: str, distance_ratio: float) -> None:
     async with AsyncPhonePlaywright() as pw:
-        page = await pw.connect(device_id=device_id)
+        device = await pw.connect(device_id)
+        page = device.page
         await page.swipe(direction=direction, distance_ratio=distance_ratio)  # type: ignore[arg-type]
         print(f"[成功] 手势执行完成: 方向 '{direction}', 距离比例 {distance_ratio}")
 
@@ -73,7 +78,8 @@ async def run_swipe(device_id: str, direction: str, distance_ratio: float) -> No
 async def run_repl(device_id: str) -> None:
     print(f"正在连接设备 {device_id} 进入 Phone-Playwright REPL...")
     async with AsyncPhonePlaywright() as pw:
-        page = await pw.connect(device_id=device_id)
+        device = await pw.connect(device_id)
+        page = device.page
         print("连接成功！可用指令: snap, click <sel>, fill <sel> <text>, scroll <sel>, swipe <dir>, back, home, exit")
         loop = asyncio.get_running_loop()
         while True:

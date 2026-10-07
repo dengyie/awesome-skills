@@ -168,6 +168,41 @@ class SyncPhoneDevice:
     def page(self) -> SyncPhonePage:
         return self._page
 
+    def locator(self, selector: str) -> SyncPhoneLocator:
+        return self._page.locator(selector)
+
+    def get_by_text(self, text: str, exact: bool = False) -> SyncPhoneLocator:
+        return self._page.get_by_text(text, exact=exact)
+
+    def get_by_role(self, role: str, name: str | None = None) -> SyncPhoneLocator:
+        return self._page.get_by_role(role, name=name)
+
+    def get_by_test_id(self, test_id: str) -> SyncPhoneLocator:
+        return self._page.get_by_test_id(test_id)
+
+    def snapshot(
+        self,
+        use_vision_fallback: bool = False,
+        include_screenshot: bool = False,
+    ) -> PageSnapshot:
+        return self._page.snapshot(
+            use_vision_fallback=use_vision_fallback,
+            include_screenshot=include_screenshot,
+        )
+
+    def swipe(
+        self,
+        direction: Literal["up", "down", "left", "right"],
+        distance_ratio: float = 0.5,
+    ) -> None:
+        self._page.swipe(direction=direction, distance_ratio=distance_ratio)
+
+    def press_back(self) -> None:
+        self._page.press_back()
+
+    def press_home(self) -> None:
+        self._page.press_home()
+
 
 class SyncPhonePlaywright:
     """同步上下文管理器顶层入口。"""
@@ -182,8 +217,9 @@ class SyncPhonePlaywright:
     def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         self.close()
 
-    def connect(self, alias_or_id: str) -> SyncPhoneDevice:
-        async_dev = self._loop_thread.run(self._async_playwright.connect(alias_or_id))
+    def connect(self, alias_or_id: str = "", device_id: str = "") -> SyncPhoneDevice:
+        target = device_id or alias_or_id
+        async_dev = self._loop_thread.run(self._async_playwright.connect(target))
         return SyncPhoneDevice(async_device=async_dev, loop_thread=self._loop_thread)
 
     def list_devices(self) -> list[dict[str, str]]:

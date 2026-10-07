@@ -150,6 +150,41 @@ class AsyncPhoneDevice:
     def page(self) -> AsyncPhonePage:
         return self._current_page
 
+    def locator(self, selector: str) -> PhoneLocator:
+        return self._current_page.locator(selector)
+
+    def get_by_text(self, text: str, exact: bool = False) -> PhoneLocator:
+        return self._current_page.get_by_text(text, exact=exact)
+
+    def get_by_role(self, role: str, name: str | None = None) -> PhoneLocator:
+        return self._current_page.get_by_role(role, name=name)
+
+    def get_by_test_id(self, test_id: str) -> PhoneLocator:
+        return self._current_page.get_by_test_id(test_id)
+
+    async def snapshot(
+        self,
+        use_vision_fallback: bool = False,
+        include_screenshot: bool = False,
+    ) -> PageSnapshot:
+        return await self._current_page.snapshot(
+            use_vision_fallback=use_vision_fallback,
+            include_screenshot=include_screenshot,
+        )
+
+    async def swipe(
+        self,
+        direction: Literal["up", "down", "left", "right"],
+        distance_ratio: float = 0.5,
+    ) -> None:
+        await self._current_page.swipe(direction=direction, distance_ratio=distance_ratio)
+
+    async def press_back(self) -> None:
+        await self._current_page.press_back()
+
+    async def press_home(self) -> None:
+        await self._current_page.press_home()
+
 
 class AsyncPhonePlaywright:
     """顶级 Playwright 上下文管理器。"""
@@ -163,9 +198,10 @@ class AsyncPhonePlaywright:
     async def __aexit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         await self.fleet.close_all()
 
-    async def connect(self, alias_or_id: str) -> AsyncPhoneDevice:
+    async def connect(self, alias_or_id: str = "", device_id: str = "") -> AsyncPhoneDevice:
         """连接目标设备并返回设备句柄。"""
-        driver = await self.fleet.get_driver(alias_or_id)
+        target = device_id or alias_or_id
+        driver = await self.fleet.get_driver(target)
         return AsyncPhoneDevice(driver=driver)
 
     async def list_devices(self) -> list[dict[str, str]]:

@@ -79,3 +79,7 @@ class PageSnapshot(BaseModel):
             else:
                 lines.append(f"- (info) {el.role}: \"{clean_text}\"")
         return "\n".join(lines)
+
+    @property
+    def summary_markdown(self) -> str:
+        return self.to_markdown()
