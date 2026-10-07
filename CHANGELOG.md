@@ -8,6 +8,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Changed
 
+- hardened `cue-sandbox` for multi-instance fleet deployments: parameterized EasyTier overlay IP (`<CUE_OVERLAY>`) and instance name (`<CUE_INSTANCE_NAME>`) to prevent intra-mesh collision, parameterized India reverse-SSH fallback port (`<TUNNEL_REMOTE_PORT>`) with a standard systemd keepalive service template, expanded test suite credential scans to usage docs, and added root `pytest.ini` for reliable test collection
 - made `cue-sandbox` executable without an Obsidian vault: probe the current host, collect missing inputs once, treat vault/`doc-lookup` as optional cache, skip India/probe/mining unless requested, and include generate-and-install commands in the references
 
 ### Added

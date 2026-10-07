@@ -14,7 +14,7 @@ ssh cue-tunnel    # 仅 mesh 挂了：印度公网:2222
 
 ```sshconfig
 Host mesh-cue cue
-  HostName 10.144.144.81
+  HostName <CUE_OVERLAY>
   User ubuntu
   IdentityFile ~/.ssh/cue-access-key
   IdentitiesOnly yes
@@ -24,7 +24,7 @@ Host mesh-cue cue
 
 Host cue-tunnel
   HostName <INDIA_PUBLIC_IP>
-  Port 2222
+  Port <TUNNEL_REMOTE_PORT>
   User ubuntu
   IdentityFile ~/.ssh/cue-access-key
   IdentitiesOnly yes
@@ -35,7 +35,7 @@ Host cue-tunnel
 
 每条 Host 必须显式 `IdentityFile` + `IdentitiesOnly yes`。不要依赖默认 `id_rsa`。
 
-`<CUE_OVERLAY>` 默认 `10.144.144.81`（`.8x` 沙盒段，`.80` 通常留给别的沙盒）。登录用户默认 `ubuntu`。`<INDIA_PUBLIC_IP>` 向操作者要一次。
+`<CUE_OVERLAY>` 首台默认 `10.144.144.81`（`.8x` 沙盒段，多台沙盒递增分配如 `.82`，严禁网内 IP 碰撞）。登录用户默认 `ubuntu`。`<INDIA_PUBLIC_IP>` 向操作者要一次。`<TUNNEL_REMOTE_PORT>` 首台默认 `2222`，多台沙盒接入同一中继时须递增分配（如 `2223`、`2224`），严禁远端端口争抢。
 
 ## 两把钥
 
@@ -87,8 +87,36 @@ Windows 要登 Cue：在 Windows 自己生成访问钥，公钥仍装 **Cue 登�
 用户没要求兜底就整段跳过。
 
 - 生效值 `sshd -T | grep gatewayports` 必须是 `clientspecified`。drop-in 即可，不要改成 `yes`。
-- 云防火墙放行 TCP 2222。
-- Cue 常驻反弹（用户级或 systemd，二选一）：
+- 云防火墙放行 TCP `<TUNNEL_REMOTE_PORT>`（首台默认 2222，多台递增）。
+- **生产推荐**：在 Cue 上配置 systemd 常驻守护服务 `/etc/systemd/system/cue-reverse-tunnel.service`：
+
+  ```ini
+  [Unit]
+  Description=Cue reverse SSH tunnel to India fallback
+  After=network-online.target
+  Wants=network-online.target
+
+  [Service]
+  Type=simple
+  User=ubuntu
+  ExecStart=/usr/bin/ssh -N -T \
+    -o ExitOnForwardFailure=yes \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=3 \
+    -o BatchMode=yes \
+    -i /home/ubuntu/.ssh/tunnel-key \
+    -R 0.0.0.0:<TUNNEL_REMOTE_PORT>:localhost:22 \
+    <INDIA_USER>@<INDIA_PUBLIC_IP>
+  Restart=always
+  RestartSec=10
+
+  [Install]
+  WantedBy=multi-user.target
+  ```
+
+  启用命令：`sudo systemctl daemon-reload && sudo systemctl enable --now cue-reverse-tunnel`。
+
+- **仅临时排障验证**：单次后台拉起（机器重启或长连接中断后失效，不可替代 systemd）：
 
   ```bash
   ssh -N -f \
@@ -97,11 +125,11 @@ Windows 要登 Cue：在 Windows 自己生成访问钥，公钥仍装 **Cue 登�
     -o ServerAliveCountMax=3 \
     -o BatchMode=yes \
     -i ~/.ssh/tunnel-key \
-    -R 0.0.0.0:2222:localhost:22 \
+    -R 0.0.0.0:<TUNNEL_REMOTE_PORT>:localhost:22 \
     <INDIA_USER>@<INDIA_PUBLIC_IP>
   ```
 
-- 隧道没起来时 2222 能 SYN、无 SSH banner，这是正常的。
+- 隧道没起来时该端口能 SYN、无 SSH banner，这是正常的。
 - 印度自己的登录仍是 `<INDIA_USER>`，和 Cue 访问钥无关。
 - 印度挂了不影响 mesh、探针、overlay 矿路。
 

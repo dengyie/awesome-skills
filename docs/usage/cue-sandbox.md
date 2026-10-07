@@ -22,11 +22,11 @@ Avoid when the machine already has inbound public SSH (run sshd directly), when 
 ```text
 operator  ssh mesh-cue  ──EasyTier──►  Cue ubuntu@overlay:22
                                         │
-                                        ├ easytier-mango-mesh (TUN)
+                                        ├ easytier-mango-mesh (TUN: <instance_name>)
                                         ├ komari-agent → Komari hub
                                         └ miner → hub overlay :7019   ← only if requested
                                         │
-Cue ssh -R 0.0.0.0:2222:localhost:22 ─► India public:2222   ← fallback only
+Cue ssh -R 0.0.0.0:<port>:localhost:22 ─► India public:<port>   ← fallback only
 ```
 
 Cue dials the mesh and the reverse tunnel outbound. India never becomes the login account host. Overlay mining depends on EasyTier, not on India.
@@ -44,7 +44,7 @@ Live numbers (fingerprints, Hub addresses, snapshot tags) come from the operator
 ## Deploy
 
 1. **Probe the current machine.** Decide Cue vs operator laptop from `tun0` / `ubuntu` / `cue-access-key`. Do not ask for vault first.
-2. **Collect missing inputs once.** Mesh secret, two Hub `host:11010`, access pubkey line, optional India IP, optional Komari endpoint. Never ask for private keys in chat.
+2. **Collect missing inputs once.** Instance name, unique overlay IP, mesh secret, two Hub `host:11010`, access pubkey line, optional India IP and port, optional Komari endpoint. Never ask for private keys in chat.
 3. **EasyTier TUN.** Copy the template; do not hand-edit `network_secret`. Accept Cue-side `tun0` + unit active when Hub CLI is unreachable.
 4. **Access key on Cue only.** Install the operator pubkey on Cue, write `Host mesh-cue` with `IdentitiesOnly yes`. Prove `ssh mesh-cue` before touching India.
 5. **India and probe are optional.** Skip unless the user asked. Mining is off by default and must not reinstall a live miner.
