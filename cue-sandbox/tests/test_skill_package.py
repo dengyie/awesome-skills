@@ -47,7 +47,7 @@ class CueSandboxPackageTests(unittest.TestCase):
         self.assertIn("name: cue-sandbox", frontmatter)
         self.assertIn("mesh-cue", frontmatter)
         self.assertIn("EasyTier", frontmatter)
-        self.assertIn("没有 Obsidian vault", frontmatter)
+        self.assertIn("自包含执行", frontmatter)
 
         metadata = _read(ROOT / "agents" / "openai.yaml")
         self.assertIn("interface:", metadata)
@@ -72,10 +72,10 @@ class CueSandboxPackageTests(unittest.TestCase):
             "references/ssh.md",
             "references/easytier.md",
             "references/probe.md",
-            "先探测，不要先问 vault",
+            "步骤 1：探测本机环境",
             "一次性收集",
             "挖矿默认跳过",
-            "没有 vault 不是失败",
+            "严禁停工索取外部文档",
         ]:
             self.assertIn(expected, combined)
 
@@ -139,16 +139,25 @@ class CueSandboxPackageTests(unittest.TestCase):
                     f"{path}: public IPv4 literal {match}",
                 )
 
-    def test_skill_does_not_gate_on_vault(self):
+    def test_skill_is_fully_self_contained_with_no_vault_references(self):
+        forbidden_terms = ["vault", "doc-lookup", "canonical", "obsidian"]
+        for path in _package_text_files():
+            text = _read(path).lower()
+            for term in forbidden_terms:
+                self.assertNotIn(
+                    term,
+                    text,
+                    f"{path} must be self-contained and not mention external '{term}'",
+                )
+
         skill_text = _read(ROOT / "SKILL.md")
-        usage = _read(ROOT.parent / "docs" / "usage" / "cue-sandbox.md")
-        self.assertNotIn("先 `doc-lookup` 再动手", skill_text)
-        self.assertNotIn("现网数字以 Obsidian canonical 为准", skill_text)
-        self.assertIn("不是开工门禁", skill_text)
-        self.assertIn("不要停下来要 canonical", skill_text)
-        self.assertIn("not a gate", usage)
+        self.assertIn("严禁停下来索取外部文档", skill_text)
+        self.assertIn("自包含执行", skill_text)
         self.assertIn("ssh-keygen", _read(ROOT / "references" / "ssh.md"))
-        self.assertIn("systemctl enable --now easytier-mango-mesh", _read(ROOT / "references" / "easytier.md"))
+        self.assertIn(
+            "systemctl enable --now easytier-mango-mesh",
+            _read(ROOT / "references" / "easytier.md"),
+        )
 
     def test_usage_guide_links_shared_navigation(self):
         usage = _read(ROOT.parent / "docs" / "usage" / "cue-sandbox.md")
@@ -156,4 +165,4 @@ class CueSandboxPackageTests(unittest.TestCase):
         self.assertIn("quickstart.md", usage)
         self.assertIn("cue-sandbox", usage)
         self.assertIn("GatewayPorts", usage)
-        self.assertIn("Missing vault is not a failure", usage)
+        self.assertIn("Do not halt execution", usage)

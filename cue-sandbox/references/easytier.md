@@ -2,7 +2,7 @@
 
 Cue **有 `/dev/net/tun`**，走内核 TUN。不要抄 Muse VM / pxed / tebi 的 `no_tun=true` + SOCKS5。
 
-没有 vault 时：向操作者一次要 `<MESH_SECRET>`、`<TENCENT_HUB>`、`<HK_HUB>`（两个 `host:11010`）。不要手编 secret，不要凭记忆改 Hub。
+所需配置由操作者提供：`<MESH_SECRET>`、`<TENCENT_HUB>`、`<HK_HUB>`（两个 `host:11010`）。不要手编 secret，不要凭记忆改 Hub。
 
 ## 配置
 

@@ -2,7 +2,7 @@
 
 用户没提探针就整篇跳过。挖矿段再加一道门：用户没提挖矿就只做探针。
 
-没有 vault 时向操作者一次要：`<KOMARI_ENDPOINT>`、Hub 上执行 `admin:addClient` 的方式（或已经写好的 token 文件路径）、可选的 snapshot 标签。token 不要发到聊天。
+执行前向操作者索取：`<KOMARI_ENDPOINT>`、Hub 上执行 `admin:addClient` 的方式（或已经写好的 token 文件路径）、可选的 snapshot 标签。token 不要发到聊天。
 
 ## token
 
