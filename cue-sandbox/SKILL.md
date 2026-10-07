@@ -1,56 +1,87 @@
 ---
 name: cue-sandbox
-description: Cue 沙盒的 SSH、EasyTier mango-mesh TUN、Komari 探针与 overlay 挖矿接入 SOP。用于用户提到 cue、mesh-cue、cue-tunnel、Cue 探针、Cue EasyTier、Cue reverse-ssh、10.144.144.81、easytire/easytier Cue、印度 2222 兜底，或要把无公网入站的 Cue 接到 mesh / Komari / 挖矿中枢时。日常走 mesh，不要把印度 VPS 当登录机。
+description: Cue 沙盒的 SSH、EasyTier mango-mesh TUN、Komari 探针与 overlay 挖矿接入 SOP。用于用户提到 cue、mesh-cue、cue-tunnel、Cue 探针、Cue EasyTier、Cue reverse-ssh、10.144.144.81、easytire/easytier Cue、印度 2222 兜底，或要把无公网入站的 Cue 接到 mesh / Komari / 挖矿中枢时。日常走 mesh，不要把印度 VPS 当登录机。没有 Obsidian vault / doc-lookup 也能执行：先探测本机，再一次性向操作者要齐输入。
 ---
 
 # Cue 沙盒接入（SSH / EasyTier / 探针）
 
 Cue 没有公网入站。日常登录走 EasyTier TUN。印度 VPS 只反弹 SSH 兜底。探针跑在 Cue 本机。挖矿走 Hub overlay 口，不走公网 7019。
 
+本 skill 必须能在**没有 vault、没有 doc-lookup、没有操作者笔记本**的 Cue 本机上执行。vault 只是可选加速，不是开工门禁。缺 vault 时：探测本机 → 一次性列出缺的输入 → 操作者补齐后继续。不要停下来要 canonical 全文。
+
 ```text
 操作者  ssh mesh-cue  ──EasyTier──►  Cue ubuntu@<CUE_OVERLAY>:22
                                       │
-                                      ├ easytier-mango-mesh (TUN .81)
+                                      ├ easytier-mango-mesh (TUN)
                                       ├ komari-agent → <KOMARI_ENDPOINT>
-                                      └ srb-xel → <HUB_OVERLAY>:7019
+                                      └ srb-xel → <HUB_OVERLAY>:7019   ← 仅用户明确要求
                                       │
-Cue ssh -R 0.0.0.0:2222:localhost:22 ─► 印度 azureuser@公网:2222   ← 仅兜底
+Cue ssh -R 0.0.0.0:2222:localhost:22 ─► 印度 <INDIA_USER>@<INDIA_PUBLIC_IP>:2222   ← 仅兜底
 ```
 
-本 skill **不含**私钥、agent token、mesh secret、钱包。真实值只在操作者本机密钥和 Cue `/etc/komari-agent.env`。现网数字以 Obsidian canonical 为准，先 `doc-lookup` 再动手。
-
-深度细节按需读：
+深度细节按需读，不要一上来全读：
 
 - `references/ssh.md`：两把钥、GatewayPorts、sshd、SSH config
-- `references/easytier.md`：TUN 模板、systemd 单元名、验收
-- `references/probe.md`：token 签发、ICMP、挖矿三件套、overlay 矿池
+- `references/easytier.md`：TUN 模板、systemd 单元、验收命令
+- `references/probe.md`：token 签发、ICMP、挖矿三件套（默认跳过）
 
-活事实挂在 vault（从 vault 根跑 `python3 .local/bin/doc-lookup "cue"`）：
+## 先探测，不要先问 vault
 
-- Cue 沙盒接入最佳实践 — 三件套入口
-- EasyTier 全网虚拟网格组网运维手册 — 全网矩阵
-- india-vps — 反向隧道中继
-- Komari 探针后台运行最佳实践 — Linux systemd + ping_group_range
-- Beszel-Komari 监控迁移计划 §20 — Cue 上线记录
-- ssh-credentials / ssh-config — 别名与指纹
+在当前机器上跑，保存输出，用来决定自己是 Cue 还是操作者本机：
 
-## 先决定，不要直接装
+```bash
+hostname; whoami; uname -m
+ip -4 addr show tun0 2>/dev/null || echo "no tun0"
+test -e /dev/net/tun && echo "tun-ok" || echo "no-tun"
+systemctl is-active easytier-mango-mesh 2>/dev/null || echo "no-easytier-unit"
+systemctl is-active komari-agent 2>/dev/null || echo "no-komari"
+systemctl is-active srb-xel 2>/dev/null || echo "no-miner"
+ss -tlnp | grep -E ':22 |:2222 ' || true
+```
+
+判定：
+
+- 有 `/dev/net/tun`、用户是 `ubuntu`（或即将成为 Cue 的 Linux 沙盒）→ **你在 Cue 上**。按下面「Cue 本机落地」做，不要要求 `doc-lookup`。
+- 有 `ssh mesh-cue` / `~/.ssh/cue-access-key` → **你在操作者本机**。写 SSH config、装访问钥，不要在本机起 EasyTier 当 Cue。
+- 两边都不是 → 问操作者：目标是「把当前这台接成 Cue」还是「从这台登录已有 Cue」。只问这一句。
+
+**挖矿默认跳过。** 只有用户明确说挖矿 / srb-xel / overlay 7019 才读 `references/probe.md` 的矿池段。已在跑的矿不要重装。
+
+## 一次性收集，不要连环追问
+
+把缺的项列成一张表，一次发给操作者。已探测到的不要再问。私钥、token、mesh secret、钱包只写路径或让操作者在目标机本地粘贴，**不要**让他们发到聊天。
+
+| 占位符 | 谁提供 | 何时必需 | 不要问的情况 |
+|---|---|---|---|
+| `<CUE_OVERLAY>` | 操作者，或沿用 `10.144.144.81/24` | EasyTier | 本机 `tun0` 已持有 `.81` |
+| `<MESH_NAME>` | 默认 `mango-mesh` | EasyTier | 已有 `config.toml` 的 `network_name` |
+| `<MESH_SECRET>` | 操作者从现网模板抄，禁止手编 | EasyTier | 已有匹配的 `network_secret` |
+| `<TENCENT_HUB>` `<HK_HUB>` | 操作者：两个 Hub 的 `host:11010` | EasyTier | 已有双 `[[peer]]` |
+| `<ACCESS_PUBKEY>` | 操作者本机 `cue-access-key.pub` 一行 | SSH | Cue `authorized_keys` 已能登录 |
+| `<INDIA_PUBLIC_IP>` `<INDIA_USER>` | 操作者；用户默认 `azureuser` | 只要兜底 | 用户只要 mesh、不要 2222 |
+| `<KOMARI_ENDPOINT>` | 操作者：Hub HTTPS 入口 | 探针 | 用户明确不要探针 |
+| Komari token | Hub `admin:addClient`，只写入 Cue env | 探针 | 已有 `/etc/komari-agent.env` |
+| 矿池 / 钱包 / worker | 操作者 | 仅用户明确要求挖矿 | 默认跳过 |
+
+vault 若碰巧可用，可以 `doc-lookup "cue"` 填表，**填完就干活**。填不了就用上表，不要停。
+
+## 先决定
 
 1. **日常入口是 mesh。** `ssh mesh-cue` 通了就不要改印度。印度挂了只断 `cue-tunnel`。
 2. **Cue 有 TUN。** 不要抄 Muse VM / Bohrium 的 `--no-tun` + SOCKS5。
-3. **两把钥。** 访问钥只在操作者本机，公钥只装 Cue `ubuntu`。隧道钥只在 Cue，公钥只装印度 `azureuser`。不要用 `id_rsa` 当隧道钥，不要在印度建 `ubuntu`，不要把访问钥放到任何 VPS。
-4. **Mac 不是隧道的一端。** Cue 自己连出 `-R`。不要等 Windows，也不要为这条隧道改 Mac。
+3. **两把钥。** 访问钥只在操作者本机，公钥只装 Cue 登录用户。隧道钥只在 Cue，公钥只装印度 `<INDIA_USER>`。不要用 `id_rsa` 当隧道钥，不要在印度建 `ubuntu`，不要把访问钥放到任何 VPS。
+4. **操作者笔记本不是隧道的一端。** Cue 自己连出 `-R`。不要等 Windows，也不要为这条隧道改 Mac。
 5. **挖矿已在跑就不要重装。** 排障不要 `journalctl` SRBMiner，不要 `SRBMiner --version`。
 
-## 落地顺序
+## Cue 本机落地（按序，可中途停）
 
-1. EasyTier TUN 起来，Hub `easytier-cli peer` 能看到 `.81`。
-2. 访问钥装到 Cue `ubuntu`，本机写 `Host mesh-cue`。先 mesh 登录成功。
-3. 隧道钥只在 Cue 生成；印度 `GatewayPorts clientspecified`（不要 `yes`）+ 云防火墙 2222。
-4. 探针：Hub loopback `admin:addClient` 拿 token → `/etc/komari-agent.env` 600 → systemd → `ping_group_range`。
-5. 若需要挖矿：池写成 overlay `<HUB_OVERLAY>:7019`，白名单 `_static_ips` 加 Cue overlay IP，探针带 miner URL + `{action}` 管控命令，且 **不要** `--disable-web-ssh`。
+每一步的命令在对应 `references/`。做完一步立刻验收，失败不要跳到下一步。
 
-逐步命令见对应 `references/`。
+1. **EasyTier TUN** — 读 `references/easytier.md`。Hub `easytier-cli peer` 能看到本机 overlay。没有 Hub 操作权就在 Cue 上看 `tun0` + `systemctl is-active easytier-mango-mesh`。
+2. **访问钥** — 读 `references/ssh.md`。公钥进 Cue 登录用户 `authorized_keys`。操作者本机写 `Host mesh-cue`。先 mesh 登录成功。
+3. **印度兜底（可选）** — 用户没提 2222 / cue-tunnel 就跳过。要做：隧道钥只在 Cue 生成；印度 `GatewayPorts clientspecified`（不要 `yes`）+ 云防火墙 2222。
+4. **探针（可选）** — 用户没提 Komari / 探针就跳过。要做：读 `references/probe.md`。Hub loopback `admin:addClient` → `/etc/komari-agent.env` 600 → systemd → `ping_group_range`。
+5. **挖矿（可选，默认不做）** — 池写成 overlay `<HUB_OVERLAY>:7019`，白名单 `_static_ips`，探针带 miner URL + `{action}`，且 **不要** `--disable-web-ssh`。
 
 ## 铁律
 
@@ -60,11 +91,19 @@ Cue ssh -R 0.0.0.0:2222:localhost:22 ─► 印度 azureuser@公网:2222   ← �
 - 挖矿节点禁止 `AGENT_DISABLE_WEB_SSH=true`。
 - 白名单用 Hub `tcpdump` 和 `_static_ips`，不用 ipify，不改 `hub.env`。
 - GitHub `releases/latest` 对 prerelease 404，二进制钉 snapshot 标签。
-- 现网事实以 vault canonical 为准，禁止全库 rg 首个命中覆盖。
+- 没有 vault 不是失败。连环追问 vault / canonical 全文才是失败。
 
 ## 验收
 
-- `ssh mesh-cue 'hostname; ip -4 addr show tun0'` 落到 Cue 且 tun0 持有 `.81/24`。
-- Hub peer 列表有 `cue` p2p、0% loss。
+最少集（mesh only）：
+
+- Cue：`ip -4 addr show tun0` 持有 `<CUE_OVERLAY>`；`systemctl is-active easytier-mango-mesh` 为 `active`。
+- 操作者：`ssh mesh-cue 'hostname; ip -4 addr show tun0'` 落到 Cue。
+
+按需追加：
+
+- Hub peer 列表有本机 hostname、p2p、0% loss。
 - 探针日志 `Basic info uploaded` + `WebSocket connected`；Ping 任务 loss=0。
 - 挖矿节点：`miner_configured` 与 `miner_controllable` 均为 true；`--pool` 是 overlay 不是公网 7019。
+
+向用户汇报时写：做了哪几步、跳过了哪几步、缺的输入还剩什么。不要因为跳过可选步骤而宣称失败。

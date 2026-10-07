@@ -77,7 +77,7 @@ Use $codex-agent-worktree-setup to create an isolated Codex worktree on the requ
 `cue-sandbox`
 
 ```text
-Use $cue-sandbox to land Cue over EasyTier mesh SSH, keep India reverse-SSH as fallback only, and wire the Komari probe without disabling mining control.
+Use $cue-sandbox to land this Cue host over EasyTier mesh SSH. Probe the machine first, collect missing inputs once, skip vault if unavailable, and skip mining unless I ask.
 ```
 
 `evidence-driven-bugfix`

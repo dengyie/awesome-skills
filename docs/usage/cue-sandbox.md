@@ -1,6 +1,8 @@
 # Cue Sandbox Access
 
-Use `cue-sandbox` when a Cue cloud sandbox with no inbound public SSH must join EasyTier mango-mesh, stay reachable over `ssh mesh-cue`, keep an India reverse-SSH fallback, and run a Komari probe (optionally with overlay mining).
+Use `cue-sandbox` when a Cue cloud sandbox with no inbound public SSH must join EasyTier mango-mesh, stay reachable over `ssh mesh-cue`, keep an India reverse-SSH fallback, and optionally run a Komari probe (overlay mining only when the user asks).
+
+The skill is executable on the Cue host itself. An Obsidian vault or `doc-lookup` is optional cache, not a gate. If vault is missing: probe the current machine, ask once for missing inputs, then continue. Do not stop to request canonical docs.
 
 If you are still choosing among skills, use the [Skill Matrix](skill-matrix.md). For installation only, use the [Quickstart](quickstart.md).
 
@@ -22,7 +24,7 @@ operator  ssh mesh-cue  ──EasyTier──►  Cue ubuntu@overlay:22
                                         │
                                         ├ easytier-mango-mesh (TUN)
                                         ├ komari-agent → Komari hub
-                                        └ miner → hub overlay :7019
+                                        └ miner → hub overlay :7019   ← only if requested
                                         │
 Cue ssh -R 0.0.0.0:2222:localhost:22 ─► India public:2222   ← fallback only
 ```
@@ -33,19 +35,19 @@ Cue dials the mesh and the reverse tunnel outbound. India never becomes the logi
 
 The skill is a runbook. Credentials stay with the operator and are never committed:
 
-- `references/ssh.md` — two keypairs, `GatewayPorts clientspecified`, Cue sshd, SSH config snippets
-- `references/easytier.md` — TUN template, unit name `easytier-mango-mesh.service`, peer placeholders
-- `references/probe.md` — Hub loopback `admin:addClient`, ICMP, mining env triad, overlay pool
+- `references/ssh.md` — two keypairs, `GatewayPorts clientspecified`, Cue sshd, SSH config snippets, generate-and-install commands
+- `references/easytier.md` — TUN template, unit `easytier-mango-mesh.service`, peer placeholders, systemd unit
+- `references/probe.md` — Hub loopback `admin:addClient`, ICMP, optional mining env triad, overlay pool
 
-Live numbers (fingerprints, Hub addresses, snapshot tags) live in the operator's Obsidian vault, not in this package.
+Live numbers (fingerprints, Hub addresses, snapshot tags) come from the operator in one batch, or from vault if it happens to be available.
 
 ## Deploy
 
-1. **EasyTier TUN first.** Copy the vault mesh template; do not hand-edit `network_secret`. Confirm Hub `easytier-cli peer` shows Cue `.81`.
-2. **Access key on Cue only.** Install the operator pubkey on Cue `ubuntu`, write `Host mesh-cue` with `IdentitiesOnly yes`. Prove `ssh mesh-cue` before touching India.
-3. **Tunnel key on Cue only.** Generate `~/.ssh/tunnel-key` on Cue; append its pubkey to India `azureuser`. Set VPS `GatewayPorts clientspecified` (not `yes`) and open TCP 2222.
-4. **Probe.** Mint the token via Hub loopback `admin:addClient`, write `/etc/komari-agent.env` mode `600`, enable systemd, set `ping_group_range = 0 2147483647`.
-5. **Mining (only if required).** Pool is overlay `<HUB_OVERLAY>:7019`, whitelist Cue overlay IP in `devices.json` `_static_ips`, keep `AGENT_DISABLE_WEB_SSH=false`, and do not reinstall a live miner.
+1. **Probe the current machine.** Decide Cue vs operator laptop from `tun0` / `ubuntu` / `cue-access-key`. Do not ask for vault first.
+2. **Collect missing inputs once.** Mesh secret, two Hub `host:11010`, access pubkey line, optional India IP, optional Komari endpoint. Never ask for private keys in chat.
+3. **EasyTier TUN.** Copy the template; do not hand-edit `network_secret`. Accept Cue-side `tun0` + unit active when Hub CLI is unreachable.
+4. **Access key on Cue only.** Install the operator pubkey on Cue, write `Host mesh-cue` with `IdentitiesOnly yes`. Prove `ssh mesh-cue` before touching India.
+5. **India and probe are optional.** Skip unless the user asked. Mining is off by default and must not reinstall a live miner.
 
 ## Safety Boundaries
 
@@ -54,6 +56,7 @@ Live numbers (fingerprints, Hub addresses, snapshot tags) live in the operator's
 - Cue public-facing sshd keeps `PasswordAuthentication no`.
 - GitHub `releases/latest` 404s on prerelease tags — pin a snapshot.
 - Do not `journalctl` SRBMiner or run `SRBMiner --version` during troubleshooting.
+- Missing vault is not a failure. Stopping to demand canonical docs is.
 
 ## Related
 

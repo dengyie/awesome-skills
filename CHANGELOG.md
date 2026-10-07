@@ -6,6 +6,10 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ## Unreleased
 
+### Changed
+
+- made `cue-sandbox` executable without an Obsidian vault: probe the current host, collect missing inputs once, treat vault/`doc-lookup` as optional cache, skip India/probe/mining unless requested, and include generate-and-install commands in the references
+
 ### Added
 
 - added `cue-sandbox` skill package: Cue sandbox access SOP for EasyTier mango-mesh TUN SSH (`ssh mesh-cue`), India reverse-SSH fallback only, Komari Linux probe with `ping_group_range`, and overlay mining without disabling Web SSH; credentials stay out of the package (placeholders only)
