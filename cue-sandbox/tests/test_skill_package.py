@@ -43,6 +43,7 @@ class CueSandboxPackageTests(unittest.TestCase):
         self.assertIn("name: cue-sandbox", frontmatter)
         self.assertIn("mesh-cue", frontmatter)
         self.assertIn("EasyTier", frontmatter)
+        self.assertIn("没有 Obsidian vault", frontmatter)
 
         metadata = _read(ROOT / "agents" / "openai.yaml")
         self.assertIn("interface:", metadata)
@@ -67,6 +68,10 @@ class CueSandboxPackageTests(unittest.TestCase):
             "references/ssh.md",
             "references/easytier.md",
             "references/probe.md",
+            "先探测，不要先问 vault",
+            "一次性收集",
+            "挖矿默认跳过",
+            "没有 vault 不是失败",
         ]:
             self.assertIn(expected, combined)
 
@@ -76,7 +81,7 @@ class CueSandboxPackageTests(unittest.TestCase):
         probe_text = _read(ROOT / "references" / "probe.md")
         skill_text = _read(ROOT / "SKILL.md")
 
-        self.assertIn('network_secret = "<从 EasyTier 手册模板抄，禁止手编或改大小写>"', easytier_text)
+        self.assertIn('network_secret = "<从现网模板抄，禁止手编或改大小写>"', easytier_text)
         self.assertIn("<TENCENT_HUB>", easytier_text)
         self.assertIn("<HK_HUB>", easytier_text)
         self.assertIn("<INDIA_PUBLIC_IP>", ssh_text)
@@ -126,9 +131,21 @@ class CueSandboxPackageTests(unittest.TestCase):
                     f"{path}: public IPv4 literal {match}",
                 )
 
+    def test_skill_does_not_gate_on_vault(self):
+        skill_text = _read(ROOT / "SKILL.md")
+        usage = _read(ROOT.parent / "docs" / "usage" / "cue-sandbox.md")
+        self.assertNotIn("先 `doc-lookup` 再动手", skill_text)
+        self.assertNotIn("现网数字以 Obsidian canonical 为准", skill_text)
+        self.assertIn("不是开工门禁", skill_text)
+        self.assertIn("不要停下来要 canonical", skill_text)
+        self.assertIn("not a gate", usage)
+        self.assertIn("ssh-keygen", _read(ROOT / "references" / "ssh.md"))
+        self.assertIn("systemctl enable --now easytier-mango-mesh", _read(ROOT / "references" / "easytier.md"))
+
     def test_usage_guide_links_shared_navigation(self):
         usage = _read(ROOT.parent / "docs" / "usage" / "cue-sandbox.md")
         self.assertIn("skill-matrix.md", usage)
         self.assertIn("quickstart.md", usage)
         self.assertIn("cue-sandbox", usage)
         self.assertIn("GatewayPorts", usage)
+        self.assertIn("Missing vault is not a failure", usage)
