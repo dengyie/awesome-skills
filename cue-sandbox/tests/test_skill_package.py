@@ -8,7 +8,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 def _package_text_files():
-    paths = [ROOT / "SKILL.md", ROOT / "agents" / "openai.yaml"]
+    paths = [
+        ROOT / "SKILL.md",
+        ROOT / "agents" / "openai.yaml",
+        ROOT.parent / "docs" / "usage" / "cue-sandbox.md",
+    ]
     paths.extend(sorted((ROOT / "references").glob("*.md")))
     return paths
 
@@ -84,7 +88,11 @@ class CueSandboxPackageTests(unittest.TestCase):
         self.assertIn('network_secret = "<从现网模板抄，禁止手编或改大小写>"', easytier_text)
         self.assertIn("<TENCENT_HUB>", easytier_text)
         self.assertIn("<HK_HUB>", easytier_text)
+        self.assertIn("<CUE_INSTANCE_NAME>", easytier_text)
+        self.assertIn("<CUE_OVERLAY>", easytier_text)
         self.assertIn("<INDIA_PUBLIC_IP>", ssh_text)
+        self.assertIn("<TUNNEL_REMOTE_PORT>", ssh_text)
+        self.assertIn("cue-reverse-tunnel", ssh_text)
         self.assertIn("<KOMARI_ENDPOINT>", probe_text)
         self.assertIn("<KOMARI_ENDPOINT>", skill_text)
         self.assertIn("<HUB_OVERLAY>", skill_text)

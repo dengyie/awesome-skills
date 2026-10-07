@@ -12,11 +12,11 @@ Cue 没有公网入站。日常登录走 EasyTier TUN。印度 VPS 只反弹 SSH
 ```text
 操作者  ssh mesh-cue  ──EasyTier──►  Cue ubuntu@<CUE_OVERLAY>:22
                                       │
-                                      ├ easytier-mango-mesh (TUN)
+                                      ├ easytier-mango-mesh (TUN: <CUE_INSTANCE_NAME>)
                                       ├ komari-agent → <KOMARI_ENDPOINT>
                                       └ srb-xel → <HUB_OVERLAY>:7019   ← 仅用户明确要求
                                       │
-Cue ssh -R 0.0.0.0:2222:localhost:22 ─► 印度 <INDIA_USER>@<INDIA_PUBLIC_IP>:2222   ← 仅兜底
+Cue ssh -R 0.0.0.0:<TUNNEL_REMOTE_PORT>:localhost:22 ─► 印度 <INDIA_USER>@<INDIA_PUBLIC_IP>:<TUNNEL_REMOTE_PORT>   ← 仅兜底
 ```
 
 深度细节按需读，不要一上来全读：
@@ -53,15 +53,18 @@ ss -tlnp | grep -E ':22 |:2222 ' || true
 
 | 占位符 | 谁提供 | 何时必需 | 不要问的情况 |
 |---|---|---|---|
-| `<CUE_OVERLAY>` | 操作者，或沿用 `10.144.144.81/24` | EasyTier | 本机 `tun0` 已持有 `.81` |
+| `<CUE_INSTANCE_NAME>` | 默认 `cue`；多机填 `cue-2` 等 | EasyTier | 已有 `config.toml` 的 `instance_name` |
+| `<CUE_OVERLAY>` | 操作者，首台沿用 `10.144.144.81/24`，多台递增如 `.82` | EasyTier | 本机 `tun0` 已持有有效 overlay |
 | `<MESH_NAME>` | 默认 `mango-mesh` | EasyTier | 已有 `config.toml` 的 `network_name` |
 | `<MESH_SECRET>` | 操作者从现网模板抄，禁止手编 | EasyTier | 已有匹配的 `network_secret` |
 | `<TENCENT_HUB>` `<HK_HUB>` | 操作者：两个 Hub 的 `host:11010` | EasyTier | 已有双 `[[peer]]` |
 | `<ACCESS_PUBKEY>` | 操作者本机 `cue-access-key.pub` 一行 | SSH | Cue `authorized_keys` 已能登录 |
-| `<INDIA_PUBLIC_IP>` `<INDIA_USER>` | 操作者；用户默认 `azureuser` | 只要兜底 | 用户只要 mesh、不要 2222 |
+| `<INDIA_PUBLIC_IP>` `<INDIA_USER>` | 操作者；用户默认 `azureuser` | 只要兜底 | 用户只要 mesh、不要兜底 |
+| `<TUNNEL_REMOTE_PORT>` | 兜底端口：首台 `2222`，多机递增（如 `2223`） | 只要兜底 | 用户只要 mesh、不要兜底 |
 | `<KOMARI_ENDPOINT>` | 操作者：Hub HTTPS 入口 | 探针 | 用户明确不要探针 |
 | Komari token | Hub `admin:addClient`，只写入 Cue env | 探针 | 已有 `/etc/komari-agent.env` |
-| 矿池 / 钱包 / worker | 操作者 | 仅用户明确要求挖矿 | 默认跳过 |
+| `<HUB_OVERLAY>` | 矿池宿主 Overlay IP，默认 `10.144.144.2` | 仅用户明确要求挖矿 | 默认跳过挖矿 |
+| 钱包 / worker | 操作者 | 仅用户明确要求挖矿 | 默认跳过挖矿 |
 
 vault 若碰巧可用，可以 `doc-lookup "cue"` 填表，**填完就干活**。填不了就用上表，不要停。
 

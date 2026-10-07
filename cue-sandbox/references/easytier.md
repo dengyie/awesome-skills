@@ -9,9 +9,9 @@ Cue **有 `/dev/net/tun`**，走内核 TUN。不要抄 Muse VM / pxed / tebi 的
 路径：`/home/ubuntu/easytier/config.toml`，二进制优先 `/home/ubuntu/.local/bin/easytier-core`（没有再 `which easytier-core`）。
 
 ```toml
-instance_name = "cue"
-hostname = "cue"
-ipv4 = "10.144.144.81/24"
+instance_name = "<CUE_INSTANCE_NAME>"
+hostname = "<CUE_INSTANCE_NAME>"
+ipv4 = "<CUE_OVERLAY>/24"
 listeners = []
 rpc_portal = "127.0.0.1:15888"
 
@@ -30,10 +30,10 @@ default_protocol = "tcp"
 no_tun = false
 ```
 
+- `instance_name` / `hostname`：首台默认 `cue`。第二台及更多沙盒必须使用唯一短名（如 `cue-2`），严禁网内重名。
+- `ipv4`：静态虚拟 IP，禁止 DHCP。首台默认 `10.144.144.81`；第二台及后续沙盒必须向操作者索取唯一的 `.8x`（如 `10.144.144.82`），严禁 IP 碰撞导致网络争抢。
 - `listeners = []`：Cue 无公网入站，不要开 `0.0.0.0:11010`。
 - 双 Peer 都写，跨境 TCP。密钥与全网同构，手抄一次就会 `network identity not match`。
-- 虚拟 IP 静态，禁止 DHCP。默认 `.81`；已被占用时让操作者另给一个 `.8x`，不要自己猜。
-- `hostname` / `instance_name` 默认 `cue`。第二台 Cue 让操作者给唯一短名，不要两台都叫 `cue`。
 
 写入前：
 
