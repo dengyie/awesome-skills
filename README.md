@@ -1,14 +1,59 @@
 # Awesome Skills
 
+[![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 [![LINUX DO](https://img.shields.io/badge/Community-LINUX%20DO-2563eb.svg?logo=linux&logoColor=white)](https://linux.do/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 
-Reusable Codex skills for evidence-first, production-minded project work.
+Independent Agent Skills packaged according to the Anthropic Agent Skills specification. These packages provide modular workflows for software engineering, code quality review, network tunneling, and UI components.
 
-This repository ships independent skill packages. Start by choosing the one that matches your problem, then install only what you need.
+Compatible with OpenAI Codex, Claude Code, ZCode, Cursor, Gemini CLI, and Windsurf.
 
-## 🌟 Acknowledgments: LINUX DO
+[English](README.md) | [中文说明](docs/zh/README.zh-CN.md)
 
-> 🐧 **This project recognizes and thanks the [LINUX DO](https://linux.do/) community.** Many of the ideas, techniques, and production-hardened lessons behind these skills — evidence-first debugging, production-minded review, and real-world ops workflows — were inspired by the generous sharing of the LINUX DO community. Salute to the open-source spirit and pure technical exploration!
+---
+
+## Acknowledgments: LINUX DO
+
+This repository acknowledges the [LINUX DO](https://linux.do/) community. Engineering solutions throughout these packages—including log-first reproduction loops, code review criteria, and cross-NAT tunnel configurations—draw directly from technical sharing within the LINUX DO community.
+
+---
+
+## Architecture and Design Principles
+
+- Reproduction before modification: Packages such as `evidence-driven-bugfix` and `production-code-quality-review` require capturing reproducible failure evidence and root-cause verification before applying code changes.
+- Progressive disclosure: Each package exposes only metadata during initial discovery, costing roughly 100 tokens per skill. Operational scripts and reference documentation load only when invoked.
+- Process isolation: Packages such as `codex-agent-worktree-setup` bind agent executions to isolated Git worktrees, keeping branch state decoupled from the primary working directory.
+- Modular distribution: Each skill is self-contained with dedicated documentation, reference materials, and optional automation scripts.
+
+---
+
+## Skill Categories
+
+### Software Engineering and Quality Assurance
+
+- [`evidence-driven-bugfix`](evidence-driven-bugfix/): Captures reproducible failure evidence, isolates root causes, and re-verifies post-fix state.
+- [`production-code-quality-review`](production-code-quality-review/): Evaluates pull requests, merge readiness, and architecture-sensitive diffs.
+- [`codex-agent-worktree-setup`](codex-agent-worktree-setup/): Creates branch-bound isolated Git worktrees for agent tasks.
+- [`best-project-memory`](best-project-memory/): Maintains cross-session project context, decision logs, and handoff state.
+
+### Networking and Infrastructure Operations
+
+- [`cloudphone-adb-tunnel`](cloudphone-adb-tunnel/): Sets up FRP STCP relays and Termux keepalive for remote ADB and scrcpy connections to non-root Android cloud phones.
+- [`windows-ssh-stcp`](windows-ssh-stcp/): Configures SSH access to NAT-isolated Windows machines over existing FRP STCP relays with loopback sshd.
+- [`muse-reverse-ssh`](muse-reverse-ssh/): Configures reverse SSH tunnels and VPS port forwarding with process keepalive.
+
+### UI Engineering and Assets
+
+- [`awesome-ui-kit`](awesome-ui-kit/): Web components for AI chat interfaces, RAG search results, split-pane canvases, and agent execution monitors.
+- [`split-image-assets`](split-image-assets/): Splits source images into reusable asset packages with alpha masks, layers, metadata, and quality checks.
+
+### Search, Knowledge Base, and Automation
+
+- [`grok-search`](grok-search/): Executes web searches, URL content extraction, and site discovery via search APIs.
+- [`obsidian-doc-router`](obsidian-doc-router/): Provides routing queries and anti-orphan documentation workflows for Obsidian vaults.
+- [`yunzhi-cloudphone-checkin`](yunzhi-cloudphone-checkin/): Automates daily check-ins and cloud phone renewals via browser console, Chrome CDP, or HTTP CLI.
+
+---
 
 ## Choose a Skill
 
@@ -29,62 +74,104 @@ This repository ships independent skill packages. Start by choosing the one that
 
 If you are not sure which one to use, go straight to the [Skill Matrix](docs/usage/skill-matrix.md).
 
+---
+
 ## Recommended Starting Points
 
 - I do not know which skill to use: [Skill Matrix](docs/usage/skill-matrix.md)
 - I want the fastest install path: [Quickstart](docs/usage/quickstart.md)
 - I prefer Chinese docs: [中文说明](docs/zh/README.zh-CN.md)
 - I want a repo walkthrough first: [Golden Path](docs/usage/golden-path.md)
+- I want to review code changes: [Review Workflows](docs/usage/review-workflows.md)
+- I want real-world usage examples: [Examples](docs/usage/examples.md)
+
+---
 
 ## Install
 
-Current OpenAI Codex docs use:
+Agent discovery paths depend on the target runtime:
 
-- user scope: `$HOME/.agents/skills`
-- repo scope: `.agents/skills`
+| Client | User Scope | Workspace Scope |
+| --- | --- | --- |
+| OpenAI Codex / ZCode | `~/.agents/skills/` | `.agents/skills/` |
+| Claude Code | `~/.claude/skills/` | `.claude/skills/` |
+| Cursor / Windsurf / Gemini CLI | `~/.agents/skills/` | `.agents/skills/` |
 
-Install one skill by copying its folder:
+### Installation Command
+
+Copy the selected package directory into the agent discovery path:
 
 ```bash
 mkdir -p ~/.agents/skills
 cp -R <skill-folder> ~/.agents/skills/
 ```
 
-Then restart Codex or reload skills so the new package is discovered.
+Restart the agent or reload skills to complete package discovery.
 
-If you want help deciding which folder to copy, start with the [Skill Matrix](docs/usage/skill-matrix.md).
+For assistance choosing packages, refer to the [Skill Matrix](docs/usage/skill-matrix.md).
+
+### Package Directory Structure
+
+Each skill conforms to the standard layout:
+
+```text
+<skill-name>/
+├── SKILL.md          # Frontmatter metadata and usage instructions
+├── scripts/          # Deterministic scripts and CLI entrypoints
+├── references/       # API specifications and technical reference docs
+└── assets/           # Configuration files, templates, and static resources
+```
+
+---
 
 ## Docs
 
-- [Quickstart](docs/usage/quickstart.md)
-- [Skill Matrix](docs/usage/skill-matrix.md)
-- [FAQ](docs/usage/faq.md)
-- [Troubleshooting](docs/usage/troubleshooting.md)
-- [Review Workflows](docs/usage/review-workflows.md)
-- [Examples](docs/usage/examples.md)
-- [Chinese Overview](docs/zh/README.zh-CN.md)
-- [Release Notes](docs/releases/README.md)
+- [Quickstart](docs/usage/quickstart.md) — Fast installation and verification guide
+- [Skill Matrix](docs/usage/skill-matrix.md) — Feature comparison and routing matrix
+- [FAQ](docs/usage/faq.md) — Frequently asked questions
+- [Troubleshooting](docs/usage/troubleshooting.md) — Issue diagnostics and resolution
+- [Review Workflows](docs/usage/review-workflows.md) — Production code review procedures
+- [Examples](docs/usage/examples.md) — Concrete usage examples
+- [Chinese Overview](docs/zh/README.zh-CN.md) — Localized Chinese documentation portal
+- [Release Notes](docs/releases/README.md) — Version history and release notes
+
+---
 
 ## Repository Layout
 
 ```text
-awesome-ui-kit/                     skill package
-best-project-memory/                 skill package
-cloudphone-adb-tunnel/              skill package
-codex-agent-worktree-setup/         skill package
-evidence-driven-bugfix/             skill package
-grok-search/                        skill package
-muse-reverse-ssh/                     skill package
-obsidian-doc-router/                skill package
-production-code-quality-review/     skill package
-split-image-assets/                 skill package
-windows-ssh-stcp/                   skill package
-docs/usage/                         newcomer and usage guides
-docs/zh/                            Chinese entry docs
-docs/releases/                      release notes
-docs/superpowers/                   design specs and implementation plans
-tests/                              repository-level regression checks
+awesome-ui-kit/                     AI chat, RAG, reasoning viewer, and canvas components
+best-project-memory/                Cross-session project memory, decisions, and handoffs
+cloudphone-adb-tunnel/              FRP STCP relay for non-root Android cloud phone ADB
+codex-agent-worktree-setup/         Branch-bound isolated Git worktrees for agent threads
+evidence-driven-bugfix/             Evidence-first reproduction and bugfix loop
+grok-search/                        Web search, fact verification, and URL inspection
+muse-reverse-ssh/                   Reverse SSH tunnels and VPS port forwarding keepalive
+obsidian-doc-router/                Obsidian vault documentation router and updates
+production-code-quality-review/     Production-focused pull request review and diff audit
+split-image-assets/                 Image asset decomposition, alpha masks, and packaging
+windows-ssh-stcp/                   Windows SSH over FRP STCP with NSSM keepalive
+yunzhi-cloudphone-checkin/          Yunzhi cloud phone daily check-in and automated renewal
+docs/usage/                         Guides, matrix, troubleshooting, and examples
+docs/zh/                            Chinese landing page and localized guides
+docs/releases/                      Release notes and changelogs
+docs/superpowers/                   Design specifications and implementation plans
+tests/                              Repository-level regression test suite
 ```
+
+---
+
+## Contributing
+
+1. Verify that new packages adhere to the Agent Skills specification with a valid `SKILL.md` frontmatter.
+2. Add regression tests under the package `tests/` directory.
+3. Register new packages in `docs/usage/skill-matrix.md` and repository tables.
+4. Run the repository documentation test suite:
+   ```bash
+   python3 -m unittest discover tests -v
+   ```
+
+---
 
 ## For Maintainers
 
