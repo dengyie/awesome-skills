@@ -11,8 +11,10 @@ def _package_text_files():
     paths = [
         ROOT / "SKILL.md",
         ROOT / "agents" / "openai.yaml",
-        ROOT.parent / "docs" / "usage" / "cue-sandbox.md",
     ]
+    usage = ROOT.parent / "docs" / "usage" / "cue-sandbox.md"
+    if usage.exists():
+        paths.append(usage)
     paths.extend(sorted((ROOT / "references").glob("*.md")))
     return paths
 
@@ -29,10 +31,12 @@ class CueSandboxPackageTests(unittest.TestCase):
             ROOT / "references" / "ssh.md",
             ROOT / "references" / "easytier.md",
             ROOT / "references" / "probe.md",
-            ROOT.parent / "docs" / "usage" / "cue-sandbox.md",
         ]
+        usage = ROOT.parent / "docs" / "usage" / "cue-sandbox.md"
+        if (ROOT.parent / ".git").exists() or (ROOT.parent / "docs").exists():
+            required_paths.append(usage)
         missing = [
-            str(path.relative_to(ROOT.parent))
+            str(path.relative_to(ROOT.parent if path.is_relative_to(ROOT.parent) else ROOT))
             for path in required_paths
             if not path.exists()
         ]
@@ -160,7 +164,10 @@ class CueSandboxPackageTests(unittest.TestCase):
         )
 
     def test_usage_guide_links_shared_navigation(self):
-        usage = _read(ROOT.parent / "docs" / "usage" / "cue-sandbox.md")
+        usage_path = ROOT.parent / "docs" / "usage" / "cue-sandbox.md"
+        if not usage_path.exists():
+            self.skipTest("standalone installation outside repository")
+        usage = _read(usage_path)
         self.assertIn("skill-matrix.md", usage)
         self.assertIn("quickstart.md", usage)
         self.assertIn("cue-sandbox", usage)
