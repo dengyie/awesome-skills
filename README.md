@@ -40,6 +40,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 
 - [`cloudphone-adb-tunnel`](cloudphone-adb-tunnel/): Sets up FRP STCP relays and Termux keepalive for remote ADB and scrcpy connections to non-root Android cloud phones.
 - [`windows-ssh-stcp`](windows-ssh-stcp/): Configures SSH access to NAT-isolated Windows machines over existing FRP STCP relays with loopback sshd.
+- [`cue-sandbox`](cue-sandbox/): Lands a Cue sandbox over EasyTier TUN SSH, with India reverse-SSH as fallback and a Komari probe.
 - [`muse-reverse-ssh`](muse-reverse-ssh/): Configures reverse SSH tunnels and VPS port forwarding with process keepalive.
 
 ### UI Engineering and Assets
@@ -63,6 +64,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 | `best-project-memory` | You need durable repo memory across long-running work | restoring context, recording decisions, keeping TODOs and handoffs current | [Guide](docs/usage/best-project-memory.md) |
 | `cloudphone-adb-tunnel` | You need ADB/scrcpy to a non-root cloud phone over the internet | FRP STCP relay, Termux frpc deployment, phantom-process hardening | [Guide](docs/usage/cloudphone-adb-tunnel.md) |
 | `codex-agent-worktree-setup` | You need an isolated Codex development thread bound to a branch | protected main worktrees, branch-bound agents, detached HEAD repair | [Guide](docs/usage/codex-agent-worktree-setup.md) |
+| `cue-sandbox` | You need Cue on EasyTier mesh SSH with India reverse-SSH as fallback | TUN `.81`, two-keypair SSH, Komari probe, overlay mining | [Guide](docs/usage/cue-sandbox.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
 | `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive | [Guide](docs/usage/muse-reverse-ssh.md) |
@@ -144,6 +146,7 @@ awesome-ui-kit/                     AI chat, RAG, reasoning viewer, and canvas c
 best-project-memory/                Cross-session project memory, decisions, and handoffs
 cloudphone-adb-tunnel/              FRP STCP relay for non-root Android cloud phone ADB
 codex-agent-worktree-setup/         Branch-bound isolated Git worktrees for agent threads
+cue-sandbox/                        Cue EasyTier TUN SSH, India fallback, Komari probe
 evidence-driven-bugfix/             Evidence-first reproduction and bugfix loop
 grok-search/                        Web search, fact verification, and URL inspection
 muse-reverse-ssh/                   Reverse SSH tunnels and VPS port forwarding keepalive
