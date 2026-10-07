@@ -16,6 +16,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive supervision | the machine already has a public IP or you need HTTPS/browser access | working public SSH endpoint, keepalive supervisor, verification results | `docs/usage/muse-reverse-ssh.md` |
 | `obsidian-doc-router` | You need accurate ops facts or are writing docs in an Obsidian vault | router-first queries, anti-orphan documentation workflow | the query is unrelated to your vault or ops notes | verified ops answers with cited notes, anti-orphan canonical entries | `docs/usage/obsidian-doc-router.md` |
+| `phone-playwright` | You need Playwright-style mobile automation or an AI mobile agent | semantic pruning, auto-waiting state machine, warm-cache fast dispatch, scroll-into-view, MCP server | you are automating desktop web browsers or remote cloudphone reverse SSH tunnels | compact semantic snapshots, deterministic actions, verified UI workflows | `docs/usage/phone-playwright.md` |
 | `production-code-quality-review` | You need production-minded judgment on changed code | PR review, diff triage, merge readiness, architecture-sensitive review | you need implementation or debugging instead of review | review brief, findings, risk summary, verification guidance | `docs/usage/quickstart.md`, `docs/usage/review-workflows.md` |
 | `split-image-assets` | You need reusable assets instead of one flat image | object layers, masks, previews, asset manifests, QA evidence | you only need a quick crop or a fully automatic segmenter | transparent PNGs, masks, `metadata.json`, `qa_report.md`, previews | `docs/usage/split-image-assets.md` |
 | `windows-ssh-stcp` | You need SSH to a Windows host that has no inbound public port | reusing an existing frps over STCP, loopback-only OpenSSH, NSSM keepalive | the host is on the same LAN, you need browser/HTTPS access, or no frps exists yet | working SSH over `127.0.0.1:2222`, supervised frpc on both ends, loopback-only sshd | `docs/usage/windows-ssh-stcp.md` |
@@ -33,6 +34,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need a source image turned into reusable package assets: `split-image-assets`
 - Need a machine without a public IP reachable over SSH from the internet: `muse-reverse-ssh`
 - Need router-first vault reading or anti-orphan doc recording: `obsidian-doc-router`
+- Need mobile device automation, semantic pruning, or AI-native mobile interaction: `phone-playwright`
 - Need SSH into a Windows host that cannot accept inbound connections: `windows-ssh-stcp`
 - Need automated daily check-in or space renewal for Yunzhi Cloudphone: `yunzhi-cloudphone-checkin`
 
@@ -47,6 +49,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - review findings and merge-readiness guidance: `production-code-quality-review`
 - working public SSH endpoint, keepalive supervisor, verification results: `muse-reverse-ssh`
 - verified ops answers, anti-orphan canonical docs: `obsidian-doc-router`
+- compact mobile snapshots, auto-waited clicks, deterministic UI interactions: `phone-playwright`
 - transparent assets, masks, previews, QA report: `split-image-assets`
 - SSH to a NAT-bound Windows host through an existing frps, with sshd kept on loopback: `windows-ssh-stcp`
 - claimed 2-day cloudphone space card and renewed active device: `yunzhi-cloudphone-checkin`
@@ -93,6 +96,12 @@ Use $muse-reverse-ssh to expose this machine without a public IP as a publicly r
 
 ```text
 Use $obsidian-doc-router to query our infrastructure topology or record a newly deployed service without creating orphan notes.
+```
+
+`phone-playwright`
+
+```text
+Use $phone-playwright to inspect the current mobile screen on 192.168.1.3:43037, click the settings button with auto-waiting, and scroll down to 'About phone'.
 ```
 
 `production-code-quality-review`

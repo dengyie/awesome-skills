@@ -22,6 +22,7 @@ This repository ships independent skill packages. Start by choosing the one that
 | `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive | [Guide](docs/usage/muse-reverse-ssh.md) |
 | `obsidian-doc-router` | You are reading/writing Obsidian vault ops notes or topologies | router-first queries, anti-orphan documentation workflow | [Guide](docs/usage/obsidian-doc-router.md) |
+| `phone-playwright` | You need Playwright-style mobile automation or an AI mobile agent | semantic pruning, auto-waiting state machine, warm-cache fast dispatch, scroll-into-view, MCP server | [Guide](docs/usage/phone-playwright.md) |
 | `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
 | `split-image-assets` | You need to turn one image into reusable package assets | masks, transparent layers, previews, metadata, QA | [Guide](docs/usage/split-image-assets.md) |
 | `windows-ssh-stcp` | You need SSH to a Windows host with no inbound public port | reuse an existing frps over STCP, loopback-only sshd, NSSM keepalive | [Guide](docs/usage/windows-ssh-stcp.md) |

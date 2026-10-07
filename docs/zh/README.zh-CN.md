@@ -26,6 +26,7 @@
 - `grok-search`
 - `muse-reverse-ssh`
 - `obsidian-doc-router`
+- `phone-playwright`
 - `production-code-quality-review`
 - `split-image-assets`
 - `windows-ssh-stcp`
@@ -45,6 +46,7 @@
 | `grok-search` | 需要联网搜索、抓取网页或发现站点页面 | 最新事实核查、URL 正文抓取、站点候选页发现 | [Guide](../usage/grok-search.md) |
 | `muse-reverse-ssh` | 需要让无公网 IP 的机器从公网经 SSH 访问 | 反向 SSH 隧道、VPS 端口转发、隧道保活 | [Guide](../usage/muse-reverse-ssh.md) |
 | `obsidian-doc-router` | 需要查阅或记录 Obsidian 知识库运维事实与拓扑 | 权威路由表首查、防孤岛文档闭环记录 | [Guide](../usage/obsidian-doc-router.md) |
+| `phone-playwright` | 需要移动端 Playwright 式自动化或构建手机 AI Agent | 视口语义蒸馏、可用性自动等待、温热缓存极速首击、MCP 服务端 | [Guide](../usage/phone-playwright.md) |
 | `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
 | `split-image-assets` | 需要把单张图拆成可复用资产包 | mask、透明图层、预览、metadata、QA | [Guide](../usage/split-image-assets.md) |
 | `windows-ssh-stcp` | 需要 SSH 登录一台没有公网入站端口的 Windows | 复用已有 frps 的 STCP、只听环回的 sshd、NSSM 保活 | [Guide](../usage/windows-ssh-stcp.md) |
