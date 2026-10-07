@@ -12,6 +12,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `best-project-memory` | You need durable project continuity across sessions | restoring context, keeping TODOs current, recording decisions, leaving handoffs | the work is a one-shot task with no continuity value | updated `.codex-memory/` files, session summaries, handoffs | `docs/usage/best-project-memory.md` |
 | `cloudphone-adb-tunnel` | You need ADB/scrcpy to a non-root Android cloud phone from anywhere | FRP STCP tunnels, Termux frpc keepalive, Android 13 hardening | the device is on the same LAN, or you need HTTPS/browser access to the phone | registered tunnel, `adb devices` showing `device`, hardened device | `docs/usage/cloudphone-adb-tunnel.md` |
 | `codex-agent-worktree-setup` | You need a Codex-visible process isolated from the primary checkout | branch-bound worktrees, protected main branches, detached HEAD repair | you only need a branch in the current checkout or no new Codex thread was requested | Codex thread, isolated worktree, verified branch mapping | `docs/usage/codex-agent-worktree-setup.md` |
+| `cue-sandbox` | You need Cue on EasyTier mesh SSH, with India reverse-SSH only as fallback | TUN overlay login, two-keypair SSH, Komari probe, overlay mining | the host already has inbound public SSH, or you only need a generic reverse tunnel (`muse-reverse-ssh`) | working `ssh mesh-cue`, TUN `.81`, probe online, overlay pool if mining | `docs/usage/cue-sandbox.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
 | `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive supervision | the machine already has a public IP or you need HTTPS/browser access | working public SSH endpoint, keepalive supervisor, verification results | `docs/usage/muse-reverse-ssh.md` |
@@ -27,11 +28,12 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need continuity and handoff discipline: `best-project-memory`
 - Need ADB or screen mirroring to a cloud phone over the internet: `cloudphone-adb-tunnel`
 - Need an isolated Codex thread or detached worktree repaired: `codex-agent-worktree-setup`
+- Need Cue on EasyTier mesh SSH with India reverse-SSH as fallback: `cue-sandbox`
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
 - Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
 - Need a production review of changed code: `production-code-quality-review`
 - Need a source image turned into reusable package assets: `split-image-assets`
-- Need a machine without a public IP reachable over SSH from the internet: `muse-reverse-ssh`
+- Need a generic reverse SSH tunnel for a machine without a public IP: `muse-reverse-ssh`
 - Need router-first vault reading or anti-orphan doc recording: `obsidian-doc-router`
 - Need SSH into a Windows host that cannot accept inbound connections: `windows-ssh-stcp`
 - Need automated daily check-in or space renewal for Yunzhi Cloudphone: `yunzhi-cloudphone-checkin`
@@ -42,6 +44,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - `.codex-memory/` updates, durable TODOs, handoff notes: `best-project-memory`
 - working ADB tunnel to a non-root cloud phone, verified hardening: `cloudphone-adb-tunnel`
 - Codex thread, isolated worktree, verified branch mapping: `codex-agent-worktree-setup`
+- working `ssh mesh-cue`, TUN `.81`, Komari probe online: `cue-sandbox`
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
 - search answer with cited sources, page content, candidate URLs: `grok-search`
 - review findings and merge-readiness guidance: `production-code-quality-review`
@@ -69,6 +72,12 @@ Use $best-project-memory to restore this repo's current objective, decisions, ac
 
 ```text
 Use $codex-agent-worktree-setup to create an isolated Codex worktree on the requested branch while keeping the primary main worktree unchanged.
+```
+
+`cue-sandbox`
+
+```text
+Use $cue-sandbox to land Cue over EasyTier mesh SSH, keep India reverse-SSH as fallback only, and wire the Komari probe without disabling mining control.
 ```
 
 `evidence-driven-bugfix`

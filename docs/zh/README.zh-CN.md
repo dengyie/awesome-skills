@@ -20,12 +20,13 @@
 
 本仓库收录一组遵循 Agent Skills 规范的独立工程包，用于解决日常开发与运维中的具体技术问题。
 
-当前包含 12 个核心 skill：
+当前包含 13 个核心 skill：
 
 - `awesome-ui-kit`
 - `best-project-memory`
 - `cloudphone-adb-tunnel`
 - `codex-agent-worktree-setup`
+- `cue-sandbox`
 - `evidence-driven-bugfix`
 - `grok-search`
 - `muse-reverse-ssh`
@@ -56,6 +57,7 @@
 | `best-project-memory` | 需要跨会话保存项目状态 | 上下文恢复、决策记录、TODO 和交接 | [Guide](../usage/best-project-memory.md) |
 | `cloudphone-adb-tunnel` | 需要从公网远程 ADB/投屏无 root 云手机 | FRP STCP 隧道、Termux frpc 保活、Android 13 加固 | [Guide](../usage/cloudphone-adb-tunnel.md) |
 | `codex-agent-worktree-setup` | 需要创建与分支绑定的隔离 Codex 工作线程 | 保护主工作树、创建隔离 agent、修复 detached HEAD | [Guide](../usage/codex-agent-worktree-setup.md) |
+| `cue-sandbox` | 需要把无公网入站的 Cue 接到 EasyTier mesh SSH，印度反向 SSH 只作兜底 | TUN `.81`、两把钥、Komari 探针、overlay 挖矿 | [Guide](../usage/cue-sandbox.md) |
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
 | `grok-search` | 需要联网搜索、抓取网页或发现站点页面 | 最新事实核查、URL 正文抓取、站点候选页发现 | [Guide](../usage/grok-search.md) |
 | `muse-reverse-ssh` | 需要让无公网 IP 的机器从公网经 SSH 访问 | 反向 SSH 隧道、VPS 端口转发、隧道保活 | [Guide](../usage/muse-reverse-ssh.md) |
@@ -141,6 +143,7 @@ awesome-ui-kit/                     AI 对话、RAG、Canvas 分屏与 Agent 监
 best-project-memory/                跨会话项目上下文保持、决策记录与交接
 cloudphone-adb-tunnel/              非 root 安卓云手机 FRP STCP 远程 ADB 穿透包
 codex-agent-worktree-setup/         与分支绑定的隔离 Codex 工作线程包
+cue-sandbox/                        Cue EasyTier TUN SSH、印度兜底与 Komari 探针接入包
 evidence-driven-bugfix/             先拿失败证据再定位根因的排障工作流包
 grok-search/                        联网搜索、实时事实核查与网页发现包
 muse-reverse-ssh/                   反向 SSH 隧道与 VPS 端口转发保活包

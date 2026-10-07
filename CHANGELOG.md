@@ -8,6 +8,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Added
 
+- added `cue-sandbox` skill package: Cue sandbox access SOP for EasyTier mango-mesh TUN SSH (`ssh mesh-cue`), India reverse-SSH fallback only, Komari Linux probe with `ping_group_range`, and overlay mining without disabling Web SSH; credentials stay out of the package (placeholders only)
 - added `yunzhi-cloudphone-checkin` skill package: automated daily login check-in and cloud phone space benefit card renewal (benefitConfigId: 158) for Tianyi / Play.cn Yunzhi Cloudphone, featuring zero-dependency browser DevTools console one-click script, Chrome DevTools Protocol (CDP) headless runner, direct CLI mode, Edge WAF 503 TLS fingerprint bypass, full protocol reverse engineering references, and offline signature unit tests
 - added `windows-ssh-stcp` skill package: SSH into a Windows host with no inbound public port by reusing an existing frps over STCP, with loopback-only OpenSSH, NSSM keepalive, a macOS/Linux visitor, and a production pitfall runbook
 - added `cloudphone-adb-tunnel` skill package: FRP STCP ADB tunnel deployment and troubleshooting for non-root Android cloud phones (Termux frpc with termux-chroot DNS, desktop visitor, phantom-process hardening), with usage guide and matrix entries

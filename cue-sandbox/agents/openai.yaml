@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cue Sandbox Access"
+  short_description: "Cue SSH, EasyTier TUN, and Komari probe SOP"
+  default_prompt: "Use $cue-sandbox to land Cue over EasyTier mesh SSH, keep India reverse-SSH as fallback only, and wire the Komari probe without disabling mining control."
