@@ -14,6 +14,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `codex-agent-worktree-setup` | You need a Codex-visible process isolated from the primary checkout | branch-bound worktrees, protected main branches, detached HEAD repair | you only need a branch in the current checkout or no new Codex thread was requested | Codex thread, isolated worktree, verified branch mapping | `docs/usage/codex-agent-worktree-setup.md` |
 | `cue-sandbox` | You need Cue on EasyTier mesh SSH, with India reverse-SSH only as fallback | TUN overlay login, two-keypair SSH, Komari probe, overlay mining | the host already has inbound public SSH, or you only need a generic reverse tunnel (`muse-reverse-ssh`) | working `ssh mesh-cue`, TUN `.81`, probe online, overlay pool if mining | `docs/usage/cue-sandbox.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
+| `freestyle-sandbox` | You need isolated Linux cloud VMs for testing, building, or running agent tasks | dynamic sizing (2C4G vs 4C8G), idle timeouts, exit/interrupt pause protection | you need a 24/7 permanent server, large bandwidth relay, or local-only tasks | running or paused sandbox VM, task execution results, quota-protected environment | `docs/usage/freestyle-sandbox.md` |
 | `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive supervision | the machine already has a public IP or you need HTTPS/browser access | working public SSH endpoint, keepalive supervisor, verification results | `docs/usage/muse-reverse-ssh.md` |
 | `obsidian-doc-router` | You need accurate ops facts or are writing docs in an Obsidian vault | router-first queries, anti-orphan documentation workflow | the query is unrelated to your vault or ops notes | verified ops answers with cited notes, anti-orphan canonical entries | `docs/usage/obsidian-doc-router.md` |
@@ -30,6 +31,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need an isolated Codex thread or detached worktree repaired: `codex-agent-worktree-setup`
 - Need Cue on EasyTier mesh SSH with India reverse-SSH as fallback: `cue-sandbox`
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
+- Need an isolated Linux cloud VM, dynamic sandbox, or remote build environment: `freestyle-sandbox`
 - Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
 - Need a production review of changed code: `production-code-quality-review`
 - Need a source image turned into reusable package assets: `split-image-assets`
@@ -46,6 +48,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Codex thread, isolated worktree, verified branch mapping: `codex-agent-worktree-setup`
 - working `ssh mesh-cue`, TUN `.81`, Komari probe online: `cue-sandbox`
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
+- running or paused sandbox VM, task execution results, quota-protected environment: `freestyle-sandbox`
 - search answer with cited sources, page content, candidate URLs: `grok-search`
 - review findings and merge-readiness guidance: `production-code-quality-review`
 - working public SSH endpoint, keepalive supervisor, verification results: `muse-reverse-ssh`
@@ -84,6 +87,12 @@ Use $cue-sandbox to land this Cue host over EasyTier mesh SSH. Probe the machine
 
 ```text
 Use $evidence-driven-bugfix to fix this failure by first capturing logs, securing failing evidence, tracing the root cause, and only reporting success after fresh verification.
+```
+
+`freestyle-sandbox`
+
+```text
+Use $freestyle-sandbox to execute this build task in an isolated cloud Linux VM, dynamically choosing the right tier and pausing the machine after execution.
 ```
 
 `grok-search`

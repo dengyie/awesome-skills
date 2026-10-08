@@ -38,6 +38,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 
 ### Networking and Infrastructure Operations
 
+- [`freestyle-sandbox`](freestyle-sandbox/): Dynamically sizes and dispatches Linux cloud virtual machines on Freestyle.sh with automatic idle timeouts and guaranteed quota-protection pause hooks.
 - [`cloudphone-adb-tunnel`](cloudphone-adb-tunnel/): Sets up FRP STCP relays and Termux keepalive for remote ADB and scrcpy connections to non-root Android cloud phones.
 - [`windows-ssh-stcp`](windows-ssh-stcp/): Configures SSH access to NAT-isolated Windows machines over existing FRP STCP relays with loopback sshd.
 - [`cue-sandbox`](cue-sandbox/): Lands a Cue sandbox over EasyTier TUN SSH, with India reverse-SSH as fallback and a Komari probe.
@@ -66,6 +67,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 | `codex-agent-worktree-setup` | You need an isolated Codex development thread bound to a branch | protected main worktrees, branch-bound agents, detached HEAD repair | [Guide](docs/usage/codex-agent-worktree-setup.md) |
 | `cue-sandbox` | You need Cue on EasyTier mesh SSH with India reverse-SSH as fallback | TUN `.81`, two-keypair SSH, Komari probe, overlay mining | [Guide](docs/usage/cue-sandbox.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
+| `freestyle-sandbox` | You need isolated Linux cloud VMs for testing, building, or running agent tasks | dynamic sizing (2C4G vs 4C8G), idle timeouts, exit/interrupt pause protection | [Guide](docs/usage/freestyle-sandbox.md) |
 | `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive | [Guide](docs/usage/muse-reverse-ssh.md) |
 | `obsidian-doc-router` | You are reading/writing Obsidian vault ops notes or topologies | router-first queries, anti-orphan documentation workflow | [Guide](docs/usage/obsidian-doc-router.md) |
