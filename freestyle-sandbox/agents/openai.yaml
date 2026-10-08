@@ -1,0 +1,4 @@
+interface:
+  display_name: "Freestyle Sandbox"
+  short_description: "Freestyle.sh Linux cloud sandbox dynamic dispatch and lifecycle control SOP"
+  default_prompt: "Use $freestyle-sandbox to execute tasks in Freestyle.sh cloud Linux VMs. Dynamically choose 2C4G (sm) for light scripts or 4C8G (std) for heavy compilation, ensure idle timeouts, and always pause VMs immediately after execution to protect compute quota."

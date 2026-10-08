@@ -6,6 +6,10 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ## Unreleased
 
+### Added
+
+- added `freestyle-sandbox` skill package: dynamic sizing (2 vCPU / 4 GiB vs 4 vCPU / 8 GiB), automatic idle timeouts, existing instance reuse, and guaranteed exit/interrupt cleanup hooks (`pause`) to strictly protect monthly compute quota limits on Freestyle.sh Linux VMs, complete with usage guide, decision matrix, hardened helper script, and package verification tests
+
 ### Changed
 
 - hardened `cue-sandbox` for multi-instance fleet deployments: parameterized EasyTier overlay IP (`<CUE_OVERLAY>`) and instance name (`<CUE_INSTANCE_NAME>`) to prevent intra-mesh collision, parameterized India reverse-SSH fallback port (`<TUNNEL_REMOTE_PORT>`) with a standard systemd keepalive service template, expanded test suite credential scans to usage docs, and added root `pytest.ini` for reliable test collection

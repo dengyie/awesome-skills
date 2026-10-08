@@ -59,6 +59,7 @@
 | `codex-agent-worktree-setup` | 需要创建与分支绑定的隔离 Codex 工作线程 | 保护主工作树、创建隔离 agent、修复 detached HEAD | [Guide](../usage/codex-agent-worktree-setup.md) |
 | `cue-sandbox` | 需要把无公网入站的 Cue 接到 EasyTier mesh SSH，印度反向 SSH 只作兜底 | TUN `.81`、两把钥、Komari 探针、overlay 挖矿 | [Guide](../usage/cue-sandbox.md) |
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
+| `freestyle-sandbox` | 需要在 Freestyle.sh 云端 Linux 沙箱运行代码、测试或重型构建 | 动态规格调度（2C4G/4C8G）、空闲自动休眠、退出中断 pause 保护 | [Guide](../usage/freestyle-sandbox.md) |
 | `grok-search` | 需要联网搜索、抓取网页或发现站点页面 | 最新事实核查、URL 正文抓取、站点候选页发现 | [Guide](../usage/grok-search.md) |
 | `muse-reverse-ssh` | 需要让无公网 IP 的机器从公网经 SSH 访问 | 反向 SSH 隧道、VPS 端口转发、隧道保活 | [Guide](../usage/muse-reverse-ssh.md) |
 | `obsidian-doc-router` | 需要查阅或记录 Obsidian 知识库运维事实与拓扑 | 权威路由表首查、防孤岛文档闭环记录 | [Guide](../usage/obsidian-doc-router.md) |
