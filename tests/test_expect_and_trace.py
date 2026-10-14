@@ -47,6 +47,8 @@ class FakeTraceDriver:
     def __init__(self, device_id: str = "test-device-1") -> None:
         self.device_id = device_id
         self.taps: list[tuple[int, int]] = []
+        self.swipes: list[tuple[int, int, int, int, int]] = []
+        self.keys: list[str | int] = []
 
     async def get_viewport_size(self) -> tuple[int, int]:
         return 1080, 2400
@@ -61,6 +63,18 @@ class FakeTraceDriver:
 
     async def tap(self, x: int, y: int) -> None:
         self.taps.append((x, y))
+
+    async def swipe(self, sx: int, sy: int, ex: int, ey: int, duration_ms: int = 300) -> None:
+        self.swipes.append((sx, sy, ex, ey, duration_ms))
+
+    async def press_key(self, key: str | int) -> None:
+        self.keys.append(key)
+
+    async def press_back(self) -> None:
+        self.keys.append("back")
+
+    async def press_home(self) -> None:
+        self.keys.append("home")
 
 
 @pytest.mark.asyncio
@@ -167,3 +181,31 @@ async def test_device_and_page_tracing_integration() -> None:
             assert action_event["name"] == "click"
             assert action_event["selector"] == "text=确认"
             assert action_event["click_point"] == {"x": 200, "y": 300}
+
+
+@pytest.mark.asyncio
+async def test_gesture_and_system_keys_trace_recording() -> None:
+    from phone_playwright.api.async_api import AsyncPhoneDevice
+
+    driver = FakeTraceDriver()
+    dev = AsyncPhoneDevice(driver=driver)  # type: ignore[arg-type]
+
+    await dev.tracing.start(screenshots=False, snapshots=False)
+    page = dev.current_page
+
+    await page.swipe(direction="up")
+    await page.press_back()
+    await page.press_home()
+    await page.press_key(4)
+    await page.pinch_out(center=(500, 500))
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        trace_path = os.path.join(tmpdir, "gestures-trace.zip")
+        out = await dev.tracing.stop(path=trace_path)
+        assert os.path.exists(out)
+        with zipfile.ZipFile(out, "r") as zf:
+            manifest_data = json.loads(zf.read("manifest.json").decode("utf-8"))
+            assert manifest_data["eventCount"] == 5
+            trace_lines = zf.read("trace.trace").decode("utf-8").strip().splitlines()
+            names = [json.loads(line)["name"] for line in trace_lines]
+            assert names == ["swipe", "press_back", "press_home", "press_key", "pinch_out"]

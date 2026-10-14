@@ -30,9 +30,15 @@ from phone_playwright.models.exceptions import (
     OffscreenElementError,
 )
 
+# Playwright 惯用名无缝兼容别名
+async_playwright = async_phone_playwright
+sync_playwright = sync_phone_playwright
+
 __all__ = [
     "sync_phone_playwright",
     "async_phone_playwright",
+    "sync_playwright",
+    "async_playwright",
     "SyncPhonePlaywright",
     "SyncPhoneDevice",
     "SyncPhonePage",

@@ -13,7 +13,7 @@ from phone_playwright.api.async_api import (
     AsyncPhoneDevice,
     AsyncPhonePage,
 )
-from phone_playwright.core.cdp import WebFrameLocator, WebPhoneLocator
+from phone_playwright.core.cdp import WebFrameLocator, WebPhoneLocator, CdpClient
 from phone_playwright.tracing.recorder import SyncTraceRecorder
 from phone_playwright.models.schema import PageSnapshot
 from phone_playwright.models.actions import ActionResult
@@ -178,6 +178,11 @@ class SyncPhonePage:
         self._loop_thread = loop_thread
         self.tracing = SyncTraceRecorder(async_page.tracing, loop_thread)
 
+    @property
+    def driver(self) -> Any:
+        """底层设备驱动实例。"""
+        return self._async.driver
+
     def __call__(self) -> SyncPhonePage:
         """支持 device.current_page() 函数式调用习惯。"""
         return self
@@ -222,6 +227,10 @@ class SyncPhonePage:
     def frame_locator(self, selector: str = "role=scrollable") -> SyncWebFrameLocator:
         async_frame = self._async.frame_locator(selector)
         return SyncWebFrameLocator(async_frame=async_frame, loop_thread=self._loop_thread)
+
+    def cdp(self) -> CdpClient:
+        """自动发现前台 WebView / 混合容器并直连返回 CdpClient 调试客户端。"""
+        return self._loop_thread.run(self._async.cdp())
 
     def dump_raw_tree(self) -> Any:
         return self._loop_thread.run(self._async.dump_raw_tree())
@@ -274,6 +283,11 @@ class SyncPhoneDevice:
     @property
     def current_page(self) -> SyncPhonePage:
         return self._page
+
+    @property
+    def device_id(self) -> str:
+        """底层物理/云端设备序列号标识。"""
+        return self._async.device_id
 
     @property
     def page(self) -> SyncPhonePage:
@@ -361,6 +375,10 @@ class SyncPhonePlaywright:
         target = device_id or alias_or_id
         async_dev = self._loop_thread.run(self._async_playwright.connect(target))
         return SyncPhoneDevice(async_device=async_dev, loop_thread=self._loop_thread)
+
+    def connect_device(self, alias_or_id: str = "", device_id: str = "") -> SyncPhoneDevice:
+        """connect 的语义等价别名，便于移动自动化用户认知对齐。"""
+        return self.connect(alias_or_id=alias_or_id, device_id=device_id)
 
     def list_devices(self) -> list[dict[str, str]]:
         return self._loop_thread.run(self._async_playwright.list_devices())

@@ -16,7 +16,7 @@ from phone_playwright.core.locator import PhoneLocator
 from phone_playwright.core.vision import RapidOcrFallbackProvider
 from phone_playwright.core.som import SetOfMarkRenderer
 from phone_playwright.core.gesture import GestureEngine
-from phone_playwright.core.cdp import WebFrameLocator
+from phone_playwright.core.cdp import WebFrameLocator, CdpClient, CdpDiscovery
 from phone_playwright.tracing.recorder import TraceRecorder
 from phone_playwright.models.schema import PageSnapshot
 from phone_playwright.fleet.manager import FleetManager
@@ -137,6 +137,10 @@ class AsyncPhonePage:
         """根据原生选择器定位内嵌 WebView 容器，并返回内嵌 Web 树定位器。"""
         return WebFrameLocator(page=self, container_selector=selector)
 
+    async def cdp(self) -> CdpClient:
+        """自动发现前台 WebView / 混合容器并直连返回 CdpClient 调试客户端。"""
+        return await CdpDiscovery.create_cdp_client(self.driver)
+
     async def screenshot(self) -> bytes:
         """抓取物理屏幕图像数据。"""
         return await self.driver.take_screenshot()
@@ -154,6 +158,7 @@ class AsyncPhonePage:
     ) -> None:
         """支持方向滑动与两点绝对坐标滑动。"""
         self.action_engine.invalidate_cache()
+        t0 = time.monotonic()
         if len(args) >= 4 or {"start_x", "start_y", "end_x", "end_y"}.issubset(kwargs):
             sx = int(args[0]) if len(args) >= 1 else int(kwargs["start_x"])
             sy = int(args[1]) if len(args) >= 2 else int(kwargs["start_y"])
@@ -162,6 +167,14 @@ class AsyncPhonePage:
             dur = args[4] if len(args) >= 5 else kwargs.get("duration", 0.3)
             duration_ms = int(float(dur) * 1000) if float(dur) <= 10 else int(dur)
             await self.driver.swipe(sx, sy, ex, ey, duration_ms=duration_ms)
+            elapsed_ms = int((time.monotonic() - t0) * 1000)
+            if self.tracing and self.tracing.is_recording:
+                await self.tracing.record_action(
+                    name="swipe",
+                    duration_ms=elapsed_ms,
+                    click_point=(sx, sy),
+                    metadata={"start": (sx, sy), "end": (ex, ey), "duration_ms": duration_ms},
+                )
             return
 
         resolved_dir = direction or (args[0] if len(args) >= 1 and isinstance(args[0], str) else None)
@@ -177,15 +190,25 @@ class AsyncPhonePage:
         delta_x = int(vw * resolved_ratio // 2)
 
         if resolved_dir == "up":
-            await self.driver.swipe(cx, cy + delta_y, cx, cy - delta_y)
+            sx, sy, ex, ey = cx, cy + delta_y, cx, cy - delta_y
         elif resolved_dir == "down":
-            await self.driver.swipe(cx, cy - delta_y, cx, cy + delta_y)
+            sx, sy, ex, ey = cx, cy - delta_y, cx, cy + delta_y
         elif resolved_dir == "left":
-            await self.driver.swipe(cx + delta_x, cy, cx - delta_x, cy)
+            sx, sy, ex, ey = cx + delta_x, cy, cx - delta_x, cy
         elif resolved_dir == "right":
-            await self.driver.swipe(cx - delta_x, cy, cx + delta_x, cy)
+            sx, sy, ex, ey = cx - delta_x, cy, cx + delta_x, cy
         else:
             raise ValueError(f"不支持的滑动方向: {resolved_dir}")
+
+        await self.driver.swipe(sx, sy, ex, ey)
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        if self.tracing and self.tracing.is_recording:
+            await self.tracing.record_action(
+                name="swipe",
+                duration_ms=elapsed_ms,
+                click_point=(sx, sy),
+                metadata={"direction": resolved_dir, "start": (sx, sy), "end": (ex, ey), "distance_ratio": resolved_ratio},
+            )
 
     async def pinch_out(
         self,
@@ -195,10 +218,19 @@ class AsyncPhonePage:
     ) -> None:
         """双指张开 (放大): 两指从中心向外平滑对称滑动。"""
         self.action_engine.invalidate_cache()
+        t0 = time.monotonic()
         if center is None:
             vw, vh = await self.driver.get_viewport_size()
             center = (vw // 2, vh // 2)
         await self.gesture_engine.pinch(center=center, scale=scale, duration_ms=duration_ms)
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        if self.tracing and self.tracing.is_recording:
+            await self.tracing.record_action(
+                name="pinch_out",
+                duration_ms=elapsed_ms,
+                click_point=center,
+                metadata={"center": center, "scale": scale, "duration_ms": duration_ms},
+            )
 
     async def pinch_in(
         self,
@@ -208,10 +240,19 @@ class AsyncPhonePage:
     ) -> None:
         """双指捏合 (缩小): 两指从外侧向中心平滑对称滑动。"""
         self.action_engine.invalidate_cache()
+        t0 = time.monotonic()
         if center is None:
             vw, vh = await self.driver.get_viewport_size()
             center = (vw // 2, vh // 2)
         await self.gesture_engine.pinch(center=center, scale=scale, duration_ms=duration_ms)
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        if self.tracing and self.tracing.is_recording:
+            await self.tracing.record_action(
+                name="pinch_in",
+                duration_ms=elapsed_ms,
+                click_point=center,
+                metadata={"center": center, "scale": scale, "duration_ms": duration_ms},
+            )
 
     async def swipe_path(
         self,
@@ -220,22 +261,54 @@ class AsyncPhonePage:
     ) -> None:
         """多点折线连续手势 (如九宫格锁屏、复杂滑块拼图)。"""
         self.action_engine.invalidate_cache()
+        t0 = time.monotonic()
         await self.gesture_engine.swipe_path(points=points, duration_ms=duration_ms)
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        if self.tracing and self.tracing.is_recording:
+            start_pt = points[0] if points else None
+            await self.tracing.record_action(
+                name="swipe_path",
+                duration_ms=elapsed_ms,
+                click_point=start_pt,
+                metadata={"points": points, "duration_ms": duration_ms},
+            )
 
     async def press_key(self, key: str | int) -> None:
         """模拟物理或系统按键。"""
         self.action_engine.invalidate_cache()
+        t0 = time.monotonic()
         await self.driver.press_key(key)
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        if self.tracing and self.tracing.is_recording:
+            await self.tracing.record_action(
+                name="press_key",
+                duration_ms=elapsed_ms,
+                metadata={"key": str(key)},
+            )
 
     async def press_back(self) -> None:
         """模拟系统返回键。"""
         self.action_engine.invalidate_cache()
+        t0 = time.monotonic()
         await self.driver.press_back()
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        if self.tracing and self.tracing.is_recording:
+            await self.tracing.record_action(
+                name="press_back",
+                duration_ms=elapsed_ms,
+            )
 
     async def press_home(self) -> None:
         """模拟系统物理 Home 键返回桌面。"""
         self.action_engine.invalidate_cache()
+        t0 = time.monotonic()
         await self.driver.press_home()
+        elapsed_ms = int((time.monotonic() - t0) * 1000)
+        if self.tracing and self.tracing.is_recording:
+            await self.tracing.record_action(
+                name="press_home",
+                duration_ms=elapsed_ms,
+            )
 
 
 class AsyncPhoneDevice:
@@ -254,6 +327,11 @@ class AsyncPhoneDevice:
     @property
     def current_page(self) -> AsyncPhonePage:
         return self._current_page
+
+    @property
+    def device_id(self) -> str:
+        """底层物理/云端设备序列号标识。"""
+        return self.driver.device_id
 
     @property
     def page(self) -> AsyncPhonePage:
@@ -342,6 +420,10 @@ class AsyncPhonePlaywright:
         target = device_id or alias_or_id
         driver = await self.fleet.get_driver(target)
         return AsyncPhoneDevice(driver=driver)
+
+    async def connect_device(self, alias_or_id: str = "", device_id: str = "") -> AsyncPhoneDevice:
+        """connect 的语义等价别名，便于移动自动化用户认知对齐。"""
+        return await self.connect(alias_or_id=alias_or_id, device_id=device_id)
 
     async def list_devices(self) -> list[dict[str, str]]:
         return await self.fleet.scan_devices()

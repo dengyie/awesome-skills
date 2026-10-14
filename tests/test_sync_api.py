@@ -134,3 +134,35 @@ def test_sync_playwright_locator_warm_cache_reuse(monkeypatch):
         # 验证 1.0s 内连续读取复用温热缓存，dump_raw_tree 仅调用 1 次
         assert driver_instance.dump_count == 1
 
+
+def test_ergonomics_and_aliases(monkeypatch):
+    from phone_playwright import async_playwright, sync_playwright
+    from phone_playwright.models.schema import PageSnapshot
+    import base64
+
+    # 1. 验证 PageSnapshot 原始字节便捷属性
+    raw_bytes = b"sample_png_bytes"
+    b64_str = base64.b64encode(raw_bytes).decode("ascii")
+    snap = PageSnapshot(
+        timestamp=100.0,
+        device_id="dev-123",
+        viewport_width=1080,
+        viewport_height=2400,
+        screenshot_base64=b64_str,
+        annotated_screenshot_base64=b64_str,
+    )
+    assert snap.screenshot_bytes == raw_bytes
+    assert snap.annotated_screenshot_bytes == raw_bytes
+    assert snap.som_image_bytes == raw_bytes
+
+    # 2. 验证 sync_playwright 别名及 device_id、connect_device
+    driver_instance = DummySyncDriver("my-serial-456")
+    with sync_playwright() as p:
+        async def fake_get_driver(alias_or_id: str):
+            return driver_instance
+
+        monkeypatch.setattr(p._async_playwright.fleet, "get_driver", fake_get_driver)
+        dev = p.connect_device("my-serial-456")
+        assert dev.device_id == "my-serial-456"
+        assert dev.page.driver.device_id == "my-serial-456"
+

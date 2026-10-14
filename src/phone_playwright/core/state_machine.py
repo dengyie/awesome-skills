@@ -196,6 +196,7 @@ class ActionabilityEngine:
 
             if verb == "click":
                 await self.driver.tap(cx, cy)
+                elapsed_ms = int((time.monotonic() - start_time) * 1000)
                 if self.trace_recorder and self.trace_recorder.is_recording:
                     await self.trace_recorder.record_action(
                         name="click",
@@ -224,6 +225,7 @@ class ActionabilityEngine:
                         pass
                 text_to_type = value or ""
                 await self.driver.type_text(text_to_type)
+                elapsed_ms = int((time.monotonic() - start_time) * 1000)
                 if self.trace_recorder and self.trace_recorder.is_recording:
                     await self.trace_recorder.record_action(
                         name="fill",
@@ -243,6 +245,7 @@ class ActionabilityEngine:
             elif verb == "hover":
                 # 触发长按 / 悬浮
                 await self.driver.long_press(cx, cy, duration_ms=duration_ms)
+                elapsed_ms = int((time.monotonic() - start_time) * 1000)
                 if self.trace_recorder and self.trace_recorder.is_recording:
                     await self.trace_recorder.record_action(
                         name="hover",

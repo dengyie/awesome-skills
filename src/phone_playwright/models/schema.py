@@ -4,6 +4,7 @@
 """
 
 from __future__ import annotations
+import base64
 from typing import Literal
 from pydantic import BaseModel, Field
 from phone_playwright.models.geometry import Rect
@@ -94,3 +95,28 @@ class PageSnapshot(BaseModel):
     @property
     def summary_markdown(self) -> str:
         return self.to_markdown()
+
+    @property
+    def screenshot_bytes(self) -> bytes | None:
+        """物理屏幕截图原始字节数据 (解码自 screenshot_base64)。"""
+        if not self.screenshot_base64:
+            return None
+        try:
+            return base64.b64decode(self.screenshot_base64)
+        except Exception:
+            return None
+
+    @property
+    def annotated_screenshot_bytes(self) -> bytes | None:
+        """带有 SoM 标注的屏幕截图原始字节数据 (解码自 annotated_screenshot_base64)。"""
+        if not self.annotated_screenshot_base64:
+            return None
+        try:
+            return base64.b64decode(self.annotated_screenshot_base64)
+        except Exception:
+            return None
+
+    @property
+    def som_image_bytes(self) -> bytes | None:
+        """annotated_screenshot_bytes 的便捷别名。"""
+        return self.annotated_screenshot_bytes
