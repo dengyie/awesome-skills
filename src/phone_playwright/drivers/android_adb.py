@@ -45,6 +45,15 @@ _CLIPBOARD_UNSUPPORTED_MARKERS: tuple[str, ...] = (
 
 _ADB_KEYBOARD_IME = "com.android.adbkeyboard/.AdbIME"
 
+# 截屏 exec-out 通道的超时阶梯：本地/局域网链路毫秒级返回 (8s 档即命中)；
+# VPN/mesh 弱网隧道 (如 EasyTier 中继) 吞吐可跌至 <10KB/s，固定 8s 必然超时
+# 导致截图静默丢失 —— 逐级放宽至上限 90s 覆盖 1MB+ 级 PNG 传输。
+_SCREENCAP_TIMEOUT_LADDER: tuple[float, ...] = (8.0, 30.0, 90.0)
+
+# 视口探测的合理性下限：低于该值 (如弱网半截输出解析出的 1x1) 视作探测失败，
+# 宁可显式报错或继续降级，也不让荒谬尺寸缓存后毒化全部裁剪与手势几何。
+_MIN_SANE_VIEWPORT_DIM = 50
+
 
 class AndroidAdbDriver(BaseDriver):
     """基于 ADB 的 Android 驱动实现。"""
@@ -176,9 +185,11 @@ class AndroidAdbDriver(BaseDriver):
             match = re.search(r"cur=(\d+)x(\d+)", display_info)
             if match:
                 size = (int(match.group(1)), int(match.group(2)))
-                self._cached_viewport = size
-                self._cached_viewport_at = now
-                return size
+                if min(size) >= _MIN_SANE_VIEWPORT_DIM:
+                    self._cached_viewport = size
+                    self._cached_viewport_at = now
+                    return size
+                # 荒谬尺寸视作探测失败，继续降级而非污染坐标几何
         except Exception:
             pass
 
@@ -189,10 +200,17 @@ class AndroidAdbDriver(BaseDriver):
         override = re.search(r"Override size:\s*(\d+)x(\d+)", output)
         physical = re.search(r"Physical size:\s*(\d+)x(\d+)", output)
         match = override or physical
-        size = (int(match.group(1)), int(match.group(2))) if match else (1080, 2400)
-        self._cached_viewport = size
-        self._cached_viewport_at = now
-        return size
+        if match:
+            size = (int(match.group(1)), int(match.group(2)))
+            if min(size) >= _MIN_SANE_VIEWPORT_DIM:
+                self._cached_viewport = size
+                self._cached_viewport_at = now
+                return size
+        # 无法取得可信视口时显式失败 —— 静默回退猜测值会以错误几何执行所有手势
+        raise DeviceOfflineError(
+            self.device_id,
+            "视口探测失败: dumpsys 与 wm size 均未返回可信分辨率 (请检查设备链路与 adb 状态)",
+        )
 
     async def dump_raw_tree(self) -> RawNode:
         """从手机 dump UI 层次结构并解析为 RawNode 多叉树。"""
@@ -325,34 +343,44 @@ class AndroidAdbDriver(BaseDriver):
         await self._run_adb("shell", "input", "keyevent", str(keycode))
 
     async def take_screenshot(self) -> bytes:
-        # 1. 尝试首选的高性能 exec-out screencap -p (支持 1 次微重试)
-        for attempt in range(2):
+        # 1. 首选高性能 exec-out screencap -p：按超时阶梯自适应链路质量，
+        #    每次超时显式 kill 子进程，避免僵尸 adb 进程堆积。
+        for i, timeout_s in enumerate(_SCREENCAP_TIMEOUT_LADDER):
+            proc = await asyncio.create_subprocess_exec(
+                *self._cmd_prefix(), "exec-out", "screencap", "-p",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
             try:
-                proc = await asyncio.create_subprocess_exec(
-                    *self._cmd_prefix(), "exec-out", "screencap", "-p",
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.DEVNULL,
-                )
-                stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=8.0)
-                if proc.returncode == 0 and len(stdout) > 0:
-                    return stdout
-            except (asyncio.TimeoutError, Exception):
-                pass
-            if attempt == 0:
+                stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout_s)
+            except asyncio.TimeoutError:
+                proc.kill()
+                await asyncio.sleep(0.2)
+                continue
+            if proc.returncode == 0 and len(stdout) > 0:
+                return stdout
+            if i < len(_SCREENCAP_TIMEOUT_LADDER) - 1:
                 await asyncio.sleep(0.2)
 
         # 2. 降级方案：写入临时文件并读取 (兼容转场锁帧或某些定制 Rom 的 exec-out 异常)
         tmp_remote = "/data/local/tmp/pp_screenshot.png"
+        max_wait = _SCREENCAP_TIMEOUT_LADDER[-1]
         try:
-            await self._run_adb("shell", "screencap", "-p", tmp_remote, timeout=10.0)
+            await self._run_adb("shell", "screencap", "-p", tmp_remote, timeout=max_wait)
             proc = await asyncio.create_subprocess_exec(
                 *self._cmd_prefix(), "exec-out", "cat", tmp_remote,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=10.0)
+            try:
+                stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=max_wait)
+            except asyncio.TimeoutError:
+                proc.kill()
+                raise PhonePlaywrightError("截屏降级通道读取超时") from None
             if proc.returncode == 0 and len(stdout) > 0:
                 return stdout
+        except PhonePlaywrightError:
+            raise
         except Exception as fallback_exc:
             raise PhonePlaywrightError(
                 f"截屏执行失败 (exec-out 与文件降级均未成功: {fallback_exc})"
