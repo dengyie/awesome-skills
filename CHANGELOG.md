@@ -6,9 +6,15 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ## Unreleased
 
+### Changed
+
+- hardened `cue-sandbox` for multi-instance fleet deployments: parameterized EasyTier overlay IP (`<CUE_OVERLAY>`) and instance name (`<CUE_INSTANCE_NAME>`) to prevent intra-mesh collision, parameterized India reverse-SSH fallback port (`<TUNNEL_REMOTE_PORT>`) with a standard systemd keepalive service template, expanded test suite credential scans to usage docs, and added root `pytest.ini` for reliable test collection
+- made `cue-sandbox` fully self-contained: removed all external vault/doc-lookup/canonical references, derive configuration solely from host probing and operator inputs, and forbid halting for external documentation
+
 ### Added
 
 - added `phone-playwright` skill package: AI-native mobile interaction and semantic distillation framework for Android (ADB) and iOS (WDA), featuring Viewport-Aware Semantic Pruning (O(N) DFS, ≥90% token reduction), 5-phase Actionability Auto-Waiting State Machine, Snapshot Warm-Cache (1.0s TTL, 54x click speedup to ~140ms), automated dynamic `scroll_into_view()`, unclipped virtual viewport error diagnostics, cross-platform STDIO MCP JSON-RPC 2.0 server with Windows IOCP threadpool isolation, mDNS port drift self-healing Fleet Watchdog, interactive CLI & REPL runner, exhaustive references, and 27 offline unit tests
+- added `cue-sandbox` skill package: Cue sandbox access SOP for EasyTier mango-mesh TUN SSH (`ssh mesh-cue`), India reverse-SSH fallback only, Komari Linux probe with `ping_group_range`, and overlay mining without disabling Web SSH; credentials stay out of the package (placeholders only)
 - added `yunzhi-cloudphone-checkin` skill package: automated daily login check-in and cloud phone space benefit card renewal (benefitConfigId: 158) for Tianyi / Play.cn Yunzhi Cloudphone, featuring zero-dependency browser DevTools console one-click script, Chrome DevTools Protocol (CDP) headless runner, direct CLI mode, Edge WAF 503 TLS fingerprint bypass, full protocol reverse engineering references, and offline signature unit tests
 - added `windows-ssh-stcp` skill package: SSH into a Windows host with no inbound public port by reusing an existing frps over STCP, with loopback-only OpenSSH, NSSM keepalive, a macOS/Linux visitor, and a production pitfall runbook
 - added `cloudphone-adb-tunnel` skill package: FRP STCP ADB tunnel deployment and troubleshooting for non-root Android cloud phones (Termux frpc with termux-chroot DNS, desktop visitor, phantom-process hardening), with usage guide and matrix entries
@@ -18,9 +24,13 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Removed
 
+- removed the unreleased `freestyle-sandbox` skill package, its usage guide, and all landing-page/matrix references (the Freestyle.sh account was blocked, so the skill has no reachable backend)
 - removed `little-lighthouse-blog-publisher` and `zero-to-website-design` skill packages, their usage guides, and all landing-page/matrix references
 
 ### Changed
+
+- updated `muse-reverse-ssh` watchdog cadence guidance with measured production token data: 1-minute agent poll ≈26M input tokens/day, 5-minute supervisor ≈1/5 of that, 2.5-minute supervisor ≈2/5 (≈11M/day) — and recorded production's tightening to 2.5 min after repeated resident-loop deaths on a churny platform (worst-case detection window ≤2.5 min)
+- updated `muse-reverse-ssh` SKILL.md Layer 3 watchdog guidance to the production two-tier pattern: a zero-cost resident loop (`scripts/health-watch-loop.sh`, new template) runs minute-level checks and self-heals on the ephemeral machine, while the external supervisor polls sparsely (5 min default) to verify loop liveness (pidfile + `/proc/<pid>/cmdline`), relaunch it detached, and read the JSON status with one fixed command — silent when healthy, logs only anomalies. Replaces the old "1-minute external poll" default after production measurement showed a 1-minute agent-driven poll burning ~7% of a weekly free quota on an idle machine (resident loop + 5-min supervisor ≈ 1/5 the usage). Added pitfalls: never `set -e` in the resident loop (degraded exit code kills it), wrap each run in `timeout`, and the post-restore re-verify must clear first-pass failures to `fixed` instead of sticking at `failed`
 
 - updated `obsidian-doc-router` SKILL.md: multi-platform vault paths (macOS iCloud + Windows), vault-real recording directories (`Note/Project/`, `Note/AI/经验/`, `Note/Accounts/`) replacing non-existent `01.项目/`/`02.技术/`, TLDR header contract `## 速读（当前有效 · 维护于 …）`, trigger-word budget (≤15 distinctive keywords, no synonym/version enumeration), quick-section length cap (≤200 chars), and removal of stale cross-skill references
 
