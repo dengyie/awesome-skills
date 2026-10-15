@@ -153,6 +153,12 @@ class AndroidAdbDriver(BaseDriver):
                 cur = await self._run_adb("shell", "settings", "get", "secure", "default_input_method")
                 if cur and "/" in cur and not self._original_ime:
                     self._original_ime = cur.strip()
+                # 幂等守卫：AdbIME 已是当前 IME 时严禁重发 ime set —— 部分 ROM/云手机
+                # (如实测的三星云手机) 在 IME 重绑瞬态会触发剪贴板自动上屏，把系统
+                # 剪贴板内容静默粘进聚焦输入框，破坏 fill 的清空-注入语义。
+                if self._original_ime == _ADB_KEYBOARD_IME:
+                    self._current_ime = _ADB_KEYBOARD_IME
+                    return True
                 await self._run_adb("shell", "ime", "enable", _ADB_KEYBOARD_IME)
                 await self._run_adb("shell", "ime", "set", _ADB_KEYBOARD_IME)
                 self._current_ime = _ADB_KEYBOARD_IME

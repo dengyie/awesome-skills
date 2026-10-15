@@ -56,6 +56,21 @@ class ActionabilityEngine:
         self._cached_elements = None
         self._cached_timestamp = 0.0
 
+    def _editable_text_of(
+        self, elements: list[CompactElement], bounds: Rect
+    ) -> str | None:
+        """读取与目标边界重合的输入元素当前文本 (用于清空态前后对比观测)。"""
+        target = next(
+            (
+                el
+                for el in elements
+                if el.bounds.intersects(bounds)
+                and (el.bounds.center == bounds.center or el.role in ("input", "textbox"))
+            ),
+            None,
+        )
+        return (target.text or None) if target else None
+
     async def execute_action(
         self,
         verb: str,
@@ -213,17 +228,36 @@ class ActionabilityEngine:
                     time_taken_ms=elapsed_ms,
                 )
             elif verb == "fill":
-                # Playwright 契约：点击聚焦输入框 -> 清空 -> 注入新文本
-                await self.driver.tap(cx, cy)
-                await asyncio.sleep(0.05)
-                clear_text = getattr(self.driver, "clear_text", None)
-                if callable(clear_text):
-                    try:
-                        await clear_text()
-                        await asyncio.sleep(0.05)
-                    except Exception:
-                        pass
+                # Playwright 契约：点击聚焦输入框 -> 清空 -> 注入，且注入后字段值
+                # 必须精确等于目标文本。部分云手机 ROM (实测天翼云手机) 在输入框
+                # 聚焦/清空瞬态会把系统剪贴板内容自动上屏 (智能剪贴板特性)，使注入
+                # 退化为"剪贴板+新文本"拼接 —— 以注入后整字段精确比对为准，不匹配
+                # 则重清重注一次自愈。
                 text_to_type = value or ""
+                for attempt in range(2):
+                    await self.driver.tap(cx, cy)
+                    await asyncio.sleep(0.05 if attempt == 0 else 0.5)
+                    clear_text = getattr(self.driver, "clear_text", None)
+                    if callable(clear_text):
+                        try:
+                            await clear_text()
+                        except Exception:
+                            pass
+                        await asyncio.sleep(0.3)
+                    await self.driver.type_text(text_to_type)
+                    if not text_to_type:
+                        break
+                    await asyncio.sleep(0.3)
+                    try:
+                        fresh_tree = await self.driver.dump_raw_tree()
+                        fresh_elements = self.pruner.prune_and_distill(fresh_tree, vw, vh)
+                    except Exception:
+                        break  # 校验通道不可用时按既有语义成功
+                    actual = self._editable_text_of(fresh_elements, cur_bounds)
+                    if actual == text_to_type:
+                        break
+                    if actual is None:
+                        break  # 无法观测 (如键盘弹起导致字段滚出视口) 时不误判
                 await self.driver.type_text(text_to_type)
                 elapsed_ms = int((time.monotonic() - start_time) * 1000)
                 if self.trace_recorder and self.trace_recorder.is_recording:
