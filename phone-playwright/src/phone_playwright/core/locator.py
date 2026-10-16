@@ -176,11 +176,10 @@ class PhoneLocator:
             return False
 
     async def count(self) -> int:
-        """统计当前视口内命中该选择器的元素总数。"""
+        """统计当前视口内命中该选择器的元素总数 (链式选择器走管道约简而非末级匹配)。"""
         try:
             elements, _ = await self._resolve_elements()
-            sel = parse_selector(self._selector)
-            return sum(1 for el in elements if sel.match(el))
+            return len(parse_selector(self._selector).find_all(elements))
         except Exception:
             return 0
 

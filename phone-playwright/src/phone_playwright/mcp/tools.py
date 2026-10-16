@@ -8,11 +8,9 @@
 
 from __future__ import annotations
 import base64
-import json
-from typing import Any, Dict, List, Literal
+from typing import Any, Literal
 from phone_playwright.fleet.manager import FleetManager
 from phone_playwright.api.async_api import AsyncPhoneDevice
-from phone_playwright.models.actions import ActionResult
 
 TOOL_DEFINITIONS = [
     {

@@ -235,6 +235,8 @@ class ActionabilityEngine:
                 # 则重清重注一次自愈。
                 text_to_type = value or ""
                 for attempt in range(2):
+                    if time.monotonic() - start_time > timeout_s:
+                        break  # 自愈重注不突破调用方超时预算
                     await self.driver.tap(cx, cy)
                     await asyncio.sleep(0.05 if attempt == 0 else 0.5)
                     clear_text = getattr(self.driver, "clear_text", None)

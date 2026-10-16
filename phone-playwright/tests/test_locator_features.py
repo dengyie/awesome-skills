@@ -138,3 +138,23 @@ async def test_tracing_captures_failure_events() -> None:
             assert last_event["name"] == "click_failed"
             assert "error" in last_event
             assert "SelectorNotFoundError" in last_event["metadata"]["error_type"]
+
+
+@pytest.mark.asyncio
+async def test_chained_locator_count_uses_pipeline() -> None:
+    """回归防护: 链式选择器 count() 必须走管道约简，而非仅末级子选择器匹配。
+
+    旧实现对 'role=button >> nth=1' 会返回视口内全部元素数，对文本过滤链
+    会漏掉层级约束计入其他角色同名元素。
+    """
+    driver = FakeChainedDriver()
+    pruner = SemanticPruner()
+    page = AsyncPhonePage(driver=driver, pruner=pruner)
+
+    # 管道: role=button 过滤 (3) -> text=添加到购物车 过滤 (2)
+    assert await page.locator("role=button >> text=添加到购物车").count() == 2
+    # nth= 结尾: 池内截取 1 个，而不是视口内全部元素数 3
+    assert await page.locator("role=button >> nth=1").count() == 1
+    # 非链式选择器行为保持不变
+    assert await page.locator("role=button").count() == 3
+    assert await page.locator("text=立即结算").count() == 1

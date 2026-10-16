@@ -8,7 +8,6 @@
 from __future__ import annotations
 import asyncio
 import re
-from typing import Dict
 from phone_playwright.drivers.base import BaseDriver
 from phone_playwright.drivers.android_adb import AndroidAdbDriver
 from phone_playwright.drivers.ios_wda import IosWdaDriver
@@ -21,8 +20,8 @@ _IOS_TOKEN_RE = re.compile(r"(?<![a-z0-9])ios(?![a-z0-9])", re.IGNORECASE)
 def _looks_like_wda_endpoint(candidate: str) -> bool:
     """判定设备标识是否指向 iOS WDA 端点。
 
-    不能用裸子串匹配 'ios' —— 别名如 'bios-node'、'curious-iphone-case' 会被
-    误路由到 WDA 驱动；要求 token 边界 (前后均不是字母数字)，URL 前缀直接判定。
+    不能用裸子串匹配 'ios' —— 别名如 'bios-node' 会被误路由到 WDA 驱动；
+    要求 token 边界 (前后均不是字母数字)，URL 前缀直接判定。
     """
     if candidate.startswith(("http://", "https://")):
         return True
