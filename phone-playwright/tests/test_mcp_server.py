@@ -237,3 +237,31 @@ async def test_inspect_screen_reuses_snapshot_screenshot(monkeypatch):
     info = await executor.inspect_screen("shot-count-1", with_screenshot=True)
     assert info["screenshot_base64"] is not None
     assert driver.shot_count == 1
+
+
+@pytest.mark.asyncio
+async def test_device_cache_purges_stale_key_on_driver_replacement(monkeypatch):
+    """驱动被 watchdog 重建 (如局域网端口漂移换发新 id) 后，缓存须按实例身份
+    清除旧键，只保留新 id -> 新设备映射，避免缓存字典随端口漂移无界增长。"""
+    old_driver = MockMcpDriver("10.0.0.5:43037")
+    new_driver = MockMcpDriver("10.0.0.5:52201")
+    fleet = FleetManager()
+    current = old_driver
+
+    async def fake_get_driver(alias_or_id: str):
+        return current
+
+    monkeypatch.setattr(fleet, "get_driver", fake_get_driver)
+    executor = McpToolExecutor(fleet_manager=fleet)
+
+    device = await executor._get_device("旧id")
+    assert device.driver is old_driver
+    assert executor._devices == {"10.0.0.5:43037": device}
+
+    current = new_driver  # watchdog 重建: 同设备换发新 id
+
+    new_device = await executor._get_device("旧id")
+    assert new_device.driver is new_driver
+    assert new_device is not device
+    # 旧键必须被按实例身份清除，仅剩新 id -> 新设备
+    assert executor._devices == {"10.0.0.5:52201": new_device}

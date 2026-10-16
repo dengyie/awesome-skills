@@ -5,7 +5,6 @@
 """
 
 from __future__ import annotations
-import io
 import hashlib
 from typing import Protocol, runtime_checkable
 from phone_playwright.models.geometry import Rect

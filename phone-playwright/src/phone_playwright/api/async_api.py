@@ -8,7 +8,7 @@ AsyncPhonePlaywright -> AsyncPhoneDevice -> AsyncPhonePage -> PhoneLocator
 from __future__ import annotations
 import base64
 import time
-from typing import Any, AsyncIterator, Literal
+from typing import Any, Literal
 from phone_playwright.drivers.base import BaseDriver
 from phone_playwright.core.pruner import SemanticPruner
 from phone_playwright.core.state_machine import ActionabilityEngine

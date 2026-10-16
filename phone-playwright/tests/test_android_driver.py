@@ -165,6 +165,9 @@ class TimeoutRecordingAdbDriver(AndroidAdbDriver):
     def __init__(self) -> None:
         super().__init__(device_id="emulator-scripted")
         self.calls: list[tuple[tuple[str, ...], float]] = []
+        self.tree_texts: list[str] = []
+        # 额外回放表: 命中键的命令返回预设输出 (如剪贴板通道未实现标记)
+        self.responses: dict[str, str] = {}
         self.xml = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<hierarchy rotation=\"0\">"
@@ -175,8 +178,18 @@ class TimeoutRecordingAdbDriver(AndroidAdbDriver):
     async def _run_adb(self, *args: str, timeout: float = 15.0) -> str:
         self.calls.append((tuple(args), timeout))
         joined = " ".join(args)
+        if joined in self.responses:
+            return self.responses[joined]
         if joined.startswith("shell cat"):
-            return self.xml
+            fields = "".join(
+                f'<node class="android.widget.EditText" text="{txt}" bounds="[0,0][100,50]" />'
+                for txt in self.tree_texts
+            )
+            return (
+                '<?xml version="1.0" encoding="UTF-8"?><hierarchy rotation="0">'
+                f'<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">{fields}</node>'
+                "</hierarchy>"
+            )
         if "dumpsys" in joined:
             return "cur=1080x2400"
         return ""
@@ -232,3 +245,30 @@ async def test_type_text_ascii_multiline_blank_segment_only_sends_enter():
     assert text_args == [("shell", "input", "text", "a"), ("shell", "input", "text", "b")]
     enter_calls = [args for args in commands if args == ("shell", "input", "keyevent", "66")]
     assert len(enter_calls) == 2
+
+
+@pytest.mark.asyncio
+async def test_type_text_multiline_cjk_splits_segments_with_enter():
+    """非 ASCII 多行文本须与 ASCII 路径同构: 逐段走三通道注入，段间 ENTER (66)。
+
+    真机实证 (SM 云手机): 多行 EditText 上 AdbIME 整段含 \n 提交可落换行，
+    但单行控件 (搜索框) 上换行必丢 —— 整段终态校验因此永远 miss 并误报
+    "注入失败"。拆段后逐段校验在两类控件上都可靠。
+    """
+    driver = TimeoutRecordingAdbDriver()
+    driver.tree_texts = ["甲行", "乙行"]
+    # 剪贴板通道回未实现标记，强制走 AdbIME 广播通道，断言才可确定
+    driver.responses = {
+        "shell cmd clipboard set text '甲行'": "No shell command implementation.",
+        "shell cmd clipboard set text '乙行'": "No shell command implementation.",
+        "shell ime list -a": "com.android.adbkeyboard/.AdbIME",
+    }
+
+    await driver.type_text("甲行\n乙行")
+
+    commands = [args for args, _ in driver.calls]
+    broadcasts = [c for c in commands if "ADB_INPUT_B64" in " ".join(c)]
+    assert len(broadcasts) == 2  # 每段一次 AdbIME 广播 (无含换行整段的第三次)
+    assert ("shell", "input", "keyevent", "66") in commands
+    # 含换行的整段原文不得被直接塞进任何通道参数
+    assert not any("\n" in " ".join(c) for c in commands)

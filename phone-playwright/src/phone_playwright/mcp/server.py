@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
-from typing import Any, Dict
+from typing import Any
 from phone_playwright.mcp.tools import TOOL_DEFINITIONS, McpToolExecutor
 from phone_playwright.fleet.manager import FleetManager
 

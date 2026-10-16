@@ -90,13 +90,23 @@ class McpToolExecutor:
         # 能被紧随其后的 phone_interact 复用 (每次调用重建实例会让缓存永远落空)；
         # 底层驱动被 watchdog 重建时按实例身份失效。
         self._devices: dict[str, AsyncPhoneDevice] = {}
+        # 入口 id -> 上次解析出的缓存实体，用于识别 watchdog 重建 / 端口漂移
+        # (同一设备换发新 id) 时按实例身份清掉旧键，避免缓存字典无界增长
+        self._seen_devices: dict[str, AsyncPhoneDevice] = {}
 
     async def _get_device(self, device_id: str) -> AsyncPhoneDevice:
         driver = await self.fleet.get_driver(device_id)
+        prev = self._seen_devices.get(device_id)
         device = self._devices.get(driver.device_id)
         if device is None or device.driver is not driver:
+            stale = device if device is not None else prev
+            if stale is not None and stale.driver is not driver:
+                self._devices = {
+                    k: v for k, v in self._devices.items() if v is not stale
+                }
             device = AsyncPhoneDevice(driver=driver)
             self._devices[driver.device_id] = device
+        self._seen_devices[device_id] = device
         return device
 
     async def list_devices(self) -> list[dict[str, Any]]:

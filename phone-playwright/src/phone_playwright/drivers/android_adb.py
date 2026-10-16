@@ -261,10 +261,30 @@ class AndroidAdbDriver(BaseDriver):
         await self._run_adb("shell", "input", "keyevent", *keycodes)
 
     async def type_text(self, text: str) -> None:
-        """安全键入文本。具备三通道自愈阶梯 (Tri-Channel Input Fallback Chain)。"""
+        """安全键入文本。具备三通道自愈阶梯 (Tri-Channel Input Fallback Chain)。
+
+        含换行时按段拆分注入，段间以 ENTER (keyevent 66) 落键 —— 三通道
+        (输入框 paste / AdbIME commitText) 的终态校验按整段文本检索，多行
+        文本在单行控件或树聚合作用下会 miss，逐段校验才可靠。单行控件上
+        ENTER 被 IME 消费 (如搜索框提交)，第二段顺势续排，不产生错字。
+        """
         if not text:
             return
 
+        segments = text.split("\n")
+        if len(segments) > 1:
+            for i, segment in enumerate(segments):
+                if i > 0:
+                    await self._run_adb("shell", "input", "keyevent", "66")
+                    await asyncio.sleep(0.15)
+                if segment:
+                    await self._type_text_segment(segment)
+            return
+
+        await self._type_text_segment(text)
+
+    async def _type_text_segment(self, text: str) -> None:
+        """注入单段无换行文本 (三通道阶梯)。"""
         has_non_ascii = any(ord(c) > 127 for c in text)
         if has_non_ascii:
             # 优先尝试通道 1: 剪贴板 + KEYCODE_PASTE (279)
@@ -299,14 +319,13 @@ class AndroidAdbDriver(BaseDriver):
                     return
 
             raise PhonePlaywrightError(
-                "非 ASCII 文本注入失败 (剪贴板通道与 AdbIME 广播通道均未能成功写入目标输入框)",
+                f"非 ASCII 文本注入失败 (剪贴板通道与 AdbIME 广播通道均未能成功写入目标输入框): {text[:50]!r}",
                 suggestion=(
                     "请确认焦点已正确位于可编辑输入框内，或检查设备是否预装并启用了 ADBKeyBoard 输入法"
                 ),
             )
 
-        # 安全 ASCII 字符注入路径：严格对每个字符做输入法转义 (空格 -> %s, Shell 元字符 -> 反斜杠转义)。
-        # `input text` 不接受换行符 —— 换行按段拆分，段间以 ENTER (keyevent 66) 落键。
+        # 安全 ASCII 字符注入路径：严格对每个字符做输入法转义 (空格 -> %s, Shell 元字符 -> 反斜杠转义)
         def _escape_ascii_input(segment: str) -> str:
             tokens: list[str] = []
             for ch in segment:
@@ -318,12 +337,7 @@ class AndroidAdbDriver(BaseDriver):
                     tokens.append(ch)
             return "".join(tokens)
 
-        segments = text.split("\n")
-        for i, segment in enumerate(segments):
-            if i > 0:
-                await self._run_adb("shell", "input", "keyevent", "66")
-            if segment:
-                await self._run_adb("shell", "input", "text", _escape_ascii_input(segment))
+        await self._run_adb("shell", "input", "text", _escape_ascii_input(text))
 
     async def _tree_contains_text(self, payload: str) -> bool:
         """在当前无障碍原始树中检索目标文本 (用于注入终态校验)。"""
