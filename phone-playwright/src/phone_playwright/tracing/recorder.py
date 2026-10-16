@@ -1,11 +1,13 @@
-"""Playwright 兼容 Trace Viewer 录制引擎 (Trace Recorder)。
+"""Playwright 风格 Trace 录制引擎 (Trace Recorder)。
 
 对齐规格书: docs/specs/06-expect-assertions-and-trace.md
 包含:
 1. 流式捕获动作前后快照 (Snapshots & Screenshots)
 2. 动作时序指标与 JSONL 事件流 (trace.trace)
 3. 静态资源 SHA-256 哈希池 (resources/)
-4. 打包导出为标准的 Playwright 兼容 trace.zip
+4. 打包导出为 Playwright 风格 trace.zip 归档
+   (注意: 归档结构对齐 Playwright 惯例但未包含 trace.network 等全部字段，
+   不保证可被 Playwright Trace Viewer 直接打开，仅供本项目回放与分析)
 """
 
 from __future__ import annotations
@@ -102,7 +104,7 @@ class TraceRecorder:
             self.events.append(event)
 
     async def stop(self, path: str = "trace.zip") -> str:
-        """停止录制并将所有时序事件、前后快照及元数据打包导出为 Playwright 兼容的 trace.zip。"""
+        """停止录制并将所有时序事件、前后快照及元数据打包导出为 Playwright 风格的 trace.zip 归档。"""
         async with self._lock:
             self.is_recording = False
             end_time = time.time()

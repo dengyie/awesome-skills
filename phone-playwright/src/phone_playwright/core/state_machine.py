@@ -65,7 +65,7 @@ class ActionabilityEngine:
                 el
                 for el in elements
                 if el.bounds.intersects(bounds)
-                and (el.bounds.center == bounds.center or el.role in ("input", "textbox"))
+                and (el.bounds.center == bounds.center or el.role == "input")
             ),
             None,
         )
@@ -258,7 +258,6 @@ class ActionabilityEngine:
                         break
                     if actual is None:
                         break  # 无法观测 (如键盘弹起导致字段滚出视口) 时不误判
-                await self.driver.type_text(text_to_type)
                 elapsed_ms = int((time.monotonic() - start_time) * 1000)
                 if self.trace_recorder and self.trace_recorder.is_recording:
                     await self.trace_recorder.record_action(

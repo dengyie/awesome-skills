@@ -356,7 +356,11 @@ class WebPhoneLocator:
         return ActionResult(verb="click", target=self.selector, success=True, time_taken_ms=100)
 
     async def fill(self, text: str, timeout_s: float = 5.0) -> ActionResult:
-        """聚焦目标输入框并注入文本。"""
+        """聚焦目标输入框并注入文本。
+
+        必须经原型链上的原生 value setter 赋值 —— 直接 el.value = 对 React/Vue
+        等受控组件无效 (状态管理器会在下一渲染周期把值改回旧值)。
+        """
         await self.click(timeout_s=timeout_s)
         client = await self.frame._ensure_connected()
         js_arg = json.dumps(text)
@@ -365,7 +369,15 @@ class WebPhoneLocator:
                 const el = document.querySelector({json.dumps(self.selector)});
                 if (el) {{
                     el.focus();
-                    el.value = {js_arg};
+                    const proto = el instanceof HTMLTextAreaElement
+                        ? HTMLTextAreaElement.prototype
+                        : HTMLInputElement.prototype;
+                    const desc = Object.getOwnPropertyDescriptor(proto, 'value');
+                    if (desc && desc.set) {{
+                        desc.set.call(el, {js_arg});
+                    }} else {{
+                        el.value = {js_arg};
+                    }}
                     el.dispatchEvent(new Event('input', {{bubbles: true}}));
                     el.dispatchEvent(new Event('change', {{bubbles: true}}));
                 }}

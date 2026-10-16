@@ -7,7 +7,6 @@
 """
 
 from __future__ import annotations
-import base64
 import json
 from typing import Any, Dict, List, Literal
 from phone_playwright.fleet.manager import FleetManager
@@ -88,6 +87,18 @@ class McpToolExecutor:
 
     def __init__(self, fleet_manager: FleetManager | None = None) -> None:
         self.fleet = fleet_manager or FleetManager()
+        # 按设备缓存 AsyncPhoneDevice，让 phone_inspect_screen 填充的 1.0s 温热缓存
+        # 能被紧随其后的 phone_interact 复用 (每次调用重建实例会让缓存永远落空)；
+        # 底层驱动被 watchdog 重建时按实例身份失效。
+        self._devices: dict[str, AsyncPhoneDevice] = {}
+
+    async def _get_device(self, device_id: str) -> AsyncPhoneDevice:
+        driver = await self.fleet.get_driver(device_id)
+        device = self._devices.get(driver.device_id)
+        if device is None or device.driver is not driver:
+            device = AsyncPhoneDevice(driver=driver)
+            self._devices[driver.device_id] = device
+        return device
 
     async def list_devices(self) -> list[dict[str, Any]]:
         raw_devices = await self.fleet.scan_devices()
@@ -107,10 +118,11 @@ class McpToolExecutor:
         with_screenshot: bool = False,
         use_vision_fallback: bool = False,
     ) -> dict[str, Any]:
-        driver = await self.fleet.get_driver(device_id)
-        device = AsyncPhoneDevice(driver=driver)
+        device = await self._get_device(device_id)
         page = device.current_page
-        snapshot = await page.snapshot(use_vision_fallback=use_vision_fallback)
+        snapshot = await page.snapshot(
+            use_vision_fallback=use_vision_fallback, include_screenshot=with_screenshot
+        )
 
         element_items: list[dict[str, Any]] = []
         for el in snapshot.elements:
@@ -134,8 +146,8 @@ class McpToolExecutor:
         }
 
         if with_screenshot:
-            img_bytes = await page.screenshot()
-            result["screenshot_base64"] = base64.b64encode(img_bytes).decode("ascii")
+            # 复用快照阶段抓取的截图，避免对设备发起第二次截屏往返
+            result["screenshot_base64"] = snapshot.screenshot_base64
 
         return result
 
@@ -147,8 +159,7 @@ class McpToolExecutor:
         value: str | None = None,
         timeout_s: float = 5.0,
     ) -> dict[str, Any]:
-        driver = await self.fleet.get_driver(device_id)
-        device = AsyncPhoneDevice(driver=driver)
+        device = await self._get_device(device_id)
         page = device.current_page
 
         if action == "swipe":

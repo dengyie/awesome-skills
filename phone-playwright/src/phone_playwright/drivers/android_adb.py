@@ -54,6 +54,10 @@ _SCREENCAP_TIMEOUT_LADDER: tuple[float, ...] = (8.0, 30.0, 90.0)
 # 宁可显式报错或继续降级，也不让荒谬尺寸缓存后毒化全部裁剪与手势几何。
 _MIN_SANE_VIEWPORT_DIM = 50
 
+# uiautomator dump + cat 是全框架最高频操作，弱网隧道下 15s 默认档会频繁超时
+# (dump 自身转场重试 + XML 传输)，放宽到 30s 与弱网语义对齐。
+_TREE_DUMP_TIMEOUT_S: float = 30.0
+
 
 class AndroidAdbDriver(BaseDriver):
     """基于 ADB 的 Android 驱动实现。"""
@@ -110,7 +114,11 @@ class AndroidAdbDriver(BaseDriver):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            out, _ = await proc.communicate()
+            try:
+                out, _ = await asyncio.wait_for(proc.communicate(), timeout=15.0)
+            except asyncio.TimeoutError:
+                proc.kill()
+                raise DeviceOfflineError(self.device_id, "adb devices 探测超时 (15s)")
             for line in out.decode().splitlines()[1:]:
                 parts = line.strip().split()
                 if len(parts) >= 2 and parts[1] == "device":
@@ -118,11 +126,16 @@ class AndroidAdbDriver(BaseDriver):
                     break
 
         if ":" in self.device_id:
-            await asyncio.create_subprocess_exec(
+            proc = await asyncio.create_subprocess_exec(
                 self.adb_path, "connect", self.device_id,
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
+            try:
+                await asyncio.wait_for(proc.communicate(), timeout=15.0)
+            except asyncio.TimeoutError:
+                proc.kill()
+                raise DeviceOfflineError(self.device_id, f"adb connect 握手超时 (15s): {self.device_id}")
         await self.get_viewport_size()
 
     async def disconnect(self) -> None:
@@ -220,8 +233,12 @@ class AndroidAdbDriver(BaseDriver):
 
     async def dump_raw_tree(self) -> RawNode:
         """从手机 dump UI 层次结构并解析为 RawNode 多叉树。"""
-        await self._run_adb("shell", "uiautomator", "dump", "/data/local/tmp/uidump.xml")
-        xml_content = await self._run_adb("shell", "cat", "/data/local/tmp/uidump.xml")
+        await self._run_adb(
+            "shell", "uiautomator", "dump", "/data/local/tmp/uidump.xml", timeout=_TREE_DUMP_TIMEOUT_S
+        )
+        xml_content = await self._run_adb(
+            "shell", "cat", "/data/local/tmp/uidump.xml", timeout=_TREE_DUMP_TIMEOUT_S
+        )
 
         if not xml_content.startswith("<?xml") and not xml_content.startswith("<hierarchy"):
             raise ValueError(f"拉取到的 UI XML 格式异常: {xml_content[:100]}")
@@ -252,6 +269,7 @@ class AndroidAdbDriver(BaseDriver):
         if has_non_ascii:
             # 优先尝试通道 1: 剪贴板 + KEYCODE_PASTE (279)
             clipboard_failed = False
+            unsupported = False
             safe_text = shlex.quote(text)
             try:
                 response = await self._run_adb("shell", f"cmd clipboard set text {safe_text}")
@@ -287,17 +305,25 @@ class AndroidAdbDriver(BaseDriver):
                 ),
             )
 
-        # 安全 ASCII 字符注入路径：严格对每个字符做输入法转义 (空格 -> %s, Shell 元字符 -> 反斜杠转义)
-        tokens: list[str] = []
-        for ch in text:
-            if ch == " ":
-                tokens.append("%s")
-            elif ch in "'\"&;()<>$`\\|*?!#~[]{}":
-                tokens.append(f"\\{ch}")
-            else:
-                tokens.append(ch)
-        escaped_arg = "".join(tokens)
-        await self._run_adb("shell", "input", "text", escaped_arg)
+        # 安全 ASCII 字符注入路径：严格对每个字符做输入法转义 (空格 -> %s, Shell 元字符 -> 反斜杠转义)。
+        # `input text` 不接受换行符 —— 换行按段拆分，段间以 ENTER (keyevent 66) 落键。
+        def _escape_ascii_input(segment: str) -> str:
+            tokens: list[str] = []
+            for ch in segment:
+                if ch == " ":
+                    tokens.append("%s")
+                elif ch in "'\"&;()<>$`\\|*?!#~[]{}":
+                    tokens.append(f"\\{ch}")
+                else:
+                    tokens.append(ch)
+            return "".join(tokens)
+
+        segments = text.split("\n")
+        for i, segment in enumerate(segments):
+            if i > 0:
+                await self._run_adb("shell", "input", "keyevent", "66")
+            if segment:
+                await self._run_adb("shell", "input", "text", _escape_ascii_input(segment))
 
     async def _tree_contains_text(self, payload: str) -> bool:
         """在当前无障碍原始树中检索目标文本 (用于注入终态校验)。"""

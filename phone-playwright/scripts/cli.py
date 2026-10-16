@@ -179,7 +179,8 @@ def main() -> None:
     elif args.subcommand == "repl":
         asyncio.run(run_repl(args.device))
     elif args.subcommand == "mcp":
-        server = PhonePlaywrightMcpServer(device_id=args.device)
+        # McpServer 不接受 device_id；MCP 客户端会在每次工具调用时传入 device_id
+        server = PhonePlaywrightMcpServer()
         asyncio.run(server.run_stdio())
     else:
         parser.print_help()

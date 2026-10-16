@@ -157,3 +157,78 @@ def test_xml_hierarchy_marks_autocompletetextview_editable():
     field = root.children[0]
     assert field.editable is True
     assert field.text == "搜索设置项"
+
+
+class TimeoutRecordingAdbDriver(AndroidAdbDriver):
+    """记录每条 ADB 命令及其超时档位，并回放预设输出。"""
+
+    def __init__(self) -> None:
+        super().__init__(device_id="emulator-scripted")
+        self.calls: list[tuple[tuple[str, ...], float]] = []
+        self.xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<hierarchy rotation=\"0\">"
+            '<node class="android.widget.Button" text="确认" bounds="[0,0][100,50]" />'
+            "</hierarchy>"
+        )
+
+    async def _run_adb(self, *args: str, timeout: float = 15.0) -> str:
+        self.calls.append((tuple(args), timeout))
+        joined = " ".join(args)
+        if joined.startswith("shell cat"):
+            return self.xml
+        if "dumpsys" in joined:
+            return "cur=1080x2400"
+        return ""
+
+
+@pytest.mark.asyncio
+async def test_dump_raw_tree_uses_weak_network_timeout():
+    """uiautomator dump 与 cat 均须使用 30s 弱网超时档，而非 15s 默认值。
+
+    树转储是全框架最高频操作，弱网隧道下 15s 必然频繁超时。
+    """
+    driver = TimeoutRecordingAdbDriver()
+
+    await driver.dump_raw_tree()
+
+    dump_calls = [
+        timeout
+        for args, timeout in driver.calls
+        if "uiautomator" in args and "dump" in args
+    ]
+    cat_calls = [timeout for args, timeout in driver.calls if args[:2] == ("shell", "cat")]
+    assert dump_calls == [30.0]
+    assert cat_calls == [30.0]
+
+
+@pytest.mark.asyncio
+async def test_type_text_ascii_newline_splits_with_enter_keyevent():
+    """ASCII 注入遇换行符须按段拆分，段间以 ENTER (keyevent 66) 落键。
+
+    `input text` 不接受换行参数 —— 直接透传会让注入静默失败或截断。
+    """
+    driver = TimeoutRecordingAdbDriver()
+
+    await driver.type_text("ab\ncd")
+
+    commands = [args for args, _ in driver.calls]
+    assert ("shell", "input", "text", "ab") in commands
+    assert ("shell", "input", "keyevent", "66") in commands
+    assert ("shell", "input", "text", "cd") in commands
+    # 换行不得原样透传进 input text 参数
+    assert not any("\n" in (args[-1] if args else "") for args in commands if args[:3] == ("shell", "input", "text"))
+
+
+@pytest.mark.asyncio
+async def test_type_text_ascii_multiline_blank_segment_only_sends_enter():
+    """连续换行 (空段) 只发 ENTER 键，不得发送空的 input text 命令。"""
+    driver = TimeoutRecordingAdbDriver()
+
+    await driver.type_text("a\n\nb")
+
+    commands = [args for args, _ in driver.calls]
+    text_args = [args for args in commands if args[:3] == ("shell", "input", "text")]
+    assert text_args == [("shell", "input", "text", "a"), ("shell", "input", "text", "b")]
+    enter_calls = [args for args in commands if args == ("shell", "input", "keyevent", "66")]
+    assert len(enter_calls) == 2

@@ -267,3 +267,114 @@ async def test_scroll_into_view_and_queries():
     assert await locator.count() == 1
     assert await locator.text_content() == "关于手机"
 
+
+class EditableFieldDriver(MockDriver):
+    """带可编辑输入框的有状态虚拟驱动，用于 fill 注入/自愈语义验证。
+
+    junk_prefix 模拟云手机 ROM 智能剪贴板：仅在首次注入时把剪贴板内容拼接上屏，
+    自愈重注后不再污染 (与实测天翼云手机行为一致)。
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.field_text: str | None = None
+        self.cleared_count = 0
+        self.type_count = 0
+        self.junk_prefix = ""
+
+    async def dump_raw_tree(self) -> RawNode:
+        field = RawNode(
+            class_name="android.widget.EditText",
+            resource_id="com.demo:id/username",
+            text=self.field_text,
+            bounds=Rect(left=200, top=300, right=880, bottom=420),
+            editable=True,
+            enabled=True,
+        )
+        return RawNode(
+            class_name="android.widget.FrameLayout",
+            bounds=Rect(left=0, top=0, right=1080, bottom=2400),
+            children=[field],
+        )
+
+    async def clear_text(self) -> None:
+        self.cleared_count += 1
+        self.field_text = None
+
+    async def type_text(self, text: str) -> None:
+        self.type_count += 1
+        base = self.field_text or ""
+        self.field_text = base + self.junk_prefix + text
+        self.junk_prefix = ""  # 智能剪贴板仅在首次注入时上屏
+
+
+@pytest.mark.asyncio
+async def test_fill_types_exactly_once_on_first_match():
+    """回归防护: fill 首次注入精确命中后必须停止，不得在自愈循环外再冗余注入一次。"""
+    driver = EditableFieldDriver()
+    pruner = SemanticPruner()
+    page = AsyncPhonePage(driver=driver, pruner=pruner)
+
+    res = await page.locator("resource-id=com.demo:id/username").fill("hello")
+
+    assert res.success
+    assert res.verb == "fill"
+    assert driver.field_text == "hello"
+    assert driver.type_count == 1
+    assert driver.cleared_count == 1
+
+
+@pytest.mark.asyncio
+async def test_fill_self_heals_when_smart_clipboard_pollutes_field():
+    """验证智能剪贴板污染注入结果 (字段变为 剪贴板+新文本) 时，fill 重清重注一次自愈。"""
+    driver = EditableFieldDriver()
+    driver.junk_prefix = "clipboard-junk|"
+    pruner = SemanticPruner()
+    page = AsyncPhonePage(driver=driver, pruner=pruner)
+
+    res = await page.locator("resource-id=com.demo:id/username").fill("hello")
+
+    assert res.success
+    assert driver.field_text == "hello"
+    # 尝试 1: 清空+注入 (被污染) -> 尝试 2: 再次清空+注入 (自愈成功)
+    assert driver.type_count == 2
+    assert driver.cleared_count == 2
+
+
+class KeyboardOcclusionDriver(EditableFieldDriver):
+    """模拟键盘弹起导致输入框滚出视口、注入后无法观测的驱动。"""
+
+    async def dump_raw_tree(self) -> RawNode:
+        if self.type_count >= 1:
+            return RawNode(
+                class_name="android.widget.FrameLayout",
+                bounds=Rect(left=0, top=0, right=1080, bottom=2400),
+                children=[],
+            )
+        return await super().dump_raw_tree()
+
+
+@pytest.mark.asyncio
+async def test_fill_does_not_reinject_when_field_unobservable():
+    """验证注入后字段不可观测 (实际值为 None) 时按既有语义成功返回，不盲目二次注入。"""
+    driver = KeyboardOcclusionDriver()
+    pruner = SemanticPruner()
+    page = AsyncPhonePage(driver=driver, pruner=pruner)
+
+    res = await page.locator("resource-id=com.demo:id/username").fill("hello")
+
+    assert res.success
+    assert driver.type_count == 1
+    assert driver.cleared_count == 1
+
+
+@pytest.mark.asyncio
+async def test_scroll_into_view_raises_when_target_absent():
+    """回归防护: 滚动打满预算后目标仍不存在时须显式抛 SelectorNotFoundError，不得静默返回。"""
+    driver = MockDriver()  # 树中只有 确认支付 按钮，目标永远不存在
+    pruner = SemanticPruner()
+    page = AsyncPhonePage(driver=driver, pruner=pruner)
+
+    with pytest.raises(SelectorNotFoundError):
+        await page.locator("text=永不存在的元素").scroll_into_view(max_swipes=1)
+

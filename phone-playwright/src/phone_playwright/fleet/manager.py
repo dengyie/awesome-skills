@@ -15,6 +15,19 @@ from phone_playwright.drivers.ios_wda import IosWdaDriver
 from phone_playwright.models.exceptions import DeviceOfflineError
 from phone_playwright.fleet.watchdog import DeviceWatchdog
 
+_IOS_TOKEN_RE = re.compile(r"(?<![a-z0-9])ios(?![a-z0-9])", re.IGNORECASE)
+
+
+def _looks_like_wda_endpoint(candidate: str) -> bool:
+    """判定设备标识是否指向 iOS WDA 端点。
+
+    不能用裸子串匹配 'ios' —— 别名如 'bios-node'、'curious-iphone-case' 会被
+    误路由到 WDA 驱动；要求 token 边界 (前后均不是字母数字)，URL 前缀直接判定。
+    """
+    if candidate.startswith(("http://", "https://")):
+        return True
+    return bool(_IOS_TOKEN_RE.search(candidate))
+
 
 class FleetManager:
     """局域网设备集群生命周期管理器。"""
@@ -57,7 +70,7 @@ class FleetManager:
                 old_driver = self._drivers.pop(old_id)
                 await old_driver.disconnect()
                 new_driver: BaseDriver
-                if new_id.startswith("http://") or new_id.startswith("https://") or "ios" in new_id.lower():
+                if _looks_like_wda_endpoint(new_id):
                     new_driver = IosWdaDriver(device_id=new_id, wda_base_url=new_id)
                 else:
                     new_driver = AndroidAdbDriver(device_id=new_id, adb_path=self.adb_path)
@@ -91,7 +104,7 @@ class FleetManager:
                 return self._drivers[real_id]
 
             driver: BaseDriver
-            if real_id.startswith("http://") or real_id.startswith("https://") or "ios" in alias_or_id.lower() or "ios" in real_id.lower():
+            if _looks_like_wda_endpoint(real_id) or _looks_like_wda_endpoint(alias_or_id):
                 driver = IosWdaDriver(device_id=real_id, wda_base_url=real_id)
             else:
                 driver = AndroidAdbDriver(device_id=real_id, adb_path=self.adb_path)

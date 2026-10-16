@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal
 from phone_playwright.models.actions import ActionResult
 from phone_playwright.models.geometry import Rect
 from phone_playwright.models.schema import CompactElement
+from phone_playwright.models.exceptions import OffscreenElementError, SelectorNotFoundError
 from phone_playwright.core.selector import parse_selector
 
 if TYPE_CHECKING:
@@ -139,7 +140,11 @@ class PhoneLocator:
         direction: Literal["up", "down"] = "up",
         distance_ratio: float = 0.5,
     ) -> PhoneLocator:
-        """Playwright 风格的自动滚动搜寻: 若元素未在当前视口，自动向指定方向滑动直至可见。"""
+        """Playwright 风格的自动滚动搜寻: 若元素未在当前视口，自动向指定方向滑动直至可见。
+
+        打满滑动预算后仍不可见时显式抛错 (用极大虚拟视口蒸馏精准区分
+        【未挂载】与【屏幕外】)，绝不静默返回让后续动作无从定位。
+        """
         for _ in range(max_swipes):
             elements, viewport = await self._resolve_elements(force_refresh=True)
             target_el = parse_selector(self._selector).find_first(elements)
@@ -149,7 +154,11 @@ class PhoneLocator:
             await self._page.swipe(direction=direction, distance_ratio=distance_ratio)
             await asyncio.sleep(0.4)
 
-        return self
+        raw_tree = await self._page.driver.dump_raw_tree()
+        unclipped = self._page.pruner.prune_and_distill(raw_tree, 1000000, 1000000)
+        if not parse_selector(self._selector).find_first(unclipped):
+            raise SelectorNotFoundError(self._selector)
+        raise OffscreenElementError(self._selector)
 
     async def is_visible(self) -> bool:
         """瞬态断言检查: 判断当前选择器目标是否处于视口内可见。"""
@@ -209,7 +218,11 @@ class PhoneLocator:
         return not (await self.is_enabled())
 
     def locator(self, sub_selector: str) -> PhoneLocator:
-        """链式子定位器 (Chained Locators)。在当前定位器的语义作用域内继续匹配子元素。"""
+        """链式定位器 (Chained Locators): 以 sub_selector 逐级过滤当前定位器的命中结果池。
+
+        注意这是对视口扁平元素列表的管道过滤 (非 DOM 祖先-后代作用域限定)，
+        详见 core.selector.parse_selector 的语义说明。
+        """
         combined = f"{self._selector} >> {sub_selector}"
         return PhoneLocator(page=self._page, selector=combined)
 
