@@ -7,6 +7,7 @@ from phone_playwright.models.schema import RawNode
 from phone_playwright.drivers.base import BaseDriver
 from phone_playwright.fleet.manager import FleetManager
 from phone_playwright.mcp.tools import McpToolExecutor, TOOL_DEFINITIONS
+from phone_playwright.models.exceptions import PhonePlaywrightError
 from phone_playwright.mcp.server import McpServer
 
 
@@ -61,6 +62,18 @@ class MockMcpDriver(BaseDriver):
 
     async def get_current_app(self) -> tuple[str | None, str | None]:
         return "com.mock.mall", "MallActivity"
+
+
+class ShotCountingMcpDriver(MockMcpDriver):
+    """统计截屏调用次数的驱动，用于验证截图复用。"""
+
+    def __init__(self, device_id: str = "shot-count-1") -> None:
+        super().__init__(device_id)
+        self.shot_count = 0
+
+    async def take_screenshot(self) -> bytes:
+        self.shot_count += 1
+        return b"fake-png-bytes"
 
 
 @pytest.mark.asyncio
@@ -184,3 +197,43 @@ async def test_mcp_server_run_stdio_clean_exit(monkeypatch):
     assert len(sent_responses) == 1
     assert sent_responses[0]["id"] == 100
 
+
+
+class ScreenshotDeadMcpDriver(MockMcpDriver):
+    """截屏通道永久失效的驱动，用于验证截图失败的显式抛错契约。"""
+
+    async def take_screenshot(self) -> bytes:
+        raise PhonePlaywrightError("截屏通道失效")
+
+
+@pytest.mark.asyncio
+async def test_inspect_screen_screenshot_failure_raises(monkeypatch):
+    """回归防护: with_screenshot=True 且快照截屏失败时必须显式抛错，不得静默返 null。"""
+    driver = ScreenshotDeadMcpDriver("shot-dead-1")
+    fleet = FleetManager()
+
+    async def fake_get_driver(alias_or_id: str):
+        return driver
+
+    monkeypatch.setattr(fleet, "get_driver", fake_get_driver)
+    executor = McpToolExecutor(fleet_manager=fleet)
+
+    with pytest.raises(PhonePlaywrightError):
+        await executor.inspect_screen("shot-dead-1", with_screenshot=True)
+
+
+@pytest.mark.asyncio
+async def test_inspect_screen_reuses_snapshot_screenshot(monkeypatch):
+    """快照阶段截图成功时复用其 Base64，不再发起第二次截屏往返。"""
+    driver = ShotCountingMcpDriver("shot-count-1")
+    fleet = FleetManager()
+
+    async def fake_get_driver(alias_or_id: str):
+        return driver
+
+    monkeypatch.setattr(fleet, "get_driver", fake_get_driver)
+    executor = McpToolExecutor(fleet_manager=fleet)
+
+    info = await executor.inspect_screen("shot-count-1", with_screenshot=True)
+    assert info["screenshot_base64"] is not None
+    assert driver.shot_count == 1

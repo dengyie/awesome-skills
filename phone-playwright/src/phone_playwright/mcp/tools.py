@@ -7,6 +7,7 @@
 """
 
 from __future__ import annotations
+import base64
 import json
 from typing import Any, Dict, List, Literal
 from phone_playwright.fleet.manager import FleetManager
@@ -146,8 +147,13 @@ class McpToolExecutor:
         }
 
         if with_screenshot:
-            # 复用快照阶段抓取的截图，避免对设备发起第二次截屏往返
-            result["screenshot_base64"] = snapshot.screenshot_base64
+            # 复用快照阶段抓取的截图，省一次截屏往返；快照通道失败 (内部吞异常置
+            # None) 时回退显式截屏，保持截屏失败显式抛错的旧契约而非静默返 null
+            if snapshot.screenshot_base64:
+                result["screenshot_base64"] = snapshot.screenshot_base64
+            else:
+                img_bytes = await page.screenshot()
+                result["screenshot_base64"] = base64.b64encode(img_bytes).decode("ascii")
 
         return result
 

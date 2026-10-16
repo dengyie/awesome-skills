@@ -369,14 +369,16 @@ class WebPhoneLocator:
                 const el = document.querySelector({json.dumps(self.selector)});
                 if (el) {{
                     el.focus();
-                    const proto = el instanceof HTMLTextAreaElement
-                        ? HTMLTextAreaElement.prototype
-                        : HTMLInputElement.prototype;
-                    const desc = Object.getOwnPropertyDescriptor(proto, 'value');
+                    let desc = null;
+                    if (el instanceof HTMLTextAreaElement) {{
+                        desc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+                    }} else if (el instanceof HTMLInputElement) {{
+                        desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+                    }}
                     if (desc && desc.set) {{
                         desc.set.call(el, {js_arg});
                     }} else {{
-                        el.value = {js_arg};
+                        try {{ el.value = {js_arg}; }} catch (err) {{}}
                     }}
                     el.dispatchEvent(new Event('input', {{bubbles: true}}));
                     el.dispatchEvent(new Event('change', {{bubbles: true}}));

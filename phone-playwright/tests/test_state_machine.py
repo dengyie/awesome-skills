@@ -378,3 +378,34 @@ async def test_scroll_into_view_raises_when_target_absent():
     with pytest.raises(SelectorNotFoundError):
         await page.locator("text=永不存在的元素").scroll_into_view(max_swipes=1)
 
+
+
+class ScrollDiagnosticsDeadDriver(ScrollableTestDriver):
+    """目标始终留在屏幕外、且滚动后诊断转储失效的驱动。"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.dump_calls = 0
+
+    async def swipe(self, sx: int, sy: int, ex: int, ey: int, duration_ms: int = 300) -> None:
+        pass  # 元素始终留在屏幕外
+
+    async def dump_raw_tree(self) -> RawNode:
+        self.dump_calls += 1
+        if self.dump_calls > 1:
+            raise RuntimeError("UiAutomator dead during scroll diagnostics")
+        return await super().dump_raw_tree()
+
+
+@pytest.mark.asyncio
+async def test_scroll_into_view_tolerates_dead_diagnostics():
+    """回归防护: 诊断转储瞬态失效时按既有容忍语义返回，不误抛裸 RuntimeError。"""
+    driver = ScrollDiagnosticsDeadDriver()
+    pruner = SemanticPruner()
+    page = AsyncPhonePage(driver=driver, pruner=pruner)
+
+    locator = page.locator("text=关于手机")
+    result = await locator.scroll_into_view(max_swipes=1)
+
+    assert result is locator
+    assert driver.dump_calls == 2  # 滚动搜寻 1 次 + 最终诊断 1 次

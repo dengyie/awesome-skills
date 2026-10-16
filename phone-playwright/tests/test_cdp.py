@@ -176,3 +176,50 @@ async def test_cdp_client_get_element_box_with_dpr(monkeypatch: pytest.MonkeyPat
     assert box["dpr"] == 2.625
     assert box["x"] == 262.5
     assert box["text"] == "加入购物车"
+
+
+@pytest.mark.asyncio
+async def test_web_phone_fill_prototype_setter_guard(monkeypatch: pytest.MonkeyPatch) -> None:
+    """CDP fill 必须按元素类型取原生 value setter，非 input/textarea 目标回退直接赋值。
+
+    回归防护: 一律取 HTMLInputElement.prototype 的 setter 会在 <select>/
+    contenteditable 上按 WebIDL 抛 'Illegal invocation'。
+    """
+    driver = FakeAdbDriverForCdp()
+    page = FakePageForCdp(driver=driver)
+    frame = WebFrameLocator(page=page)  # type: ignore[arg-type]
+
+    eval_scripts: list[str] = []
+
+    class FakeCdpClient:
+        def __init__(self) -> None:
+            self._closed = False
+
+        async def get_element_box(self, selector: str) -> dict[str, object]:
+            return {"x": 0, "y": 0, "width": 50, "height": 20, "text": None}
+
+        async def evaluate(self, js: str) -> object:
+            eval_scripts.append(js)
+            return None
+
+        async def close(self) -> None:
+            self._closed = True
+
+    fake_client = FakeCdpClient()
+
+    async def fake_ensure_connected() -> FakeCdpClient:
+        return fake_client
+
+    monkeypatch.setattr(frame, "_ensure_connected", fake_ensure_connected)
+
+    res = await frame.locator("select#country").fill("CN", timeout_s=1.0)
+
+    assert res.success is True
+    assert len(eval_scripts) >= 1
+    fill_js = eval_scripts[-1]
+    assert "el instanceof HTMLTextAreaElement" in fill_js
+    assert "el instanceof HTMLInputElement" in fill_js
+    assert "desc.set.call" in fill_js
+    # 回退直接赋值分支必须保留 (select/contenteditable 无原生 value setter)
+    assert "el.value =" in fill_js
+    await frame.close()

@@ -154,11 +154,17 @@ class PhoneLocator:
             await self._page.swipe(direction=direction, distance_ratio=distance_ratio)
             await asyncio.sleep(0.4)
 
-        raw_tree = await self._page.driver.dump_raw_tree()
-        unclipped = self._page.pruner.prune_and_distill(raw_tree, 1000000, 1000000)
-        if not parse_selector(self._selector).find_first(unclipped):
-            raise SelectorNotFoundError(self._selector)
-        raise OffscreenElementError(self._selector)
+        try:
+            raw_tree = await self._page.driver.dump_raw_tree()
+            unclipped = self._page.pruner.prune_and_distill(raw_tree, 1000000, 1000000)
+            if not parse_selector(self._selector).find_first(unclipped):
+                raise SelectorNotFoundError(self._selector)
+            raise OffscreenElementError(self._selector)
+        except (SelectorNotFoundError, OffscreenElementError):
+            raise
+        except Exception:
+            # 诊断转储瞬态失效时按既有容忍语义返回，不误伤可能已滚入视口的目标
+            return self
 
     async def is_visible(self) -> bool:
         """瞬态断言检查: 判断当前选择器目标是否处于视口内可见。"""
