@@ -30,8 +30,12 @@ description: >
 1. 先检索 `awesome-ui/react/`、`awesome-ui/vue/` 或 `awesome-ui/vanilla/`，复用现成单文件组件。
 2. 所有界面图标优先使用对应技术栈的 `UiIcon`：`react/UiIcon.tsx`、`vue/UiIcon.vue`、`vanilla/UiIcon.js`。
 3. React 命名图标从 `react/UiIcon.tsx` 导入，例如 `Sparkles`、`Check`、`X`、`ChevronRight`；Vue 使用 `<UiIcon name="sparkles" />`；Vanilla 使用 `uiIcon('sparkles')`。
-4. 禁止用 emoji、Unicode 字符（如 `✓`、`▶`、`✕`）或临时手写 SVG 代替 UI 图标。品牌 Logo 使用品牌官方资源。
-5. 只有仓库没有匹配图标时，才允许引入外部开源图标库；新增依赖前必须说明原因和许可证。
+4. 禁止用 emoji、Unicode 字符（如 `✓`、`▶`、`✕`）或临时手写 SVG 代替 UI 图标。
+5. **项目品牌 Logo 规范（开源通用原则）**：
+   - 页面装配需要品牌 Logo / 产品标识时，**优先检索并使用当前项目自身的 Logo 资产**（按优先级检索 `public/logo.*`、`public/favicon.*`、`src/assets/logo.*`、`assets/brand/` 或用户显式传入的品牌图）。
+   - 本 Skill 为面向全网的通用开源规范，**严禁硬编码任何特定组织或个人的私有 Logo / 专属 CDN 链接**。
+   - 若当前项目尚未定义自有 Logo，优先使用产品名称文本配合 `UiIcon` 通用几何图形（如 `Sparkles`、`Bot`）作为中性占位，并预留标准的外部配置属性（如 `logoUrl`）或插槽（`<slot name="logo">`）。
+6. 只有仓库没有匹配图标时，才允许引入外部开源图标库；新增依赖前必须说明原因和许可证。
 
 ## 🛠️ 标准装配执行工作流 (Standard Workflow)
 
@@ -88,3 +92,4 @@ description: >
 1. **严禁重新造轮子**：不要在用户代码里手写 `textarea` 的高度自适应或重新写一段包含 Bug 的 Markdown 流式打字逻辑，直接复制对应单文件。
 2. **严禁引入复杂第三方重黑盒库**：不随意引入需要复杂 Context Provider 包裹的重量级组件库。
 3. **保持 Tailwind 纯洁度**：各组件均基于标准 Tailwind CSS 工具类，尽量通过外部 `className` 传递覆盖，不要破坏组件内部的原子结构。
+4. **严禁硬编码私有品牌资产**：装配页面、顶部导航栏或侧边栏时，禁止擅自注入未被当前工程声明的外部个人 Logo、特定站点专属静态链接或作者个人头像；必须优先探测目标工程已有资产，或通过插槽/中性几何图标占位。

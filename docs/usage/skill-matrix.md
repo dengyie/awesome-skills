@@ -19,6 +19,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `obsidian-doc-router` | You need accurate ops facts or are writing docs in an Obsidian vault | router-first queries, anti-orphan documentation workflow | the query is unrelated to your vault or ops notes | verified ops answers with cited notes, anti-orphan canonical entries | `docs/usage/obsidian-doc-router.md` |
 | `phone-playwright` | You need Playwright-style mobile automation or an AI mobile agent | semantic pruning, auto-waiting state machine, warm-cache fast dispatch, scroll-into-view, MCP server | you are automating desktop web browsers or remote cloudphone reverse SSH tunnels | compact semantic snapshots, deterministic actions, verified UI workflows | `docs/usage/phone-playwright.md` |
 | `production-code-quality-review` | You need production-minded judgment on changed code | PR review, diff triage, merge readiness, architecture-sensitive review | you need implementation or debugging instead of review | review brief, findings, risk summary, verification guidance | `docs/usage/quickstart.md`, `docs/usage/review-workflows.md` |
+| `render-engine` | You need an unprivileged Web-Box container on Render Free Tier | Caddy multiplexing, EasyTier smoltcp mesh, persistent ttyd+tmux sessions | you have full root/kernel privileges and prefer native kernel TUN and systemd | running Render service, persistent Web terminal, smoltcp mesh access, verified metrics | `docs/usage/render-engine.md` |
 | `split-image-assets` | You need reusable assets instead of one flat image | object layers, masks, previews, asset manifests, QA evidence | you only need a quick crop or a fully automatic segmenter | transparent PNGs, masks, `metadata.json`, `qa_report.md`, previews | `docs/usage/split-image-assets.md` |
 | `windows-ssh-stcp` | You need SSH to a Windows host that has no inbound public port | reusing an existing frps over STCP, loopback-only OpenSSH, NSSM keepalive | the host is on the same LAN, you need browser/HTTPS access, or no frps exists yet | working SSH over `127.0.0.1:2222`, supervised frpc on both ends, loopback-only sshd | `docs/usage/windows-ssh-stcp.md` |
 | `yunzhi-cloudphone-checkin` | You need daily check-in and cloud phone space benefit card renewal for Yunzhi Cloudphone | browser console one-click script, Chrome CDP automation, direct CLI, 100% WAF pass | you need ADB/scrcpy tunnel management on the device (use `cloudphone-adb-tunnel`) | auto-claimed 2-day space card, renewed active cloud phone expiration | `docs/usage/yunzhi-cloudphone-checkin.md` |
@@ -37,6 +38,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need a generic reverse SSH tunnel for a machine without a public IP: `muse-reverse-ssh`
 - Need router-first vault reading or anti-orphan doc recording: `obsidian-doc-router`
 - Need mobile device automation, semantic pruning, or AI-native mobile interaction: `phone-playwright`
+- Need an unprivileged Web-Box on Render Free Tier with mesh and persistent terminal: `render-engine`
 - Need SSH into a Windows host that cannot accept inbound connections: `windows-ssh-stcp`
 - Need automated daily check-in or space renewal for Yunzhi Cloudphone: `yunzhi-cloudphone-checkin`
 
@@ -50,6 +52,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
 - search answer with cited sources, page content, candidate URLs: `grok-search`
 - review findings and merge-readiness guidance: `production-code-quality-review`
+- running Render Web-Box, persistent ttyd+tmux session, verified smoltcp mesh: `render-engine`
 - working public SSH endpoint, keepalive supervisor, verification results: `muse-reverse-ssh`
 - verified ops answers, anti-orphan canonical docs: `obsidian-doc-router`
 - compact mobile snapshots, auto-waited clicks, deterministic UI interactions: `phone-playwright`
@@ -117,6 +120,12 @@ Use $phone-playwright to inspect the current mobile screen on 192.168.1.3:43037,
 
 ```text
 Use $production-code-quality-review to review this change for production correctness, robustness, and merge readiness.
+```
+
+`render-engine`
+
+```text
+Use $render-engine to deploy or diagnose this Render Free Tier container, verifying Caddy multiplexing, EasyTier smoltcp mesh connectivity, and persistent ttyd+tmux sessions.
 ```
 
 `split-image-assets`
