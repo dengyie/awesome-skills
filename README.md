@@ -42,7 +42,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 - [`windows-ssh-stcp`](windows-ssh-stcp/): Configures SSH access to NAT-isolated Windows machines over existing FRP STCP relays with loopback sshd.
 - [`cue-sandbox`](cue-sandbox/): Lands a Cue sandbox over EasyTier TUN SSH, with India reverse-SSH as fallback and a Komari probe.
 - [`muse-reverse-ssh`](muse-reverse-ssh/): Configures reverse SSH tunnels and VPS port forwarding with process keepalive.
-- [`render-engine`](render-engine/): Deploys and manages unprivileged Web-Box containers on Render Free Tier with Caddy multiplexing, EasyTier smoltcp mesh, and persistent ttyd+tmux sessions.
+- [`render-engine`](render-engine/): Guides 0-to-1 deployment of unprivileged Linux Web-Box containers on Render Free Tier from registration and repo fork to Caddy multiplexing and persistent ttyd+tmux sessions.
 
 ### UI Engineering and Assets
 
@@ -72,7 +72,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 | `obsidian-doc-router` | You are reading/writing Obsidian vault ops notes or topologies | router-first queries, anti-orphan documentation workflow | [Guide](docs/usage/obsidian-doc-router.md) |
 | `phone-playwright` | You need Playwright-style mobile automation or an AI mobile agent | semantic pruning, auto-waiting state machine, warm-cache fast dispatch, scroll-into-view, MCP server | [Guide](docs/usage/phone-playwright.md) |
 | `production-code-quality-review` | You want a production-minded review of changes | PR review, merge readiness, architecture-sensitive diffs | [Review Workflows](docs/usage/review-workflows.md) |
-| `render-engine` | You need a secure, unprivileged Web-Box on Render Free Tier | Caddy multiplexing, EasyTier smoltcp mesh, persistent ttyd+tmux sessions | [Guide](docs/usage/render-engine.md) |
+| `render-engine` | You need 0-to-1 deployment and connection of a Web-Box on Render Free Tier | from-scratch Render registration, repo fork, Caddy multiplexing, ttyd+tmux sessions | [Guide](docs/usage/render-engine.md) |
 | `split-image-assets` | You need to turn one image into reusable package assets | masks, transparent layers, previews, metadata, QA | [Guide](docs/usage/split-image-assets.md) |
 | `windows-ssh-stcp` | You need SSH to a Windows host with no inbound public port | reuse an existing frps over STCP, loopback-only sshd, NSSM keepalive | [Guide](docs/usage/windows-ssh-stcp.md) |
 | `yunzhi-cloudphone-checkin` | You need automated check-in and cloud phone renewal for Yunzhi Cloudphone | browser console one-click script, Chrome CDP automation, direct CLI | [Guide](docs/usage/yunzhi-cloudphone-checkin.md) |

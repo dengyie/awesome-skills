@@ -66,7 +66,7 @@
 | `obsidian-doc-router` | 需要查阅或记录 Obsidian 知识库运维事实与拓扑 | 权威路由表首查、防孤岛文档闭环记录 | [Guide](../usage/obsidian-doc-router.md) |
 | `phone-playwright` | 需要移动端 Playwright 式自动化或构建手机 AI Agent | 视口语义蒸馏、可用性自动等待、温热缓存极速首击、MCP 服务端 | [Guide](../usage/phone-playwright.md) |
 | `production-code-quality-review` | 需要从生产工程视角审查改动 | PR review、合并前把关、风险判断 | [审查工作流](review-workflows.zh-CN.md) |
-| `render-engine` | 需要在 Render Free Tier 运行受限安全 Web-Box 容器 | Caddy 单端口复用、EasyTier smoltcp 网格、ttyd+tmux 会话持久化 | [Guide](../usage/render-engine.md) |
+| `render-engine` | 需要从 0 引导注册 Render、Fork 代码、部署容器与连接终端 | 零门槛注册引导、Blueprint 一键部署、ttyd+tmux 持久化会话 | [Guide](../usage/render-engine.md) |
 | `split-image-assets` | 需要把单张图拆成可复用资产包 | mask、透明图层、预览、metadata、QA | [Guide](../usage/split-image-assets.md) |
 | `windows-ssh-stcp` | 需要 SSH 登录一台没有公网入站端口的 Windows | 复用已有 frps 的 STCP、只听环回的 sshd、NSSM 保活 | [Guide](../usage/windows-ssh-stcp.md) |
 | `yunzhi-cloudphone-checkin` | 需要云智手机每日签到与云机空间自动续期 | 浏览器控制台一键脚本、Chrome CDP 无感自动化、直连 CLI | [Guide](../usage/yunzhi-cloudphone-checkin.md) |

@@ -1,6 +1,6 @@
-# Render Engine Web-Box Operations
+# Render Engine Web-Box 0-to-1 Deployment & Operations
 
-Use `render-engine` when deploying, maintaining, diagnosing, or troubleshooting Linux Web-Box containers on Render.com Free Tier (Docker Web Services) with single-port Caddy multiplexing, EasyTier user-space network mesh, persistent ttyd+tmux terminals, and optional Komari telemetry.
+Use `render-engine` when guiding a user or agent through the complete lifecycle of deploying, configuring, and connecting to an unprivileged Linux Web-Box container on Render.com Free Tier: from initial Render.com account registration, Forking/Cloning the repository, configuring Blueprint / Web Service settings, deploying the container, to connecting via persistent `ttyd`+`tmux` Web Terminal and EasyTier mesh SSH.
 
 The skill provides an operational runbook and diagnostic standard operating procedure (SOP) tailored for AI agents and human operators. It addresses specific constraints of the Render Free Tier (AWS us-east Kubernetes, 512MB RAM cap, no `/dev/net/tun`, single public port, 15-minute HTTP idle spindown, and OverlayFS host disk metric leakage).
 
@@ -10,10 +10,12 @@ If you are still choosing among skills, use the [Skill Matrix](skill-matrix.md).
 
 Use this skill when you need to:
 
+- Guide a user from scratch: registering on Render.com, Forking `dengyie/render-engine`, and deploying with 1-click Blueprint
 - Deploy a zero-config or modular Linux environment on Render.com free Docker service
 - Connect an unprivileged container without `/dev/net/tun` to an EasyTier mesh via `--no-tun --use-smoltcp`
 - Route multiple services (health checks, Web terminal, EasyTier WebSocket, sing-box VLESS) over a single public port (`$PORT:10000`) using Caddy
 - Provide persistent, disconnect-resilient Web terminal sessions (`ttyd` + `tmux` session `main`) with active WebSocket keepalive (`--ping-interval 15`)
+- Connect and run commands inside the container via browser Web Terminal, mesh SSH, or headless agent WebSocket
 - Investigate false disk capacity alarms caused by Kubernetes OverlayFS host storage leakage
 - Triage container spindown, offline incidents, and health-check monitoring via Uptime bots
 
@@ -21,6 +23,16 @@ Avoid when deploying on dedicated virtual machines with full root kernel privile
 
 ## How It Works
 
+```text
+  Phase 0: Account Setup       Phase 1: Repo Setup         Phase 2: Configuration      Phase 3: Deploy & Verify    Phase 4: Connection
+┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
+│ Register Render.com     │ │ Fork/Clone Repository   │ │ Set Environment Vars    │ │ Trigger Build & Deploy  │ │ Connect Web Shell / SSH │
+│ (GitHub SSO, Free Tier) │►│ (dengyie/render-engine) │►│ (Credentials/Mesh/Probe)│►│ (Verify Build/Logs,     │►│ (ttyd+tmux persistent   │
+│ (No credit card needed) │ │ (Automated CI/CD sync)  │ │ (Zero-config out of box)│ │  Extract random pass)   │ │  session or EasyTier) │
+└─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘
+```
+
+Single-port multiplexing topology:
 ```text
 Render Public Edge (Single Exposed $PORT:10000)
                   │
@@ -55,16 +67,19 @@ Operator / Bastion (pxed)
 
 The skill contains actionable operational runbooks and reference guides:
 
-- `SKILL.md` — The complete agent operating procedure: environment discovery, modular feature activation, terminal persistence, and structured diagnostics.
-- `references/deployment.md` — Platform specification, 512MB RAM constraints, environment variable matrix, and `render.yaml` blueprint.
+- `SKILL.md` — The complete agent operating procedure: 0-to-1 onboarding, Render registration, Forking repo, Blueprint deployment, log inspection, persistent terminal access, and structured diagnostics.
+- `references/deployment.md` — Platform specifications, 512MB RAM constraints, environment variable matrix, console walkthrough, and `render.yaml` blueprint.
 - `references/network-mesh.md` — Technical details of EasyTier user-space `smoltcp` networking, dynamic connector commands, and mesh topology.
-- `references/terminal-persistence.md` — Root-cause analysis of edge WebSocket idle drops, `--ping-interval 15` keepalive, and `ttyd` + `tmux` session persistence.
+- `references/terminal-persistence.md` — Root-cause analysis of edge WebSocket idle drops, `--ping-interval 15` keepalive, `ttyd` + `tmux` session persistence, and headless Python WebSocket script.
 - `references/troubleshooting.md` — Incident runbooks for OverlayFS false disk alarms, offline recovery, BasicAuth issues, and circuit breaker watchdog crashes.
 
-## Quick Workflow
+## Quick Workflow (0 to 1)
 
-1. **Deployment**: Deploy via Render Blueprint (`render.yaml`) or Dockerfile. Zero environment variables required for minimal secure Web-Box; passwords auto-generate on launch.
-2. **Modular Activation**: Add `ET_PEERS`, `ET_SECRET`, and `ET_NAME` to join EasyTier mesh. Add `KOMARI_ENDPOINT` and `KOMARI_TOKEN` to activate telemetry.
-3. **Web Terminal Access**: Access `https://<service-name>.onrender.com/shell/` with BasicAuth. Terminal auto-attaches to the persistent `main` tmux session.
-4. **Mesh Access**: Connect directly via bastion: `ssh -o ProxyJump=pxed root@10.144.144.90`.
-5. **Diagnostics**: For false disk alarms (e.g. reporting 315GB / 386GB used), verify real container usage with `du -sh /` (~190MB) and ignore the OverlayFS host leak, or set `AGENT_FORCE_DISK_TOTAL="5368709120"` in telemetry.
+1. **Register**: Guide user to register at `https://dashboard.render.com/register` with GitHub. Explain Free Tier benefits (750 hours/mo, no credit card required).
+2. **Repository**: Guide user to Fork `https://github.com/dengyie/render-engine` to their GitHub for CI/CD updates.
+3. **Configure & Deploy**: Use Blueprint URL `https://render.com/deploy?repo=https://github.com/dengyie/render-engine` (or user's fork). Select Free plan, region, and optional environment variables (`SSH_PASS`, `ET_PEERS`, `KOMARI_ENDPOINT`).
+4. **Log Verification**: In Render Dashboard Logs, verify Caddy, SSHD, and ttyd startup. If `SSH_PASS` was not manually set, copy the 18-character random password printed in the logs.
+5. **Connect**:
+   - Web Terminal: Open `https://<service-name>.onrender.com/shell/` with BasicAuth (`admin` / password). Auto-attaches to persistent `main` tmux session.
+   - Mesh SSH: Connect via bastion `ssh -o ProxyJump=pxed root@10.144.144.90`.
+6. **Maintenance**: Set up 5-minute HTTP ping to `/health` on UptimeRobot to prevent 15-minute container spindown. For false disk alarms (~315GB / 386GB used), verify actual container usage (~191MB) and configure `KOMARI_FORCE_DISK_TOTAL="5368709120"`.

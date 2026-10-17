@@ -1,179 +1,178 @@
 ---
 name: render-engine
-description: Render.com 免费 Docker Web Service 容器（render-engine / render-box）的标准运维与操作 SOP。用于用户提到 render-engine、render-box、Render 容器、Render 部署、Render 掉线、Render 终端、Render EasyTier、10.144.144.90、Render 防休眠/保活、Caddy 多路复用、ttyd+tmux 持久化会话，或要在 Render 免费容器上运行安全 Linux Web-Box 时。包含一键部署、零配置基座、按需激活（EasyTier smoltcp / sing-box / Komari）、探活诊断与 OverlayFS 虚假磁盘告警排查。
+description: 从零引导用户注册 Render.com 免费账号、Fork/Clone 代码仓库、配置环境变量、部署 Docker 容器到连接 Web 终端 (ttyd+tmux) 与 EasyTier 网格直连 SSH 的完整生命周期 SOP。用于用户提到从 0 部署 Render、注册 Render、render-engine、render-box、Render 容器部署、Render 终端连接、Render EasyTier 组网、Render 防休眠保活，或要在 Render 免费层上搭建持久安全 Linux 运行时时。包含从 0 引导注册、代码 Fork、Blueprint/手动配置、日志核验、多路连接与日常运维排错。
 ---
 
-# Render-Engine 容器运维与管理 SOP
+# Render-Engine 从零部署与连接管理 SOP (0 到 1 全周期指南)
 
-`render-engine` 是专为 Render.com Free Tier 设计的单容器 Web-Box 运行时环境。底层基于 Alpine Linux，在无 `CAP_NET_ADMIN` 和无 `/dev/net/tun` 的严苛受限环境（512MB RAM 上限）下，通过 Caddy 单端口多路复用、OpenSSH、基于 tmux 会话持久化的 ttyd Web 终端，提供零配置开箱即用的 Linux 环境；并支持 EasyTier（smoltcp 用户态网络栈）、sing-box 代理和 Komari 探针的按需渐进式激活。
-
-本 Skill 为面向 AI Agent 与运维人员的**完全自包含操作规程**。
+`render-engine` 是专为 Render.com Free Tier 打造的单容器安全 Linux Web-Box 运行环境。本 Skill 负责**从零引导用户注册 Render 账号、获取代码仓库、配置环境变量、触发部署、核验日志，直到成功连接终端与虚拟网直连**的完整生命周期。
 
 ```text
-                               Render Public Edge (Port 10000 / HTTPS)
-                                                 │
-                                    ┌────────────┴────────────┐
-                                    │    Caddy Multiplexer    │
-                                    └────────────┬────────────┘
-                                                 │
-       ┌──────────────────────┬──────────────────┴──────────────────┬──────────────────────┐
-       ▼                      ▼                                     ▼                      ▼
-Path: /health          Path: /shell/                         Path: /et (WS)         Path: /vless-ws
-┌──────────────┐       ┌──────────────────────┐              ┌──────────────────┐   ┌──────────────────┐
-│ Health probe │       │ Web terminal (ttyd)  │              │ EasyTier Mesh    │   │ sing-box VLESS   │
-│ (200 OK)     │       │ Basic Authentication │              │ (Optional)       │   │ (Optional)       │
-└──────────────┘       └──────────┬───────────┘              └────────┬─────────┘   └──────────────────┘
-                                  │                                   │
-                         [tmux session: main]               [smoltcp user-space]
-                                  │                                   │
-                      ┌───────────┴───────────┐            ┌──────────┴──────────┐
-                      ▼                       ▼            ▼                     ▼
-             State persistence        Mouse scroll /   OpenSSH (Port 22/2222) sing-box (Port 10808)
-             across reconnects        50k history      (In-mesh direct SSH)   (In-mesh mixed proxy)
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                Render-Engine 全生命周期流程                             │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+  阶段 0: 账号准备       阶段 1: 仓库获取       阶段 2: 服务配置       阶段 3: 触发构建       阶段 4: 终端连接
+┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│ 注册 Render.com │──►│ Fork/Clone 仓库 │──►│ 配置环境变量    │──►│ 启动构建部署    │──►│ 登录 Web Shell  │
+│ (GitHub 快捷登录)│   │ (dengyie/       │   │ (密码/网格/探针)│   │ (核验 Build/    │   │ (ttyd+tmux/SSH) │
+│ 免费 512MB 实例 │   │  render-engine) │   │ (零配置开箱即用)│   │  Deploy 日志)   │   │ (持久化会话保持)│
+└─────────────────┘   └─────────────────┘   └─────────────────┘   └─────────────────┘   └─────────────────┘
 ```
 
 按需查阅参考手册，避免一次性全量加载：
-- `references/deployment.md`：Render Blueprint（render.yaml）、环境变量矩阵与一键部署
-- `references/network-mesh.md`：EasyTier smoltcp 用户态组网、Peer 连接与免密 SSH 直连
-- `references/terminal-persistence.md`：ttyd+tmux 断线保活机制与 WebSocket 自动化交互协议
-- `references/troubleshooting.md`：常见排错（OverlayFS 宿主度量泄露、掉线根因与看门狗熔断）
+- `references/deployment.md`：Render Blueprint（render.yaml）、环境变量配置矩阵与控制台图文引导
+- `references/network-mesh.md`：EasyTier smoltcp 用户态虚拟网格组网、Peer 连接与免密 SSH 直连
+- `references/terminal-persistence.md`：ttyd+tmux 断线无损保持机制与 Agent 自动化 WebSocket 协议
+- `references/troubleshooting.md`：常见排错（OverlayFS 宿主度量泄露辟谣、Spindown 保活与掉线恢复）
 
 ---
 
-## 快速自检与决策树 (Decision Tree)
+## 阶段 0：引导用户注册 Render.com 账号
 
-接手 `render-engine` 相关任务时，按以下顺序决策与行动：
+接手从零部署任务时，先协助或引导用户准备平台账号：
 
-1. **探测目标容器存活与健康**：
-   - 请求 `https://<render-host>/health`：
-     - 若返回 `200 OK` → 容器处于存活服务状态。
-     - 若返回 `502 Bad Gateway` 或超时 → 容器处于休眠（Spindown）、正在构建部署或 Caddy 异常崩溃。
-2. **判断身份认证与凭据**：
-   - 生产环境默认账号为 `admin`。
-   - 若用户未显式设置 `SSH_PASS` / `TTYD_PASS`，容器启动时在控制台日志中自动生成并打印 18 位随机强密码。
-3. **定位掉线告警根因**：
-   - 若用户报告“Render 掉线”或“节点离线”，优先检查是否为 **MangoHub/Komari 监控面板告警** 或 **EasyTier 虚拟网失联**，而非容器本身宕机。详细排查步骤见下文 [工作流 4]。
+1. **注册入口**：访问 [Render 注册页面](https://dashboard.render.com/register)。
+2. **推荐方式**：选择 **"Sign up with GitHub"**。
+   - **优势**：一键授权登录，无需繁琐邮箱验证，且能直接打通后续 GitHub 仓库自动同步部署权限。
+3. **配额说明（给用户的安心提示）**：
+   - Render 个人免费版（Free Tier）无需绑定信用卡即可部署 Docker Web Service。
+   - 每个免费账号每月拥有 750 小时免费运行额度（足以全月 24 小时运行 1 个服务）。
+   - 单实例配额：512 MB 内存、0.15 vCPU、单个公网端口。
 
 ---
 
-## 工作流 1：服务探活与健康巡检
+## 阶段 1：获取代码仓库 (Fork / Clone)
 
-执行以下命令快速诊断目标实例的四层/七层状态：
+Render 通过拉取 Git 仓库代码自动执行 Docker 镜像构建。引导用户将项目同步到自己的 GitHub：
 
-```bash
-TARGET_URL="https://render-engine.onrender.com"
-
-# 1. 存活探针探测
-curl -s -i "${TARGET_URL}/health" | head -n 5
-
-# 2. 根路径多路复用回落验证
-curl -s "${TARGET_URL}/"
-
-# 3. Web 终端认证端点与 Token 接口探测
-curl -s -i "${TARGET_URL}/shell/" | grep -E "HTTP/|WWW-Authenticate|via"
-```
-
-正常输出特征：
-- `/health` 返回 `HTTP/2 200`，Body 为 `OK`。
-- `/` 返回 `render-engine is running. Access /shell/ for web terminal...`。
-- 未带认证访问 `/shell/` 严格返回 `HTTP 401 Unauthorized` 并携带 `WWW-Authenticate: Basic realm="ttyd"`。
+1. **上游项目地址**：[`https://github.com/dengyie/render-engine`](https://github.com/dengyie/render-engine)
+2. **操作指引**：
+   - **方式 A（Fork 到个人 GitHub，推荐用于长期自动化更新）**：
+     引导用户点击项目页面右上角 **"Fork"**，创建属于自己的副本（如 `https://github.com/<user>/render-engine`）。
+   - **方式 B（直接引用公开源仓库，适合一键体验）**：
+     若用户不想 Fork，Render 支持直接连接任何公开的 GitHub 仓库进行部署。
 
 ---
 
-## 工作流 2：Web 终端交互与会话保持
+## 阶段 2：在 Render 创建并配置服务
 
-目标实例集成了 `ttyd` + `tmux` 持久化体系，客户端断线或页面刷新不会丢失终端上下文。
+提供两种配置路径，优先推荐 **路径 A（一键 Blueprint）**：
 
-### 1. 浏览器人工访问
-- 打开 `https://<render-host>/shell/`
-- 输入 HTTP BasicAuth 凭据（如 `admin` / 密码）
-- 自动挂载进入 `tmux` 的 `main` 会话，内置支持：
-  - 鼠标滚轮滑动浏览；
-  - 50,000 行历史缓冲区（`history-limit 50000`）；
-  - `--ping-interval 15` 心跳防 Cloudflare/ALB 60s 静默断连。
+### 路径 A：一键快速部署 (Render Blueprint，最快最准)
 
-### 2. Agent 自动化脚本交互（WebSocket）
-在无浏览器环境（如命令行 Agent）下，可通过 Python 建立带 BasicAuth 的 WebSocket 连接执行命令，见 `references/terminal-persistence.md`。
+1. 点击或引导用户在浏览器中打开专属部署入口：
+   ```text
+   https://render.com/deploy?repo=https://github.com/dengyie/render-engine
+   ```
+   *(若用户已 Fork，将链接中的 repo 替换为用户个人仓库地址)*
+2. 页面会自动识别项目根目录下的 `render.yaml` 规格文件。
+3. 提示用户核对或填入以下参数：
+   - **Service Name**：默认 `render-engine`（可自命名，例如 `my-box`）。
+   - **Region**：选择就近机房（推荐 `Oregon (US West)`、`Singapore (Southeast Asia)` 或 `Frankfurt (EU Central)`）。
+   - **Plan**：确认选中 **`Free`**。
+4. 点击 **"Apply"** 即可全自动创建服务。
+
+### 路径 B：手动创建 Web Service
+
+若通过控制台手动添加：
+1. 登录 [Render Dashboard](https://dashboard.render.com/)，点击右上角 **"New +"** -> 选择 **"Web Service"**。
+2. 选择 **"Build and deploy from a Git repository"**，搜索并选中 `render-engine`。
+3. 配置基本属性：
+   - **Name**：`render-engine`
+   - **Region**：推荐 `Oregon (US West)`
+   - **Branch**：`main`
+   - **Runtime**：选择 **`Docker`**
+   - **Instance Type**：选择 **`Free`** (512 MB / 0.15 CPU)
+4. 高级配置（Advanced）：
+   - **Health Check Path**：填入 `/health`（极其重要：平台借此判断容器启动完毕，杜绝 502）。
+5. **环境变量按需注入（渐进式原则）**：
+   - **纯净开箱模式（零配置）**：无需添加任何环境变量！容器会自动生成随机 18 位强密码并在日志打印。
+   - **固定凭据模式（推荐新手）**：
+     - `SSH_PASS`：设置固定密码（如 `YourStrongPass2026!`，用于 Web 终端与 SSH）。
+     - `TTYD_USER`：设置 Web 终端用户名（默认 `admin`）。
+   - **虚拟网格模式（可选加入 EasyTier）**：
+     - `ENABLE_EASYTIER`：`true`
+     - `ET_NAME`：网格名称（如 `my-mesh`）
+     - `ET_SECRET`：通信密钥
+     - `ET_PEERS`：核心节点（如 `tcp://hub1.example.com:11010`）
+   - **监控探针模式（可选加入 Komari / MangoHub）**：
+     - `KOMARI_ENDPOINT`：监控服务端地址（如 `https://hub.example.com`）
+     - `KOMARI_TOKEN`：探针通信 Token
+     - `KOMARI_FORCE_DISK_TOTAL`：`5368709120`（消除宿主机 OverlayFS 虚假度量泄露）
 
 ---
 
-## 工作流 3：EasyTier 网格连接与直连 SSH
+## 阶段 3：触发构建与部署日志核验
 
-当目标容器配置了 `ET_NAME` 时，EasyTier 自动激活，运行在用户态 `smoltcp` 模式（无需 `/dev/net/tun`）。
+点击 **"Create Web Service"**，进入部署流程：
 
-### 1. 外部机器接入该网格
-在操作者机器或跳板机上运行：
+1. **查看构建日志 (Build Logs)**：
+   - 观察 Alpine 基础镜像拉取、Caddy/ttyd/EasyTier 二进制注入。
+   - 确认无构建报错，直至输出 `=> exporting to image`。
+2. **查看运行日志 (Deploy / Service Logs)**：
+   - 观察 `entrypoint.sh` 启动流程：
+     - **提取随机密码**（若未自定义 `SSH_PASS`）：
+       ```text
+       ========================================================
+         Root/Web password set to: XXXXXXXXXXXXXXXXXX
+       ========================================================
+       ```
+       *提醒用户妥善复制该 18 位密码！*
+     - 确认组件顺序拉起：`Caddy` (Port 10000)、`OpenSSH`、`ttyd`。
+     - 确认探活放行：Render 平台发起 `/health` 探测并收到 `200 OK`，服务状态变更为绿色的 **"Live"**。
+
+---
+
+## 阶段 4：连接并使用 Render 容器
+
+提供 3 种连接使用方式，适应不同场景：
+
+### 方式 1：Web 浏览器直接访问 (零客户端门槛)
+1. 在 Render 控制台顶部获取已分配的 HTTPS 公网域名（如 `https://render-engine.onrender.com`）。
+2. 在浏览器打开：
+   ```text
+   https://<your-service-name>.onrender.com/shell/
+   ```
+3. 弹出 BasicAuth 认证弹窗：
+   - 用户名：`admin`（或自定义的 `TTYD_USER`）
+   - 密码：日志打印的随机密码或自定义的 `SSH_PASS`
+4. 成功登入内置持久化终端：
+   - 会话由 `tmux` 常驻守护（`main` 会话），断线、刷新或关掉浏览器，任务不中断；
+   - 再次打开链接无缝恢复工作区（Attach）；
+   - 支持鼠标滚轮滚动浏览历史（50,000 行缓冲区）。
+
+### 方式 2：通过 EasyTier 虚拟网格直连 SSH (安全无公网暴露)
+若配置了 EasyTier，容器接入私有网格，IP 为 `10.144.144.90`：
 ```bash
-sudo easytier-core \
-  --network-name "<ET_NAME>" \
-  --network-secret "<ET_SECRET>" \
-  --ipv4 "10.144.144.100" \
-  --peers "wss://<render-host>/et"
-```
-
-### 2. 验证对等拓扑
-```bash
-easytier-cli peer
-```
-若看到 `10.144.144.90`（`render-box`），说明 Mesh 虚拟通道打通。
-
-### 3. SSH 直连登录
-容器通过 smoltcp 白名单放行 22 端口，可直接登录：
-```bash
-# 密码认证（若未注入公钥）
+# 密码认证直接登录
 sshpass -p "<SSH_PASS>" ssh -o StrictHostKeyChecking=no root@10.144.144.90
 
-# 密钥认证（若已注入 SSH_PUBKEY）
-ssh -o StrictHostKeyChecking=no root@10.144.144.90
+# 或通过网格跳板机 (如 pxed) 免密登录
+ssh -o ProxyJump=pxed root@10.144.144.90
 ```
+
+### 方式 3：AI Agent 自动化无头连接 (WebSocket)
+Agent 本地无浏览器时，可使用 Python 通过标准 WebSocket RFC 6455 发送二进制指令与捕获回显，详见 `references/terminal-persistence.md`。
 
 ---
 
-## 工作流 4：排查与修复“节点掉线”问题
+## 阶段 5：日常运维、防休眠保活与常见排错
 
-当用户反馈“线上 render-engine 掉线了”，按以下 SOP 快速定位并解决：
+### 1. 免费版 15 分钟休眠防断 (Keep-Alive)
+- **机制**：Render Free Tier 若连续 15 分钟无入站公网 HTTP 请求，容器将自动挂起进入 Spindown（下次请求需 30~50 秒冷启动）。
+- **保活措施**：
+  引导用户在 [UptimeRobot](https://uptimerobot.com/) 或各类定时服务（Cron / GitHub Actions）中添加 HTTP 探活任务：
+  - 监控类型：`HTTP(s)`
+  - URL：`https://<your-service-name>.onrender.com/health`
+  - 监控频率：每 `5 分钟` 或 `10 分钟` 一次
+  - 预期响应：`200 OK`（保持容器 7x24 小时活跃在线）。
 
-### 核心真相：公网存活 vs 私有 Mesh/监控脱靶
-1. **先查公网**：`curl -s https://<render-host>/health`。若返回 200，说明**容器本身运转完好**。
-2. **根因归纳**：
-   - 掉线通常是**监控探针（Komari）离线**或 **EasyTier 无法打通**。
-   - **典型诱因**：开源版本剥离了所有私有硬编码（如私有 VPS 域名、私有 Hub IP、固定 Token）。若用户在 Render 控制台未显式配置对应的环境变量，容器重新部署后将遵循规范**保持可选模块休眠**，进而导致监控面板因收不到心跳产生离线告警。
+### 2. 线上掉线诊断三步法
+1. 先查公网：`curl -s https://<render-host>/health`。若返回 200，定性为容器在线，仅为私有网格或监控断流。
+2. 检查环境变量：核实 Render 控制台是否遗漏注入 `ET_PEERS` 或 `KOMARI_ENDPOINT`。
+3. 临时热修复：在 Web Shell 执行 `easytier-cli connector add tcp://<hub-ip>:11010` 即可实时拉起虚拟网。
 
-### 修复步骤：
-1. **持久化修复（强烈推荐）**：
-   指导用户或通过 Render 控制台补齐环境变量：
-   - `ET_PEERS`：填入核心 Hub（如 `tcp://hub1:11010,tcp://hub2:11010`）
-   - `KOMARI_ENDPOINT`：填入监控服务端地址（如 `https://monitor.example.com`）
-   - `KOMARI_TOKEN`：填入节点专属 Token
-   保存后 Render 自动重新部署并持久化恢复。
-2. **即时热修复（通过 Web Terminal）**：
-   若无需等待重新构建，可直接在 Web Terminal（`/shell/`）中执行：
-   ```bash
-   # 1. 动态为 EasyTier 注入对等 Hub
-   easytier-cli connector add tcp://<hub-ip>:11010
-
-   # 2. 写入探针配置并后台拉起
-   cat > /etc/komari-agent.env << EOF
-   export AGENT_ENDPOINT="<YOUR_ENDPOINT>"
-   export AGENT_TOKEN="<YOUR_TOKEN>"
-   export AGENT_INCLUDE_MOUNTPOINTS="/"
-   export AGENT_FORCE_DISK_TOTAL="5368709120"
-   EOF
-   nohup /usr/local/bin/komari-agent --prefer-cgroup-limits >/dev/null 2>&1 &
-   ```
-
----
-
-## 工作流 5：辟谣“386G 磁盘爆满 80%~91%”告警
-
-在监控面板或终端执行 `df -h` 时，常见如下告警：
-```text
-Filesystem                Size      Used Available Use% Mounted on
-overlay                 386.9G    315.9G     51.3G  86% /
-```
-**生产真相与定案原则**：
-- Render 免费实例为 AWS Kubernetes 上的多租户 unprivileged 容器，无独立底层块设备。
-- `statvfs("/")` 与 `df -h` 汇报的 386GB 盘已用 315GB 是**宿主机物理节点的共享 OverlayFS 泄露**，绝非当前容器的真实占用。
-- 容器真实占用仅约 **190MB ~ 250MB**，剩余空间充裕且健康。
-- **严禁**盲目执行磁盘清理、删除系统文件或重装镜像。
-- 探针通过 `AGENT_FORCE_DISK_TOTAL="5368709120"`（5 GiB）将监控总容量虚拟化收敛，杜绝面板虚假误报。
+### 3. 辟谣“386G 磁盘占用 86%”告警
+- **真相**：`df -h` 汇报的 386GB 盘已用 315GB 实为 Kubernetes 多租户节点的底层宿主 OverlayFS 泄露。
+- **验证**：在终端运行 `du -sh / --exclude=/proc --exclude=/sys --exclude=/dev` 确认实际占用仅约 **191.7 MB**。
+- **处置**：严禁误删系统文件；探针配置 `KOMARI_FORCE_DISK_TOTAL=5368709120` 即可归一化面板度量。
