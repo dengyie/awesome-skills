@@ -82,4 +82,4 @@ The skill contains actionable operational runbooks and reference guides:
 5. **Connect**:
    - Web Terminal: Open `https://<service-name>.onrender.com/shell/` with BasicAuth (`admin` / password). Auto-attaches to persistent `main` tmux session.
    - Mesh SSH: Connect via bastion `ssh -o ProxyJump=pxed root@10.144.144.90`.
-6. **Maintenance**: Set up 5-minute HTTP ping to `/health` on UptimeRobot to prevent 15-minute container spindown. For false disk alarms (~315GB / 386GB used), verify actual container usage (~191MB) and configure `KOMARI_FORCE_DISK_TOTAL="5368709120"`.
+6. **Maintenance & 24/7 Continuity**: Built-in self-keepalive (`ENABLE_KEEPALIVE=true`) automatically pings the service's own public edge URL every 5 minutes to prevent the 15-minute container spindown, staying comfortably within the 750 free hours/month quota. External ping via UptimeRobot or VPS Cron can be added as an optional fail-safe. For false disk alarms (~315GB / 386GB used), verify actual container usage (~191MB) and configure `KOMARI_FORCE_DISK_TOTAL="5368709120"`.

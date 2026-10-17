@@ -126,6 +126,10 @@ services:
         value: ""
       - key: KOMARI_ENDPOINT
         value: ""
+      - key: ENABLE_KEEPALIVE
+        value: "true" # 启用自主 Inbound HTTP 保活巡检，防止 15 分钟闲置休眠
+      - key: KEEPALIVE_INTERVAL
+        value: "300" # 拨测频率（秒，默认 300 秒 / 5 分钟）
 ```
 
 ---

@@ -158,14 +158,15 @@ Agent 本地无浏览器时，可使用 Python 通过标准 WebSocket RFC 6455 �
 
 ## 阶段 5：日常运维、防休眠保活与常见排错
 
-### 1. 免费版 15 分钟休眠防断 (Keep-Alive)
-- **机制**：Render Free Tier 若连续 15 分钟无入站公网 HTTP 请求，容器将自动挂起进入 Spindown（下次请求需 30~50 秒冷启动）。
-- **保活措施**：
-  引导用户在 [UptimeRobot](https://uptimerobot.com/) 或各类定时服务（Cron / GitHub Actions）中添加 HTTP 探活任务：
+### 1. 免费版 15 分钟休眠防断与 24/7 运行 (Keep-Alive)
+- **平台休眠机制**：Render Free Tier 若连续 15 分钟无入站公网 HTTP 请求，容器将自动挂起进入 Spindown（下次请求需 15~30 秒冷启动重建 Pod，且会重置临时文件与 tmux 会话）。
+- **额度核算**：Render 每个免费账号每月分配 **750 小时** 运行时长。即使按全月 31 天无休持续跑满，`31 天 × 24h = 744h`，单实例 24/7 运行完全处于免费额度内，不会产生成本。
+- **内置自主保活（默认开启）**：`render-engine` 容器启动时会自动读取平台注入的 `RENDER_EXTERNAL_URL`，拉起轻量后台守护进程（`ENABLE_KEEPALIVE=true`，默认周期 300 秒），通过外部公网域名循环请求自身的 `/health`。此举可自动向 Render 边缘网关产生真实的入站 HTTP 流量，重置闲置计时器，开箱即用实现 24/7 常驻。
+- **外部兜底拨测（可选备份）**：为防止容器被手动重启后的冷启动滞后，亦可在外部 [UptimeRobot](https://uptimerobot.com/) 或各类定时服务（Cron / 自建 VPS Crontab）中配置辅助 HTTP 探活任务：
   - 监控类型：`HTTP(s)`
   - URL：`https://<your-service-name>.onrender.com/health`
   - 监控频率：每 `5 分钟` 或 `10 分钟` 一次
-  - 预期响应：`200 OK`（保持容器 7x24 小时活跃在线）。
+  - 预期响应：`200 OK`。
 
 ### 2. 线上掉线诊断三步法
 1. 先查公网：`curl -s https://<render-host>/health`。若返回 200，定性为容器在线，仅为私有网格或监控断流。
