@@ -115,7 +115,7 @@ services:
       - key: ET_NAME
         value: ""
       - key: ET_SECRET
-        generateValue: true
+        generateValue: true # Set manually if joining an existing mesh; leave generateValue for new isolated mesh
       - key: ET_PEERS
         value: ""
       - key: ENABLE_SINGBOX
@@ -134,14 +134,14 @@ services:
 
 在部署过程中，打开控制台的 **Logs** 页面，确认以下关键标志：
 
-1. **随机密码生成输出**：
-   若未手动指定 `SSH_PASS`，容器启动时会打印以下横幅：
-   ```text
-   ========================================================
-     Root/Web password set to: XXXXXXXXXXXXXXXXXX
-   ========================================================
-   ```
-   *提醒用户立即复制该密码，以便后续登入 Web 终端或 SSH。*
+1. **随机密码生成与凭据遮蔽输出**：
+   - **自动随机密码**：若未显式指定 `SSH_PASS`，容器启动时会打印以下横幅，指导用户复制登录：
+     ```text
+     ========================================================
+       Root/Web password set to: XXXXXXXXXXXXXXXXXX
+     ========================================================
+     ```
+   - **用户自定义密码**：若用户显式注入了自定义 `SSH_PASS`，生产容器在就绪日志中自动实施凭据脱敏，仅输出 `Pass: [CONFIGURED]`，避免静态机密被平台共享日志明文泄露。
 
 2. **进程拉起日志**：
    ```text
