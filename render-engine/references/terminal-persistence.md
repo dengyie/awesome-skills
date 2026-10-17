@@ -67,3 +67,89 @@ exec tmux -f /root/.tmux.conf new-session -A -s main /bin/bash
 tmux kill-server 2>/dev/null || true
 ```
 该操作会向 `tmux` 会话树下的所有后台进程发送有序退出信号，避免容器销毁瞬间被系统直接 `SIGKILL` 导致的文件未刷盘与数据损坏。
+
+---
+
+## 三、Agent 自动化 WebSocket 通信协议与交互实现
+
+当 AI Agent 需要在无头（Headless）环境下通过 Web 终端执行命令时，需遵循 `ttyd` 的 RFC 6455 握手与二进制帧协议：
+
+### 1. 两阶段握手与鉴权
+1. **HTTP/1.1 协议升级**：携带 `Authorization: Basic <base64(user:pass)>` 与标准 WebSocket 升级头（`Upgrade: websocket`, `Connection: Upgrade`, `Sec-WebSocket-Key: ...`）请求 `/shell/ws`。
+2. **初始化握手帧（Binary Opcode 0x82）**：连接建立后，客户端必须立即下发掩码二进制 JSON 帧传递初始终端尺寸与 Token：
+   ```json
+   {"AuthToken": "", "columns": 120, "rows": 36}
+   ```
+3. **输入输出帧格式**：
+   - 输入命令：下发包含前缀字符 `'0'`（表示标准输入数据）加上指令内容与回车符 `\r` 的二进制帧。
+   - 接收输出：服务端返回的前缀 `'0'` 二进制帧为终端屏幕流数据（ANSI 转义序列与纯文本）。
+
+### 2. Python 自动化调用示例
+
+```python
+import base64
+import json
+import os
+import socket
+import ssl
+
+def run_command_in_render_box(host, user, password, cmd):
+    port = 443
+    context = ssl.create_default_context()
+    raw_sock = socket.create_connection((host, port), timeout=10)
+    sock = context.wrap_socket(raw_sock, server_hostname=host)
+
+    # 1. 发送 HTTP 升级请求
+    auth_b64 = base64.b64encode(f"{user}:{password}".encode()).decode()
+    ws_key = base64.b64encode(os.urandom(16)).decode()
+    upgrade_req = (
+        f"GET /shell/ws HTTP/1.1\r\n"
+        f"Host: {host}\r\n"
+        f"Upgrade: websocket\r\n"
+        f"Connection: Upgrade\r\n"
+        f"Sec-WebSocket-Key: {ws_key}\r\n"
+        f"Sec-WebSocket-Version: 13\r\n"
+        f"Authorization: Basic {auth_b64}\r\n\r\n"
+    )
+    sock.sendall(upgrade_req.encode())
+
+    # 2. 读取 101 握手响应
+    resp = b""
+    while b"\r\n\r\n" not in resp:
+        resp += sock.recv(1024)
+
+    # 3. 构造 WebSocket 掩码二进制帧 (Opcode 0x82)
+    def make_ws_frame(data: bytes) -> bytes:
+        mask_key = os.urandom(4)
+        length = len(data)
+        header = bytearray([0x82])  # FIN + Binary
+        if length < 126:
+            header.append(0x80 | length)
+        elif length < 65536:
+            header.append(0x80 | 126)
+            header.extend(length.to_bytes(2, "big"))
+        header.extend(mask_key)
+        masked = bytes(b ^ mask_key[i % 4] for i, b in enumerate(data))
+        return bytes(header) + masked
+
+    # 4. 下发握手认证帧与指令帧
+    handshake_payload = json.dumps({"AuthToken": "", "columns": 120, "rows": 36}).encode()
+    sock.sendall(make_ws_frame(handshake_payload))
+
+    cmd_payload = b"0" + cmd.encode() + b"\r"
+    sock.sendall(make_ws_frame(cmd_payload))
+
+    # 5. 读取回显输出
+    output = b""
+    sock.settimeout(3.0)
+    try:
+        while True:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            output += chunk
+    except socket.timeout:
+        pass
+    sock.close()
+    return output.decode(errors="ignore")
+```
