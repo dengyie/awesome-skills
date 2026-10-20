@@ -29,7 +29,7 @@ Phase 1: Page Gen (ACP)   Phase 2: Host workDir     Phase 3: Publish pipeline (h
 └───────────────────┘   └──────────────────────┘   └──────────────────────────────────────────────────────┘
 ```
 
-Single user interactions: one GitCode OAuth browser authorization, one camp selection at Step 7. Everything else is autonomous.
+Only two user interactions: one GitCode OAuth browser authorization, one camp selection at Step 7. Everything else is autonomous.
 
 ## What's Bundled
 
@@ -42,6 +42,27 @@ Single user interactions: one GitCode OAuth browser authorization, one camp sele
 3. **Authorize**: when the GitCode OAuth link appears, open it in a browser immediately (the agent waits up to 300s, and regenerates the link on timeout).
 4. **Confirm camp**: pick the training camp by index when prompted (default recommendation: 闯关活动).
 5. **Done**: the agent returns the gallery work URL; the tunnel is intentionally left running for verification.
+
+## Share & Install
+
+Recommend this skill to a teammate with either link:
+
+- Raw `SKILL.md` (paste-into-AI friendly): `https://raw.githubusercontent.com/dengyie/awesome-skills/main/huawei-cloud-gallery-publish/SKILL.md`
+- Package page on GitHub: `https://github.com/dengyie/awesome-skills/tree/main/huawei-cloud-gallery-publish`
+
+One-command install for Codex / ZCode / Claude Code / Cursor / Windsurf / Gemini CLI:
+
+```bash
+mkdir -p ~/.agents/skills/huawei-cloud-gallery-publish
+curl -fsSL https://raw.githubusercontent.com/dengyie/awesome-skills/main/huawei-cloud-gallery-publish/SKILL.md \
+  -o ~/.agents/skills/huawei-cloud-gallery-publish/SKILL.md
+```
+
+Restart the agent (or reload skills) and trigger with `$huawei-cloud-gallery-publish`.
+
+**Heads-up for the recipient**: this skill is a pure orchestration runbook. It presumes the sibling skills `huawei-cloud-ext-coding`, `huawei-cloud-jobenv-devbridge-tunnel`, and `huawei-cloud-publish-work-to-gallery`, plus a logged-in `/usr/local/bin/hcloud` and `/root/job-envs/registry.json`, already exist in the target environment. Installing this skill alone in a fresh environment will not run the pipeline end-to-end.
+
+For the full repository-level install path, see the [Quickstart](quickstart.md).
 
 ## Pitfalls The Skill Guards Against
 

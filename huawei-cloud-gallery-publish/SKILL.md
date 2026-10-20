@@ -17,6 +17,10 @@ description: 一键创建简单网页并发布到华为云开发者作品展览�
 
 以上均在目标沙箱/宿主机环境内，本包不带脚本实现，只做编排。
 
+## 分享给非技术用户
+
+如果对方没有装 skill 体系、只想拿到一段可复制的提示词直接喂给 AI，把 [`references/shareable-prompt.md`](references/shareable-prompt.md) 的「提示词正文」整段发过去即可 —— 这是与本 SKILL.md 等价的原始可复用提示词，含完整分享包装。
+
 ## 阶段一：创建网页（CodeArts ACP）
 
 1. 加载 `huawei-cloud-ext-coding` skill，`curl -s --max-time 3 http://127.0.0.1:19300/healthz` 确认 ACP 可用。
