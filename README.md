@@ -52,6 +52,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 ### Search, Knowledge Base, and Automation
 
 - [`grok-search`](grok-search/): Executes web searches, URL content extraction, and site discovery via search APIs.
+- [`huawei-cloud-gallery-publish`](huawei-cloud-gallery-publish/): One-click pipeline that generates a simple webpage with CodeArts ACP and publishes it to the Huawei Cloud Developer Works Gallery.
 - [`obsidian-doc-router`](obsidian-doc-router/): Provides routing queries and anti-orphan documentation workflows for Obsidian vaults.
 - [`yunzhi-cloudphone-checkin`](yunzhi-cloudphone-checkin/): Automates daily check-ins and cloud phone renewals via browser console, Chrome CDP, or HTTP CLI.
 
@@ -68,6 +69,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 | `cue-sandbox` | You need Cue on EasyTier mesh SSH with India reverse-SSH as fallback | TUN `.81`, two-keypair SSH, Komari probe, overlay mining | [Guide](docs/usage/cue-sandbox.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
 | `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
+| `huawei-cloud-gallery-publish` | You need a simple webpage published to the Huawei Cloud Developer Works Gallery | CodeArts ACP page gen, DevBridge tunnel, GitCode push, one-confirmation camp publish | [Guide](docs/usage/huawei-cloud-gallery-publish.md) |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive | [Guide](docs/usage/muse-reverse-ssh.md) |
 | `obsidian-doc-router` | You are reading/writing Obsidian vault ops notes or topologies | router-first queries, anti-orphan documentation workflow | [Guide](docs/usage/obsidian-doc-router.md) |
 | `phone-playwright` | You need Playwright-style mobile automation or an AI mobile agent | semantic pruning, auto-waiting state machine, warm-cache fast dispatch, scroll-into-view, MCP server | [Guide](docs/usage/phone-playwright.md) |
@@ -152,6 +154,7 @@ codex-agent-worktree-setup/         Branch-bound isolated Git worktrees for agen
 cue-sandbox/                        Cue EasyTier TUN SSH, India fallback, Komari probe
 evidence-driven-bugfix/             Evidence-first reproduction and bugfix loop
 grok-search/                        Web search, fact verification, and URL inspection
+huawei-cloud-gallery-publish/       One-click publish of simple webpages to Huawei Cloud gallery
 muse-reverse-ssh/                   Reverse SSH tunnels and VPS port forwarding keepalive
 obsidian-doc-router/                Obsidian vault documentation router and updates
 production-code-quality-review/     Production-focused pull request review and diff audit

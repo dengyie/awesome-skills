@@ -15,6 +15,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `cue-sandbox` | You need Cue on EasyTier mesh SSH, with India reverse-SSH only as fallback | TUN overlay login, two-keypair SSH, Komari probe, overlay mining | the host already has inbound public SSH, or you only need a generic reverse tunnel (`muse-reverse-ssh`) | working `ssh mesh-cue`, TUN `.81`, probe online, overlay pool if mining | `docs/usage/cue-sandbox.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
 | `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
+| `huawei-cloud-gallery-publish` | You need a simple webpage published to the Huawei Cloud Developer Works Gallery | CodeArts ACP page gen, DevBridge tunnel, GitCode push, one-confirmation camp publish | you need CI/CD repeat publishing, a large multi-service project, or the sibling Huawei skills are absent | published gallery work URL, GitCode repo, live tunnel URL | `docs/usage/huawei-cloud-gallery-publish.md` |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive supervision | the machine already has a public IP or you need HTTPS/browser access | working public SSH endpoint, keepalive supervisor, verification results | `docs/usage/muse-reverse-ssh.md` |
 | `obsidian-doc-router` | You need accurate ops facts or are writing docs in an Obsidian vault | router-first queries, anti-orphan documentation workflow | the query is unrelated to your vault or ops notes | verified ops answers with cited notes, anti-orphan canonical entries | `docs/usage/obsidian-doc-router.md` |
 | `phone-playwright` | You need Playwright-style mobile automation or an AI mobile agent | semantic pruning, auto-waiting state machine, warm-cache fast dispatch, scroll-into-view, MCP server | you are automating desktop web browsers or remote cloudphone reverse SSH tunnels | compact semantic snapshots, deterministic actions, verified UI workflows | `docs/usage/phone-playwright.md` |
@@ -33,6 +34,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need Cue on EasyTier mesh SSH with India reverse-SSH as fallback: `cue-sandbox`
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
 - Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
+- Need a simple webpage published to the Huawei Cloud Developer Works Gallery: `huawei-cloud-gallery-publish`
 - Need a production review of changed code: `production-code-quality-review`
 - Need a source image turned into reusable package assets: `split-image-assets`
 - Need a generic reverse SSH tunnel for a machine without a public IP: `muse-reverse-ssh`
@@ -51,6 +53,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - working `ssh mesh-cue`, TUN `.81`, Komari probe online: `cue-sandbox`
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
 - search answer with cited sources, page content, candidate URLs: `grok-search`
+- published gallery work URL, GitCode repo, live tunnel URL: `huawei-cloud-gallery-publish`
 - review findings and merge-readiness guidance: `production-code-quality-review`
 - 0-to-1 deployed Render Web-Box, persistent ttyd+tmux session, verified smoltcp mesh: `render-engine`
 - working public SSH endpoint, keepalive supervisor, verification results: `muse-reverse-ssh`
@@ -96,6 +99,12 @@ Use $evidence-driven-bugfix to fix this failure by first capturing logs, securin
 
 ```text
 Use $grok-search to find the current answer to this question and give me the sources you relied on.
+```
+
+`huawei-cloud-gallery-publish`
+
+```text
+Use $huawei-cloud-gallery-publish to generate a simple Hello World webpage with CodeArts ACP and publish it to the Huawei Cloud Developer Works Gallery, submitting to the running challenge camp.
 ```
 
 `muse-reverse-ssh`
