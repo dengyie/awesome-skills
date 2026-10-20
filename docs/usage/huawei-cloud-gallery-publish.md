@@ -34,6 +34,7 @@ Only two user interactions: one GitCode OAuth browser authorization, one camp se
 ## What's Bundled
 
 - `SKILL.md` — the complete 3-phase / 8-step operating procedure plus the 9-item pitfall checklist. The skill intentionally ships no scripts: all executable tooling lives in the three sibling skills it orchestrates.
+- `references/shareable-prompt.md` — the original copy-paste prompt (Chinese) with its share wrapper, for recipients who do not run a skill-capable agent and just want a paste-into-AI block.
 
 ## Quick Workflow
 
