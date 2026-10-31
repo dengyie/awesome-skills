@@ -47,6 +47,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 ### UI Engineering and Assets
 
 - [`awesome-ui-kit`](awesome-ui-kit/): Web components for AI chat interfaces, RAG search results, split-pane canvases, and agent execution monitors.
+- [`gpui-liquid-glass`](gpui-liquid-glass/): Implements, repairs, and analyzes Apple Native Liquid Glass and vibrancy effects in Rust GPUI desktop applications.
 - [`split-image-assets`](split-image-assets/): Splits source images into reusable asset packages with alpha masks, layers, metadata, and quality checks.
 
 ### Search, Knowledge Base, and Automation
@@ -68,6 +69,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 | `codex-agent-worktree-setup` | You need an isolated Codex development thread bound to a branch | protected main worktrees, branch-bound agents, detached HEAD repair | [Guide](docs/usage/codex-agent-worktree-setup.md) |
 | `cue-sandbox` | You need Cue on EasyTier mesh SSH with India reverse-SSH as fallback | TUN `.81`, two-keypair SSH, Komari probe, overlay mining | [Guide](docs/usage/cue-sandbox.md) |
 | `evidence-driven-bugfix` | You need a real bugfix loop instead of a guess-fix | logs-first debugging, failing evidence, root cause, re-verification | [Guide](docs/usage/evidence-driven-bugfix.md) |
+| `gpui-liquid-glass` | You are implementing or debugging Apple Liquid Glass in Rust GPUI | NSGlassEffectView, vibrancy fallback, transparent window synthesis, layout sync | [Guide](docs/usage/gpui-liquid-glass.md) |
 | `grok-search` | You need live web access instead of offline knowledge | web search, current facts, URL reading, site page discovery | [Guide](docs/usage/grok-search.md) |
 | `huawei-cloud-gallery-publish` | You need a simple webpage published to the Huawei Cloud Developer Works Gallery | CodeArts ACP page gen, DevBridge tunnel, GitCode push, one-confirmation camp publish | [Guide](docs/usage/huawei-cloud-gallery-publish.md) |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive | [Guide](docs/usage/muse-reverse-ssh.md) |

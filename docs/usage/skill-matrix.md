@@ -14,6 +14,7 @@ For installation only, use the [Quickstart](quickstart.md).
 | `codex-agent-worktree-setup` | You need a Codex-visible process isolated from the primary checkout | branch-bound worktrees, protected main branches, detached HEAD repair | you only need a branch in the current checkout or no new Codex thread was requested | Codex thread, isolated worktree, verified branch mapping | `docs/usage/codex-agent-worktree-setup.md` |
 | `cue-sandbox` | You need Cue on EasyTier mesh SSH, with India reverse-SSH only as fallback | TUN overlay login, two-keypair SSH, Komari probe, overlay mining | the host already has inbound public SSH, or you only need a generic reverse tunnel (`muse-reverse-ssh`) | working `ssh mesh-cue`, TUN `.81`, probe online, overlay pool if mining | `docs/usage/cue-sandbox.md` |
 | `evidence-driven-bugfix` | You need a truthful bugfix workflow | logs-first debugging, failing evidence, root cause, minimal fix, fresh verification | you only want review feedback or feature planning | failing evidence chain, root-cause statement, verified fix or blocker | `docs/usage/evidence-driven-bugfix.md` |
+| `gpui-liquid-glass` | You are implementing or debugging Apple Liquid Glass in Rust GPUI | NSGlassEffectView, vibrancy fallback, transparent window synthesis, layout sync | you are building web UI components (use `awesome-ui-kit`) or standard non-glass desktop layouts | native glass views, synchronized geometry, verified sampling | `docs/usage/gpui-liquid-glass.md` |
 | `grok-search` | You need live web access instead of offline knowledge | current facts, reading a known URL, discovering pages on a site | the answer is stable offline knowledge or lives in local code | search answer with merged sources, fetched page content, candidate URLs | `docs/usage/grok-search.md` |
 | `huawei-cloud-gallery-publish` | You need a simple webpage published to the Huawei Cloud Developer Works Gallery | CodeArts ACP page gen, DevBridge tunnel, GitCode push, one-confirmation camp publish | you need CI/CD repeat publishing, a large multi-service project, or the sibling Huawei skills are absent | published gallery work URL, GitCode repo, live tunnel URL | `docs/usage/huawei-cloud-gallery-publish.md` |
 | `muse-reverse-ssh` | You need a machine without a public IP reachable over SSH from the internet | reverse SSH tunnels, VPS port forwarding, tunnel keepalive supervision | the machine already has a public IP or you need HTTPS/browser access | working public SSH endpoint, keepalive supervisor, verification results | `docs/usage/muse-reverse-ssh.md` |
@@ -33,6 +34,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Need an isolated Codex thread or detached worktree repaired: `codex-agent-worktree-setup`
 - Need Cue on EasyTier mesh SSH with India reverse-SSH as fallback: `cue-sandbox`
 - Need a bug fixed through evidence and verification: `evidence-driven-bugfix`
+- Need Apple Liquid Glass or vibrancy in a Rust GPUI desktop app: `gpui-liquid-glass`
 - Need current web facts, a specific page read, or a site's pages discovered: `grok-search`
 - Need a simple webpage published to the Huawei Cloud Developer Works Gallery: `huawei-cloud-gallery-publish`
 - Need a production review of changed code: `production-code-quality-review`
@@ -52,6 +54,7 @@ For installation only, use the [Quickstart](quickstart.md).
 - Codex thread, isolated worktree, verified branch mapping: `codex-agent-worktree-setup`
 - working `ssh mesh-cue`, TUN `.81`, Komari probe online: `cue-sandbox`
 - failing evidence, root cause, verified repair: `evidence-driven-bugfix`
+- native glass views, synchronized geometry, verified sampling: `gpui-liquid-glass`
 - search answer with cited sources, page content, candidate URLs: `grok-search`
 - published gallery work URL, GitCode repo, live tunnel URL: `huawei-cloud-gallery-publish`
 - review findings and merge-readiness guidance: `production-code-quality-review`
@@ -93,6 +96,12 @@ Use $cue-sandbox to land this Cue host over EasyTier mesh SSH. Probe the machine
 
 ```text
 Use $evidence-driven-bugfix to fix this failure by first capturing logs, securing failing evidence, tracing the root cause, and only reporting success after fresh verification.
+```
+
+`gpui-liquid-glass`
+
+```text
+Use $gpui-liquid-glass to implement Apple Native Liquid Glass for our GPUI sidebar with desktop background sampling, layout sync, and legacy macOS vibrancy fallback.
 ```
 
 `grok-search`

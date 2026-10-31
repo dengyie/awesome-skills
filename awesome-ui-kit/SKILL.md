@@ -85,6 +85,11 @@ description: >
 | **`ArtifactCanvas`** | `<stack>/ArtifactCanvas.*` | `title`, `code`, `language`, `isOpen`, `onClose` |
 | **`MessageActionToolbar`**| `<stack>/MessageActionToolbar.*`| `content`, `role`, `onRetry`, `onFeedback`, `branchIndex`, `totalBranches`, `onBranchChange` |
 | **`PromptChips`** | `<stack>/PromptChips.*` | `suggestions: string[]`, `onSelect` |
+| **`FluidContourBackdrop`** | `<stack>/FluidContourBackdrop.*` | WebGL 等高线流体背景：`speed`, `interactive`, `inkColor`, `paperColor` |
+| **`SpotlightGlareCard`** | `<stack>/SpotlightGlareCard.*` | 3D 光标镜面高光反射卡片：`glareOpacity`, `glareRadius`, `enableTilt`, `maxTilt` |
+| **`AnimatedCounter`** | `<stack>/AnimatedCounter.*` | 平滑缓动指标计数器：`target`, `start`, `duration`, `delay`, `prefix`, `suffix` |
+| **`PointerRipples`** | `<stack>/PointerRipples.*` | WebGL 多彩流体鼠标涟漪背景，光标跟随彩虹拖尾与 3D 漫反射：`curl`, `splatRadius`, `idleMs`, `opacity` |
+| **`LiquidGlass`** | `<stack>/LiquidGlass.*` | Apple 液体玻璃材质容器：`variant ('capsule'\|'card'\|'sidebar')`, `intensity ('light'\|'regular'\|'thick')`, `interactive`, `enableTilt`, `maxTilt`, `glareOpacity` |
 
 ---
 

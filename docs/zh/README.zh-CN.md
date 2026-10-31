@@ -28,6 +28,7 @@
 - `codex-agent-worktree-setup`
 - `cue-sandbox`
 - `evidence-driven-bugfix`
+- `gpui-liquid-glass`
 - `grok-search`
 - `muse-reverse-ssh`
 - `obsidian-doc-router`
@@ -61,6 +62,7 @@
 | `codex-agent-worktree-setup` | 需要创建与分支绑定的隔离 Codex 工作线程 | 保护主工作树、创建隔离 agent、修复 detached HEAD | [Guide](../usage/codex-agent-worktree-setup.md) |
 | `cue-sandbox` | 需要把无公网入站的 Cue 接到 EasyTier mesh SSH，印度反向 SSH 只作兜底 | TUN `.81`、两把钥、Komari 探针、overlay 挖矿 | [Guide](../usage/cue-sandbox.md) |
 | `evidence-driven-bugfix` | 需要先拿失败证据再修 bug | 日志排查、根因定位、修复后复验 | [Guide](../usage/evidence-driven-bugfix.md) |
+| `gpui-liquid-glass` | 需要在 Rust GPUI 桌面应用中实现或调试 Apple 原生液体玻璃与毛玻璃材质 | NSGlassEffectView、vibrancy 降级、透明窗口与 Metal 合成、布局几何同步 | [Guide](../usage/gpui-liquid-glass.md) |
 | `grok-search` | 需要联网搜索、抓取网页或发现站点页面 | 最新事实核查、URL 正文抓取、站点候选页发现 | [Guide](../usage/grok-search.md) |
 | `huawei-cloud-gallery-publish` | 需要把简单网页一键发布到华为云开发者作品展览馆 | CodeArts ACP 生成页面、开发隧道、GitCode 推送、一次确认投递闯关活动 | [Guide](../usage/huawei-cloud-gallery-publish.md) |
 | `muse-reverse-ssh` | 需要让无公网 IP 的机器从公网经 SSH 访问 | 反向 SSH 隧道、VPS 端口转发、隧道保活 | [Guide](../usage/muse-reverse-ssh.md) |
