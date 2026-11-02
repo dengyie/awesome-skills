@@ -4,7 +4,7 @@ Read this when a result mentions a skipped or failed provider, when configuratio
 
 ## Provider Order
 
-- `search.js`: Grok Responses runs alongside independent Tavily Search (needs `TAVILY_API_KEY`), Firecrawl Search (keyless by default, `FIRECRAWL_API_KEY` when set), and Exa Search (needs `EXA_API_KEY`). Extras are never fed into Grok. The default combined extra target is 6, dealt round-robin across the configured channels (odd counts favor Tavily); `--extra N` changes it, `--no-extra` disables all extras and the degraded fallback. On `--source x` extras are off unless `--extra N` is given (`extra_mode: "off-x-only"`).
+- `search.js`: Grok Responses runs alongside independent Tavily Search (needs `TAVILY_API_KEY`), Firecrawl Search (keyless by default, `FIRECRAWL_API_KEY` when set), and Exa Search (needs `EXA_API_KEY`). Extras are never fed into Grok. `--extra N` (default 6) is the per-channel target: every configured channel searches N results on its own, then `mergeSources` dedupes the union by normalized URL (tracking params stripped, cleanest URL kept, `merged_from` listing every channel whose duplicate merged in); `--no-extra` disables all extras and the degraded fallback. On `--source x` extras are off unless `--extra N` is given (`extra_mode: "off-x-only"`).
 - `fetch.js --provider auto`: Tavily Extract → Firecrawl Scrape → Exa Contents (needs `EXA_API_KEY`, about $0.001 per page, `cost_usd` on the attempt) → Direct Fetch. Without a key Exa is just a skipped attempt. Exception: X post URLs try Direct first regardless of keys (`references/x-search.md`).
 - `map.js --provider auto`: Tavily Map → Direct Map.
 - `--responses-openrouter-engine exa` forces a web-only engine on OpenRouter.

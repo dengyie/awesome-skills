@@ -6,6 +6,7 @@ import {
   isCitationMarker,
   isOffDomainExtra,
   mergeSources,
+  normalizeSourceUrl,
   parseXPostUrl,
   selectSources,
 } from "../scripts/lib/sources.js";
@@ -67,14 +68,14 @@ assert.deepEqual(mergedCitation, [
     merged_from: ["firecrawl"],
   },
 ]);
-// Existing real values are never overwritten, and an identical duplicate leaves no trace.
+// Existing real values are never overwritten; an identical duplicate only adds provenance.
 const keptTitle = mergeSources(
   [{ provider: "grok-responses", url: "https://example.com/a", title: "Original", snippet: "kept" }],
   [{ provider: "tavily", url: "https://example.com/a", title: "Other", description: "ignored" }]
 );
 assert.equal(keptTitle[0].title, "Original");
 assert.equal(keptTitle[0].snippet, "kept");
-assert.equal(Object.hasOwn(keptTitle[0], "merged_from"), false);
+assert.deepEqual(keptTitle[0].merged_from, ["tavily"]);
 assert.equal(isCitationMarker("1"), true);
 assert.equal(isCitationMarker("[12]"), true);
 assert.equal(isCitationMarker("Issue #12"), false);
@@ -172,5 +173,26 @@ assert.deepEqual(
   selectSources(domainRanked, { maxSources: 4 }).items.map((source) => source.url),
   ["https://medium.com/off", "https://github.com/opened", "https://gist.github.com/extra", "https://github.com/cited"]
 );
+
+// Tracking params are stripped for the dedupe key: the same page arriving via three
+// channels with different campaign tags merges into one card, keeping the cleanest URL.
+{
+  const merged = mergeSources(
+    [{ url: "https://docs.example.com/guide?dub_id=5W9WUmP1", provider: "exa" }],
+    [{ url: "https://docs.example.com/guide?utm_source=x", title: "Guide", provider: "tavily" }],
+    [{ url: "https://docs.example.com/guide", snippet: "clean copy", provider: "firecrawl" }]
+  );
+  assert.equal(merged.length, 1);
+  // The card settles on the URL with the fewest params and lists whoever contributed fields.
+  assert.equal(merged[0].url, "https://docs.example.com/guide");
+  assert.equal(merged[0].title, "Guide");
+  assert.deepEqual(merged[0].merged_from, ["tavily", "firecrawl"]);
+}
+// A meaningful query string survives; only known tracking params are dropped.
+assert.equal(
+  normalizeSourceUrl("https://example.com/search?q=grok+search&page=2&utm_source=rss"),
+  "https://example.com/search?q=grok+search&page=2"
+);
+assert.equal(normalizeSourceUrl("https://Example.com/path/"), "https://example.com/path");
 
 console.log("sources fixtures ok");

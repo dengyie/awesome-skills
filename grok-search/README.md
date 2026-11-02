@@ -284,7 +284,7 @@ X citation 只返回裸 URL、且 `title` 是 inline citation 序号，因此 so
 
 默认会同时发起 Grok Responses、Tavily Search（配置 key 时）和 Firecrawl Search。三路并行，Tavily/Firecrawl 结果始终作为独立补充信源，不会注入 Grok input。
 
-`--extra N` 表示 Tavily、Firecrawl 与 Exa 合计的结果目标数，默认 `6`。可用的渠道按轮转均分（奇数优先给 Tavily），如配齐三家时 N=6 分成 2/2/2；没有 Tavily key 时全部交给 Firecrawl Keyless 与 Exa，Exa 也未配置时回到 Firecrawl。`--no-extra` 会严格关闭所有外部搜索通道。
+`--extra N` 是**每个渠道各自**的目标结果数，默认 `6`：所有配置了的渠道（Tavily / Firecrawl / Exa）各完整搜索 N 条，合并后按 URL 去重（归一化时剥离 `utm_*`、`dub_id`、`fbclid`、`gclid` 等追踪参数，同页多渠道命中合并为一张卡片、保留最干净的 URL，`merged_from` 列出所有命中该页的渠道），最终输出由 `--max-sources`（默认 12）裁剪。搜索接口按请求计费而非按条数，全渠道搜索与拆分分配的请求数相同，但给去重提供了最多的候选。`--no-extra` 严格关闭所有外部搜索通道。
 
 当 Grok 明确返回额度耗尽（402/403、额度类错误码如 `insufficient_user_usd_credit`、正文提到 quota / credits / billing / 余额 / 积分的 4xx）时，无论 extra 是否可用都会得到明确的失败码；若 extra sources 可用，命令会返回标记为 `diagnostics.degraded: true` 的降级结果：`QUOTA_EXHAUSTED`（配额）、`RATE_LIMITED`（存活下来的 429 限流）、`NO_SEARCH`（中转丢弃了 web_search、只回散文）、`EMPTY`（空内容）、`TIMEOUT`（超时 / 408 / 504 / 524）、`UPSTREAM`（5xx）。`answer.text` 会明确说明当前仅为 Tavily/Firecrawl/Exa 原始搜索结果，`diagnostics.grok_error` 保留脱敏后的上游错误。纯认证与协议错误（401/403/422 且无配额特征）保持硬失败，不会被伪装成降级。
 

@@ -35,7 +35,7 @@ const GROK_FAILURE_LABELS = {
 function usage() {
   return `Usage: ./scripts/search.js [--source web|x|both] [--instructions TEXT] [--platform NAME] [--model MODEL] [--extra N|--no-extra] [--source-chars N] [--max-sources N] [--full-sources] [--max-chars N] [--deadline SECONDS] <query>
 
-Run a Responses-compatible Grok/OpenRouter search and return JSON with independent Tavily/Firecrawl/Exa sources.
+Run a Responses-compatible Grok/OpenRouter search; every configured extra channel (Tavily/Firecrawl/Exa) searches the full --extra target and the union is deduped.
 
 Cost:
   --responses-parallel-tool-calls false
@@ -67,7 +67,7 @@ Environment:
                        Optional Responses max_turns; default 3
   GROK_RESPONSES_PARALLEL_TOOL_CALLS
                        Optional true|false; false makes Grok search one call per turn. Not sent unless set
-  GROK_DEFAULT_EXTRA   Optional total Tavily/Firecrawl/Exa source count; default 6
+  GROK_DEFAULT_EXTRA   Optional per-channel Tavily/Firecrawl/Exa source count; default 6
   GROK_SOURCE_CHARS    Optional source snippet size; default 400
   GROK_MAX_SOURCES     Optional cap on returned source cards; default 12
   GROK_DEADLINE_SECONDS
@@ -453,8 +453,10 @@ async function extraSources(query, limit, config, filters = {}) {
     warnings.push(`exa extra source search skipped: ${message}`);
   }
 
+  // No cap here: every channel returns up to `limit`, and the union only gets truncated later
+  // by selectSources (max_sources) — cutting earlier would discard dedupe candidates.
   return {
-    sources: sources.slice(0, limit),
+    sources,
     warnings,
     provider_attempts: providerAttempts,
     provider_raw: providerRaw,

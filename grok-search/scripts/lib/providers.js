@@ -62,21 +62,15 @@ function attemptFromResult(result) {
 }
 
 export function extraAllocation(limit, config, { firecrawlAvailable = true, exaAvailable = true } = {}) {
-  const allocation = { tavily: 0, firecrawl: 0, exa: 0 };
-  if (limit <= 0) return allocation;
-  // Deal one result at a time starting at Tavily, so the odd result keeps going to Tavily and
-  // the legacy two-way split is unchanged. A configured Exa key joins the rotation; a missing
-  // key or an active cooldown drops a channel out and its deals go to the rest.
-  const priority = [
-    hasTavilyApiKey(config) && "tavily",
-    firecrawlAvailable && "firecrawl",
-    exaAvailable && hasExaApiKey(config) && "exa",
-  ].filter(Boolean);
-  if (!priority.length) return allocation;
-  for (let index = 0; index < limit; index += 1) {
-    allocation[priority[index % priority.length]] += 1;
-  }
-  return allocation;
+  // Every configured channel searches the full target; mergeSources then dedupes the union.
+  // Search endpoints bill per request, not per result, so this costs the same requests as a
+  // split allocation while giving the merge step the most candidates to dedupe against. A
+  // missing key or an active cooldown drops that channel entirely.
+  return {
+    tavily: limit > 0 && hasTavilyApiKey(config) ? limit : 0,
+    firecrawl: limit > 0 && firecrawlAvailable ? limit : 0,
+    exa: limit > 0 && exaAvailable && hasExaApiKey(config) ? limit : 0,
+  };
 }
 
 export async function mapUrl(url, config, { provider = "auto", ...options } = {}) {

@@ -925,9 +925,9 @@ await withServer(
         seen.add(req.url);
         pending.set(req.url, res);
         res.writeHead(200, { "content-type": "application/json" });
-        if (req.url === "/tavily/search") assert.equal(body.max_results, 3);
+        if (req.url === "/tavily/search") assert.equal(body.max_results, 6);
         if (req.url === "/firecrawl/search") {
-          assert.equal(body.limit, 3);
+          assert.equal(body.limit, 6);
           assert.equal(req.headers.authorization, undefined);
         }
         release();
@@ -947,7 +947,7 @@ await withServer(
     assert.equal(output.sources.omitted, 0);
     assert.equal(output.sources.items.filter((source) => source.provider === "tavily").length, 3);
     assert.equal(output.sources.items.filter((source) => source.provider === "firecrawl").length, 3);
-    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 3, firecrawl: 3, exa: 0 });
+    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 6, firecrawl: 6, exa: 0 });
     assert.equal(output.diagnostics.options.firecrawl_auth_mode, "keyless");
     assert.deepEqual(
       output.diagnostics.provider_attempts.map((attempt) => [attempt.provider, attempt.ok, attempt.count]),

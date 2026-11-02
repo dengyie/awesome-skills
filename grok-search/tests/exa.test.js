@@ -198,22 +198,18 @@ await withServer(
   }
 );
 
-// extraAllocation: with an Exa key configured the deal rotates through all three channels;
-// without it, the legacy two-way split is byte-for-byte unchanged.
+// extraAllocation: every configured channel searches the full target; the union is deduped
+// downstream. A missing key or cooldown drops that channel entirely.
 {
   const withExa = { ...baseConfig, tavilyApiKeys: ["tvly-x"] };
-  assert.deepEqual(extraAllocation(6, withExa), { tavily: 2, firecrawl: 2, exa: 2 });
-  assert.deepEqual(extraAllocation(7, withExa), { tavily: 3, firecrawl: 2, exa: 2 });
-  assert.deepEqual(extraAllocation(5, withExa), { tavily: 2, firecrawl: 2, exa: 1 });
-  assert.deepEqual(extraAllocation(1, withExa), { tavily: 1, firecrawl: 0, exa: 0 });
-  const withoutExa = { ...baseConfig, tavilyApiKeys: ["tvly-x"] };
-  assert.deepEqual(extraAllocation(6, withoutExa, { exaAvailable: false }), { tavily: 3, firecrawl: 3, exa: 0 });
-  assert.deepEqual(extraAllocation(5, withoutExa, { exaAvailable: false }), { tavily: 3, firecrawl: 2, exa: 0 });
-  // No Tavily key: Firecrawl keeps its legacy full share when Exa is absent.
+  assert.deepEqual(extraAllocation(6, withExa), { tavily: 6, firecrawl: 6, exa: 6 });
+  assert.deepEqual(extraAllocation(1, withExa), { tavily: 1, firecrawl: 1, exa: 1 });
+  assert.deepEqual(extraAllocation(6, withExa, { exaAvailable: false }), { tavily: 6, firecrawl: 6, exa: 0 });
+  // No Tavily key: Firecrawl and Exa each take the full target.
+  assert.deepEqual(extraAllocation(6, baseConfig), { tavily: 0, firecrawl: 6, exa: 6 });
   assert.deepEqual(extraAllocation(6, baseConfig, { exaAvailable: false }), { tavily: 0, firecrawl: 6, exa: 0 });
-  assert.deepEqual(extraAllocation(6, baseConfig), { tavily: 0, firecrawl: 3, exa: 3 });
-  // Firecrawl cooling down: its deals go to the remaining channels.
-  assert.deepEqual(extraAllocation(4, withExa, { firecrawlAvailable: false }), { tavily: 2, firecrawl: 0, exa: 2 });
+  // Firecrawl cooling down: the remaining channels still search the full target.
+  assert.deepEqual(extraAllocation(4, withExa, { firecrawlAvailable: false }), { tavily: 4, firecrawl: 0, exa: 4 });
   assert.deepEqual(extraAllocation(0, withExa), { tavily: 0, firecrawl: 0, exa: 0 });
 }
 

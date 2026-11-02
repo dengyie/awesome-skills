@@ -72,6 +72,10 @@ export function isXUrl(url) {
   }
 }
 
+// Params that only identify the traffic source. Stripping them lets the same page arrive via
+// three channels with three campaign tags and still merge into one card.
+const TRACKING_PARAM = /^(utm_|fbclid$|gclid$|msclkid$|dub_id$|igshid$|mc_cid$|mc_eid$|ref_src$|ref_url$)/;
+
 export function normalizeSourceUrl(url) {
   try {
     const parsed = new URL(trimUrl(url));
@@ -79,6 +83,9 @@ export function normalizeSourceUrl(url) {
     parsed.hostname = parsed.hostname.toLowerCase();
     if (parsed.pathname !== "/" && parsed.pathname.endsWith("/")) {
       parsed.pathname = parsed.pathname.replace(/\/+$/g, "");
+    }
+    for (const key of [...parsed.searchParams.keys()]) {
+      if (TRACKING_PARAM.test(key)) parsed.searchParams.delete(key);
     }
     return parsed.toString();
   } catch {
@@ -112,9 +119,24 @@ function sourceSnippet(source) {
  * as a bare URL with a marker title; the same page found by Tavily or Firecrawl has a title
  * and a description. Dropping the duplicate threw both away.
  */
+function queryParamCount(url) {
+  try {
+    return new URL(url).searchParams.size;
+  } catch {
+    return 0;
+  }
+}
+
 function mergeSourceFields(existing, incoming) {
   const out = { ...existing };
   let merged = false;
+
+  // Same page after normalization: keep the URL with the fewer query params as the card's
+  // address so a campaign-tagged duplicate does not win by arriving first.
+  if (queryParamCount(String(incoming.url || "")) < queryParamCount(String(out.url || ""))) {
+    out.url = incoming.url;
+    merged = true;
+  }
 
   if (!hasUsableTitle(out) && hasUsableTitle(incoming)) {
     out.title = textField(incoming.title);
@@ -139,10 +161,13 @@ function mergeSourceFields(existing, incoming) {
     merged = true;
   }
 
-  if (merged) {
+  // A duplicate URL is itself a signal: the same page was found by another channel, so record
+  // the provider even when it contributed no new fields.
+  {
     const provider = textField(incoming.provider);
     if (provider && provider !== textField(out.provider)) {
       out.merged_from = [...new Set([...(out.merged_from || []), provider])];
+      merged = true;
     }
   }
   return out;
