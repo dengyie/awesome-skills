@@ -351,6 +351,27 @@ await withServer(
   }
 );
 
+// max_results is clamped to Tavily's documented maximum of 20 so a huge --extra
+// degrades gracefully instead of failing the channel.
+await withServer(
+  (req, res) => {
+    readBody(req, (body) => {
+      assert.equal(body.max_results, 20);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ results: [] }));
+    });
+  },
+  async (base) => {
+    const tavily = await tavilySearch(
+      "query",
+      50,
+      { ...baseConfig, tavilyApiKey: "key", tavilyApiUrl: base, tavilyRoundRobinPath: path.join(stateDir, "tavily-rr.json") },
+      {}
+    );
+    assert.equal(tavily.ok, true);
+  }
+);
+
 // Metadata normalisation falls back to Open Graph keys and drops what is missing.
 assert.deepEqual(
   firecrawlMetadata({

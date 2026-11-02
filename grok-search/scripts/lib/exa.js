@@ -57,7 +57,9 @@ export async function exaSearch(query, limit, config, filters = {}) {
       body: {
         query,
         type: "auto",
-        numResults: limit,
+        // Exa rejects numResults above 100 with INVALID_REQUEST_BODY; a large --extra
+        // would kill the whole channel for the run, so cap at the documented maximum.
+        numResults: Math.min(limit, 100),
         contents: { highlights: true },
         // includeDomains/excludeDomains accept hostnames, host+path and *.wildcard — the same
         // filter pair Tavily/Firecrawl get.

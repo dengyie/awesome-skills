@@ -9,22 +9,28 @@
 ## 组件
 
 ```text
-scripts/search.js
+scripts/search.js         搜索 CLI 入口：grokChannel + publicResult 编排、错误与运行记录
+  ├─ lib/search-argv.js     usage 文本与 argv 解析
+  ├─ lib/search-options.js  搜索选项解析（CLI 覆盖配置）与派生诊断（searchBudget 等）
+  ├─ lib/search-filters.js  allow/deny 清单解析：CLI 只能收紧配置、不能放宽
+  ├─ lib/search-extras.js   Tavily / Firecrawl / Exa 三渠道 fan-out、名额分配、attempt 整形
+  ├─ lib/search-degrade.js  失败标签表、原始信源降级答案、失败诊断
   ├─ lib/grok-responses.js  Responses 请求、tool trace 与 citation 解析
   ├─ lib/context.js         本地时间和 platform 上下文
-  ├─ lib/providers.js       fetch / map 编排：provider 顺序、X 原帖 Direct 优先、失败接力；re-export 下面四个适配器
+  ├─ lib/providers.js       fetch / map 编排：provider 顺序、X 原帖 Direct 优先、失败接力；extraAllocation；re-export 适配器
   ├─ lib/http.js            requestJson：重试与退避、Retry-After、脱敏、代理初始化
+  ├─ lib/exa.js             Exa Search / Contents、余额冷却判断
   ├─ lib/tavily.js          Tavily Extract / Search / Map
   ├─ lib/firecrawl.js       Firecrawl Scrape / Search、metadata、额度判断与冷却记录
   ├─ lib/direct.js          Direct fetch / map：HTML 转文本、X 原帖校验、sitemap 与链接解析
-  ├─ lib/cooldown.js        Firecrawl 额度耗尽后的跨命令冷却状态
-  ├─ lib/sources.js         信源压缩、规范化、字段合并去重、域名过滤降级
+  ├─ lib/cooldown.js        Firecrawl / Exa 额度耗尽后的跨命令冷却状态
+  ├─ lib/sources.js         信源压缩、规范化（含追踪参数剥离）、字段合并去重、域名过滤降级
   ├─ lib/output.js          JSON、preview、完整输出与运行记录落盘
   ├─ lib/prompts.js         system prompt 与软预算常量
   └─ lib/config.js          环境变量和配置文件
 
 scripts/fetch.js
-  └─ Tavily Extract → Firecrawl Scrape → Direct Fetch
+  └─ Tavily Extract → Firecrawl Scrape → Exa Contents → Direct Fetch
 
 scripts/map.js
   └─ Tavily Map → Direct Map

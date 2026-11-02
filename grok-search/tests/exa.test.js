@@ -111,6 +111,22 @@ await withServer(
   }
 );
 
+// numResults is clamped to Exa's documented maximum of 100 so a huge --extra
+// degrades gracefully instead of failing the channel with INVALID_REQUEST_BODY.
+await withServer(
+  (req, res) => {
+    readBody(req, (body) => {
+      assert.equal(body.numResults, 100);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ results: [] }));
+    });
+  },
+  async (base) => {
+    const result = await exaSearch("q", 500, { ...baseConfig, exaApiUrl: base });
+    assert.equal(result.ok, true);
+  }
+);
+
 // No filters: the arrays stay out of the body entirely.
 await withServer(
   (req, res) => {

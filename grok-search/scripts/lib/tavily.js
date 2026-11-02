@@ -293,7 +293,8 @@ export async function tavilySearch(query, limit, config, filters = {}) {
       headers: authHeaders(apiKey),
       body: {
         query,
-        max_results: limit,
+        // Tavily's API caps max_results at 20; a larger --extra must not fail the channel.
+        max_results: Math.min(limit, 20),
         search_depth: "advanced",
         include_raw_content: false,
         include_answer: false,
