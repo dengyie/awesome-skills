@@ -606,3 +606,24 @@ export async function searchGrokResponses(query, options, config) {
     raw: data,
   };
 }
+
+/**
+ * `total` is the billing-grade figure (the larger of usage and trace per tool). The two raw
+ * tallies stay visible because relays under-report on either side, and the per-action split
+ * says how many of those calls were searches versus page opens.
+ */
+export function summarizeToolCalls(toolCalls, total, counts) {
+  const failed = toolCalls.filter((call) => call.status && call.status !== "completed");
+  const byAction = {};
+  for (const call of toolCalls) {
+    const action = call.action_type || "other";
+    byAction[action] = (byAction[action] || 0) + 1;
+  }
+  return {
+    total,
+    upstream: counts?.upstream ?? null,
+    trace: counts?.trace ?? { web: 0, x: 0 },
+    by_action: byAction,
+    ...(failed.length ? { failed } : {}),
+  };
+}
