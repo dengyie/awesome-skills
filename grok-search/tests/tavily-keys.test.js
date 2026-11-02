@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { resolveTavilyApiKeys } from "../scripts/lib/config.js";
-import { extraAllocation } from "../scripts/search.js";
+import { extraAllocation } from "../scripts/lib/providers.js";
 import {
   hasTavilyApiKey,
   isTavilyKeyExhaustedError,

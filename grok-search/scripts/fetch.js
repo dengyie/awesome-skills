@@ -8,15 +8,17 @@ import { assertProxyUsable } from "./lib/proxy.js";
 const DEFAULT_MAX_CHARS = 12000;
 
 function usage() {
-  return `Usage: ./scripts/fetch.js [--provider auto|tavily|firecrawl|direct] [--max-chars N] [--deadline SECONDS] <url>
+  return `Usage: ./scripts/fetch.js [--provider auto|tavily|firecrawl|exa|direct] [--max-chars N] [--deadline SECONDS] <url>
 
-Fetch a web page as readable text/Markdown using Tavily Extract, Firecrawl Scrape, then Direct Fetch.
+Fetch a web page as readable text/Markdown using Tavily Extract, Firecrawl Scrape, Exa Contents, then Direct Fetch.
 
 Environment:
   TAVILY_API_KEY       Tavily key used by the primary provider
   TAVILY_API_URL       Default: https://api.tavily.com
   FIRECRAWL_API_KEY    Optional Firecrawl key; keyless fallback works without it
   FIRECRAWL_API_URL    Default: https://api.firecrawl.dev/v2
+  EXA_API_KEY          Optional Exa key; enables the Exa Contents provider
+  EXA_API_URL          Default: https://api.exa.ai
   GROK_DEADLINE_SECONDS
                        Optional whole-command deadline; default 240, 0 disables
   GROK_OUTPUT_DIR      Optional directory for full content when preview is truncated
@@ -77,8 +79,8 @@ function parseArgs(argv) {
   }
 
   if (!url) throw new Error("缺少 URL");
-  if (!["auto", "tavily", "firecrawl", "direct"].includes(provider)) {
-    throw new Error("--provider 只能是 auto、tavily、firecrawl 或 direct");
+  if (!["auto", "tavily", "firecrawl", "exa", "direct"].includes(provider)) {
+    throw new Error("--provider 只能是 auto、tavily、firecrawl、exa 或 direct");
   }
 
   let parsed;
@@ -217,7 +219,7 @@ try {
     process.exit(1);
   });
   try {
-    const result = await fetchUrl(args.url, config, { provider: args.provider });
+    const result = await fetchUrl(args.url, config, { provider: args.provider, maxChars: args.maxChars });
     const output = await publicResult(args, result, config);
     const runPath = await writeRunRecord(config, {
       kind: "fetch",

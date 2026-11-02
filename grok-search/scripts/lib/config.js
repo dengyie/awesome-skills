@@ -17,6 +17,7 @@ export const DEFAULT_MAX_SOURCES = 12;
 const DEFAULT_DEADLINE_SECONDS = 240;
 const DEFAULT_TAVILY_API_URL = "https://api.tavily.com";
 const DEFAULT_FIRECRAWL_API_URL = "https://api.firecrawl.dev/v2";
+const DEFAULT_EXA_API_URL = "https://api.exa.ai";
 const DEFAULT_STATE_DIR = path.join(homedir(), ".cache", "grok-search");
 const DEFAULT_OUTPUT_DIR = path.join(DEFAULT_STATE_DIR, "outputs");
 const DEFAULT_OUTPUT_RETENTION_DAYS = 30;
@@ -357,6 +358,9 @@ export async function loadConfig({ requireGrok = false } = {}) {
       DEFAULT_FIRECRAWL_API_URL
     ),
     firecrawlApiKey: envOrFile("FIRECRAWL_API_KEY", fileConfig, ["FIRECRAWL_API_KEY", "firecrawlApiKey", "firecrawl_api_key"]),
+
+    exaApiUrl: envOrFile("EXA_API_URL", fileConfig, ["EXA_API_URL", "exaApiUrl", "exa_api_url"], DEFAULT_EXA_API_URL),
+    exaApiKey: envOrFile("EXA_API_KEY", fileConfig, ["EXA_API_KEY", "exaApiKey", "exa_api_key"]),
 
     retryMaxAttempts: envInt("GROK_RETRY_MAX_ATTEMPTS", 3, { min: 1 }),
     retryMultiplier: envFloat("GROK_RETRY_MULTIPLIER", 1, { min: 0 }),

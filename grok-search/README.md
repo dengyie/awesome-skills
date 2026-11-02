@@ -90,6 +90,8 @@ chmod 600 ~/.config/grok-search/config.json
   "tavilyProxyTimeoutMs": 12000,
   "firecrawlApiKey": "",
   "firecrawlApiUrl": "https://api.firecrawl.dev/v2",
+  "exaApiKey": "",
+  "exaApiUrl": "https://api.exa.ai",
   "outputDir": "",
   "stateDir": "",
   "runLog": true
@@ -110,7 +112,7 @@ chmod 600 ~/.config/grok-search/config.json
 - 旧配置项 `responsesIncludeXSearch` / `GROK_RESPONSES_INCLUDE_X_SEARCH` 已移除（2026-08 弃用，2026-09 删除）。值为 `true` 时命令直接报 `CONFIG_OPTION_REMOVED` 而不是静默丢掉 X 检索，请改为 `searchSource: "both"`；`false` 或缺失不受影响。
 - 优先级为 命令行 > 环境变量 > 配置文件 > 默认值。注意配置文件由你书写、命令行参数由调用本工具的 agent 书写：标量配置（如 `searchSource`）是**默认值**，agent 可以覆盖，实际生效值见 `diagnostics.options`；但配置里的**限制**不会被静默抹掉——allow-list 与 deny-list 都是限制，命令行只能收紧不能放宽。越界报 `RESPONSES_FILTER_FORBIDDEN`，把 allow-list 减空报 `RESPONSES_FILTER_EMPTY`，两个 deny-list 合并而非替换。规则见 [docs/responses-mode.md](docs/responses-mode.md#配置与命令行的优先级)。
 - `responsesOpenRouterEngine` 可选 `auto`、`native`、`exa`、`firecrawl`、`parallel` 或 `perplexity`，仅在 `apiProvider` 为 `openrouter` 时生效。
-- `tavilyApiKey` 可留空；多把官方 key 写进 `tavilyApiKeys`（或环境变量 `TAVILY_API_KEYS`，逗号分隔），配额或鉴权失败时才轮到下一把，游标在 `~/.cache/grok-search/tavily-rr.json`。`tavilyProxyUrl` + `tavilyProxyKey` 是另一套第三方兼容入口：先打代理（默认 12 秒、不重试），HTTP 失败或 search/map 空结果再回落官方 key。不要把代理 URL 写进 `tavilyApiUrl`，两边的 key 不通用。`firecrawlApiKey` 也可留空并使用 Firecrawl Keyless。`outputDir` 留空时使用默认目录 `~/.cache/grok-search/outputs/`；`stateDir` 留空时使用 `~/.cache/grok-search/`，存放 Firecrawl 冷却状态；`runLog: false` 关闭每次调用的运行记录落盘。
+- `tavilyApiKey` 可留空；多把官方 key 写进 `tavilyApiKeys`（或环境变量 `TAVILY_API_KEYS`，逗号分隔），配额或鉴权失败时才轮到下一把，游标在 `~/.cache/grok-search/tavily-rr.json`。`tavilyProxyUrl` + `tavilyProxyKey` 是另一套第三方兼容入口：先打代理（默认 12 秒、不重试），HTTP 失败或 search/map 空结果再回落官方 key。不要把代理 URL 写进 `tavilyApiUrl`，两边的 key 不通用。`firecrawlApiKey` 也可留空并使用 Firecrawl Keyless。`exaApiKey` 可选，配置后 Exa 加入 search 的 extra 轮转与 fetch 的 auto 链（注意它与 OpenRouter 引擎值 `exa` 无关，后者仅在 `apiProvider` 为 `openrouter` 时生效）。`outputDir` 留空时使用默认目录 `~/.cache/grok-search/outputs/`；`stateDir` 留空时使用 `~/.cache/grok-search/`，存放 Firecrawl 冷却状态；`runLog: false` 关闭每次调用的运行记录落盘。
 
 如果使用 OpenRouter，核心字段可改为：
 
@@ -161,7 +163,7 @@ Node 原生 `fetch` 默认不会可靠读取终端代理变量。本项目会在
 | `GROK_MODEL` | `model` | 否 | `search.js` | 默认 `grok-4.20-multi-agent-0309`。该模型在 CPA 兼容上游会自己执行服务端 `web_search`；普通 Chat Completions 模型和免费 CLI 账号池不会。 |
 | `GROK_RESPONSES_MAX_TURNS` | `responsesMaxTurns` | 否 | Responses | 默认 `3`，控制 Responses agentic turn 上限；只对 X 搜索是硬上限，web 搜索不受它约束。 |
 | `GROK_RESPONSES_REASONING_EFFORT` | `responsesReasoningEffort` | 否 | Responses | 默认 `low`。 |
-| `GROK_RESPONSES_PARALLEL_TOOL_CALLS` | `responsesParallelToolCalls` | 否 | Responses | `true` / `false`；默认不发送。`false` 让 Grok 每个 turn 只做一次服务端工具调用，官方 `api.x.ai` 与透传的中转都回显 `false`，X 搜索被压到每 turn 一次、`max_turns` 成为硬上限（2026-09-08 实测：grok-4.5 经中转 7–14 次降到 3 次、费用约三分之一；grok-4.6 无论官方还是中转自然只 3–4 次，降到 3 次费用持平，`responses_tool_calls.total` 超过 6 再加）；不透传的中转会回显 `true`。`max_tool_calls` 官方与中转都不生效，未接入。命令行 `--responses-parallel-tool-calls false`。 |
+| `GROK_RESPONSES_PARALLEL_TOOL_CALLS` | `responsesParallelToolCalls` | 否 | Responses | `true` / `false`；默认不发送。`false` 让 Grok 每个 turn 只做一次服务端工具调用，官方 `api.x.ai` 与透传的中转都回显 `false`，X 搜索被压到每 turn 一次、`max_turns` 成为硬上限（2026-09-08 实测：grok-4.5 经中转 7–14 次降到 3 次、费用约三分之一；grok-4.6 无论官方还是中转自然只 3–4 次，降到 3 次费用持平，`responses_tool_calls.total` 超过 6 再加）；不透传的中转会回显 `true`。`max_tool_calls` 官方与中转都不生效，未接入。命令行 `--responses-parallel-tool-calls false`。2026-11-03 补充：grok-4.20-multi-agent-0309 经透传中转，flag 生效于 agent 层（trace 4→1、费用 $0.64→$0.41），但上游 x_search 仍 19–21 次——多智能体在服务端扇出，`total` 不再被 `max_turns` 封顶，效果看 `trace` 而非 `total`。 |
 | `GROK_RESPONSES_ALLOWED_DOMAINS` | `responsesAllowedDomains` | 否 | Responses | 逗号分隔 domain allow-list，最多 5 个；与 excluded 互斥。 |
 | `GROK_RESPONSES_EXCLUDED_DOMAINS` | `responsesExcludedDomains` | 否 | Responses | 逗号分隔 domain deny-list，最多 5 个；与 allowed 互斥。 |
 | `GROK_SEARCH_SOURCE` | `searchSource` | 否 | Responses | 默认检索源：`web`、`x` 或 `both`。默认 `web`。 |
@@ -182,6 +184,8 @@ Node 原生 `fetch` 默认不会可靠读取终端代理变量。本项目会在
 | `TAVILY_PROXY_TIMEOUT_MS` | `tavilyProxyTimeoutMs` | 否 | Tavily 路径 | 代理 fail-fast 超时，默认 `12000`，不重试。search/map 空结果也回落官方；extract 空内容不回落。 |
 | `FIRECRAWL_API_KEY` | `firecrawlApiKey` | 否 | `search.js`、`fetch.js` | 可选。未配置时使用 Firecrawl Keyless；配置后使用独立账户额度和更高限流。 |
 | `FIRECRAWL_API_URL` | `firecrawlApiUrl` | 否 | Firecrawl 路径 | 默认 `https://api.firecrawl.dev/v2`。 |
+| `EXA_API_KEY` | `exaApiKey` | 否 | `search.js`、`fetch.js` | 可选。配置后 Exa 加入 `--extra` 轮转，并作为 `fetch.js --provider exa` / auto 链的 Contents 渠道。 |
+| `EXA_API_URL` | `exaApiUrl` | 否 | Exa 路径 | 默认 `https://api.exa.ai`。 |
 | `GROK_OUTPUT_DIR` | `outputDir` | 否 | 所有脚本 | 覆盖长输出与运行记录的落盘目录。默认 `~/.cache/grok-search/outputs/`。 |
 | `GROK_STATE_DIR` | `stateDir` | 否 | 所有脚本 | 跨命令状态目录（Firecrawl 额度冷却文件 `firecrawl-cooldown.json`）。默认 `~/.cache/grok-search/`。 |
 | `GROK_RUN_LOG` | `runLog` | 否 | 所有脚本 | 默认 `true`，每次调用写一份运行记录 JSON；`off` / `false` 关闭后 `sources.raw_path` / `diagnostics.run_path` 为 null。 |
@@ -280,13 +284,13 @@ X citation 只返回裸 URL、且 `title` 是 inline citation 序号，因此 so
 
 默认会同时发起 Grok Responses、Tavily Search（配置 key 时）和 Firecrawl Search。三路并行，Tavily/Firecrawl 结果始终作为独立补充信源，不会注入 Grok input。
 
-`--extra N` 表示 Tavily 与 Firecrawl 合计的结果目标数，默认 `6`。两家都可用时平均分配，奇数优先给 Tavily；没有 Tavily key 时全部交给 Firecrawl Keyless。`--no-extra` 会严格关闭两个外部搜索通道。
+`--extra N` 表示 Tavily、Firecrawl 与 Exa 合计的结果目标数，默认 `6`。可用的渠道按轮转均分（奇数优先给 Tavily），如配齐三家时 N=6 分成 2/2/2；没有 Tavily key 时全部交给 Firecrawl Keyless 与 Exa，Exa 也未配置时回到 Firecrawl。`--no-extra` 会严格关闭所有外部搜索通道。
 
-当 Grok 明确返回额度耗尽（402、额度类错误码、正文提到 quota / credits / billing 的 429），而 extra sources 可用时，命令会返回标记为 `diagnostics.degraded: true` 的降级结果，`grok_error.code` 为 `QUOTA_EXHAUSTED`；普通 429 限流同样降级，但 code 是 `RATE_LIMITED`。`answer.text` 会明确说明当前仅为 Tavily/Firecrawl 原始搜索结果，`diagnostics.grok_error` 保留脱敏后的上游错误。其他认证、协议或服务错误不会被伪装成降级。
+当 Grok 明确返回额度耗尽（402/403、额度类错误码如 `insufficient_user_usd_credit`、正文提到 quota / credits / billing / 余额 / 积分的 4xx）时，无论 extra 是否可用都会得到明确的失败码；若 extra sources 可用，命令会返回标记为 `diagnostics.degraded: true` 的降级结果：`QUOTA_EXHAUSTED`（配额）、`RATE_LIMITED`（存活下来的 429 限流）、`NO_SEARCH`（中转丢弃了 web_search、只回散文）、`EMPTY`（空内容）、`TIMEOUT`（超时 / 408 / 504 / 524）、`UPSTREAM`（5xx）。`answer.text` 会明确说明当前仅为 Tavily/Firecrawl/Exa 原始搜索结果，`diagnostics.grok_error` 保留脱敏后的上游错误。纯认证与协议错误（401/403/422 且无配额特征）保持硬失败，不会被伪装成降级。
 
 Firecrawl Keyless 提供每月 1,000 credits，并受按 IP 的每日限额约束。配置 `FIRECRAWL_API_KEY` 不会增加免费计划的月度 credits，但能获得更高限流、独立账户额度和更多 API 能力。
 
-额度耗尽时 Firecrawl 返回 429 与 `reason: credits`、`retry_after_seconds`（通常数小时）。脚本不再重试，而是把 `{ until, auth_mode, reason, hit_at }` 写进 `<stateDir>/firecrawl-cooldown.json`；冷却期内 `search.js` 与 `fetch.js --provider auto` 直接跳过 Firecrawl（provider attempt 记 `skipped: true` 与 `cooldown until <ISO>`），search 的名额转给 Tavily，没有 Tavily 时 extra 为空并写 warning。显式 `--provider firecrawl` 仍会真打，成功后清除冷却。冷却按 `auth_mode` 区分，换上 API key 立即生效。
+额度耗尽时 Firecrawl 返回 429 与 `reason: credits`、`retry_after_seconds`（通常数小时）。脚本不再重试，而是把 `{ until, auth_mode, reason, hit_at }` 写进 `<stateDir>/firecrawl-cooldown.json`；冷却期内 `search.js` 与 `fetch.js --provider auto` 直接跳过 Firecrawl（provider attempt 记 `skipped: true` 与 `cooldown until <ISO>`），search 的名额转给其余渠道，没有可用渠道时 extra 为空并写 warning。显式 `--provider firecrawl` 仍会真打，成功后清除冷却。冷却按 `auth_mode` 区分，换上 API key 立即生效。Exa 余额耗尽（402）以同样机制记录在 `<stateDir>/exa-cooldown.json`。
 
 通用重试规则：408 / 429 / 5xx 最多重试 3 次，`Retry-After`（header 或 Firecrawl 的 `retry_after_seconds`）在重试预算内照等，超出预算即停止而不是截短后继续；坏 JSON、`success:false`、403 等 4xx、scrape 超时都只请求一次。provider attempt 带 `requests`（实际 HTTP 次数）与 `duration_ms`。
 
@@ -308,12 +312,12 @@ fetch 默认只返回 12,000 字符 preview。`--max-chars 50000` 应作为看�
 `--provider auto` 的 provider 顺序：
 
 ```text
-Tavily Extract -> Firecrawl Scrape -> Direct Fetch
+Tavily Extract -> Firecrawl Scrape -> Exa Contents -> Direct Fetch
 ```
 
 Direct Fetch 是普通 HTTP(S) 文本页面的 best-effort fallback。它会做简单 HTML 清理、尽量格式化 JSON、记录重定向，并拒绝二进制 / 附件 / 超大响应。
 
-Firecrawl Scrape 无 key 时会使用 Keyless；配置 `FIRECRAWL_API_KEY` 后会自动发送 Bearer token。当前认证模式写入 `diagnostics.firecrawl_auth_mode`。
+Firecrawl Scrape 无 key 时会使用 Keyless；配置 `FIRECRAWL_API_KEY` 后会自动发送 Bearer token。当前认证模式写入 `diagnostics.firecrawl_auth_mode`。Exa Contents 需要配置 `EXA_API_KEY`，按页计费（普通页约 $0.001），`metadata` 提供 `title / author / published_at`，attempt 携带 `cost_usd`；未配置时 auto 链里它只是一条 `skipped` 记录。
 
 X 原帖（`x.com/<handle>/status/<id>`）在 `--provider auto` 下不论是否配置 key 都先走 Direct，校验页面含 `@handle`、日期与非登录页正文才算成功（只有主帖）；校验不过再回到 Tavily → Firecrawl，都不可用时按原样返回 Direct 内容并写 warning。这样定的依据是 2026-09-08 的对照：Tavily 快且免费但三条里一条不带日期、另有一次超时；Firecrawl 每条约 30 credits、10 秒以上，换来 ISO 时间戳、互动数和 thread。需要 thread 时显式 `--provider firecrawl`。任何一次 `credits_used >= 10` 都会在 `diagnostics.warnings` 里说明成本。
 

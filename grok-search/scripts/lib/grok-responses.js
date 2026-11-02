@@ -22,6 +22,34 @@ function responsesEndpoint(config) {
   return `${config.grokApiUrl.replace(/\/+$/, "")}/responses`;
 }
 
+const QUOTA_CODE_PATTERN = /insufficient.*credit|insufficient.*quota|quota[_-]?exhausted|credits?[_-]?exhausted|payment[_-]?required/i;
+const QUOTA_MESSAGE_PATTERN = /quota|credits?|balance|billing|insufficient|额度|余额|计费|积分/i;
+
+export function classifyGrokFailure(error) {
+  if (error?.status === 402) return "quota";
+  const codeText = [error?.code, error?.upstreamCode, error?.details?.code].filter(Boolean).join(" ");
+  if (QUOTA_CODE_PATTERN.test(codeText)) return "quota";
+  if (error?.status === 429) {
+    return QUOTA_MESSAGE_PATTERN.test(String(error?.message || "")) ? "quota" : "rate_limit";
+  }
+  // Relays report an empty balance with arbitrary statuses (observed: wxiai 403, code
+  // insufficient_user_usd_credit, message 预扣费失败/信用积分). A quota-flavored message on a
+  // 4xx means retrying cannot help, so degrade to extra sources instead of failing the run.
+  if (error?.status >= 400 && error?.status < 500 && QUOTA_MESSAGE_PATTERN.test(String(error?.message || ""))) {
+    return "quota";
+  }
+  return null;
+}
+
+export function grokDegradeKind(error) {
+  if (error?.code === "GROK_RESPONSES_NO_SEARCH") return "no_search";
+  if (error?.code === "GROK_RESPONSES_EMPTY") return "empty";
+  if (error?.timedOut || error?.status === 408 || error?.status === 504 || error?.status === 524) return "timeout";
+  if (/超时|timed?\s*out|timeout/i.test(String(error?.message || ""))) return "timeout";
+  if (Number.isInteger(error?.status) && error.status >= 500) return "upstream";
+  return null;
+}
+
 /**
  * The query doubles as the keywords Tavily/Firecrawl search for, so it should stay short.
  * Anything the caller wants from Grok beyond "search this" (what to return, in which

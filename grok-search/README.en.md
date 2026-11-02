@@ -90,6 +90,8 @@ Full configuration example:
   "tavilyProxyTimeoutMs": 12000,
   "firecrawlApiKey": "",
   "firecrawlApiUrl": "https://api.firecrawl.dev/v2",
+  "exaApiKey": "",
+  "exaApiUrl": "https://api.exa.ai",
   "outputDir": "",
   "stateDir": "",
   "runLog": true
@@ -168,7 +170,7 @@ Supported variables:
 | `GROK_MODEL` | `model` | No | `search.js` | Defaults to `grok-4.20-multi-agent-0309`. On CPA-compatible upstreams this model runs server-side `web_search`; plain Chat Completions models and the free CLI account pool do not. |
 | `GROK_RESPONSES_MAX_TURNS` | `responsesMaxTurns` | No | Responses | Responses agentic turn limit; a hard cap for X search only, web search is not bound by it. Default: `3`. |
 | `GROK_RESPONSES_REASONING_EFFORT` | `responsesReasoningEffort` | No | Responses | Default: `low`. |
-| `GROK_RESPONSES_PARALLEL_TOOL_CALLS` | `responsesParallelToolCalls` | No | Responses | `true` / `false`; not sent unless set. `false` makes Grok run one server-side tool call per turn; `api.x.ai` and relays that pass it through echo `false` and X search drops to one call per turn, so `max_turns` becomes a hard cap (2026-09-08: grok-4.5 via a relay went from 7–14 calls to 3 at a third of the cost; grok-4.6, direct or via the same relay, runs 3–4 calls on its own and gained nothing, so add it when `responses_tool_calls.total` is above 6). Relays that ignore it echo `true`. `max_tool_calls` is ignored by xAI and by relays, so it is not wired. CLI: `--responses-parallel-tool-calls false`. |
+| `GROK_RESPONSES_PARALLEL_TOOL_CALLS` | `responsesParallelToolCalls` | No | Responses | `true` / `false`; not sent unless set. `false` makes Grok run one server-side tool call per turn; `api.x.ai` and relays that pass it through echo `false` and X search drops to one call per turn, so `max_turns` becomes a hard cap (2026-09-08: grok-4.5 via a relay went from 7–14 calls to 3 at a third of the cost; grok-4.6, direct or via the same relay, runs 3–4 calls on its own and gained nothing, so add it when `responses_tool_calls.total` is above 6). Relays that ignore it echo `true`. `max_tool_calls` is ignored by xAI and by relays, so it is not wired. CLI: `--responses-parallel-tool-calls false`. 2026-11-03 addendum: grok-4.20-multi-agent-0309 via a pass-through relay honored the flag at the agent level (trace 4→1, cost $0.64→$0.41) but upstream x_search stayed at 19–21 calls — multi-agent models fan out server-side, so `total` is no longer capped by `max_turns`; judge by `trace`, not `total`. |
 | `GROK_RESPONSES_ALLOWED_DOMAINS` | `responsesAllowedDomains` | No | Responses | Comma-separated domain allow-list, max 5; mutually exclusive with excluded domains. |
 | `GROK_RESPONSES_EXCLUDED_DOMAINS` | `responsesExcludedDomains` | No | Responses | Comma-separated domain deny-list, max 5; mutually exclusive with allowed domains. |
 | `GROK_SEARCH_SOURCE` | `searchSource` | No | Responses | Default search source: `web`, `x`, or `both`. Default: `web`. |
@@ -189,6 +191,8 @@ Supported variables:
 | `TAVILY_PROXY_TIMEOUT_MS` | `tavilyProxyTimeoutMs` | No | Tavily paths | Proxy fail-fast timeout. Default `12000`, no retry. Empty search/map results also fall back; empty extract content does not. |
 | `FIRECRAWL_API_KEY` | `firecrawlApiKey` | No | `search.js`, `fetch.js` | Optional. Uses Firecrawl Keyless when absent; a key provides account-scoped credits and higher rate limits. |
 | `FIRECRAWL_API_URL` | `firecrawlApiUrl` | No | Firecrawl paths | Defaults to `https://api.firecrawl.dev/v2`. |
+| `EXA_API_KEY` | `exaApiKey` | No | `search.js`, `fetch.js` | Optional. When set, Exa joins the `--extra` rotation and serves `fetch.js --provider exa` / the auto chain. |
+| `EXA_API_URL` | `exaApiUrl` | No | Exa paths | Defaults to `https://api.exa.ai`. |
 | `GROK_OUTPUT_DIR` | `outputDir` | No | all scripts | Overrides long-output and run-record storage. Default: `~/.cache/grok-search/outputs/`. |
 | `GROK_STATE_DIR` | `stateDir` | No | all scripts | Cross-command state directory (Firecrawl quota cooldown file `firecrawl-cooldown.json`). Default: `~/.cache/grok-search/`. |
 | `GROK_RUN_LOG` | `runLog` | No | all scripts | Default `true`: every command writes one run-record JSON. `off` / `false` disables it, and `sources.raw_path` / `diagnostics.run_path` become null. |
@@ -287,13 +291,13 @@ Post text and dates are not in the card; `answer.text` attributes each X claim b
 
 By default the command starts Grok Responses, Tavily Search when configured, and Firecrawl Search in parallel. Tavily and Firecrawl remain independent evidence channels and are never injected into Grok input.
 
-`--extra N` is the combined Tavily/Firecrawl target, defaulting to `6`. Both providers split the target evenly, with odd counts favoring Tavily. Without a Tavily key, Firecrawl Keyless receives the full target. `--no-extra` strictly disables both external search channels.
+`--extra N` is the combined Tavily/Firecrawl/Exa target, defaulting to `6`. Available channels split the target round-robin (odd counts favor Tavily) — with all three configured, 6 becomes 2/2/2. Without a Tavily key the target goes to Firecrawl Keyless and Exa; with Exa absent too it falls back to Firecrawl alone. `--no-extra` strictly disables all external search channels.
 
-When Grok explicitly reports exhausted quota (402, a quota error code, or a 429 whose body mentions quota / credits / billing) and extra sources are available, the command returns a degraded success with `diagnostics.degraded: true` and `grok_error.code: QUOTA_EXHAUSTED`. A plain 429 degrades the same way with `RATE_LIMITED`. The visible answer states that it contains raw Tavily/Firecrawl results, while `diagnostics.grok_error` preserves the redacted upstream error. Authentication, protocol, and generic service failures do not trigger this fallback.
+When Grok explicitly reports exhausted quota (402/403, a quota error code such as `insufficient_user_usd_credit`, or a 4xx whose body mentions quota / credits / billing / balance), the command fails with a named code whether or not extras exist. When extra sources are available, several more failures degrade to a marked success with `diagnostics.degraded: true`: `QUOTA_EXHAUSTED` (quota), `RATE_LIMITED` (a surviving 429), `NO_SEARCH` (the relay dropped web_search and answered from memory), `EMPTY` (empty content), `TIMEOUT` (timeout / 408 / 504 / 524), and `UPSTREAM` (5xx). The visible answer states that it contains raw Tavily/Firecrawl/Exa results, while `diagnostics.grok_error` preserves the redacted upstream error. Plain authentication and protocol errors (401/403/422 without a quota body) stay hard failures.
 
 Firecrawl Keyless includes 1,000 credits per month and additional undisclosed daily IP limits. A free API key keeps the same monthly credits but provides higher rate limits, account-scoped usage, and access to more endpoints.
 
-When the quota is exhausted Firecrawl answers 429 with `reason: credits` and a `retry_after_seconds` that is usually hours. The scripts stop retrying and write `{ until, auth_mode, reason, hit_at }` to `<stateDir>/firecrawl-cooldown.json`. During the cooldown, `search.js` and `fetch.js --provider auto` skip Firecrawl (the provider attempt reads `skipped: true` with `cooldown until <ISO>`); search gives the slots to Tavily, or leaves extras empty with a warning when Tavily is not configured. An explicit `--provider firecrawl` still makes the request and clears the cooldown on success. Cooldowns are scoped by `auth_mode`, so adding an API key takes effect immediately.
+When the quota is exhausted Firecrawl answers 429 with `reason: credits` and a `retry_after_seconds` that is usually hours. The scripts stop retrying and write `{ until, auth_mode, reason, hit_at }` to `<stateDir>/firecrawl-cooldown.json`. During the cooldown, `search.js` and `fetch.js --provider auto` skip Firecrawl (the provider attempt reads `skipped: true` with `cooldown until <ISO>`); search gives the slots to the remaining channels, or leaves extras empty with a warning when none are configured. An explicit `--provider firecrawl` still makes the request and clears the cooldown on success. Cooldowns are scoped by `auth_mode`, so adding an API key takes effect immediately. An Exa balance exhaustion (402) records `<stateDir>/exa-cooldown.json` the same way.
 
 General retry rule: 408 / 429 / 5xx retry up to 3 times. A `Retry-After` (header or Firecrawl's `retry_after_seconds`) within the retry budget is honored as-is; one beyond the budget stops retrying instead of being clamped. Bad JSON, `success:false` bodies, 4xx such as 403, and scrape timeouts are requested once. Provider attempts carry `requests` (HTTP calls made) and `duration_ms`.
 
@@ -315,12 +319,12 @@ Default fetch output is a 12,000-character preview. Use `--max-chars 50000` only
 Provider order for `--provider auto`:
 
 ```text
-Tavily Extract -> Firecrawl Scrape -> Direct Fetch
+Tavily Extract -> Firecrawl Scrape -> Exa Contents -> Direct Fetch
 ```
 
 Direct Fetch is a best-effort fallback for normal HTTP(S) text pages. It strips simple HTML, formats JSON when possible, records redirects, and rejects binary/attachment/oversized responses.
 
-Firecrawl Scrape uses Keyless without a key and automatically sends a Bearer token when `FIRECRAWL_API_KEY` is configured. The active mode is exposed as `diagnostics.firecrawl_auth_mode`.
+Firecrawl Scrape uses Keyless without a key and automatically sends a Bearer token when `FIRECRAWL_API_KEY` is configured. The active mode is exposed as `diagnostics.firecrawl_auth_mode`. Exa Contents requires `EXA_API_KEY`, bills per page (about $0.001 for a normal page), provides `title / author / published_at` metadata, and reports `cost_usd` on its attempt; without a key it is just a `skipped` entry in the auto chain.
 
 X posts (`x.com/<handle>/status/<id>`) under `--provider auto` try Direct first regardless of keys, and count as success only when the page names the handle, carries a date, and has non-boilerplate text (main post only). If validation fails the normal Tavily → Firecrawl order runs; if that is unavailable too, the Direct text is returned with a warning. The 2026-09-08 side-by-side is the reason: Tavily is fast and free but returned one of three posts without a date and timed out on another; Firecrawl costs about 30 credits and 10+ seconds per post in exchange for ISO timestamps, engagement counts and the thread. Use `--provider firecrawl` explicitly when you need the thread. Any fetch with `credits_used >= 10` adds a cost warning to `diagnostics.warnings`.
 

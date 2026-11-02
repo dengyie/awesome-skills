@@ -4,11 +4,12 @@
  * (`http.js`, `tavily.js`, `firecrawl.js`, `direct.js`); everything they export is re-exported
  * here so callers keep a single import path.
  */
-import { activeFirecrawlCooldown, clearFirecrawlCooldown, cooldownSkipMessage } from "./cooldown.js";
+import { activeExaCooldown, activeFirecrawlCooldown, clearExaCooldown, clearFirecrawlCooldown, cooldownSkipMessage } from "./cooldown.js";
 import { directFetch, directFirstForX, directMap, validateXPostContent } from "./direct.js";
+import { exaExtract, hasExaApiKey } from "./exa.js";
 import { firecrawlAuthMode, firecrawlScrape } from "./firecrawl.js";
 import { parseXPostUrl } from "./sources.js";
-import { tavilyExtract, tavilyMap } from "./tavily.js";
+import { hasTavilyApiKey, tavilyExtract, tavilyMap } from "./tavily.js";
 
 export { authHeaders, backoffMs, debugLog, redactSecrets, requestJson, retryAfterMs, retryMaxAttempts, upstreamMessage } from "./http.js";
 export {
@@ -28,6 +29,7 @@ export {
   withTavilyApiKey,
 } from "./tavily.js";
 export { firecrawlAuthMode, firecrawlMetadata, firecrawlScrape, firecrawlSearch, isFirecrawlQuotaError } from "./firecrawl.js";
+export { exaExtract, exaSearch, hasExaApiKey, isExaQuotaError } from "./exa.js";
 export {
   DIRECT_MAP_REQUEST_TIMEOUT_SECONDS,
   collapseRepeatedLines,
@@ -57,6 +59,24 @@ function attemptFromResult(result) {
     ...(result.tavily_proxy_tried ? { tavily_proxy_tried: true } : {}),
     ...(result.tavily_proxy_error ? { tavily_proxy_error: result.tavily_proxy_error } : {}),
   };
+}
+
+export function extraAllocation(limit, config, { firecrawlAvailable = true, exaAvailable = true } = {}) {
+  const allocation = { tavily: 0, firecrawl: 0, exa: 0 };
+  if (limit <= 0) return allocation;
+  // Deal one result at a time starting at Tavily, so the odd result keeps going to Tavily and
+  // the legacy two-way split is unchanged. A configured Exa key joins the rotation; a missing
+  // key or an active cooldown drops a channel out and its deals go to the rest.
+  const priority = [
+    hasTavilyApiKey(config) && "tavily",
+    firecrawlAvailable && "firecrawl",
+    exaAvailable && hasExaApiKey(config) && "exa",
+  ].filter(Boolean);
+  if (!priority.length) return allocation;
+  for (let index = 0; index < limit; index += 1) {
+    allocation[priority[index % priority.length]] += 1;
+  }
+  return allocation;
 }
 
 export async function mapUrl(url, config, { provider = "auto", ...options } = {}) {
@@ -92,7 +112,7 @@ function summarizeFetchFailure(tried, fallback) {
   return details ? `提取失败: ${details}` : fallback || "提取失败: 所有提取服务均未能获取内容";
 }
 
-export async function fetchUrl(url, config, { provider = "auto" } = {}) {
+export async function fetchUrl(url, config, { provider = "auto", maxChars } = {}) {
   const tried = [];
   let directFirst = null;
 
@@ -156,6 +176,28 @@ export async function fetchUrl(url, config, { provider = "auto" } = {}) {
       });
       if (result.ok && provider === "firecrawl") await clearFirecrawlCooldown(config);
       if (result.ok || provider === "firecrawl") return { ...result, tried };
+    }
+  }
+
+  if (provider === "auto" || provider === "exa") {
+    // A cooldown only spares an empty balance; an explicit --provider exa still makes the
+    // request so a topped-up key clears the stale state.
+    const cooldown = provider === "auto" ? await activeExaCooldown(config) : null;
+    if (cooldown) {
+      tried.push({ provider: "exa", ok: false, skipped: true, error: cooldownSkipMessage(cooldown) });
+    } else {
+      const result = await exaExtract(url, config, { maxChars });
+      tried.push({
+        provider: result.provider,
+        ok: result.ok,
+        skipped: Boolean(result.skipped),
+        error: result.error,
+        ...(result.requests == null ? {} : { requests: result.requests }),
+        ...(result.duration_ms == null ? {} : { duration_ms: result.duration_ms }),
+        ...(result.cost_usd == null ? {} : { cost_usd: result.cost_usd }),
+      });
+      if (result.ok && provider === "exa") await clearExaCooldown(config);
+      if (result.ok || provider === "exa") return { ...result, tried };
     }
   }
 

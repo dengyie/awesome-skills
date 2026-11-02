@@ -11,19 +11,18 @@ import {
   usesWebSearch,
   usesXSearch,
 } from "./lib/config.js";
-import { activeFirecrawlCooldown, cooldownSkipMessage } from "./lib/cooldown.js";
+import { activeExaCooldown, activeFirecrawlCooldown, cooldownSkipMessage } from "./lib/cooldown.js";
 import { startDeadline } from "./lib/deadline.js";
-import { grokRequestTimeoutMs, searchGrokResponses } from "./lib/grok-responses.js";
+import { classifyGrokFailure, grokDegradeKind, grokRequestTimeoutMs, searchGrokResponses } from "./lib/grok-responses.js";
 import { cleanupOutputDir, previewText, printJson, runRecordBase, writeRunRecord, writeRunRecordSync } from "./lib/output.js";
 import { SEARCH_BUDGET_TOTAL, SEARCH_BUDGET_X } from "./lib/prompts.js";
 import { firecrawlAuthMode, firecrawlSearch } from "./lib/firecrawl.js";
-import { hasTavilyApiKey, tavilySearch } from "./lib/tavily.js";
+import { exaSearch, hasExaApiKey } from "./lib/exa.js";
+import { extraAllocation, hasTavilyApiKey, tavilySearch } from "./lib/providers.js";
 import { assertProxyUsable, getProxyState } from "./lib/proxy.js";
 import { buildRawSourcesPayload, compactSources, isOffDomainExtra, mergeSources, selectSources } from "./lib/sources.js";
 
 const DEFAULT_MAX_CHARS = 30000;
-const QUOTA_CODE_PATTERN = /insufficient[_-]?quota|quota[_-]?exhausted|credits?[_-]?exhausted|insufficient[_-]?credits?|payment[_-]?required/i;
-const QUOTA_MESSAGE_PATTERN = /quota|credits?|balance|billing|insufficient|额度|余额|计费/i;
 const GROK_FAILURE_LABELS = {
   quota: { code: "QUOTA_EXHAUSTED", errorCode: "GROK_QUOTA_EXHAUSTED", label: "额度已耗尽", warning: "Grok Responses quota was exhausted." },
   rate_limit: { code: "RATE_LIMITED", errorCode: "GROK_RATE_LIMITED", label: "触发限流", warning: "Grok Responses was rate limited." },
@@ -36,7 +35,7 @@ const GROK_FAILURE_LABELS = {
 function usage() {
   return `Usage: ./scripts/search.js [--source web|x|both] [--instructions TEXT] [--platform NAME] [--model MODEL] [--extra N|--no-extra] [--source-chars N] [--max-sources N] [--full-sources] [--max-chars N] [--deadline SECONDS] <query>
 
-Run a Responses-compatible Grok/OpenRouter search and return JSON with independent Tavily/Firecrawl sources.
+Run a Responses-compatible Grok/OpenRouter search and return JSON with independent Tavily/Firecrawl/Exa sources.
 
 Cost:
   --responses-parallel-tool-calls false
@@ -45,7 +44,7 @@ Cost:
 
 Research instructions:
   --instructions TEXT  What Grok should return (fields, language, what to leave out). Only
-                       Grok sees it; Tavily/Firecrawl still search the plain query.
+                       Grok sees it; Tavily/Firecrawl/Exa still search the plain query.
 
 Search sources:
   --source web         Grok web_search only (default)
@@ -68,7 +67,7 @@ Environment:
                        Optional Responses max_turns; default 3
   GROK_RESPONSES_PARALLEL_TOOL_CALLS
                        Optional true|false; false makes Grok search one call per turn. Not sent unless set
-  GROK_DEFAULT_EXTRA   Optional total Tavily/Firecrawl source count; default 6
+  GROK_DEFAULT_EXTRA   Optional total Tavily/Firecrawl/Exa source count; default 6
   GROK_SOURCE_CHARS    Optional source snippet size; default 400
   GROK_MAX_SOURCES     Optional cap on returned source cards; default 12
   GROK_DEADLINE_SECONDS
@@ -386,6 +385,7 @@ function providerAttempt(result) {
     ...(result.skipped ? { skipped: true } : {}),
     ...(result.auth_mode ? { auth_mode: result.auth_mode } : {}),
     ...(result.credits_used == null ? {} : { credits_used: result.credits_used }),
+    ...(Number.isFinite(result.cost_usd) ? { cost_usd: result.cost_usd } : {}),
     ...(Number.isFinite(result.requests) ? { requests: result.requests } : {}),
     ...(Number.isFinite(result.duration_ms) ? { duration_ms: result.duration_ms } : {}),
     ...(result.quota_exhausted ? { quota_exhausted: true } : {}),
@@ -397,31 +397,23 @@ function providerAttempt(result) {
   };
 }
 
-export function extraAllocation(limit, config, { firecrawlAvailable = true } = {}) {
-  if (limit <= 0) return { tavily: 0, firecrawl: 0 };
-  const tavilyAvailable = hasTavilyApiKey(config);
-  if (!tavilyAvailable) return { tavily: 0, firecrawl: firecrawlAvailable ? limit : 0 };
-  if (!firecrawlAvailable) return { tavily: limit, firecrawl: 0 };
-  const tavily = Math.ceil(limit / 2);
-  return { tavily, firecrawl: limit - tavily };
-}
-
 /**
- * Independent Tavily / Firecrawl searches. Domain filters are the same ones Grok's web_search
- * gets: when the caller scopes a search to github.com, extras that wander off to blogs and
- * video sites only displace in-scope candidates. A Firecrawl quota cooldown hands its share to
- * Tavily when a key exists, otherwise the channel is skipped rather than re-failing.
+ * Independent Tavily / Firecrawl / Exa searches. Domain filters are the same ones Grok's
+ * web_search gets: when the caller scopes a search to github.com, extras that wander off to
+ * blogs and video sites only displace in-scope candidates. A Firecrawl quota cooldown hands its
+ * share to the other channels; the same applies to an Exa balance cooldown.
  */
 async function extraSources(query, limit, config, filters = {}) {
   const warnings = [];
   const providerRaw = {};
   if (limit <= 0) {
-    return { sources: [], warnings, provider_attempts: [], provider_raw: providerRaw, allocation: { tavily: 0, firecrawl: 0 } };
+    return { sources: [], warnings, provider_attempts: [], provider_raw: providerRaw, allocation: { tavily: 0, firecrawl: 0, exa: 0 } };
   }
 
   const firecrawlMode = firecrawlAuthMode(config);
   const cooldown = await activeFirecrawlCooldown(config, firecrawlMode);
-  const allocation = extraAllocation(limit, config, { firecrawlAvailable: !cooldown });
+  const exaCooldown = await activeExaCooldown(config);
+  const allocation = extraAllocation(limit, config, { firecrawlAvailable: !cooldown, exaAvailable: !exaCooldown });
 
   // Timed per provider so the attempt says which side made the caller wait.
   const timed = async (job) => {
@@ -432,6 +424,7 @@ async function extraSources(query, limit, config, filters = {}) {
   const jobs = [];
   if (allocation.tavily > 0) jobs.push(timed(tavilySearch(query, allocation.tavily, config, filters)));
   if (allocation.firecrawl > 0) jobs.push(timed(firecrawlSearch(query, allocation.firecrawl, config, filters)));
+  if (allocation.exa > 0) jobs.push(timed(exaSearch(query, allocation.exa, config, filters)));
   const results = await Promise.all(jobs);
   const sources = [];
   const providerAttempts = [];
@@ -452,6 +445,12 @@ async function extraSources(query, limit, config, filters = {}) {
     const message = cooldownSkipMessage(cooldown);
     providerAttempts.push({ provider: "firecrawl", ok: false, count: 0, skipped: true, auth_mode: firecrawlMode, error: message });
     warnings.push(`firecrawl extra source search skipped: ${message}`);
+  }
+
+  if (exaCooldown) {
+    const message = cooldownSkipMessage(exaCooldown);
+    providerAttempts.push({ provider: "exa", ok: false, count: 0, skipped: true, error: message });
+    warnings.push(`exa extra source search skipped: ${message}`);
   }
 
   return {
@@ -475,7 +474,7 @@ function resolveExtra(args, config, searchSource) {
 
 function extraModeWarnings(extraOptions) {
   if (extraOptions.mode !== "off-x-only") return [];
-  return ["extra sources skipped: --source x searches X only and Tavily/Firecrawl search the web; pass --extra N to include them."];
+  return ["extra sources skipped: --source x searches X only and Tavily/Firecrawl/Exa search the web; pass --extra N to include them."];
 }
 
 function dedupeFilterValues(values) {
@@ -803,28 +802,11 @@ async function grokChannel(args, config, searchOptions, { timeoutMs } = {}) {
 }
 
 /**
- * Quota and rate-limit are named even without extras. Relays that drop web_search,
- * Cloudflare 524, timeouts and 5xx are not billing events, but they still leave
- * Tavily/Firecrawl extras on the table. Auth and protocol errors (401/403/422)
- * stay hard failures even when extras exist.
+ * Only two Grok failures are worth degrading to raw extras for: an exhausted quota (nothing
+ * will change until someone pays) and a rate limit that survived the retries. They must be
+ * reported as what they are, though; calling a transient 429 "quota exhausted" sends the
+ * user to check billing for nothing.
  */
-function classifyGrokFailure(error) {
-  if (error?.status === 402) return "quota";
-  const codeText = [error?.code, error?.upstreamCode, error?.details?.code].filter(Boolean).join(" ");
-  if (QUOTA_CODE_PATTERN.test(codeText)) return "quota";
-  if (error?.status !== 429) return null;
-  return QUOTA_MESSAGE_PATTERN.test(String(error?.message || "")) ? "quota" : "rate_limit";
-}
-
-function grokDegradeKind(error) {
-  if (error?.code === "GROK_RESPONSES_NO_SEARCH") return "no_search";
-  if (error?.code === "GROK_RESPONSES_EMPTY") return "empty";
-  if (error?.timedOut || error?.status === 408 || error?.status === 504 || error?.status === 524) return "timeout";
-  if (/超时|timed?\s*out|timeout/i.test(String(error?.message || ""))) return "timeout";
-  if (Number.isInteger(error?.status) && error.status >= 500) return "upstream";
-  return null;
-}
-
 function grokFailureAttempt(config, error) {
   return { provider: `grok-responses:${config.apiProvider}`, ok: false, count: 0, error: error.message };
 }
@@ -847,7 +829,7 @@ function degradedAnswer(sources, label) {
     groups.get(provider).push(source);
   }
   for (const [provider, items] of groups) {
-    lines.push(`## ${provider === "tavily" ? "Tavily" : provider === "firecrawl" ? "Firecrawl" : provider}`);
+    lines.push(`## ${provider === "tavily" ? "Tavily" : provider === "firecrawl" ? "Firecrawl" : provider === "exa" ? "Exa" : provider}`);
     lines.push("");
     for (const [index, source] of items.entries()) {
       const title = String(source.title || `Result ${index + 1}`).trim();
@@ -876,7 +858,7 @@ function failureDiagnostics(config, searchOptions, extraOptions, extra, error, {
       api_provider: config.apiProvider,
       extra: extraOptions.limit,
       extra_mode: extraOptions.mode,
-      extra_allocation: extra?.allocation || { tavily: 0, firecrawl: 0 },
+      extra_allocation: extra?.allocation || { tavily: 0, firecrawl: 0, exa: 0 },
       firecrawl_auth_mode: extraOptions.limit > 0 ? firecrawlAuthMode(config) : null,
       ...responsesDiagnosticOptions(searchOptions),
     },
@@ -912,6 +894,9 @@ async function publicResult(args, config) {
   } else {
     const extrasReady = extraOptions.limit > 0 && extra.sources.length > 0;
     const named = classifyGrokFailure(grokResult.error);
+    // Quota and rate-limit are named even without extras. Timeouts, 5xx, and replies without
+    // usable search still leave Tavily/Firecrawl/Exa results on the table; auth and protocol
+    // errors (401/403/422 without a quota body) stay hard failures even when extras exist.
     const failure = extrasReady ? named || grokDegradeKind(grokResult.error) : named;
     if (!failure) {
       grokResult.error.diagnostics = failureDiagnostics(config, searchOptions, extraOptions, extra, grokResult.error);
@@ -924,7 +909,7 @@ async function publicResult(args, config) {
           ? `Grok Responses ${labels.label}；--source x 下 extra sources 默认关闭（传 --extra N 可开启），无法降级`
           : extraOptions.limit <= 0
             ? `Grok Responses ${labels.label}；extra sources 已显式关闭，无法降级`
-            : `Grok Responses ${labels.label}，且 Tavily/Firecrawl 未返回可用结果`
+            : `Grok Responses ${labels.label}，且 Tavily/Firecrawl/Exa 未返回可用结果`
       );
       error.code = labels.errorCode;
       error.diagnostics = failureDiagnostics(config, searchOptions, extraOptions, extra, grokResult.error, { failure });
@@ -939,7 +924,7 @@ async function publicResult(args, config) {
       sources: [],
       tool_calls: [],
       warnings: [
-        `Grok Responses 因${labels.label}不可用；当前 answer 仅包含 Tavily/Firecrawl 原始搜索结果，未经 Grok 综合生成。`,
+        `Grok Responses 因${labels.label}不可用；当前 answer 仅包含 Tavily/Firecrawl/Exa 原始搜索结果，未经 Grok 综合生成。`,
       ],
       provider_attempts: [grokFailureAttempt(config, grokResult.error)],
       diagnostics: {},
@@ -989,7 +974,7 @@ async function publicResult(args, config) {
       extra: extraOptions.limit,
       extra_mode: extraOptions.mode,
       extra_allocation: extra.allocation,
-      // Domain filters are pushed to Tavily/Firecrawl as well; results that still fall
+      // Domain filters are pushed to Tavily/Firecrawl/Exa as well; results that still fall
       // outside them are ranked last (see sources.js selectSources).
       extra_domain_filter:
         extraOptions.limit > 0 && (searchOptions.allowedDomains.length || searchOptions.excludedDomains.length) ? "pushed" : "none",

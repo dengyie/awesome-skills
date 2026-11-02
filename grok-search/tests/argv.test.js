@@ -379,7 +379,7 @@ await withServer(
     assert.equal(searchResult.code, 0, searchResult.stderr);
     const output = parseJson(searchResult.stdout);
     assert.equal(output.diagnostics.options.extra_mode, "off-x-only");
-    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0 });
+    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0, exa: 0 });
     assert.deepEqual(output.diagnostics.provider_attempts.map((attempt) => attempt.provider), ["grok-responses:xai"]);
     assert.equal(output.diagnostics.warnings.some((warning) => /--source x searches X only/.test(warning)), true);
     // --source both still runs extras by default, so nothing changes for the routed mode.
@@ -947,7 +947,7 @@ await withServer(
     assert.equal(output.sources.omitted, 0);
     assert.equal(output.sources.items.filter((source) => source.provider === "tavily").length, 3);
     assert.equal(output.sources.items.filter((source) => source.provider === "firecrawl").length, 3);
-    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 3, firecrawl: 3 });
+    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 3, firecrawl: 3, exa: 0 });
     assert.equal(output.diagnostics.options.firecrawl_auth_mode, "keyless");
     assert.deepEqual(
       output.diagnostics.provider_attempts.map((attempt) => [attempt.provider, attempt.ok, attempt.count]),
@@ -980,7 +980,7 @@ await withServer(
     }));
     assert.equal(searchResult.code, 0);
     const output = parseJson(searchResult.stdout);
-    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 4 });
+    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 4, exa: 0 });
     assert.equal(output.sources.items.filter((source) => source.provider === "firecrawl").length, 1);
   }
 );
@@ -1332,13 +1332,13 @@ await withServer(
     const output = parseJson(fetchResult.stdout);
     assert.equal(output.diagnostics.provider, "direct");
     assert.match(output.content.text, /Direct content/);
-    assert.deepEqual(output.diagnostics.provider_attempts.map((attempt) => attempt.provider), ["tavily", "firecrawl", "direct"]);
+    assert.deepEqual(output.diagnostics.provider_attempts.map((attempt) => attempt.provider), ["tavily", "firecrawl", "exa", "direct"]);
     // Fetch keeps its full text and provider trail in a run record too.
     const record = JSON.parse(await readFile(output.diagnostics.run_path, "utf8"));
     assert.equal(record.kind, "fetch");
     assert.equal(record.provider, "direct");
     assert.match(record.content, /Direct content/);
-    assert.equal(record.provider_attempts.length, 3);
+    assert.equal(record.provider_attempts.length, 4);
     assert.equal(record.error, null);
   }
 );
@@ -1472,7 +1472,7 @@ await withServer(
       assert.equal(searchResult.code, 0);
       output = parseJson(searchResult.stdout);
       assert.equal(output.answer.text, "Cooldown answer.");
-      assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0 });
+      assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0, exa: 0 });
       const skipped = output.diagnostics.provider_attempts.find((attempt) => attempt.provider === "firecrawl");
       assert.equal(skipped.skipped, true);
       assert.match(skipped.error, /cooldown until/);

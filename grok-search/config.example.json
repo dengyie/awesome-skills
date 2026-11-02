@@ -26,6 +26,8 @@
   "tavilyProxyTimeoutMs": 12000,
   "firecrawlApiKey": "",
   "firecrawlApiUrl": "https://api.firecrawl.dev/v2",
+  "exaApiKey": "",
+  "exaApiUrl": "https://api.exa.ai",
   "outputDir": "",
   "stateDir": "",
   "runLog": true
