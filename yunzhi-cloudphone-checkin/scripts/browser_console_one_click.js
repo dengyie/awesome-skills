@@ -297,16 +297,31 @@
 
     // 3. 查询待开通权益卡与云机
     console.log("%c[3/4] 正在查询待生效卡片与云机设备...", STYLE_INFO);
-    let benRes = await api("POST", "/api/benefit/user/benefit", { benefitConfigId: BENEFIT_ID });
-    let items = (benRes.data && benRes.data.userItems) || [];
-    let devices = (benRes.data && benRes.data.cloudDevices) || [];
+    let benRes = null;
+    let items = [];
+    let devices = [];
+    const maxRetries = claimable ? 4 : 1;
 
-    // 若刚领了弹窗，稍等重试一次刷新入账
-    if (items.length === 0 && claimable) {
-      await new Promise((r) => setTimeout(r, 2000));
-      benRes = await api("POST", "/api/benefit/user/benefit", { benefitConfigId: BENEFIT_ID });
-      items = (benRes.data && benRes.data.userItems) || [];
-      devices = (benRes.data && benRes.data.cloudDevices) || [];
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) {
+        console.log(`%c⏳ 权益卡可能异步入账中，等待 1.5s 重试 (${attempt}/${maxRetries - 1})...`, STYLE_INFO);
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+      try {
+        benRes = await api("POST", "/api/benefit/user/benefit", { benefitConfigId: BENEFIT_ID });
+        if (benRes.code === 0 || benRes.code === 200) {
+          items = (benRes.data && benRes.data.userItems) || [];
+          devices = (benRes.data && benRes.data.cloudDevices) || [];
+          if (items.length > 0) break;
+        } else if (claimable && (String(benRes.message || "").includes("不存在") || String(benRes.message || "").includes("过期"))) {
+          continue;
+        } else {
+          console.log(`%c⚠️ 权益查询提示: ${benRes.message || "未能查询到权益"}`, STYLE_WARN);
+          break;
+        }
+      } catch (err) {
+        console.log(`%c⚠️ 接口异常: ${err.message || err}`, STYLE_WARN);
+      }
     }
 
     if (items.length === 0) {

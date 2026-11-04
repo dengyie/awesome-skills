@@ -563,26 +563,37 @@ async def run_checkin_flow(client: YunzhiClient) -> Dict[str, Any]:
     async def fetch_benefit():
         return await client.request("POST", "/api/benefit/user/benefit", {"benefitConfigId": YUNZHI_BENEFIT_ID})
 
-    b_data, b_err = await fetch_benefit()
+    is_fresh_claimed = "成功" in popup_note
+    if is_fresh_claimed:
+        log("刚领取弹窗福利，等待 1.5s 供后台异步入账...", "INFO", client.json_mode)
+        await asyncio.sleep(1.5)
+
+    max_benefit_retries = 4 if is_fresh_claimed else 1
+    b_data = {}
+    b_err = None
+    user_items = []
+    devices = []
+
+    for attempt in range(max_benefit_retries):
+        if attempt > 0:
+            log(f"权益卡可能异步入账中，等待 1.5s 重试 ({attempt}/{max_benefit_retries - 1})...", "INFO", client.json_mode)
+            await asyncio.sleep(1.5)
+        b_data_curr, b_err_curr = await fetch_benefit()
+        if b_err_curr:
+            b_err = b_err_curr
+            if is_fresh_claimed and any(kw in b_err_curr for kw in ("不存在", "过期", "未找到")):
+                continue
+            break
+        b_err = None
+        b_data = b_data_curr
+        user_items = b_data.get("userItems") or []
+        devices = b_data.get("cloudDevices") or []
+        if user_items:
+            break
+
     if b_err:
         result["detail"] = f"权益卡查询失败: {b_err}"
         return result
-
-    user_items = b_data.get("userItems") or []
-    devices = b_data.get("cloudDevices") or []
-
-    # 刚领取弹窗但可能后台异步入账，重试 3 次缓冲
-    if not user_items and "领取成功" in popup_note:
-        log("权益卡可能异步入账中，正在缓冲查询...", "INFO", client.json_mode)
-        for i in range(3):
-            await asyncio.sleep(1.5)
-            b_data_retry, b_err_retry = await fetch_benefit()
-            if not b_err_retry:
-                b_data = b_data_retry
-                user_items = b_data.get("userItems") or []
-                devices = b_data.get("cloudDevices") or devices
-                if user_items:
-                    break
 
     # 无待开通权益卡时的结语判定
     if not user_items:
