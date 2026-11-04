@@ -89,6 +89,7 @@ export function resolveSearchOptions(args, config) {
     xVideoUnderstanding: args.xVideoUnderstanding ?? config.responsesXVideoUnderstanding,
     openRouterEngine: normalizeOpenRouterSearchEngine(args.responsesOpenRouterEngine || config.responsesOpenRouterEngine),
     instructions: args.instructions || "",
+    days: args.days ?? null,
   };
 }
 
@@ -142,6 +143,7 @@ export function responsesDiagnosticOptions(searchOptions) {
       : {}),
     responses_openrouter_engine: searchOptions.openRouterEngine,
     ...(searchOptions.instructions ? { instructions_chars: searchOptions.instructions.length } : {}),
+    ...(searchOptions.days != null ? { days: searchOptions.days } : {}),
   };
 }
 

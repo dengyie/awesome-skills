@@ -591,10 +591,33 @@ await withServer(
   }
 );
 
+// --days option propagates to diagnostics.options.days
+await withServer(
+  (req, res) => {
+    readJson(req, (_body) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(responsesPayload()));
+    });
+  },
+  async (_server, port) => {
+    const searchDaysResult = await runNode(
+      ["scripts/search.js", "--no-extra", "--days", "7", "mock query"],
+      baseGrokEnv(port)
+    );
+    assert.equal(searchDaysResult.code, 0);
+    assert.equal(parseJson(searchDaysResult.stdout).diagnostics.options.days, 7);
+  }
+);
+
 // Bad arguments fail at the argument stage (exit 2) before any config or output work.
 for (const [args, code, exitCode] of [
   [["--source", "twitter", "mock query"], "SEARCH_SOURCE_INVALID", 2],
   [["--source=", "mock query"], "ARGUMENT_ERROR", 2],
+  [["--days", "mock query"], "ARGUMENT_ERROR", 2],
+  [["--days", "0", "mock query"], "ARGUMENT_ERROR", 2],
+  [["--days", "-1", "mock query"], "ARGUMENT_ERROR", 2],
+  [["--days", "abc", "mock query"], "ARGUMENT_ERROR", 2],
+  [["--days=", "mock query"], "ARGUMENT_ERROR", 2],
   [["--x-from-date", "08/01/2026", "mock query"], "ARGUMENT_ERROR", 2],
   // Date.parse rolls this over to Mar 2 rather than rejecting it.
   [["--x-from-date", "2026-02-30", "mock query"], "ARGUMENT_ERROR", 2],

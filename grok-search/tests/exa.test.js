@@ -99,6 +99,7 @@ await withServer(
       assert.deepEqual(body.contents, { highlights: true });
       assert.deepEqual(body.includeDomains, ["github.com"]);
       assert.deepEqual(body.excludeDomains, ["medium.com"]);
+      assert.equal("startPublishedDate" in body, false);
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ results: [] }));
     });
@@ -107,6 +108,25 @@ await withServer(
     await exaSearch("node lts version", 2, { ...baseConfig, exaApiUrl: base }, {
       allowedDomains: ["github.com"],
       excludedDomains: ["medium.com"],
+    });
+  }
+);
+
+await withServer(
+  (req, res) => {
+    readBody(req, (body) => {
+      assert.equal(typeof body.startPublishedDate, "string");
+      const then = Date.parse(body.startPublishedDate);
+      assert.equal(Number.isNaN(then), false);
+      const diffDays = (Date.now() - then) / 86_400_000;
+      assert.ok(diffDays >= 6.99 && diffDays <= 7.01);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ results: [] }));
+    });
+  },
+  async (base) => {
+    await exaSearch("node lts version", 2, { ...baseConfig, exaApiUrl: base }, {
+      days: 7,
     });
   }
 );

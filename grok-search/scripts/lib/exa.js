@@ -49,6 +49,8 @@ export async function exaSearch(query, limit, config, filters = {}) {
 
   const endpoint = `${config.exaApiUrl.replace(/\/+$/, "")}/search`;
   const { allowed, excluded } = domainFilters(filters);
+  const days = Number.isFinite(filters?.days) && filters.days > 0 ? filters.days : null;
+  const startPublishedDate = days != null ? new Date(Date.now() - days * 86_400_000).toISOString() : undefined;
   const startedAt = Date.now();
   const stats = { requests: 0 };
   try {
@@ -61,6 +63,7 @@ export async function exaSearch(query, limit, config, filters = {}) {
         // would kill the whole channel for the run, so cap at the documented maximum.
         numResults: Math.min(limit, 100),
         contents: { highlights: true },
+        ...(startPublishedDate ? { startPublishedDate } : {}),
         // includeDomains/excludeDomains accept hostnames, host+path and *.wildcard — the same
         // filter pair Tavily/Firecrawl get.
         ...(allowed.length ? { includeDomains: allowed } : {}),

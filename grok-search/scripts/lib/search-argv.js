@@ -4,7 +4,7 @@ import { normalizeSearchSource } from "./config.js";
 const DEFAULT_MAX_CHARS = 30000;
 
 export function usage() {
-  return `Usage: ./scripts/search.js [--source web|x|both] [--instructions TEXT] [--platform NAME] [--model MODEL] [--extra N|--no-extra] [--source-chars N] [--max-sources N] [--full-sources] [--max-chars N] [--deadline SECONDS] <query>
+  return `Usage: ./scripts/search.js [--source web|x|both] [--instructions TEXT] [--platform NAME] [--model MODEL] [--extra N|--no-extra] [--days N] [--source-chars N] [--max-sources N] [--full-sources] [--max-chars N] [--deadline SECONDS] <query>
 
 Run a Responses-compatible Grok/OpenRouter search; every configured extra channel (Tavily/Firecrawl/Exa) searches the full --extra target and the union is deduped.
 
@@ -21,6 +21,7 @@ Search sources:
   --source web         Grok web_search only (default)
   --source x           Grok x_search only; search X posts, profiles, and threads
   --source both        Grok decides between web_search and x_search
+  --days N             Restrict extra web search results to the last N days (Tavily/Exa)
   --x-from-date DATE   Restrict X posts to on/after DATE (YYYY-MM-DD); implies X search
   --x-to-date DATE     Restrict X posts to on/before DATE (YYYY-MM-DD); implies X search
   --x-images           Analyze images in X posts; billed as extra tokens
@@ -90,6 +91,7 @@ export function parseArgs(argv) {
   let extraMode = "auto";
   let extraSeen = false;
   let noExtraSeen = false;
+  let days = null;
   let sourceChars = null;
   let maxSources = null;
   let fullSources = false;
@@ -273,6 +275,14 @@ export function parseArgs(argv) {
       extraMode = "off";
       continue;
     }
+    if (arg === "--days") {
+      days = parseIntOption("--days", args.shift(), { min: 1 });
+      continue;
+    }
+    if (arg?.startsWith("--days=")) {
+      days = parseIntOption("--days", arg.slice("--days=".length), { min: 1 });
+      continue;
+    }
     if (arg === "--source-chars") {
       sourceChars = parseIntOption("--source-chars", args.shift(), { min: 0 });
       continue;
@@ -326,6 +336,7 @@ export function parseArgs(argv) {
     model,
     extra,
     extraMode,
+    days,
     sourceChars,
     maxSources,
     fullSources,

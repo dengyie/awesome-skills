@@ -20,6 +20,7 @@ Run the fewest commands that answer the question; run independent sub-questions 
 
 ```bash
 ./scripts/search.js "plain keywords"
+./scripts/search.js --days 7 "plain keywords"
 ./scripts/search.js --instructions "what to return, language, what to leave out" "plain keywords"
 ./scripts/search.js --responses-allowed-domains github.com "plain keywords"
 ./scripts/search.js --source x --x-from-date 2026-07-01 "what people say about ..."

@@ -87,6 +87,7 @@ async function publicResult(args, config) {
     extraSources(args.query, extraOptions.limit, config, {
       allowedDomains: searchOptions.allowedDomains,
       excludedDomains: searchOptions.excludedDomains,
+      days: searchOptions.days,
     }),
   ]);
 
