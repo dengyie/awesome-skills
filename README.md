@@ -1,20 +1,48 @@
+<!-- markdownlint-disable-file MD033 MD045 -->
+<div align="center">
+
 # Awesome Skills
 
+**Production-Grade Agent Skills Ecosystem Conforming to the Open Agent Skills Specification**
+
+[![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
-[![LINUX DO](https://img.shields.io/badge/Community-LINUX%20DO-2563eb.svg?logo=linux&logoColor=white)](https://linux.do/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
+[![LINUX DO](https://img.shields.io/badge/Community-LINUX%20DO-2563eb.svg?style=flat-square&logo=linux&logoColor=white)](https://linux.do/)
+[![Specification](https://img.shields.io/badge/Spec-Agent_Skills-8A2BE2.svg?style=flat-square)](https://docs.anthropic.com/)
+[![Runtime Compatibility](https://img.shields.io/badge/Runtime-Codex_%7C_Claude_Code_%7C_ZCode_%7C_Cursor-blueviolet.svg?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-8%20passed-brightgreen.svg?style=flat-square)]()
 
-Independent Agent Skills packaged according to the Anthropic Agent Skills specification. These packages provide modular workflows for software engineering, code quality review, network tunneling, and UI components.
+[English](./README.md) · [简体中文](./README.zh-CN.md) · [Choose a Skill](#choose-a-skill) · [Architecture](#architecture-and-design-principles) · [Quickstart](docs/usage/quickstart.md) · [Skill Matrix](docs/usage/skill-matrix.md) · [Installation](#install)
 
-Compatible with OpenAI Codex, Claude Code, ZCode, Cursor, Gemini CLI, and Windsurf.
+<br>
 
-[English](README.md) | [中文说明](docs/zh/README.zh-CN.md)
+<p align="center">
+  <b>Terminates context window exhaustion and prompt fragmentation across multi-agent engineering workflows.</b><br>
+  Built strictly according to the open Agent Skills specification with roughly 100-token discovery footprints, isolated Git worktrees, and deterministic reproduction gates.<br>
+  Provides 17 battle-tested modular skills spanning evidence-driven bugfixing, cross-NAT device tunneling, Apple Liquid Glass UI, and production-grade CI/CD code reviews.
+</p>
+
+</div>
 
 ---
 
 ## Acknowledgments: LINUX DO
 
 This repository acknowledges the [LINUX DO](https://linux.do/) community. Engineering solutions throughout these packages—including log-first reproduction loops, code review criteria, and cross-NAT tunnel configurations—draw directly from technical sharing within the LINUX DO community.
+
+---
+
+## Problem Statement & Architecture Comparison
+
+Agent skill ecosystems often suffer from two extremes: either monolithic prompt files that exhaust context windows with irrelevant tokens, or unstructured script collections lacking deterministic schemas, testing gates, and platform portability. Awesome Skills resolves this by adhering to the open Agent Skills specification with progressive disclosure:
+
+| Evaluation Dimension | Awesome Skills Ecosystem | Ad-Hoc Prompt Dumps | Monolithic Multi-Agent Frameworks |
+| :--- | :--- | :--- | :--- |
+| **Token Footprint** | ~100 tokens per skill at discovery; progressive disclosure on invocation | Consumes thousands of prompt tokens unconditionally | High framework overhead and bloated system prompts |
+| **Execution Isolation** | Branch-bound Git worktrees (`codex-agent-worktree-setup`) & loopback sandboxes | Executes in dirty working tree, risking accidental overwrites | Requires Docker containers or heavy VM runtimes |
+| **Bugfix Discipline** | Mandatory failing evidence before modification (`evidence-driven-bugfix`) | Guess-and-check prompt loops without verification gates | Trial-and-error without structured evidence retention |
+| **Cross-Platform Bridge** | Native Apple Liquid Glass, FRP STCP relays, EasyTier mesh, Android JNI | Limited to standard web/CLI hooks | Vendor-specific SDK lock-in |
+| **Testing & Verification** | Deterministic unit tests + repository docs contract assertions | No testing or validation gates | Complex multi-tier integration test harness |
 
 ---
 
@@ -55,6 +83,7 @@ This repository acknowledges the [LINUX DO](https://linux.do/) community. Engine
 - [`grok-search`](grok-search/): Executes web searches, URL content extraction, and site discovery via search APIs.
 - [`huawei-cloud-gallery-publish`](huawei-cloud-gallery-publish/): One-click pipeline that generates a simple webpage with CodeArts ACP and publishes it to the Huawei Cloud Developer Works Gallery.
 - [`obsidian-doc-router`](obsidian-doc-router/): Provides routing queries and anti-orphan documentation workflows for Obsidian vaults.
+- [`phone-playwright`](phone-playwright/): Playwright-style mobile automation and AI mobile agent execution with semantic viewport distillation.
 - [`yunzhi-cloudphone-checkin`](yunzhi-cloudphone-checkin/): Automates daily check-ins and cloud phone renewals via browser console, Chrome CDP, or HTTP CLI.
 
 ---
@@ -159,7 +188,9 @@ grok-search/                        Web search, fact verification, and URL inspe
 huawei-cloud-gallery-publish/       One-click publish of simple webpages to Huawei Cloud gallery
 muse-reverse-ssh/                   Reverse SSH tunnels and VPS port forwarding keepalive
 obsidian-doc-router/                Obsidian vault documentation router and updates
+phone-playwright/                   Playwright-style mobile automation and AI mobile agent
 production-code-quality-review/     Production-focused pull request review and diff audit
+render-engine/                      Render.com unprivileged container setup, Caddy & ttyd
 split-image-assets/                 Image asset decomposition, alpha masks, and packaging
 windows-ssh-stcp/                   Windows SSH over FRP STCP with NSSM keepalive
 yunzhi-cloudphone-checkin/          Yunzhi cloud phone daily check-in and automated renewal

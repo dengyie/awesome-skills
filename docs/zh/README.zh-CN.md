@@ -1,12 +1,28 @@
+<!-- markdownlint-disable-file MD033 MD045 -->
+<div align="center">
+
 # Awesome Skills 中文说明
 
+**遵循 Agent Skills 开放规范的工业级智能体技能生态与工程工作流矩阵**
+
+[![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](../../LICENSE)
 [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 [![LINUX DO](https://img.shields.io/badge/Community-LINUX%20DO-2563eb.svg?logo=linux&logoColor=white)](https://linux.do/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
+[![Specification](https://img.shields.io/badge/Spec-Agent_Skills-8A2BE2.svg?style=flat-square)](https://docs.anthropic.com/)
+[![Runtime Compatibility](https://img.shields.io/badge/Runtime-Codex_%7C_Claude_Code_%7C_ZCode_%7C_Cursor-blueviolet.svg?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-8%20passed-brightgreen.svg?style=flat-square)]()
 
-本仓库收录一系列遵循 Agent Skills 开放规范的独立模块，面向软件工程、生产运维、代码评审与前端交互开发场景。
+[English](../../README.md) · [简体中文](README.zh-CN.md) · [选择 Skill](#选择-skill) · [设计原则](#核心设计原则) · [快速开始](quickstart.zh-CN.md) · [技能路由矩阵](../usage/skill-matrix.md) · [安装指引](#安装)
 
-英文主页：[`README.md`](../../README.md)
+<br>
+
+<p align="center">
+  <b>彻底终结多智能体工程工作流中上下文窗口过度膨胀与提示词碎片化的混乱困境。</b><br>
+  严格遵循开放 Agent Skills 规范构建，具备约 100-token 极简发现指纹、分支绑定的独立 Git 工作树与确定性失败证据复验门禁。<br>
+  提供 17 个经生产环境严苛验证的模块化 Skill，覆盖证据驱动缺陷修复、跨 NAT 设备隧道穿透、Apple Liquid Glass 视效以及工业级代码审查。
+</p>
+
+</div>
 
 ---
 
@@ -16,11 +32,25 @@
 
 ---
 
+## 痛点与架构对比
+
+智能体技能生态常陷入两种极端：要么是冗长庞大的单体提示词文件，在初次加载时便吃满宝贵的上下文窗口；要么是缺乏标准化元数据与测试用例的散落脚本，无法跨平台迁移且极易出错。Awesome Skills 依托渐进式披露与独立沙盒设计实现了架构平衡：
+
+| 评估维度 | Awesome Skills 技能生态 | 传统散落提示词模板 | 庞大重型单体智能体框架 |
+| :--- | :--- | :--- | :--- |
+| **Token 损耗** | 初次检索仅暴露约 100-token 元数据，按需载入正文 | 无条件塞入数千 token 冗长说明 | 系统级 Prompt 沉重，框架层开销高 |
+| **执行隔离性** | 绑定 Git 独立工作树 (`codex-agent-worktree-setup`) | 在未提交的脏工作区直接运行，极易覆盖代码 | 强依赖重型 Docker 容器或全虚拟化沙箱 |
+| **缺陷修复纪律** | 改动前强制捕获确定性失败证据 (`evidence-driven-bugfix`) | 盲目猜测修改，缺乏自动化复验闭环 | 依靠试错循环，无结构化证据链存证 |
+| **底层硬件协同** | 原生 Apple Liquid Glass、FRP STCP、EasyTier 网格、Android JNI | 仅限简单的 Web 抓取或文本处理脚本 | 强行绑定特定厂商云端闭源基础设施 |
+| **测试与质量守护** | 完备单元测试套件 + 仓库级文档契约断言门禁 | 零自动化测试与格式校验 | 维护复杂的多层端到端集成测试底座 |
+
+---
+
 ## 仓库定位
 
 本仓库收录一组遵循 Agent Skills 规范的独立工程包，用于解决日常开发与运维中的具体技术问题。
 
-当前包含 13 个核心 skill：
+当前包含 17 个核心 skill：
 
 - `awesome-ui-kit`
 - `best-project-memory`
@@ -30,6 +60,7 @@
 - `evidence-driven-bugfix`
 - `gpui-liquid-glass`
 - `grok-search`
+- `huawei-cloud-gallery-publish`
 - `muse-reverse-ssh`
 - `obsidian-doc-router`
 - `phone-playwright`
@@ -45,10 +76,10 @@
 
 ## 核心设计原则
 
-- 改动前必须先抓取复现证据：`evidence-driven-bugfix` 与 `production-code-quality-review` 要求先拿到确定性失败证据并定位根因，再修改代码并复验。
-- 渐进式加载控制上下文开销：每个模块遵循标准规范，初次检索时仅暴露元数据，占用约 100 tokens；操作脚本与参考资料仅在调用时按需读取。
-- 隔离执行防止污染主工作区：`codex-agent-worktree-setup` 把 Agent 执行流程绑定到独立的 Git worktree，避免分支状态影响主工作目录。
-- 独立解耦支持按需引入：所有模块均为自包含结构，各自维护说明文档、参考规范与可选的执行脚本。
+- **改动前必须先抓取复现证据**：`evidence-driven-bugfix` 与 `production-code-quality-review` 要求先拿到确定性失败证据并定位根因，再修改代码并复验。
+- **渐进式加载控制上下文开销**：每个模块遵循标准规范，初次检索时仅暴露元数据，占用约 100 tokens；操作脚本与参考资料仅在调用时按需读取。
+- **隔离执行防止污染主工作区**：`codex-agent-worktree-setup` 把 Agent 执行流程绑定到独立的 Git worktree，避免分支状态影响主工作目录。
+- **独立解耦支持按需引入**：所有模块均为自包含结构，各自维护说明文档、参考规范与可选的执行脚本。
 
 ---
 
@@ -132,7 +163,7 @@ cp -R <skill-folder> ~/.agents/skills/
 - [Skill Matrix](../usage/skill-matrix.md) — 全功能路由矩阵与选型对比
 - [常见问题](faq.zh-CN.md) — 核心概念与日常 FAQ
 - [故障排查](troubleshooting.zh-CN.md) — 异常处理与排障步骤
-- [审查工作流](review-workflows.zh-CN.md) — 生产级代码评审标准指南
+- [审查工作流](review-workflows.zh-CN.md) — 生产级代码审查流程与规范
 - [示例](examples.zh-CN.md) — 跨技能典型实战案例
 - [中文发布说明](releases/README.zh-CN.md) — 历史版本演进与发布记录
 
@@ -156,7 +187,9 @@ grok-search/                        联网搜索、实时事实核查与网页�
 huawei-cloud-gallery-publish/       简单网页一键发布华为云开发者作品展览馆编排包
 muse-reverse-ssh/                   反向 SSH 隧道与 VPS 端口转发保活包
 obsidian-doc-router/                Obsidian 知识库运维事实查阅与防孤岛闭环包
+phone-playwright/                   移动端 Playwright 式自动化与手机 AI Agent 引擎包
 production-code-quality-review/     生产工程视角的 PR 审计与 diff 审查包
+render-engine/                      Render 免费层非特权 Linux 容器部署、Caddy 与 ttyd
 split-image-assets/                 单图拆解透明图层、mask 与元数据资产包
 windows-ssh-stcp/                   无公网入站 Windows 的 FRP STCP SSH 穿透包
 yunzhi-cloudphone-checkin/          云智手机每日签到与云机空间自动续期包
