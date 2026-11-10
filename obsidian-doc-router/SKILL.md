@@ -79,8 +79,8 @@ description: >
 ### 1. 检索执行动作
 - **脚本检索（首选）**：
   在 vault 根执行 `python3 .local/bin/doc-lookup "<业务词> <动词>"`（例如 `doc-lookup "公益站 签到"`、`doc-lookup "CPA 升级"`、`doc-lookup "反代 最佳实践"`）。
-  *注：`doc-lookup` 会按词全命中匹配领域、触发词、权威入口及速查列，命中即停。*
-- **路由直读**：若脚本受限，直接 **Read** `00.MOC/AI-DOC-ROUTER.md`。
+  *注：`doc-lookup` 自动合并检索两层路由——主表（高频领域压缩速查）+ `00.MOC/routers/` 六个领域子路由（全量逐字行），按词全命中匹配领域、触发词、权威入口及速查列，命中即停。*
+- **路由直读**：若脚本受限，先 **Read** `00.MOC/AI-DOC-ROUTER.md`（主表）；未命中再查 `00.MOC/routers/*.md`（ai-gateway / vps-network / infra-services / projects / knowledge-docs / accounts）。
 - **模式下钻**：若涉及架构选型或复杂流程，进一步 Read 入口链接的主手册（`Note/Infra/*.md`）或经验库（`Note/AI/经验/*.md`）。
 
 ### 2. 知识库典型成熟设计模式矩阵（直接对齐，严禁重造）
@@ -109,8 +109,8 @@ description: >
 5. **归因输出**：回答生产事实时写明依据笔记名（如「据 [[公益站签到运维手册]]」）。
 
 ### 路由未命中 Fallback 策略
-若 `AI-DOC-ROUTER.md` 未命中：
-1. 检查 `00.MOC/` 目录下相关索引（如 `技术笔记索引.md`、`项目索引.md`）。
+若主表与六个子路由均未命中：
+1. 检查 `00.MOC/` 目录下相关索引（如 `技术笔记索引.md`、`项目索引.md`），并跑 `python3 .local/bin/doc-lookup --list` 浏览全量领域清单。
 2. 若仅在非 Canonical/历史排查笔记中搜到片段，**必须向用户声明**：「此信息仅在非权威历史笔记 [[xxx]] 中提及，生产可能已变更，建议核验」。
 3. 协助用户将确认后的事实**就地登记**进 `AI-DOC-ROUTER.md`。
 
@@ -127,21 +127,26 @@ description: >
 - **项目开发文档**：`Note/Project/<项目名>/<项目名> 开发文档.md`
 - **账号 / 资产清单**：`Note/Accounts/`（私有敏感；Agent 只登记结构与路径，不回显敏感密钥）
 
-### 2. 标准 Frontmatter 元数据
+### 2. 标准 Frontmatter 元数据（治理三元组必填）
 ```yaml
 ---
 title: <文档标题>
 tags:
   - <主分类，如 Infra/Deploy/Ops/BestPractice>
   - <服务或领域名>
-  - canonical  # 若为权威主手册/设计模式
-status: canonical # 或 active / draft
+status: canonical # legacy 兼容键，保留但不再新增
 updated: YYYY-MM-DD
+doc_type: project-index   # project-index | ops-runbook | architecture | development | decision | research | credential | incident | archive
+authority: canonical      # canonical（权威）| supporting（辅助）| historical（历史）
+lifecycle: active         # active | draft | deprecated | archived
+canonical_for: "<scope 内唯一标识>"  # 仅 authority: canonical 必填；同 (canonical_for, doc_type, scope) 全库唯一
+scope: vault              # 仅 authority: canonical 必填
 aliases:
   - <别名1>
   - <缩写>
 ---
 ```
+*元数据三元组 `doc_type`/`authority`/`lifecycle` 缺一即被 `scan-doc-governance --strict` 判 FAIL；`canonical_for` 与 `authority: supporting/historical` 同现属矛盾。*
 
 ### 3. 文档主体标准骨架
 ```markdown
@@ -165,16 +170,21 @@ aliases:
 ```
 
 ### 4. 双向挂载（核心防丢防孤岛步骤）
-1. **登记路由**：在 `00.MOC/AI-DOC-ROUTER.md` 的表格中追加或更新对应的一行（触发词 ≤15 个，速查 ≤200 字）。
+1. **登记路由（两层）**：
+   - 全量行（完整触发词与下钻速查）写进对应领域子路由 `00.MOC/routers/<领域>.md`；
+   - 高频领域另在主表 `00.MOC/AI-DOC-ROUTER.md` 加压缩速查行（硬预算：主表 ≤60 行、整页 ≤40000 B、单行触发词 ≤15、速查 ≤200 字，`scan-doc-governance --strict` 强制）；
+   - **长变更流水与日期结论写 `00.MOC/生产变更速记.md`，严禁写回主表撑爆预算**。
 2. **挂入主题 MOC**：在 `00.MOC/` 下对应的 `项目索引.md` / `技术笔记索引.md` 挂入双链。
 3. **原地更新原则**：已有对应 Canonical 文档时，严禁另起新孤儿文件，直接在原文档就地维护并更新 `updated` 日期。
 
 ### 5. 校验闭环
 在 vault 根执行健康检查：
 ```bash
-python3 .local/bin/scan-stale-docs
+python3 .local/bin/scan-doc-governance --strict            # 路由预算/MOC断链/元数据三元组/速读契约
+python3 .local/bin/scan-stale-docs --strict-status --strict-tldr
+PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s .local/tests/doc_governance -t .local/tests/doc_governance
 ```
-确保无断链、无语法解析错误。
+确保无断链、无预算超限、无语法解析错误（三项均须 RESULT=OK / OK）。
 
 ---
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Doc Router"
+  short_description: "Router-first vault lookup and anti-orphan doc SOP"
+  default_prompt: "Use $obsidian-doc-router before any engineering or ops action: run the vault's doc-lookup two-tier router query for this task, align with the mature chain it points to, and after the work mount any new note into the sub-router and MOC per the anti-orphan SOP."
