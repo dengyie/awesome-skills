@@ -66,3 +66,30 @@ class SkillPackageTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class InstalledCopyDriftTests(unittest.TestCase):
+    """The five install points must carry the committed SKILL.md verbatim.
+
+    macOS-local paths; each check skips when the install point is absent
+    (e.g. running on another machine). YOLO copy lives inside the iCloud vault.
+    """
+
+    REPO_SKILL = ROOT / "obsidian-doc-router" / "SKILL.md"
+
+    def _installs(self):
+        vault = pathlib.Path.home() / "Library/Mobile Documents/iCloud~md~obsidian/Documents/obsidian-note"
+        return {
+            "~/.agents": pathlib.Path.home() / ".agents/skills/obsidian-doc-router/SKILL.md",
+            "~/.mirasim": pathlib.Path.home() / ".mirasim/skills/obsidian-doc-router/SKILL.md",
+            "vault YOLO": vault / "YOLO/skills/obsidian-doc-router/SKILL.md",
+        }
+
+    def test_install_copies_match_repo(self):
+        expected = self.REPO_SKILL.read_text(encoding="utf-8")
+        stale = []
+        for name, path in self._installs().items():
+            if not path.exists():
+                continue  # not this machine / not installed yet
+            if path.read_text(encoding="utf-8") != expected:
+                stale.append(name)
+        self.assertEqual(stale, [], f"drifted install copies (re-run cp sync): {stale}")
