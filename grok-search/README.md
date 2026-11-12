@@ -20,9 +20,9 @@
 
 ```bash
 npm install
-./scripts/search.js "latest Node.js LTS"
-./scripts/fetch.js https://example.com
-./scripts/map.js https://docs.example.com --limit 20
+node scripts/search.js "latest Node.js LTS"
+node scripts/fetch.js https://example.com
+node scripts/map.js https://docs.example.com --limit 20
 ```
 
 ## 在 pi 中使用（示例）
@@ -32,9 +32,9 @@ npm install
 示例命令仍然是直接运行脚本：
 
 ```bash
-./scripts/search.js "latest Node.js LTS"
-./scripts/fetch.js https://example.com
-./scripts/map.js https://docs.example.com --limit 20
+node scripts/search.js "latest Node.js LTS"
+node scripts/fetch.js https://example.com
+node scripts/map.js https://docs.example.com --limit 20
 ```
 
 其他 agent harness 也可以采用同样方式：读取 `SKILL.md`，再按需运行 `scripts/search.js`、`scripts/fetch.js`、`scripts/map.js`。
@@ -219,18 +219,18 @@ OpenRouter 使用 `openrouter:web_search` server tool，不会给模型名追加
 ## Search
 
 ```bash
-./scripts/search.js "What changed in the latest Node.js LTS?"
-./scripts/search.js --instructions "只要官方 changelog 的原文和日期，找不到就说" "node lts changelog"
-./scripts/search.js --platform GitHub "pi coding agent search skill"
-./scripts/search.js --responses-allowed-domains github.com "pi coding agent search skill"
-./scripts/search.js --extra 10 "latest pi coding agent docs"
-./scripts/search.js --no-extra "query"
-./scripts/search.js --source-chars 200 "query"
-./scripts/search.js --max-sources 8 "query"
-./scripts/search.js --deadline 120 "query"
-./scripts/search.js --full-sources "debug provider raw"
-./scripts/search.js --responses-openrouter-engine exa "strict web-only query"
-./scripts/search.js --source x --responses-parallel-tool-calls false "query"   # 每 turn 一次工具调用，省费用
+node scripts/search.js "What changed in the latest Node.js LTS?"
+node scripts/search.js --instructions "只要官方 changelog 的原文和日期，找不到就说" "node lts changelog"
+node scripts/search.js --platform GitHub "pi coding agent search skill"
+node scripts/search.js --responses-allowed-domains github.com "pi coding agent search skill"
+node scripts/search.js --extra 10 "latest pi coding agent docs"
+node scripts/search.js --no-extra "query"
+node scripts/search.js --source-chars 200 "query"
+node scripts/search.js --max-sources 8 "query"
+node scripts/search.js --deadline 120 "query"
+node scripts/search.js --full-sources "debug provider raw"
+node scripts/search.js --responses-openrouter-engine exa "strict web-only query"
+node scripts/search.js --source x --responses-parallel-tool-calls false "query"   # 每 turn 一次工具调用，省费用
 ```
 
 `--instructions TEXT` 把"要什么"和"搜什么"分开：query 是 Tavily / Firecrawl 原样检索的关键词，指令只追加到发给 Grok 的 user message 末尾（system prompt 前缀不变，prompt cache 不受影响）；带指令时 query 前会加一行 `# Search query` 标题，否则短 query 会被当成时间上下文的一行而丢失（2026-09-08 实测 Grok 回答"未指定主题"）。`diagnostics.options.instructions_chars` 记录长度，运行记录保存全文；没有配置项默认值。
@@ -242,11 +242,11 @@ OpenRouter 使用 `openrouter:web_search` server tool，不会给模型名追加
 `--source` 选择挂载哪些 Grok 服务端工具，默认 `web`：
 
 ```bash
-./scripts/search.js --source x "X 上怎么评价 grok-4.6"          # 只查 X
-./scripts/search.js --source both "grok-4.6 发布后的反响"        # Grok 自行路由
-./scripts/search.js --source x --responses-allowed-x-handles xai,OpenAI "query"
-./scripts/search.js --source x --x-from-date 2026-08-01 --x-to-date 2026-08-16 "query"
-./scripts/search.js --source x --x-images "query"               # 分析帖子中的图片
+node scripts/search.js --source x "X 上怎么评价 grok-4.6"          # 只查 X
+node scripts/search.js --source both "grok-4.6 发布后的反响"        # Grok 自行路由
+node scripts/search.js --source x --responses-allowed-x-handles xai,OpenAI "query"
+node scripts/search.js --source x --x-from-date 2026-08-01 --x-to-date 2026-08-16 "query"
+node scripts/search.js --source x --x-images "query"               # 分析帖子中的图片
 ```
 
 - `x_search` 支持 handle allow/deny（互斥，各上限 20）、`--x-from-date` / `--x-to-date`（`YYYY-MM-DD`）、`--x-images` / `--x-videos`（默认关闭，按 token 额外计费；`--no-x-images` / `--no-x-videos` 可关掉配置里打开的开关）。
@@ -299,14 +299,14 @@ Source card 不再输出长 `description` 或 `content` 字段，只输出短 `s
 ## Fetch
 
 ```bash
-./scripts/fetch.js https://example.com
-./scripts/fetch.js --provider direct https://example.com
+node scripts/fetch.js https://example.com
+node scripts/fetch.js --provider direct https://example.com
 ```
 
 fetch 默认只返回 12,000 字符 preview。`--max-chars 50000` 应作为看过 preview 后的显式深读使用，不是常规默认。
 
 ```bash
-./scripts/fetch.js --max-chars 50000 https://example.com
+node scripts/fetch.js --max-chars 50000 https://example.com
 ```
 
 `--provider auto` 的 provider 顺序：
@@ -328,9 +328,9 @@ fetch 成功输出使用 `content.text`、`content.chars`、`content.original_ch
 ## Map
 
 ```bash
-./scripts/map.js https://docs.example.com --limit 20
-./scripts/map.js --provider direct https://docs.example.com
-./scripts/map.js https://docs.example.com --instructions "only API reference pages" --max-depth 2
+node scripts/map.js https://docs.example.com --limit 20
+node scripts/map.js --provider direct https://docs.example.com
+node scripts/map.js https://docs.example.com --instructions "only API reference pages" --max-depth 2
 ```
 
 `--provider auto` 的 provider 顺序：
@@ -369,8 +369,8 @@ map 成功输出使用 `urls` 表示发现的 URL。provider、response time、i
 不需要 key：
 
 ```bash
-./scripts/fetch.js --provider direct https://example.com
-./scripts/map.js --provider direct https://example.com --limit 5
+node scripts/fetch.js --provider direct https://example.com
+node scripts/map.js --provider direct https://example.com --limit 5
 node tests/sources.test.js
 node tests/proxy.test.js
 node tests/responses.test.js
@@ -385,7 +385,7 @@ node tests/argv.test.js
 ```bash
 export GROK_API_URL="https://your-openai-compatible-endpoint/v1"
 export GROK_API_KEY="your-key"
-./scripts/search.js "What changed in the latest Node.js LTS?"
+node scripts/search.js "What changed in the latest Node.js LTS?"
 ```
 
 ## 常见错误

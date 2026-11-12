@@ -11,9 +11,9 @@ npm test
 ## 无 Grok key
 
 ```bash
-./scripts/fetch.js --provider firecrawl https://example.com
-./scripts/fetch.js --provider direct https://example.com
-./scripts/map.js --provider direct https://example.com --limit 5
+node scripts/fetch.js --provider firecrawl https://example.com
+node scripts/fetch.js --provider direct https://example.com
+node scripts/map.js --provider direct https://example.com --limit 5
 ```
 
 第一条验证 Firecrawl Keyless；输出应含 `diagnostics.firecrawl_auth_mode: keyless`，`metadata.title` 非空，`diagnostics.run_path` 指向一份 `kind: "fetch"` 的运行记录。
@@ -21,8 +21,8 @@ npm test
 ### X 原帖（keyless）
 
 ```bash
-./scripts/fetch.js https://x.com/xai/status/2087942296721559607
-./scripts/fetch.js --provider firecrawl https://x.com/xai/status/2087942296721559607   # 约 30 credits
+node scripts/fetch.js https://x.com/xai/status/2087942296721559607
+node scripts/fetch.js --provider firecrawl https://x.com/xai/status/2087942296721559607   # 约 30 credits
 ```
 
 期望：第一条 `diagnostics.provider` 为 `direct`，`provider_attempts[0]` 带 `x_validated: true`，不消耗 Firecrawl credits；第二条 `credits_used >= 10` 且 `diagnostics.warnings` 里有成本提示，正文含 thread。
@@ -33,9 +33,9 @@ npm test
 cat > ~/.cache/grok-search/firecrawl-cooldown.json <<'EOF2'
 {"until":"2099-01-01T00:00:00.000Z","auth_mode":"keyless","reason":"credits","hit_at":"2026-09-08T00:00:00.000Z"}
 EOF2
-./scripts/fetch.js https://example.com
-./scripts/search.js "any query"
-./scripts/fetch.js --provider firecrawl https://example.com
+node scripts/fetch.js https://example.com
+node scripts/search.js "any query"
+node scripts/fetch.js --provider firecrawl https://example.com
 rm -f ~/.cache/grok-search/firecrawl-cooldown.json
 ```
 
@@ -49,8 +49,8 @@ export GROK_API_URL="https://api.x.ai/v1"
 export GROK_API_KEY="your-key"
 export GROK_MODEL="grok-4.20-multi-agent-0309"
 
-./scripts/search.js "latest xAI docs"
-./scripts/search.js --no-extra "only Grok Responses"
+node scripts/search.js "latest xAI docs"
+node scripts/search.js --no-extra "only Grok Responses"
 ```
 
 期望：
@@ -66,7 +66,7 @@ export GROK_MODEL="grok-4.20-multi-agent-0309"
 ### 域名限定
 
 ```bash
-./scripts/search.js --responses-allowed-domains github.com "pi coding agent search skill"
+node scripts/search.js --responses-allowed-domains github.com "pi coding agent search skill"
 ```
 
 期望：`diagnostics.options.extra_domain_filter` 为 `pushed`；`sources.items` 里 extra 结果 host 都在 github.com 内，若有域外结果则排在所有 `searched` 之后，且对应 provider attempt 的 `off_domain` 大于 0。
@@ -74,7 +74,7 @@ export GROK_MODEL="grok-4.20-multi-agent-0309"
 ### 研究指令
 
 ```bash
-./scripts/search.js --instructions "只要官方文档原文和日期，中文回答，找不到就明说" "codex context window"
+node scripts/search.js --instructions "只要官方文档原文和日期，中文回答，找不到就明说" "codex context window"
 ```
 
 期望：`answer.text` 为中文且不含配置建议；`diagnostics.options.instructions_chars` 等于指令长度；`raw_path` 记录里 `instructions` 为全文。
@@ -82,9 +82,9 @@ export GROK_MODEL="grok-4.20-multi-agent-0309"
 ## X 检索
 
 ```bash
-./scripts/search.js --source x --no-extra "X 上大家怎么评价 grok-4.6"
-./scripts/search.js --source both --responses-allowed-x-handles xai "latest xAI news"
-./scripts/search.js --source x --x-from-date 2026-08-01 --no-extra "query"
+node scripts/search.js --source x --no-extra "X 上大家怎么评价 grok-4.6"
+node scripts/search.js --source both --responses-allowed-x-handles xai "latest xAI news"
+node scripts/search.js --source x --x-from-date 2026-08-01 --no-extra "query"
 ```
 
 期望：
@@ -98,7 +98,7 @@ export GROK_MODEL="grok-4.20-multi-agent-0309"
 时间线题（同一话题存在 3 月与 8 月两种说法）：
 
 ```bash
-./scripts/search.js --source x --no-extra --x-from-date 2026-07-01 "codex 1M context availability"
+node scripts/search.js --source x --no-extra --x-from-date 2026-07-01 "codex 1M context availability"
 ```
 
 期望：结果里的帖子日期都不早于 2026-07-01；`answer.text` 对新旧说法分别标注日期，不把旧 issue 当现状。
@@ -106,17 +106,17 @@ export GROK_MODEL="grok-4.20-multi-agent-0309"
 错误路径：
 
 ```bash
-./scripts/search.js --source twitter "query"                        # SEARCH_SOURCE_INVALID，退出码 2
-./scripts/search.js --source web --x-from-date 2026-08-01 "query"   # SEARCH_SOURCE_CONFLICT
-./scripts/search.js --x-from-date 08/01/2026 "query"                # ARGUMENT_ERROR
-./scripts/search.js --x-from-date 2026-02-30 "query"                # ARGUMENT_ERROR（溢出日期不滚动）
+node scripts/search.js --source twitter "query"                        # SEARCH_SOURCE_INVALID，退出码 2
+node scripts/search.js --source web --x-from-date 2026-08-01 "query"   # SEARCH_SOURCE_CONFLICT
+node scripts/search.js --x-from-date 08/01/2026 "query"                # ARGUMENT_ERROR
+node scripts/search.js --x-from-date 2026-02-30 "query"                # ARGUMENT_ERROR（溢出日期不滚动）
 ```
 
 配置里已有 `responsesAllowedDomains` 时（命令行只能收紧）：
 
 ```bash
-./scripts/search.js --responses-allowed-domains 清单外域名 "query"   # RESPONSES_FILTER_FORBIDDEN
-./scripts/search.js --responses-excluded-domains 清单内全部域名 "query"  # RESPONSES_FILTER_EMPTY
+node scripts/search.js --responses-allowed-domains 清单外域名 "query"   # RESPONSES_FILTER_FORBIDDEN
+node scripts/search.js --responses-excluded-domains 清单内全部域名 "query"  # RESPONSES_FILTER_EMPTY
 ```
 
 ## OpenRouter
@@ -127,7 +127,7 @@ export GROK_API_URL="https://openrouter.ai/api/v1"
 export GROK_API_KEY="your-key"
 export GROK_MODEL="x-ai/grok-4.1-fast"
 
-./scripts/search.js --responses-openrouter-engine exa "latest OpenAI docs"
+node scripts/search.js --responses-openrouter-engine exa "latest OpenAI docs"
 ```
 
 期望 tool 为 `openrouter:web_search`，模型名没有自动 `:online`。
@@ -136,11 +136,11 @@ export GROK_MODEL="x-ai/grok-4.1-fast"
 
 ```bash
 export TAVILY_API_KEY="tvly-your-key"
-./scripts/search.js "latest pi coding agent docs"
-./scripts/search.js --extra 10 "latest pi coding agent docs"
+node scripts/search.js "latest pi coding agent docs"
+node scripts/search.js --extra 10 "latest pi coding agent docs"
 
 export FIRECRAWL_API_KEY="fc-your-key"
-./scripts/search.js "latest pi coding agent docs"
+node scripts/search.js "latest pi coding agent docs"
 ```
 
 默认 `extra=6` 时应分配 Tavily 3 / Firecrawl 3。移除 Firecrawl key 后仍应成功，auth mode 变为 `keyless`。
@@ -148,9 +148,9 @@ export FIRECRAWL_API_KEY="fc-your-key"
 ## Fetch 主备链
 
 ```bash
-./scripts/fetch.js https://example.com
-./scripts/fetch.js --provider firecrawl https://example.com
-./scripts/fetch.js --provider direct https://example.com
+node scripts/fetch.js https://example.com
+node scripts/fetch.js --provider firecrawl https://example.com
+node scripts/fetch.js --provider direct https://example.com
 ```
 
 配置 Tavily 时顺序为 Tavily → Firecrawl → Direct；未配置 Tavily 时 Firecrawl Keyless → Direct。

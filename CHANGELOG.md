@@ -8,6 +8,7 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 ### Changed
 
+- fixed `grok-search` Windows invocation: all documented command examples now call the scripts through `node` (`node scripts/search.js ...`) instead of executing the `.js` files directly, and `SKILL.md` plus `docs/usage/grok-search.md` carry an explicit warning that direct execution hands the file to Windows Script Host, which dies with a JScript compile error (`800A03F6 无效字符`) on the shebang line; normalized skill Markdown files to LF line endings so install copies stay byte-identical across Windows and macOS
 - fixed `huawei-cloud-gallery-publish` frontmatter YAML: wrapped `description` in double quotes so the inline `Triggers: ...` segment no longer breaks GitHub's frontmatter parser (mapping-values error at the `Triggers: ` colon)
 - hardened `cue-sandbox` for multi-instance fleet deployments: parameterized EasyTier overlay IP (`<CUE_OVERLAY>`) and instance name (`<CUE_INSTANCE_NAME>`) to prevent intra-mesh collision, parameterized India reverse-SSH fallback port (`<TUNNEL_REMOTE_PORT>`) with a standard systemd keepalive service template, expanded test suite credential scans to usage docs, and added root `pytest.ini` for reliable test collection
 - made `cue-sandbox` fully self-contained: removed all external vault/doc-lookup/canonical references, derive configuration solely from host probing and operator inputs, and forbid halting for external documentation

@@ -7,6 +7,8 @@ description: Use when the user explicitly asks to search the web, check latest/c
 
 Node scripts for web search, URL fetch and site mapping. Run `npm install` once. Run scripts from the grok-search root (the directory of this SKILL.md): `cd` there or use absolute paths.
 
+**Windows: always invoke the scripts through `node` (`node scripts/fetch.js ...`), never execute the `.js` files directly.** Running `./scripts/fetch.js` or `scripts\fetch.js` on Windows hands the file to Windows Script Host (JScript), which dies with `800A03F6 无效字符` on the shebang line.
+
 ## Choose The Script
 
 - URL given → `scripts/fetch.js`.
@@ -19,13 +21,13 @@ Run the fewest commands that answer the question; run independent sub-questions 
 ## Commands
 
 ```bash
-./scripts/search.js "plain keywords"
-./scripts/search.js --days 7 "plain keywords"
-./scripts/search.js --instructions "what to return, language, what to leave out" "plain keywords"
-./scripts/search.js --responses-allowed-domains github.com "plain keywords"
-./scripts/search.js --source x --x-from-date 2026-07-01 "what people say about ..."
-./scripts/fetch.js https://example.com        # --max-chars 50000 only for a deliberate deep read
-./scripts/map.js https://docs.example.com --limit 20
+node scripts/search.js "plain keywords"
+node scripts/search.js --days 7 "plain keywords"
+node scripts/search.js --instructions "what to return, language, what to leave out" "plain keywords"
+node scripts/search.js --responses-allowed-domains github.com "plain keywords"
+node scripts/search.js --source x --x-from-date 2026-07-01 "what people say about ..."
+node scripts/fetch.js https://example.com        # --max-chars 50000 only for a deliberate deep read
+node scripts/map.js https://docs.example.com --limit 20
 ```
 
 Query rules:

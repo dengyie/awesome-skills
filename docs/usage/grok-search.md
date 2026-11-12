@@ -43,10 +43,12 @@ Route by what the request already gives you:
 
 Run the fewest commands that answer the question. Do not chain map, fetch, and search by default. When sub-questions are independent, run the commands in parallel.
 
+On Windows, always invoke the scripts through `node` (`node scripts/fetch.js ...`). Executing the `.js` files directly hands them to Windows Script Host, which fails with a JScript compile error (`800A03F6`) on the shebang line.
+
 ```bash
-./scripts/search.js "latest Node.js LTS"
-./scripts/fetch.js https://example.com
-./scripts/map.js https://docs.example.com --limit 20
+node scripts/search.js "latest Node.js LTS"
+node scripts/fetch.js https://example.com
+node scripts/map.js https://docs.example.com --limit 20
 ```
 
 ## Reading Results

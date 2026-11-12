@@ -3,7 +3,7 @@
 `search.js` 的唯一生产搜索协议是 Responses API：
 
 ```bash
-./scripts/search.js "query"
+node scripts/search.js "query"
 ```
 
 它不支持 Chat Completions，也没有模式切换或 Chat fallback。
@@ -54,10 +54,10 @@
 | `both` | `web_search` + `x_search` | 由 Grok 自行路由 |
 
 ```bash
-./scripts/search.js --source x "X 上怎么评价 grok-4.6"
-./scripts/search.js --source both "grok-4.6 发布后的反响"
-./scripts/search.js --source x --responses-allowed-x-handles xai,elonmusk "query"
-./scripts/search.js --source x --x-from-date 2026-08-01 --x-to-date 2026-08-16 "query"
+node scripts/search.js --source x "X 上怎么评价 grok-4.6"
+node scripts/search.js --source both "grok-4.6 发布后的反响"
+node scripts/search.js --source x --responses-allowed-x-handles xai,elonmusk "query"
+node scripts/search.js --source x --x-from-date 2026-08-01 --x-to-date 2026-08-16 "query"
 ```
 
 `x_search` 的过滤参数放在 tool 对象上（不是 `filters`）：
@@ -109,7 +109,7 @@ auto | native | exa | firecrawl | parallel | perplexity
 ```
 
 ```bash
-./scripts/search.js --responses-openrouter-engine exa "query"
+node scripts/search.js --responses-openrouter-engine exa "query"
 ```
 
 模型名不会自动追加 `:online`。

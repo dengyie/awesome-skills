@@ -20,9 +20,9 @@ Install dependencies once, then run scripts from the project root:
 
 ```bash
 npm install
-./scripts/search.js "latest Node.js LTS"
-./scripts/fetch.js https://example.com
-./scripts/map.js https://docs.example.com --limit 20
+node scripts/search.js "latest Node.js LTS"
+node scripts/fetch.js https://example.com
+node scripts/map.js https://docs.example.com --limit 20
 ```
 
 ## Use With pi (Example)
@@ -32,9 +32,9 @@ Clone or copy this directory into your pi skills location, then enable the skill
 The commands are still direct script invocations:
 
 ```bash
-./scripts/search.js "latest Node.js LTS"
-./scripts/fetch.js https://example.com
-./scripts/map.js https://docs.example.com --limit 20
+node scripts/search.js "latest Node.js LTS"
+node scripts/fetch.js https://example.com
+node scripts/map.js https://docs.example.com --limit 20
 ```
 
 Other agent harnesses can use the same pattern: read `SKILL.md`, then run `scripts/search.js`, `scripts/fetch.js`, or `scripts/map.js` when needed.
@@ -226,18 +226,18 @@ On success, provider attempts, warnings, timestamps, and command options live un
 ## Search
 
 ```bash
-./scripts/search.js "What changed in the latest Node.js LTS?"
-./scripts/search.js --instructions "Quote the official changelog with dates; say so if not found" "node lts changelog"
-./scripts/search.js --platform GitHub "pi coding agent search skill"
-./scripts/search.js --responses-allowed-domains github.com "pi coding agent search skill"
-./scripts/search.js --extra 10 "latest pi coding agent docs"
-./scripts/search.js --no-extra "query"
-./scripts/search.js --source-chars 200 "query"
-./scripts/search.js --max-sources 8 "query"
-./scripts/search.js --deadline 120 "query"
-./scripts/search.js --full-sources "debug provider raw"
-./scripts/search.js --responses-openrouter-engine exa "strict web-only query"
-./scripts/search.js --source x --responses-parallel-tool-calls false "query"   # one tool call per turn, cheaper
+node scripts/search.js "What changed in the latest Node.js LTS?"
+node scripts/search.js --instructions "Quote the official changelog with dates; say so if not found" "node lts changelog"
+node scripts/search.js --platform GitHub "pi coding agent search skill"
+node scripts/search.js --responses-allowed-domains github.com "pi coding agent search skill"
+node scripts/search.js --extra 10 "latest pi coding agent docs"
+node scripts/search.js --no-extra "query"
+node scripts/search.js --source-chars 200 "query"
+node scripts/search.js --max-sources 8 "query"
+node scripts/search.js --deadline 120 "query"
+node scripts/search.js --full-sources "debug provider raw"
+node scripts/search.js --responses-openrouter-engine exa "strict web-only query"
+node scripts/search.js --source x --responses-parallel-tool-calls false "query"   # one tool call per turn, cheaper
 ```
 
 `--instructions TEXT` separates "what to return" from "what to search". The query is the keyword string Tavily and Firecrawl search verbatim; the instructions are appended to the user message sent to Grok only (the system-prompt prefix is unchanged, so prompt caching is unaffected). With instructions present the query gets a `# Search query` header, otherwise a short query can be read as a stray line of the time context (Grok answered "no topic was specified" in a 2026-09-08 test). `diagnostics.options.instructions_chars` records the length and the run record stores the text; there is no config default.
@@ -249,11 +249,11 @@ On success, provider attempts, warnings, timestamps, and command options live un
 `--source` selects which Grok server-side tools are attached. The default is `web`:
 
 ```bash
-./scripts/search.js --source x "what is X saying about grok-4.6"   # X only
-./scripts/search.js --source both "reaction to the grok-4.6 release" # Grok routes
-./scripts/search.js --source x --responses-allowed-x-handles xai,OpenAI "query"
-./scripts/search.js --source x --x-from-date 2026-08-01 --x-to-date 2026-08-16 "query"
-./scripts/search.js --source x --x-images "query"                  # analyze post images
+node scripts/search.js --source x "what is X saying about grok-4.6"   # X only
+node scripts/search.js --source both "reaction to the grok-4.6 release" # Grok routes
+node scripts/search.js --source x --responses-allowed-x-handles xai,OpenAI "query"
+node scripts/search.js --source x --x-from-date 2026-08-01 --x-to-date 2026-08-16 "query"
+node scripts/search.js --source x --x-images "query"                  # analyze post images
 ```
 
 - `x_search` supports handle allow/deny lists (mutually exclusive, max 20 each), `--x-from-date` / `--x-to-date` (`YYYY-MM-DD`), and `--x-images` / `--x-videos` (off by default, billed as extra tokens; `--no-x-images` / `--no-x-videos` turn off what the config enabled).
@@ -306,14 +306,14 @@ Source cards intentionally do not include long `description` or `content` fields
 ## Fetch
 
 ```bash
-./scripts/fetch.js https://example.com
-./scripts/fetch.js --provider direct https://example.com
+node scripts/fetch.js https://example.com
+node scripts/fetch.js --provider direct https://example.com
 ```
 
 Default fetch output is a 12,000-character preview. Use `--max-chars 50000` only for an explicit deep read after the preview is useful.
 
 ```bash
-./scripts/fetch.js --max-chars 50000 https://example.com
+node scripts/fetch.js --max-chars 50000 https://example.com
 ```
 
 Provider order for `--provider auto`:
@@ -335,9 +335,9 @@ Successful fetch output uses `content.text`, `content.chars`, `content.original_
 ## Map
 
 ```bash
-./scripts/map.js https://docs.example.com --limit 20
-./scripts/map.js --provider direct https://docs.example.com
-./scripts/map.js https://docs.example.com --instructions "only API reference pages" --max-depth 2
+node scripts/map.js https://docs.example.com --limit 20
+node scripts/map.js --provider direct https://docs.example.com
+node scripts/map.js https://docs.example.com --instructions "only API reference pages" --max-depth 2
 ```
 
 Provider order for `--provider auto`:
@@ -376,8 +376,8 @@ Read these paths only when the preview is not enough:
 No key required:
 
 ```bash
-./scripts/fetch.js --provider direct https://example.com
-./scripts/map.js --provider direct https://example.com --limit 5
+node scripts/fetch.js --provider direct https://example.com
+node scripts/map.js --provider direct https://example.com --limit 5
 node tests/sources.test.js
 node tests/proxy.test.js
 node tests/responses.test.js
@@ -392,7 +392,7 @@ Search requires Grok configuration:
 ```bash
 export GROK_API_URL="https://your-openai-compatible-endpoint/v1"
 export GROK_API_KEY="your-key"
-./scripts/search.js "What changed in the latest Node.js LTS?"
+node scripts/search.js "What changed in the latest Node.js LTS?"
 ```
 
 ## Common Errors
