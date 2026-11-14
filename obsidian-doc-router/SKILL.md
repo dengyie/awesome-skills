@@ -124,7 +124,15 @@ description: >
 - 严禁随意堆在根目录。
 - **经验 / 成熟 SOP / 架构模式**：`Note/AI/经验/<主题>最佳实践.md` 或 `<主题>设计模式.md`
 - **运维 / 基础设施 / 部署手册**：`Note/Infra/<服务名或架构名>.md`
-- **项目开发文档**：`Note/Project/<项目名>/<项目名> 开发文档.md`
+- **项目开发文档**：`Note/project/<项目名>/<项目名> 开发文档.md`
+- **⚠️ 路径大小写必须先核对，禁止凭记忆写**（2026-11-15 追加）：本库目录的真实
+  大小写是**混合**的——`Note/AI`、`Note/Accounts`、`Note/Career`、`Note/Infra` 是**大写**，
+  而 `Note/project`、`Note/task`、`Note/idea`、`Note/goal`、`Note/templates` 是**小写**。
+  写路径前先 `git ls-tree HEAD Note/`（或 `ls Note/`）确认该目录磁盘 casing。
+  **典型翻车**：写 `Note/Project/`（大写 P）在 Linux 设备上路径不存在、链接直接断掉；
+  Windows/NTFS 不敏感所以本地看不出问题，直到推回 Linux 才暴露。
+  落盘后若不确定，可用 `python .local/bin/normalize-link-case --dry-run` 自查
+  （只报不改；正式修复去掉 `--dry-run`）。
 - **账号 / 资产清单**：`Note/Accounts/`（私有敏感；Agent 只登记结构与路径，不回显敏感密钥）
 
 ### 2. 标准 Frontmatter 元数据（治理三元组必填）
