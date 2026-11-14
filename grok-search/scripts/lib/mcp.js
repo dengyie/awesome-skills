@@ -15,6 +15,10 @@ import { debugLog, redactSecrets } from "./http.js";
 const VERSION = createRequire(import.meta.url)("../../package.json").version;
 
 const MCP_TIMEOUT_MS = 90_000;
+// The handshake is a local JSON-RPC round trip that answers in milliseconds. It is capped well
+// below the caller's budget so a silent server cannot consume half of it before the search
+// request is even sent: a 30s fathom budget must stay a 30s budget for the whole call.
+const MCP_HANDSHAKE_TIMEOUT_MS = 5_000;
 
 /**
  * Whether a channel has both halves of an MCP credential. Each MCP channel keeps its own
@@ -80,12 +84,12 @@ async function rpcCall(url, token, method, params, { timeoutMs = MCP_TIMEOUT_MS,
     if (!response.ok) {
       // The body can echo the bearer token back (some relays do); redact before it
       // reaches an error message that ends up in the run record.
-      const error = new Error(`HTTP ${response.status}: ${redactSecrets(body.slice(0, 300), config)}`);
+      const error = new Error(`HTTP ${response.status}: ${redactSecrets(body, config).slice(0, 300)}`);
       error.status = response.status;
       throw error;
     }
     const frame = parseFrame(response.headers.get("content-type") || "", body);
-    if (!frame) throw new Error(`MCP 响应无法解析: ${redactSecrets(body.slice(0, 200), config)}`);
+    if (!frame) throw new Error(`MCP 响应无法解析: ${redactSecrets(body, config).slice(0, 200)}`);
     if (frame.error) {
       const error = new Error(String(frame.error?.message || frame.error?.code || "MCP 调用失败"));
       error.code = frame.error?.code;
@@ -110,13 +114,26 @@ async function rpcCall(url, token, method, params, { timeoutMs = MCP_TIMEOUT_MS,
  * in milliseconds.
  */
 async function callTool(url, token, tool, args, options = {}) {
+  const budgetMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : MCP_TIMEOUT_MS;
+  const startedAt = Date.now();
   await rpcCall(url, token, "initialize", {
     protocolVersion: "2024-11-05",
     capabilities: {},
     clientInfo: { name: "grok-search", version: VERSION },
-  }, options);
+  }, { ...options, timeoutMs: Math.min(budgetMs, MCP_HANDSHAKE_TIMEOUT_MS) });
 
-  const result = await rpcCall(url, token, "tools/call", { name: tool, arguments: args }, options);
+  // Whatever the handshake used comes out of the same budget: the two round trips are one
+  // caller-visible wait, not two independent ones.
+  const remainingMs = budgetMs - (Date.now() - startedAt);
+  if (remainingMs <= 0) {
+    const timeout = new Error(`请求超时（>${Math.round(budgetMs / 1000)}s）`);
+    timeout.timedOut = true;
+    throw timeout;
+  }
+  const result = await rpcCall(url, token, "tools/call", { name: tool, arguments: args }, {
+    ...options,
+    timeoutMs: remainingMs,
+  });
   const content = Array.isArray(result?.content) ? result.content : [];
   const text = content
     .filter((item) => item?.type === "text" && typeof item.text === "string")

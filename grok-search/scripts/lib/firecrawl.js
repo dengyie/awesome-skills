@@ -412,8 +412,18 @@ export async function firecrawlSearch(query, limit, config, filters = {}) {
       timeoutMs: 90_000,
       config,
       retry: true,
+      // Same reason as the scrape path below: three 90s timeouts overrun the 240s command
+      // deadline, and the caller then loses a Grok answer it already paid for.
+      retryOnTimeout: false,
       stats,
     });
+
+    // HTTP 200 with `success: false` is a refusal, not an empty result set. Reporting it as
+    // success also lets `withFirecrawlApiKey` clear a live cooldown on the strength of a
+    // request that never ran.
+    if (data?.success === false) {
+      return { ok: false, error: upstreamMessage(data) || "Firecrawl Search 返回 success:false" };
+    }
 
     const rawResults = Array.isArray(data?.data?.web)
       ? data.data.web

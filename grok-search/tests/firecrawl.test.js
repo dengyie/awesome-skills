@@ -292,6 +292,29 @@ await withServer(
 );
 await clearFirecrawlCooldown(baseConfig);
 
+// HTTP 200 with `success: false` is a refusal, not an empty result set. It must not be
+// reported as success — and it must not clear a live cooldown, since the request never ran.
+requests = 0;
+await withServer(
+  (req, res) => {
+    requests += 1;
+    req.resume();
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ success: false, error: "search is not enabled for this team" }));
+  },
+  async (base) => {
+    await recordFirecrawlCooldown(baseConfig, { authMode: "keyless", retryAfterMs: 15 * 60 * 1000 });
+    const before = await readFirecrawlCooldown(baseConfig);
+    assert.ok(before, "the cooldown is live before the call");
+    const result = await firecrawlSearch("query", 3, { ...baseConfig, firecrawlApiUrl: base });
+    assert.equal(result.ok, false);
+    assert.match(result.error, /search is not enabled/);
+    assert.equal(requests, 1, "a refusal is not retried");
+    assert.deepEqual(await readFirecrawlCooldown(baseConfig), before, "a refusal leaves the cooldown alone");
+    await clearFirecrawlCooldown(baseConfig);
+  }
+);
+
 // Missing retry_after falls back to the default 15 minutes; an absurd one is capped at 24h.
 {
   const short = await recordFirecrawlCooldown(baseConfig, { authMode: "keyless", retryAfterMs: null });

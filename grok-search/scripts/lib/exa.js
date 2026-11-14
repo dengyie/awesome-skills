@@ -1,4 +1,4 @@
-import { recordExaCooldown } from "./cooldown.js";
+import { clearExaCooldown, recordExaCooldown } from "./cooldown.js";
 import { debugLog, requestJson } from "./http.js";
 import { domainFilters } from "./sources.js";
 
@@ -75,6 +75,10 @@ export async function exaSearch(query, limit, config, filters = {}) {
       stats,
     });
     const rawResults = Array.isArray(data?.results) ? data.results : [];
+    // A key that answers again (a top-up) must not stay cooling: the cooldown is a statement
+    // about the balance, and this successful call is the newer evidence. Firecrawl clears its
+    // per-key record the same way.
+    await clearExaCooldown(config);
     return {
       ok: true,
       provider: "exa",
@@ -157,6 +161,7 @@ export async function exaExtract(url, config, { maxChars = 12_000, timeoutMs = 6
     return fail("Exa Contents 返回空内容");
   }
 
+  await clearExaCooldown(config);
   return {
     ok: true,
     provider: "exa",

@@ -133,6 +133,23 @@ for (const removed of ["--search-mode", "--fallback-chat", "--ground-extra"]) {
   assertCommandErrorSchema(parseJson(result.stdout), "searched_at", "ARGUMENT_ERROR");
 }
 
+// `--opt=` with nothing after the `=` is the same mistake as `--opt` with nothing after it:
+// `--model=$MODEL` under an unset variable used to arrive as model "" and be silently ignored.
+for (const [arg, pattern] of [
+  ["--model=", /--model 缺少值/],
+  ["--model=   ", /--model 缺少值/],
+  ["--platform=", /--platform 缺少值/],
+  ["--responses-reasoning-effort=", /--responses-reasoning-effort 缺少值/],
+  ["--responses-allowed-domains=", /--responses-allowed-domains 缺少值/],
+  ["--responses-allowed-domains=,", /--responses-allowed-domains 需要至少一个值/],
+  ["--responses-excluded-x-handles=,", /--responses-excluded-x-handles 需要至少一个值/],
+]) {
+  result = await runNode(["scripts/search.js", "--no-extra", arg, "mock query"]);
+  assert.equal(result.code, 2, `${arg} must be an argument error`);
+  assert.match(result.stderr, pattern);
+  assertCommandErrorSchema(parseJson(result.stdout), "searched_at", "ARGUMENT_ERROR");
+}
+
 result = await runNode(["scripts/map.js", "ftp://example.com"]);
 assert.equal(result.code, 2);
 assertCommandErrorSchema(parseJson(result.stdout), "mapped_at", "ARGUMENT_ERROR");

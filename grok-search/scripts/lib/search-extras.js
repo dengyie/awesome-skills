@@ -37,6 +37,27 @@ function providerAttempt(result) {
 }
 
 /**
+ * Run one channel without letting its failure end the search.
+ *
+ * The extras run alongside the Grok request. If a channel throws (a malformed payload, an fs
+ * error on its state file, a bug in its parser), an unguarded `Promise.all` rejects and the
+ * whole command fails — discarding an answer Grok already produced and billed. A thrown channel
+ * is therefore reported as a failed channel, the same shape the adapters return.
+ */
+export async function settleChannel(provider, work) {
+  try {
+    return await work;
+  } catch (error) {
+    return {
+      provider,
+      ok: false,
+      sources: [],
+      error: error?.message || String(error),
+    };
+  }
+}
+
+/**
  * Independent Tavily / Firecrawl / Exa / fathom / MCP-Tavily searches. Domain filters are
  * the same ones Grok's web_search gets: when the caller scopes a search to github.com,
  * extras that wander off to blogs and video sites only displace in-scope candidates. A
@@ -73,11 +94,11 @@ export async function extraSources(query, limit, config, filters = {}) {
     return { ...result, duration_ms: Math.round(performance.now() - started) };
   };
   const jobs = [];
-  if (allocation.tavily > 0) jobs.push(timed(tavilySearch(query, allocation.tavily, config, filters)));
-  if (allocation.firecrawl > 0) jobs.push(timed(firecrawlSearch(query, allocation.firecrawl, config, filters)));
-  if (allocation.exa > 0) jobs.push(timed(exaSearch(query, allocation.exa, config, filters)));
-  if (allocation.fathom > 0) jobs.push(timed(fathomSearch(query, allocation.fathom, config, filters)));
-  if (allocation.mcpTavily > 0) jobs.push(timed(mcpTavilySearch(query, allocation.mcpTavily, config, filters)));
+  if (allocation.tavily > 0) jobs.push(timed(settleChannel("tavily", tavilySearch(query, allocation.tavily, config, filters))));
+  if (allocation.firecrawl > 0) jobs.push(timed(settleChannel("firecrawl", firecrawlSearch(query, allocation.firecrawl, config, filters))));
+  if (allocation.exa > 0) jobs.push(timed(settleChannel("exa", exaSearch(query, allocation.exa, config, filters))));
+  if (allocation.fathom > 0) jobs.push(timed(settleChannel("fathom", fathomSearch(query, allocation.fathom, config, filters))));
+  if (allocation.mcpTavily > 0) jobs.push(timed(settleChannel("mcpTavily", mcpTavilySearch(query, allocation.mcpTavily, config, filters))));
   const results = await Promise.all(jobs);
   const sources = [];
   const providerAttempts = [];

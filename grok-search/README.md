@@ -309,7 +309,7 @@ Firecrawl Keyless 提供每月 1,000 credits，并受按 IP 的每日限额约�
 
 额度耗尽时 Firecrawl 返回 429 与 `reason: credits`、`retry_after_seconds`（通常数小时）。脚本不再重试，而是把 `{ until, auth_mode, reason, hit_at }` 写进 `<stateDir>/firecrawl-cooldown.json`；冷却期内 `search.js` 与 `fetch.js --provider auto` 直接跳过 Firecrawl（provider attempt 记 `skipped: true` 与 `cooldown until <ISO>`），search 的名额转给其余渠道，没有可用渠道时 extra 为空并写 warning。显式 `--provider firecrawl` 仍会真打，成功后清除冷却。冷却按 `auth_mode` 区分，换上 API key 立即生效。Exa 余额耗尽（402）以同样机制记录在 `<stateDir>/exa-cooldown.json`。
 
-通用重试规则：408 / 429 / 5xx 最多重试 3 次，`Retry-After`（header 或 Firecrawl 的 `retry_after_seconds`）在重试预算内照等，超出预算即停止而不是截短后继续；坏 JSON、`success:false`、403 等 4xx、scrape 超时都只请求一次。provider attempt 带 `requests`（实际 HTTP 次数）与 `duration_ms`。
+通用重试规则：408 / 429 / 5xx 最多重试 3 次，`Retry-After`（header 或 Firecrawl 的 `retry_after_seconds`）在重试预算内照等，超出预算即停止而不是截短后继续；坏 JSON、`success:false`、403 等 4xx、超时（Firecrawl scrape/search、Tavily 官方 key）都只请求一次——90 秒 × 3 会顶穿 240 秒 deadline 并丢掉已计费的 Grok 答案，状态码重试（429/5xx）不受影响。provider attempt 带 `requests`（实际 HTTP 次数）与 `duration_ms`。
 
 Source card 不再输出长 `description` 或 `content` 字段，只输出短 `snippet`。完整 raw 数据可通过 `sources.raw_path` 按需读取。
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
 import { requestJson } from "../scripts/lib/providers.js";
 
 const config = { retryMaxAttempts: 3, retryMultiplier: 0, retryMaxWait: 0.05, debug: false };
@@ -200,5 +201,52 @@ await withServer(
     assert.equal(requests, 3);
   }
 );
+
+// Every channel that talks to a slow search API must pass retryOnTimeout:false, or three 90s
+// timeouts overrun the 240s command deadline and the run reports DEADLINE_EXCEEDED instead of
+// naming the slow channel — discarding a Grok answer that was already paid for. A real 90s
+// timeout is too slow for a test, so this asserts the call sites themselves: any requestJson
+// call in a channel module that retries must also disable timeout retries.
+{
+  const callSites = (source) => {
+    const sites = [];
+    let from = 0;
+    for (;;) {
+      const at = source.indexOf("requestJson(", from);
+      if (at === -1) return sites;
+      let depth = 0;
+      let index = at + "requestJson".length;
+      for (; index < source.length; index += 1) {
+        if (source[index] === "(") depth += 1;
+        else if (source[index] === ")") {
+          depth -= 1;
+          if (depth === 0) {
+            index += 1;
+            break;
+          }
+        }
+      }
+      sites.push(source.slice(at, index));
+      from = index;
+    }
+  };
+
+  for (const file of ["firecrawl.js", "grok-responses.js"]) {
+    const source = await readFile(new URL(`../scripts/lib/${file}`, import.meta.url), "utf8");
+    for (const site of callSites(source)) {
+      if (!/retry:\s*true/.test(site)) continue;
+      assert.match(site, /retryOnTimeout:\s*false/, `${file}: a retrying channel call must disable timeout retries`);
+    }
+  }
+
+  // Tavily builds its options once and spreads them into each call, so check the builder.
+  const tavily = await readFile(new URL("../scripts/lib/tavily.js", import.meta.url), "utf8");
+  const builder = tavily.slice(tavily.indexOf("function tavilyRequestOptions"));
+  assert.match(builder.slice(0, builder.indexOf("\n}")), /retryOnTimeout:\s*false/);
+  for (const site of callSites(tavily)) {
+    if (!site.includes("tavilyRequestOptions(")) continue;
+    assert.match(site, /\.\.\.tavilyRequestOptions\(/, "every Tavily call spreads the shared options");
+  }
+}
 
 console.log("retry fixtures ok");

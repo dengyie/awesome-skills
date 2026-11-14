@@ -66,6 +66,23 @@ function parseListOption(value) {
     .filter(Boolean);
 }
 
+/**
+ * The `--opt=` form must reject an empty value exactly like `--opt` followed by nothing.
+ * `--model=$MODEL` with an unset variable used to yield `model: ""`, which the caller cannot
+ * distinguish from a deliberate default — the run silently ignored an explicit argument.
+ */
+function equalsValue(name, arg) {
+  const value = String(arg.slice(name.length + 1)).trim();
+  if (!value) throw new Error(`${name} 缺少值`);
+  return value;
+}
+
+function parseListEquals(name, arg) {
+  const list = parseListOption(equalsValue(name, arg));
+  if (!list.length) throw new Error(`${name} 需要至少一个值`);
+  return list;
+}
+
 function parseListArg(name, value) {
   if (value == null || value === "") throw new Error(`${name} 缺少值`);
   return parseListOption(value);
@@ -133,7 +150,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--platform=")) {
-      platform = arg.slice("--platform=".length);
+      platform = equalsValue("--platform", arg);
       continue;
     }
     if (arg === "--model") {
@@ -142,7 +159,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--model=")) {
-      model = arg.slice("--model=".length);
+      model = equalsValue("--model", arg);
       continue;
     }
     if (arg === "--responses-max-turns") {
@@ -165,7 +182,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--responses-reasoning-effort=")) {
-      responsesReasoningEffort = arg.slice("--responses-reasoning-effort=".length);
+      responsesReasoningEffort = equalsValue("--responses-reasoning-effort", arg);
       continue;
     }
     if (arg === "--responses-allowed-domains") {
@@ -173,7 +190,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--responses-allowed-domains=")) {
-      responsesAllowedDomains = parseListOption(arg.slice("--responses-allowed-domains=".length));
+      responsesAllowedDomains = parseListEquals("--responses-allowed-domains", arg);
       continue;
     }
     if (arg === "--responses-excluded-domains") {
@@ -181,7 +198,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--responses-excluded-domains=")) {
-      responsesExcludedDomains = parseListOption(arg.slice("--responses-excluded-domains=".length));
+      responsesExcludedDomains = parseListEquals("--responses-excluded-domains", arg);
       continue;
     }
     if (arg === "--source") {
@@ -236,7 +253,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--responses-allowed-x-handles=")) {
-      responsesAllowedXHandles = parseListOption(arg.slice("--responses-allowed-x-handles=".length));
+      responsesAllowedXHandles = parseListEquals("--responses-allowed-x-handles", arg);
       continue;
     }
     if (arg === "--responses-excluded-x-handles") {
@@ -244,7 +261,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--responses-excluded-x-handles=")) {
-      responsesExcludedXHandles = parseListOption(arg.slice("--responses-excluded-x-handles=".length));
+      responsesExcludedXHandles = parseListEquals("--responses-excluded-x-handles", arg);
       continue;
     }
     if (arg === "--responses-openrouter-engine") {
@@ -253,7 +270,7 @@ export function parseArgs(argv) {
       continue;
     }
     if (arg?.startsWith("--responses-openrouter-engine=")) {
-      responsesOpenRouterEngine = arg.slice("--responses-openrouter-engine=".length);
+      responsesOpenRouterEngine = equalsValue("--responses-openrouter-engine", arg);
       continue;
     }
     if (arg === "--extra") {

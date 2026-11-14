@@ -4,7 +4,7 @@ import { mkdtemp } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { activeExaCooldown, clearExaCooldown } from "../scripts/lib/cooldown.js";
+import { activeExaCooldown, clearExaCooldown, recordExaCooldown } from "../scripts/lib/cooldown.js";
 import { exaExtract, exaSearch, extraAllocation, hasExaApiKey } from "../scripts/lib/providers.js";
 import { classifyGrokFailure } from "../scripts/lib/grok-responses.js";
 
@@ -184,6 +184,40 @@ await withServer(
     const cooldown = await activeExaCooldown(baseConfig);
     assert.ok(cooldown, "cooldown recorded");
     await clearExaCooldown(baseConfig);
+  }
+);
+
+// A key that answers again after a top-up must not stay cooling: the next run would skip the
+// channel until the window expired, hiding a balance the user had already restored.
+await withServer(
+  (req, res) => {
+    req.resume();
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ results: [{ url: "https://example.com/a", title: "A" }] }));
+  },
+  async (base) => {
+    await clearExaCooldown(baseConfig);
+    await recordExaCooldown(baseConfig, { retryAfterMs: 15 * 60 * 1000, reason: "PAYMENT_REQUIRED" });
+    assert.ok(await activeExaCooldown(baseConfig), "the cooldown is live before the call");
+    const result = await exaSearch("q", 2, { ...baseConfig, exaApiUrl: base });
+    assert.equal(result.ok, true);
+    assert.equal(await activeExaCooldown(baseConfig), null, "a successful search clears the cooldown");
+  }
+);
+
+// /contents is the other way a dead balance shows up as a live call, so it clears it too.
+await withServer(
+  (req, res) => {
+    req.resume();
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ results: [{ url: "https://example.com/a", text: "body" }] }));
+  },
+  async (base) => {
+    await clearExaCooldown(baseConfig);
+    await recordExaCooldown(baseConfig, { retryAfterMs: 15 * 60 * 1000, reason: "PAYMENT_REQUIRED" });
+    const result = await exaExtract("https://example.com/a", { ...baseConfig, exaApiUrl: base }, { maxChars: 4000 });
+    assert.equal(result.ok, true);
+    assert.equal(await activeExaCooldown(baseConfig), null, "a successful extract clears the cooldown");
   }
 );
 

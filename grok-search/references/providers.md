@@ -34,9 +34,9 @@ Several official keys can be listed in `firecrawlApiKeys` (or comma-separated `F
 - a spent key is put in cooldown and the next key takes over within the same command. The channel is only dead when *every* key is cooling; one cooling key is skipped inside the pool instead of switching Firecrawl off;
 - attempts report `firecrawl_key_index`, `firecrawl_key_total` and `firecrawl_keys_tried`, so a run record shows which key answered and how many were tried. The keyless tier reports index `-1` and total `0`.
 
-Exa answers an empty balance with HTTP 402 and gets the same treatment: the scripts stop retrying, write `<stateDir>/exa-cooldown.json`, and skip Exa in later `auto` runs (search slots go to the remaining channels). An explicit `--provider exa` still makes the request and clears the cooldown on success.
+Exa answers an empty balance with HTTP 402 and gets the same treatment: the scripts stop retrying, write `<stateDir>/exa-cooldown.json`, and skip Exa in later `auto` runs (search slots go to the remaining channels). Any successful search or extract clears the cooldown, so a top-up takes effect on the next `auto` run instead of after the window; an explicit `--provider exa` does the same.
 
-Retry policy in general: HTTP 408/429/500/502/503/504 retry up to 3 times with backoff, honoring `Retry-After` (header or Firecrawl's `retry_after_seconds`) when it fits the budget. Bad JSON, `success:false` bodies, 4xx such as 403 "IP looks suspicious", and scrape timeouts are not retried. Attempts report `requests` (HTTP calls made) and `duration_ms`.
+Retry policy in general: HTTP 408/429/500/502/503/504 retry up to 3 times with backoff, honoring `Retry-After` (header or Firecrawl's `retry_after_seconds`) when it fits the budget. Bad JSON, `success:false` bodies, 4xx such as 403 "IP looks suspicious", and timeouts are not retried (scrape and search alike, plus Tavily official keys): three 90s attempts overrun the 240s deadline and throw away a Grok answer that was already billed. Attempts report `requests` (HTTP calls made) and `duration_ms`.
 
 ## Relay Behaviour
 

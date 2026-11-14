@@ -82,7 +82,7 @@ URL
 
 ### Firecrawl 重试与冷却
 
-`requestJson` 负责 HTTP 层重试（408/429/5xx 最多 3 次），`Retry-After`（header 或 body 的 `retry_after_seconds`）在预算内照等、超预算即停。`firecrawlScrape` 外层只对"HTTP 200 且 markdown 为空"（SPA 未渲染完）重试并递增 `waitFor`；坏 JSON、`success:false`、403、超时一次即止。额度耗尽（402 或 `reason: credits`）写入 `lib/cooldown.js` 管理的 `<stateDir>/firecrawl-cooldown.json`（`until` 取 `retry_after_seconds`，上限 24h，缺失时 15 分钟；按 `auth_mode` 区分），之后所有 auto 命令跳过 Firecrawl，显式 `--provider firecrawl` 成功后清除。
+`requestJson` 负责 HTTP 层重试（408/429/5xx 最多 3 次），`Retry-After`（header 或 body 的 `retry_after_seconds`）在预算内照等、超预算即停。`firecrawlScrape` 外层只对"HTTP 200 且 markdown 为空"（SPA 未渲染完）重试并递增 `waitFor`；坏 JSON、`success:false`、403、超时一次即止。超时一律不重试（scrape、search、Tavily 官方 key 都是 `retryOnTimeout: false`）：90 秒 × 3 会顶穿 240 秒的命令 deadline，命令只剩 `DEADLINE_EXCEEDED`，而那条已经计费的 Grok 答案会被丢掉；429/5xx 的状态重试不受影响。HTTP 200 加 `success:false` 是上游拒绝而不是空结果：按失败返回，也不会清除仍然有效的冷却——那次请求根本没跑。额度耗尽（402 或 `reason: credits`）写入 `lib/cooldown.js` 管理的 `<stateDir>/firecrawl-cooldown.json`（`until` 取 `retry_after_seconds`，上限 24h，缺失时 15 分钟；按 `auth_mode` 区分），之后所有 auto 命令跳过 Firecrawl，显式 `--provider firecrawl` 成功后清除。Exa 同理：402 写 `<stateDir>/exa-cooldown.json`，配额恢复后任何一次成功的 search/contents 都会清除记录，不必等显式 `--provider exa`。
 
 ## Map 数据流
 

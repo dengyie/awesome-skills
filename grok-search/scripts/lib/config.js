@@ -79,10 +79,36 @@ export function configFilePath() {
   return path.join(homedir(), ".config", "grok-search", "config.json");
 }
 
+/**
+ * Decode a config file by its byte-order mark.
+ *
+ * Windows editors and shells write BOMs that JSON.parse rejects: PowerShell 5.1's
+ * `Set-Content -Encoding utf8` emits UTF-8 with BOM, and `Out-File` emits UTF-16LE. Reading the
+ * file as a Buffer and decoding here keeps a correctly-authored config working instead of
+ * failing every command with "not valid JSON".
+ */
+function decodeConfigText(buffer) {
+  if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+    return buffer.subarray(3).toString("utf8");
+  }
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return buffer.subarray(2).toString("utf16le");
+  }
+  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
+    const body = Buffer.from(buffer.subarray(2));
+    // Node has no UTF-16BE decoder; swapping the 16-bit code units to LE is exact for any
+    // UTF-16 text. An odd byte count is not UTF-16 at all, so fall back and let JSON report it.
+    if (body.length % 2 !== 0) return buffer.toString("utf8");
+    body.swap16();
+    return body.toString("utf16le");
+  }
+  return buffer.toString("utf8");
+}
+
 export async function loadConfigFile() {
   let text;
   try {
-    text = await readFile(configFilePath(), "utf8");
+    text = decodeConfigText(await readFile(configFilePath()));
   } catch (error) {
     if (error.code === "ENOENT" || error.code === "ENOTDIR") return {};
     throw new ConfigError(`无法读取配置文件 ${configFilePath()}: ${error.message}`, "CONFIG_FILE_INVALID");

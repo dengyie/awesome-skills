@@ -132,7 +132,10 @@ function tavilyRequestOptions(config, target, officialTimeoutMs) {
     timeoutMs: proxy ? tavilyProxyTimeoutMs(config) : officialTimeoutMs,
     config,
     retry: !proxy,
-    retryOnTimeout: !proxy,
+    // A 90s official timeout retried three times is 270s on top of the proxy attempt, past the
+    // 240s command deadline; the run would report DEADLINE_EXCEEDED and discard Grok's answer
+    // instead of naming Tavily as the slow channel. Status retries (429/5xx) still happen.
+    retryOnTimeout: false,
   };
 }
 

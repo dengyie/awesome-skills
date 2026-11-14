@@ -60,19 +60,28 @@ export function upstreamMessage(body) {
   return typeof message === "string" && message.trim() ? message.trim() : null;
 }
 
+// Field names that carry credential material. Matching on the name rather than listing the
+// fields means a key added to the config later is redacted without anyone remembering to
+// extend this module — the failure mode of a hand-maintained list is a new key in plaintext.
+// `key$` covers names that carry no "api" prefix, such as tavilyProxyKey.
+const SECRET_FIELD = /(api[_-]?key|key$|token|secret|password)/i;
+
+function secretValues(config) {
+  const values = [];
+  for (const [name, value] of Object.entries(config || {})) {
+    if (!SECRET_FIELD.test(name)) continue;
+    if (typeof value === "string") values.push(value);
+    else if (Array.isArray(value)) {
+      for (const item of value) if (typeof item === "string") values.push(item);
+    }
+  }
+  return values;
+}
+
 export function redactSecrets(text, config) {
   let out = String(text || "");
-  const secrets = [
-    config?.grokApiKey,
-    config?.firecrawlApiKey,
-    ...(Array.isArray(config?.firecrawlApiKeys) ? config.firecrawlApiKeys : []),
-    config?.tavilyProxyKey,
-    ...(Array.isArray(config?.tavilyApiKeys) ? config.tavilyApiKeys : []),
-    config?.tavilyApiKey,
-    config?.exaApiKey,
-    config?.fathomApiKey,
-    config?.mcpTavilyToken,
-  ];
+  // Longest first: a key that contains another configured value must not be half-replaced.
+  const secrets = [...new Set(secretValues(config))].sort((a, b) => b.length - a.length);
   for (const secret of secrets) {
     if (typeof secret !== "string" || secret.length < 4) continue;
     out = out.split(secret).join("***");
@@ -136,7 +145,9 @@ export async function requestJson(url, { headers, body, timeoutMs, config, retry
 
       if (!response.ok) {
         const errorBody = parseErrorBody(text);
-        const error = new Error(`HTTP ${response.status}: ${redactSecrets(trimBody(text), config)}`);
+        // Redact before truncating: a secret that straddles the 500-character cut would
+        // otherwise survive as an unmatchable fragment of the real key.
+        const error = new Error(`HTTP ${response.status}: ${trimBody(redactSecrets(text, config), 500)}`);
         error.status = response.status;
         error.retryAfterMs = retryAfterMs(response.headers) ?? bodyRetryAfterMs(errorBody);
         error.upstreamCode = upstreamCode(errorBody);
@@ -147,7 +158,7 @@ export async function requestJson(url, { headers, body, timeoutMs, config, retry
       try {
         return text ? JSON.parse(text) : {};
       } catch (cause) {
-        const error = new Error(`响应不是有效 JSON: ${redactSecrets(trimBody(text), config)}`);
+        const error = new Error(`响应不是有效 JSON: ${trimBody(redactSecrets(text, config), 500)}`);
         error.cause = cause;
         // A stable but malformed response will not improve on retry.
         error.retryable = false;

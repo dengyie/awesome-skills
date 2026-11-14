@@ -4,6 +4,24 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## grok-search 0.3.2 - 2026-11-15
+
+### Fixed
+
+- fixed `grok-search` Firecrawl Search timing out past the command deadline: the search path retried a 90s timeout three times (270s) while the default deadline is 240s, so the run reported `DEADLINE_EXCEEDED` and threw away a Grok answer it had already paid for. Search no longer retries timeouts (status retries such as 429/5xx still happen), matching the scrape path
+- fixed `grok-search` Firecrawl Search treating HTTP 200 with `success: false` as an empty success: it now returns `ok: false` with the upstream message, and — because no request actually ran — no longer clears a live Firecrawl cooldown on the strength of a refusal
+- fixed `grok-search` Tavily official-key timeouts being retried: three 90s attempts plus the proxy attempt reached 270s, past the 240s deadline. The shared Tavily request options now set `retryOnTimeout: false` (proxy attempts already did not retry)
+- fixed `grok-search` Exa cooldowns never clearing: a key that answered again after a top-up stayed cooling for the full window and every later run skipped the channel. Both `exaSearch` and `exaExtract` now clear the record on success, the way Firecrawl clears its per-key one
+- fixed `grok-search` losing the Grok answer when one extras channel threw: a malformed payload or a state-file error rejected the whole `Promise.all`, discarding a billed answer. Each channel now settles into a failed-channel shape (`{provider, ok: false, error}`) and the run reports it while still returning Grok's result
+- fixed `grok-search` config files with a byte-order mark being rejected as `CONFIG_FILE_INVALID`: PowerShell 5.1's `Set-Content -Encoding utf8` writes UTF-8 with BOM and `Out-File` writes UTF-16LE, both of which `JSON.parse` refuses. UTF-8/UTF-16LE/UTF-16BE BOMs are decoded before parsing; genuinely broken JSON still fails
+- fixed `grok-search` MCP calls spending the timeout twice: `initialize` and `tools/call` are one caller-visible wait, but the handshake used its own full budget. The handshake is capped at 5s and the tool call gets what remains, so a slow server no longer overruns fathom's 30s total budget
+- fixed `grok-search` leaking a secret fragment into an upstream error message: the body was truncated to 500 characters before redaction, so a key straddling the cut survived as an unmatchable prefix. Redaction now runs first, and the configured-key scan matches on field name (`*ApiKey`, `*Key`, `*Token`, `*Secret`, `*Password`) instead of a hand-maintained list, so a key added later is masked without anyone remembering this module
+- fixed `grok-search` silently ignoring `--opt=` with an empty value: `--model=$MODEL` under an unset variable arrived as `model: ""` and the run fell back to the default as if no flag had been passed. Every `--opt=` form now fails like the space-separated form does (`--platform`, `--model`, `--responses-reasoning-effort`, `--responses-openrouter-engine`, `--responses-allowed-domains`, `--responses-excluded-domains`, `--responses-allowed-x-handles`, `--responses-excluded-x-handles`)
+
+### Added
+
+- added `grok-search/tests/redaction.test.js`, `config-file.test.js`, `mcp-budget.test.js` and `extras-isolation.test.js` to the `npm test` chain, plus new cases in `retry.test.js` (every retrying channel call disables timeout retries), `exa.test.js` (a successful search or extract clears the cooldown), `firecrawl.test.js` (`success: false` is a refusal and leaves the cooldown alone) and `argv.test.js` (empty `--opt=` values are argument errors)
+
 ## grok-search 0.3.1 - 2026-11-15
 
 ### Changed
