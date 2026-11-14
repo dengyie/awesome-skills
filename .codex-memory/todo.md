@@ -141,3 +141,7 @@
 - [x] Added schema, brief output, and CLI/unit coverage for project memory consumption.
 - [x] Fixed the two fathom plan bugs in grok-search 0.3.1: the empty plan when every configured engine breaker was open, and the catalog engines the mega tools reject.
 - [x] Added `grok-search/tests/cli-degrade.test.js` (offline 500 / text-only / incomplete contract) and `grok-search/tests/cleanup-temp.js`, then synced the 72 tracked files to the install copy.
+- [x] Cached the fathom engine table on disk (120s TTL) and removed catalog engines from the legacy fan-out, with test coverage for both.
+- [x] Merged the duplicated changelog sections in the grok-search vault note and fixed the `Note/project` casing in `obsidian-doc-router/SKILL.md`.
+- [x] Moved the vault credential plaintext to the live config and a local-only `vault-credentials.local.md`; pages now carry masked fingerprints only.
+- [x] Deleted six merged remote branches after verifying merge status; kept the two unmerged ones.
