@@ -139,3 +139,5 @@
 - [x] Implemented the V3 historical-mock-first workflow, new references/templates, and regression coverage.
 - [x] Landed read-only `production-code-quality-review` integration with project-memory-aware review context.
 - [x] Added schema, brief output, and CLI/unit coverage for project memory consumption.
+- [x] Fixed the two fathom plan bugs in grok-search 0.3.1: the empty plan when every configured engine breaker was open, and the catalog engines the mega tools reject.
+- [x] Added `grok-search/tests/cli-degrade.test.js` (offline 500 / text-only / incomplete contract) and `grok-search/tests/cleanup-temp.js`, then synced the 72 tracked files to the install copy.

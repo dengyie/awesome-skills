@@ -911,3 +911,9 @@
 - Results: `prepare_plan_manifest.py` now behaves like a safer low-friction planning helper without weakening the semantic truth contract. Full package validation passed with 274 tests and `quick_validate.py` returned `Skill is valid!`.
 - Next: Stop and wait for the next bounded `split-image-assets` milestone choice.
 - Blockers: None.
+## 2026-11-15 04:46
+- Task: Close grok-search 0.3.1 client hardening: live acceptance, fathom plan fixes, offline degraded-CLI test.
+- Actions: Fixed two layered fathom plan bugs (empty plan when every configured engine breaker was open; catalog engines such as arxiv rejected by the mega tools), lowered the fathom budget 45s->30s, removed the duplicated word from the degraded answer, added `tests/cli-degrade.test.js` (stub upstream 500 / text-only / incomplete, isolated HOME and state dir), added `tests/cleanup-temp.js` so `npm test` sweeps the mkdtemp dirs (~60 per run, 1000+ accumulated), synced the 72 tracked files byte-for-byte to the install copy, and recorded the acceptance in the vault.
+- Results: `npm test` green in both the repo and the install copy (17 test files plus the sweep, temp dirs 0 afterwards); GitHub main at `b6c65b3`; failure injection showed a 5xx cooldown blocking the second run from reaching the upstream at all; exact-match scan of the 7 configured secrets over 5,478 files found 0 hits.
+- Next: Upstream channel work (fathom engine health, #343/#21, CPA pool) stays out of scope; the vault credential table still holds long key-like strings and should be migrated separately.
+- Blockers: None.
