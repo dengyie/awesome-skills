@@ -32,6 +32,9 @@ function providerAttempt(result) {
     ...(Number.isFinite(result.firecrawl_key_index) ? { firecrawl_key_index: result.firecrawl_key_index } : {}),
     ...(Number.isFinite(result.firecrawl_key_total) ? { firecrawl_key_total: result.firecrawl_key_total } : {}),
     ...(Number.isFinite(result.firecrawl_keys_tried) ? { firecrawl_keys_tried: result.firecrawl_keys_tried } : {}),
+    // Which engine actually answered. Without it a run record cannot tell a fast yandex success
+    // from a lucky fallback ten plans down the ladder.
+    ...(result.fathom_engines ? { fathom_engines: result.fathom_engines } : {}),
     ...(result.error ? { error: result.error } : {}),
   };
 }

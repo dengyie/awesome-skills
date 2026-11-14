@@ -54,5 +54,38 @@ assert.ok(
 assert.ok(elapsed >= handshakeDelayMs, "the handshake delay is part of the measured wait");
 
 server.close();
+
+// A tool that fails inside an HTTP 200 answer reports the cause in its text, and the caller
+// needs the status from it: fathom must tell a dead relay (401/403) from its own upstream
+// engines failing (502 `all_engines_failed`) to choose the cooldown. The isError path used to
+// drop the status, so every tool-level failure looked unexplained.
+const toolErrorServer = createServer((req, res) => {
+  let raw = "";
+  req.on("data", (chunk) => {
+    raw += chunk;
+  });
+  req.on("end", () => {
+    const frame = JSON.parse(raw || "{}");
+    const result =
+      frame.method === "initialize"
+        ? { protocolVersion: "2024-11-05", capabilities: {} }
+        : { isError: true, content: [{ type: "text", text: 'HTTP 502: {"error":"all_engines_failed"}' }] };
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ jsonrpc: "2.0", id: frame.id, result }));
+  });
+});
+await new Promise((resolve) => toolErrorServer.listen(0, "127.0.0.1", resolve));
+
+let toolError = null;
+try {
+  await mcpSearch(`http://127.0.0.1:${toolErrorServer.address().port}/mcp`, "test-token", "search", { text: "q" }, { timeoutMs: 2_000, config: {} });
+} catch (caught) {
+  toolError = caught;
+}
+assert.ok(toolError, "an isError answer must fail the call");
+assert.equal(toolError.status, 502, "the status is recovered from the tool's own error text");
+assert.match(toolError.message, /all_engines_failed/);
+toolErrorServer.close();
+
 console.log("mcp-budget.test.js: ok");
 process.exit(0);

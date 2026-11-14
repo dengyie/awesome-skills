@@ -143,7 +143,13 @@ async function callTool(url, token, tool, args, options = {}) {
   if (result?.isError) {
     // Servers report a failed call either as isError plus a text body, or as a text body
     // that starts with "HTTP 502: {...}". Both carry the real reason in the text.
-    throw new Error(text.slice(0, 400) || "MCP 工具调用失败");
+    const error = new Error(text.slice(0, 400) || "MCP 工具调用失败");
+    // The status is what lets the caller tell a dead relay (401/403) from its own upstream
+    // engines failing (502 `all_engines_failed`). Without it every tool-level failure looks
+    // like an unexplained error and the cooldown decision cannot be made at all.
+    const status = /^HTTP (\d{3}):/.exec(text);
+    if (status) error.status = Number(status[1]);
+    throw error;
   }
   return { text, structured: result?.structuredContent };
 }

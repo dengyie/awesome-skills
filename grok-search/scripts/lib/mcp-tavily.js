@@ -6,7 +6,7 @@
  * with the Tavily search payload — `results[]` with `url`, `title`, `content` and
  * `score` — wrapped in the MCP text envelope.
  */
-import { activeChannelCooldown, recordChannelCooldown } from "./cooldown.js";
+import { clearChannelCooldown, recordChannelCooldown } from "./cooldown.js";
 import { debugLog } from "./http.js";
 import { hasMcpConfig, mcpSearch } from "./mcp.js";
 
@@ -74,6 +74,9 @@ export async function mcpTavilySearch(query, limit, config, filters = {}) {
       config,
     });
     const rows = results(payload);
+    // A working call proves the relay is healthy again; a cooldown from an earlier failure must
+    // not keep skipping it until it expires.
+    await clearChannelCooldown(config, "mcpTavily", url);
     return {
       ok: true,
       provider: "mcpTavily",

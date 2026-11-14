@@ -269,7 +269,10 @@ export async function activeChannelCooldown(config, channel, authMode) {
   if (!config?.stateDir) return null;
   const record = await readCooldownRecord(config, channelCooldownFilePath(config, channel));
   if (!record) return null;
-  if (authMode && record.auth_mode !== authMode) return null;
+  // Records are written from the trimmed endpoint, while the caller may pass the raw config
+  // value (trailing spaces in a JSON string are easy to keep). Comparing untrimmed would make
+  // the cooldown silently ineffective, so both sides are normalized here.
+  if (authMode && record.auth_mode !== String(authMode).trim()) return null;
   return record;
 }
 
@@ -280,8 +283,17 @@ export async function recordChannelCooldown(config, channel, { authMode, retryAf
   return record;
 }
 
-export async function clearChannelCooldown(config, channel) {
+/**
+ * Clear a channel cooldown. With an auth mode only that endpoint's record is cleared: a success
+ * on a new endpoint says nothing about the old one, and wiping it would hide a still-broken URL
+ * if the caller switches back.
+ */
+export async function clearChannelCooldown(config, channel, authMode) {
   if (!config?.stateDir) return;
+  if (authMode) {
+    const record = await readCooldownRecord(config, channelCooldownFilePath(config, channel));
+    if (record?.auth_mode && record.auth_mode !== String(authMode).trim()) return;
+  }
   await clearCooldownFile(config, channelCooldownFilePath(config, channel));
 }
 

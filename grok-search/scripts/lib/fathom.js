@@ -6,14 +6,19 @@
  * `fathomApiUrl` + `fathomApiKey` + `fathomSearchTool`; the tool name defaults to
  * `mega_search` but `search` (one engine) is the more reliable variant here.
  *
- * Engine health is not constant: `list_engines` reports a per-engine circuit breaker, and
- * an engine that is `open` fails the whole call when it is the only one requested. The
- * adapter therefore treats the configured engine list as a preference and falls back to
- * the server's own default routing when the preferred call fails.
+ * Engine health is not constant: `list_engines` reports a per-engine circuit breaker. Measured
+ * against the live server: a `closed` engine answers, an `open` one fails at once with
+ * `circuit_open` (or blocks for 13s and then answers `rate_limited`), and a `half-open` one was
+ * still timing out at the budget a closed engine answers in. The adapter therefore plans only
+ * `closed` engines and falls back to the server's own default routing when none is left.
+ *
+ * A failure of that fallback is an upstream engine failure, not a dead relay: the server
+ * answered, and the same endpoint served a query minutes later. It therefore gets a short
+ * cooldown instead of the full one, and any success clears it.
  */
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { recordChannelCooldown } from "./cooldown.js";
+import { clearChannelCooldown, recordChannelCooldown } from "./cooldown.js";
 import { debugLog } from "./http.js";
 import { hasMcpConfig, mcpSearch } from "./mcp.js";
 
@@ -58,6 +63,28 @@ const ENGINES_PROBE_TIMEOUT_MS = 5_000;
 const FATHOM_MIN_PLAN_MS = 5_000;
 
 /**
+ * Cooldown after a total engine failure.
+ *
+ * The relay is healthy in this case — it answered, and its upstream engines were rate limited or
+ * breaker-open. A full 15-minute channel cooldown would disable a channel that served a query
+ * four minutes later; no cooldown at all makes every command in the window pay the same ~16s for
+ * the same answer. Three minutes is longer than the engine cache's own TTL, so the next attempt
+ * after it re-probes instead of trusting the table that produced the failure.
+ */
+const ENGINE_FAILURE_COOLDOWN_MS = 3 * 60 * 1000;
+
+/**
+ * Whether the server blamed its upstream engines rather than failing as a relay.
+ *
+ * Both MCP error shapes put the server's body in the message, and a total engine failure always
+ * names it: `all_engines_failed` with a per-engine `meta.engine_errors` list.
+ */
+function engineLevelFailure(error) {
+  const text = String(error?.message || "");
+  return text.includes("all_engines_failed") || text.includes("engine_errors");
+}
+
+/**
  * The engines the server reports as usable, or null when the probe failed. Open and closed
  * names are both kept: the closed ones become the plan, the open ones explain a total failure.
  */
@@ -76,9 +103,14 @@ const ENGINES_CACHE_FILE = "fathom-engines.json";
 // Engine health rotates slowly, so the probe is worth a short cache: a warm search should not
 // pay an extra round trip, and the server's own view is what the plan is built from anyway.
 const ENGINES_CACHE_TTL_MS = 120_000;
+// A stale table is still far better than no table. The live relay failed `list_engines` while a
+// two-minute-old cache said only yandex was closed; without this fallback the call fell back to
+// the eight-engine ladder and burned 28.5s of its 30s budget, where the cached single engine
+// answered in 4.9s. Beyond half an hour the table is a guess, so the ladder takes over again.
+const ENGINES_STALE_MAX_MS = 30 * 60 * 1000;
 
-/** The cached engine table for this endpoint, or null when missing, stale or from another URL. */
-async function readEnginesCache(config, url) {
+/** The cached engine table for this endpoint, or null when missing, too old or from another URL. */
+async function readEnginesCache(config, url, { maxAgeMs = ENGINES_CACHE_TTL_MS } = {}) {
   if (!config?.stateDir) return null;
   const file = path.join(config.stateDir, ENGINES_CACHE_FILE);
   let parsed;
@@ -91,7 +123,7 @@ async function readEnginesCache(config, url) {
   // A changed endpoint is a different server; its engine table must not be reused.
   if (parsed?.auth_mode !== url) return null;
   const at = Date.parse(parsed?.at);
-  if (!Number.isFinite(at) || Date.now() - at >= ENGINES_CACHE_TTL_MS) return null;
+  if (!Number.isFinite(at) || Date.now() - at >= maxAgeMs) return null;
   const list = Array.isArray(parsed?.engines) ? parsed.engines : null;
   if (!list) return null;
   return { ...splitEngines(list), engines: list };
@@ -175,6 +207,48 @@ function fathomResults(payload) {
 }
 
 /**
+ * The plans for one search, in the order they are tried.
+ *
+ * `mega_search` refuses a single-catalog engine outright ("engine \"arxiv\" is a single-catalog
+ * engine and not allowed in mega tools"), so with that tool a configured name outside the web set
+ * can never be planned. A single-engine tool has no such rule, so its configured names are kept.
+ *
+ * With a probe, only engines whose breaker is `closed` are planned: an `open` one fails
+ * immediately with `circuit_open`, and a `half-open` one was still timing out at the budget a
+ * closed engine answers in, so neither is worth a plan while a closed engine exists. Without a
+ * probe the legacy order stands (fan-out, configured engines, then the web set).
+ */
+export function enginePlans({ engines = [], probe = null, tool = "mega_search", buildArgs = () => ({}) } = {}) {
+  const configured = tool === "mega_search" ? engines.filter((engine) => WEB_ENGINES.includes(engine)) : engines;
+  const plans = [];
+
+  if (!probe) {
+    // The fan-out still has to stay inside the web set: a mega call naming a catalog engine is
+    // refused before any web engine runs, so one configured `arxiv` would burn the first plan.
+    const legacyFanOut = configured.filter((engine) => WEB_ENGINES.includes(engine));
+    if (legacyFanOut.length) plans.push({ tool, args: buildArgs(legacyFanOut.join(",")) });
+    for (const engine of configured) plans.push({ tool, args: buildArgs(engine) });
+    for (const engine of WEB_ENGINES) {
+      if (!configured.includes(engine)) plans.push({ tool, args: buildArgs(engine) });
+    }
+    return plans;
+  }
+
+  // Candidate order: configured engines first, then the web engines in preference order.
+  const healthy = new Set(probe.closed);
+  const candidates = [];
+  for (const engine of [...configured, ...WEB_ENGINES]) {
+    if (healthy.has(engine) && !candidates.includes(engine)) candidates.push(engine);
+  }
+  const shortlist = candidates.slice(0, MAX_ENGINE_PLANS);
+  for (const engine of shortlist) plans.push({ tool, args: buildArgs(engine) });
+  // The fan-out waits for the slowest engine in the list, so it only runs after every
+  // single-engine plan failed. One engine is not a fan-out.
+  if (shortlist.length > 1) plans.push({ tool, args: buildArgs(shortlist.join(",")) });
+  return plans;
+}
+
+/**
  * Search through fathom. `limit` is the per-channel target; fathom returns a page of
  * results, so the list is trimmed to the target after the call.
  *
@@ -215,37 +289,14 @@ export async function fathomSearch(query, limit, config, filters = {}) {
   if (!probe) {
     probe = await probeEngines(url, token, config, startedAt);
     if (probe) await writeEnginesCache(config, url, probe);
+    // The probe can fail while its own last answer is still on disk (observed on the live relay:
+    // a 136-second-old table said yandex was the only closed engine). Re-planning from that table
+    // beats the ladder, which spent 28.5s of a 30s budget where the cached engine answered in 4.9s.
+    else probe = await readEnginesCache(config, url, { maxAgeMs: ENGINES_STALE_MAX_MS });
   }
-  const healthy = probe ? new Set(probe.closed) : null;
   const openEngines = probe ? probe.open : [];
 
-  const plans = [];
-  if (!probe) {
-    // Probe unavailable: keep the previous order (fan-out first) rather than guessing health.
-    // The fan-out still has to stay inside the web set: a mega call naming a catalog engine is
-    // refused before any web engine runs, so one configured `arxiv` would burn the first plan.
-    const legacyFanOut = engines.filter((engine) => WEB_ENGINES.includes(engine));
-    if (legacyFanOut.length) plans.push({ tool, args: buildArgs(legacyFanOut.join(",")) });
-    for (const engine of engines) plans.push({ tool, args: buildArgs(engine) });
-    for (const engine of WEB_ENGINES) {
-      if (!engines.includes(engine)) plans.push({ tool, args: buildArgs(engine) });
-    }
-  } else {
-    // Candidate order: configured engines first, then the web engines in preference order. Only
-    // web engines are planned — a closed catalog engine (arxiv, wikipedia) is not an alternative,
-    // because the mega tools reject it and the single-engine `search` tool answers a different
-    // question. The configured list is exempt: the user asked for those engine names explicitly.
-    const candidates = [];
-    for (const engine of [...engines, ...WEB_ENGINES]) {
-      if (healthy.has(engine) && !candidates.includes(engine)) candidates.push(engine);
-    }
-    const shortlist = candidates.slice(0, MAX_ENGINE_PLANS);
-    for (const engine of shortlist) plans.push({ tool, args: buildArgs(engine) });
-    // The fan-out must stay inside the web set for the same reason: one catalog engine in the
-    // list fails the whole call before any web engine runs.
-    const fanOut = shortlist.filter((engine) => engines.includes(engine) || WEB_ENGINES.includes(engine));
-    if (fanOut.length > 1) plans.push({ tool, args: buildArgs(fanOut.join(",")) });
-  }
+  const plans = enginePlans({ engines, probe, tool, buildArgs });
   // Never leave the channel without a plan. When every preferred engine's breaker is open the
   // shortlist is empty, and returning "search failed" without making a single request turns a
   // degraded engine into a silent outage; the server's own default routing is still worth one
@@ -273,6 +324,9 @@ export async function fathomSearch(query, limit, config, filters = {}) {
         attempts.push(`${plan.tool}(${plan.args.engines || "default"}): 返回空结果`);
         continue;
       }
+      // A working call proves the relay is healthy again; a cooldown from an earlier failure must
+      // not keep skipping it.
+      await clearChannelCooldown(config, "fathom", url);
       return {
         ok: true,
         provider: "fathom",
@@ -289,13 +343,21 @@ export async function fathomSearch(query, limit, config, filters = {}) {
     }
   }
 
-  // Every plan failed. A 5xx or a timeout means the relay is unhealthy, so a cooldown
-  // keeps later commands from paying for the same failure.
-  if (lastError && (lastError.status >= 500 || lastError.timedOut || lastError.status === 401 || lastError.status === 403)) {
-    await recordChannelCooldown(config, "fathom", {
-      authMode: url,
-      reason: lastError.status ? `http_${lastError.status}` : "timeout",
-    });
+  // Every plan failed. A 5xx or a timeout means the relay is unhealthy, so a cooldown keeps
+  // later commands from paying for the same failure — but a 502 that names the server's own
+  // engine errors (`all_engines_failed`) is not relay death: the endpoint answered, and the
+  // engines rotate. That case gets a short cooldown instead of the full one.
+  if (lastError) {
+    const engineLevel = engineLevelFailure(lastError);
+    const relayLevel =
+      lastError.timedOut || lastError.status === 401 || lastError.status === 403 || lastError.status >= 500;
+    if (engineLevel || relayLevel) {
+      await recordChannelCooldown(config, "fathom", {
+        authMode: url,
+        ...(engineLevel ? { retryAfterMs: ENGINE_FAILURE_COOLDOWN_MS } : {}),
+        reason: engineLevel ? "all_engines_failed" : lastError.status ? `http_${lastError.status}` : "timeout",
+      });
+    }
   }
 
   return {

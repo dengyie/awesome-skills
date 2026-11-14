@@ -4,6 +4,22 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## grok-search 0.3.3 - 2026-11-15
+
+### Fixed
+
+- fixed `grok-search` losing the HTTP status of an MCP tool that failed inside an HTTP 200 answer: the `isError` path built a bare `Error`, so a relay answering `HTTP 502: {"error":"all_engines_failed",...}` arrived with no `status` and fathom's cooldown policy could not tell a dead relay from its own upstream engines — the branch was unreachable on the error shape that relay actually produces
+- fixed `grok-search` cooling the whole fathom channel down for an upstream engine failure: a 502 `all_engines_failed` means the server answered and its engines are rate-limited or breaker-open, and the same endpoint served a query four minutes later, so a 15-minute channel cooldown disabled a working channel. Engine-level failures now take a 3-minute cooldown (longer than the engine-cache TTL, so the retry re-probes) while relay-level failures (401/403, timeout, a 5xx with no engine error body) keep the full window
+- fixed `grok-search` never clearing a fathom or MCP-Tavily cooldown after recovery: a channel that answered again stayed skipped until the window expired. Both now clear the record on a successful call, scoped to the same endpoint (`auth_mode`) so another URL's success cannot hide a broken one
+- fixed `grok-search` cooldown records not matching their own endpoint when the configured URL carried surrounding whitespace: the gate compared the raw config value against the trimmed value that was recorded, so the cooldown was silently ineffective. Both sides are now normalized
+- fixed `grok-search` falling back to the eight-engine fathom ladder when `list_engines` itself failed: the live relay failed the probe while its own 136-second-old engine table was still on disk, and the call spent 28.5s of its 30s budget walking the ladder where the cached single engine answered in 4.9s. A failed probe now re-plans from the last known table (up to 30 minutes old) before giving up on the probe
+- fixed `grok-search` planning a `mega_search` call with a configured single-catalog engine (`arxiv`, `wikipedia`, ...): the server rejects the whole call before any web engine runs. With the mega tool such names are no longer planned (a single-engine tool still accepts them), and plan selection is now a pure exported function with its own regression test
+
+### Added
+
+- added `fathom_engines` to a fathom `provider_attempt`, so a run record says which engine answered instead of only that the channel did
+- added `grok-search/tests/fathom-plans.test.js` to the `npm test` chain: plan selection against a stubbed `list_engines` table (only `closed` engines planned, fan-out last and never for one engine, catalog engines excluded from mega plans, a failed probe reusing its own last table) and cooldown classification (engine failure 3 minutes, relay failure 15, success clears, endpoint-scoped clear); `mcp-budget.test.js` now also proves the status is recovered from an `isError` body
+
 ## grok-search 0.3.2 - 2026-11-15
 
 ### Fixed

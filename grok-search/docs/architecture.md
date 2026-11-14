@@ -13,7 +13,7 @@ scripts/search.js         搜索 CLI 入口：grokChannel + publicResult 编排�
   ├─ lib/search-argv.js     usage 文本与 argv 解析
   ├─ lib/search-options.js  搜索选项解析（CLI 覆盖配置）与派生诊断（searchBudget 等）
   ├─ lib/search-filters.js  allow/deny 清单解析：CLI 只能收紧配置、不能放宽
-  ├─ lib/search-extras.js   Tavily / Firecrawl / Exa 三渠道 fan-out、名额分配、attempt 整形
+  ├─ lib/search-extras.js   Tavily / Firecrawl / Exa / fathom / MCP-Tavily 五渠道 fan-out、名额分配、attempt 整形
   ├─ lib/search-degrade.js  失败标签表、原始信源降级答案、失败诊断
   ├─ lib/grok-responses.js  Responses 请求、tool trace 与 citation 解析
   ├─ lib/context.js         本地时间和 platform 上下文
@@ -23,7 +23,7 @@ scripts/search.js         搜索 CLI 入口：grokChannel + publicResult 编排�
   ├─ lib/tavily.js          Tavily Extract / Search / Map
   ├─ lib/firecrawl.js       Firecrawl Scrape / Search、metadata、额度判断与冷却记录
   ├─ lib/direct.js          Direct fetch / map：HTML 转文本、X 原帖校验、sitemap 与链接解析
-  ├─ lib/cooldown.js        Firecrawl / Exa 额度耗尽后的跨命令冷却状态
+  ├─ lib/cooldown.js        Firecrawl / Exa 额度与各通道失败后的跨命令冷却状态
   ├─ lib/sources.js         信源压缩、规范化（含追踪参数剥离）、字段合并去重、域名过滤降级
   ├─ lib/output.js          JSON、preview、完整输出与运行记录落盘
   ├─ lib/prompts.js         system prompt 与软预算常量
@@ -58,6 +58,8 @@ query
 Tavily 与 Firecrawl 永远是独立证据通道，不进入 Grok input。`--extra N` 是两家合计的目标数；默认 6，两家可用时均分，奇数优先 Tavily。两家都只搜网页，所以 `--source x` 下默认不跑（`extra_mode: off-x-only`，写 warning），`--extra N` 可强制；`--source both` 仍默认跑。`--responses-allowed-domains` / `--responses-excluded-domains` 会下推给两家（Tavily `include_domains` / `exclude_domains`，Firecrawl `includeDomains` / `excludeDomains`），仍漏进来的域外结果降到最后一档而不丢弃。`--instructions` 只进 Grok 的 user message，两家只收 query。
 
 Firecrawl 处于额度冷却期（`<stateDir>/firecrawl-cooldown.json`，见下）时 search 直接跳过它：有 Tavily 则名额全给 Tavily，否则 extra 为空并写 warning。
+
+fathom 的引擎健康由服务端 `list_engines` 的 `circuit_state` 决定，实测语义是：`closed` 的引擎会真正执行（yandex 4.7s 出结果），`open` 的立即以 `circuit_open` 失败（brave 1.07s），或阻塞 13s 后才回 `rate_limited`（google），`half-open` 的仍在 closed 引擎能答完的预算内超时（duckduckgo / baidu 6–12s）。所以方案只从 `closed` 里挑，`open` 只用于在失败信息里解释原因，`half-open` 不占名额。探测结果缓存 120s 到 `<stateDir>/fathom-engines.json`（只存引擎名与 `circuit_state`，0600）。整轮失败时按性质分两档冷却：`all_engines_failed`（服务端自己的引擎被限流或熔断，中继本身是活的——同一端点几分钟后就能出结果）记 3 分钟短冷却，中继级故障（401/403、超时、无引擎错误体的 5xx）记默认 15 分钟；任何一次成功都清除冷却，且清除只作用于同一 `auth_mode`（URL），换端点不会误清。`mega_search` 会直接拒绝单目录引擎（arxiv、wikipedia 等），所以配置里这类名字只在单引擎工具下才会成为方案。
 
 ### Grok 额度降级
 
