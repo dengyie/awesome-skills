@@ -7,7 +7,12 @@
  * `application/json` or `text/event-stream`; only the JSON form is used here, and a
  * server that insists on SSE is answered by parsing the `data:` lines out of the body.
  */
+import { createRequire } from "node:module";
 import { debugLog, redactSecrets } from "./http.js";
+
+// Reported in the handshake. Read from package.json so a release bump cannot leave a stale
+// version in the MCP client info.
+const VERSION = createRequire(import.meta.url)("../../package.json").version;
 
 const MCP_TIMEOUT_MS = 90_000;
 
@@ -108,7 +113,7 @@ async function callTool(url, token, tool, args, options = {}) {
   await rpcCall(url, token, "initialize", {
     protocolVersion: "2024-11-05",
     capabilities: {},
-    clientInfo: { name: "grok-search", version: "0.2.0" },
+    clientInfo: { name: "grok-search", version: VERSION },
   }, options);
 
   const result = await rpcCall(url, token, "tools/call", { name: tool, arguments: args }, options);

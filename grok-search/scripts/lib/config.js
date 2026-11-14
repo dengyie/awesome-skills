@@ -195,10 +195,17 @@ export function resolveFirecrawlApiKeys(fileConfig, getEnv = env) {
   return dedupeStrings([...multi, ...single]);
 }
 
-function resolveUserPath(value) {
+/**
+ * Expand a leading `~` in a configured path. Both separators count: Windows shells and Explorer
+ * hand out `~\dir` as readily as `~/dir`, and accepting only the POSIX form does not fail — it
+ * silently creates a literal `~` directory relative to the cwd.
+ */
+export function resolveUserPath(value) {
   if (!value || typeof value !== "string") return value;
   if (value === "~") return homedir();
-  if (value.startsWith("~/")) return path.join(homedir(), value.slice(2));
+  if (value.startsWith("~/") || value.startsWith("~\\")) {
+    return path.join(homedir(), value.slice(2));
+  }
   return value;
 }
 
@@ -461,6 +468,15 @@ export async function loadConfig({ requireGrok = false } = {}) {
     // `mega_search` takes an engine list, `search` takes exactly one engine.
     fathomSearchTool: envOrFile("FATHOM_SEARCH_TOOL", fileConfig, ["FATHOM_SEARCH_TOOL", "fathomSearchTool", "fathom_search_tool"], "mega_search"),
     fathomEngines: envOrFile("FATHOM_ENGINES", fileConfig, ["FATHOM_ENGINES", "fathomEngines", "fathom_engines"]),
+    // One budget for the whole fathom call, not per engine attempt: the adapter retries engine
+    // plans in sequence, so a per-attempt timeout multiplies and can outlast the command deadline.
+    fathomTimeoutMs: envOrFileInt(
+      "FATHOM_TIMEOUT_MS",
+      fileConfig,
+      ["FATHOM_TIMEOUT_MS", "fathomTimeoutMs", "fathom_timeout_ms"],
+      45_000,
+      { min: 1 }
+    ),
 
     // MCP-Tavily: a Tavily-compatible MCP relay (its own URL/token pair, separate from
     // the official Tavily keys and from the Tavily proxy above).

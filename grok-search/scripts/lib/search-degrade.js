@@ -55,6 +55,17 @@ export function degradedAnswer(sources, label) {
   return lines.join("\n").trim();
 }
 
+/**
+ * A NO_SEARCH reply is a real completion: the model answered, it just never called web_search.
+ * When no extra channel can replace it, returning the text with the caveat in-band beats
+ * throwing away an answer the caller already paid for.
+ */
+export function ungroundedAnswer(text) {
+  return `> ⚠️ 未经搜索取证：以下正文由 Grok 直接生成（本次未执行 web_search），请按未验证信息对待。
+
+${String(text).trim()}`;
+}
+
 export function failureDiagnostics(config, searchOptions, extraOptions, extra, error, { failure = null } = {}) {
   const labels = failure ? GROK_FAILURE_LABELS[failure] : null;
   const warning = labels ? labels.warning : `Responses search failed: ${error.message}`;

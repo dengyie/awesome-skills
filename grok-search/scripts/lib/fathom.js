@@ -15,13 +15,56 @@ import { recordChannelCooldown } from "./cooldown.js";
 import { debugLog } from "./http.js";
 import { hasMcpConfig, mcpSearch } from "./mcp.js";
 
-const FATHOM_TIMEOUT_MS = 90_000;
+/**
+ * Total time budget for one fathom search, across every engine plan.
+ *
+ * The adapter retries plans in sequence (configured engines, then each single engine, then the
+ * fallbacks), so a per-plan timeout multiplies: at 90s each, a cold server could run for minutes
+ * and outlast the command's own deadline, killing a search that already had an answer from Grok.
+ * One budget for the whole call keeps this channel as expensive as any other single extra.
+ */
+const FATHOM_TIMEOUT_MS = 45_000;
+
+function fathomBudgetMs(config) {
+  const configured = config?.fathomTimeoutMs;
+  if (Number.isInteger(configured) && configured >= 1) return configured;
+  return FATHOM_TIMEOUT_MS;
+}
 
 /**
  * Engines that were observed working at the server. `list_engines` reports a per-engine
- * circuit breaker, and an engine that is `open` fails the whole call.
+ * circuit breaker, and an engine that is `open` fails the whole call. Ordered by observed
+ * latency: `bing` answers in about a second, while `duckduckgo` can sit on a server-side
+ * timeout for a minute and a half before failing.
  */
-const FALLBACK_ENGINES = ["duckduckgo", "bing"];
+const FALLBACK_ENGINES = ["bing", "duckduckgo"];
+
+const ENGINES_PROBE_TIMEOUT_MS = 5_000;
+// Floor for a single plan so the share never collapses to a few milliseconds.
+const FATHOM_MIN_PLAN_MS = 5_000;
+
+/**
+ * Names of the engines the server still considers healthy (breaker closed), or null when the
+ * probe is unavailable or every engine is open — in that case the caller keeps the legacy plan
+ * order instead of guessing.
+ */
+async function probeHealthyEngines(url, token, config, startedAt) {
+  const budgetLeft = fathomBudgetMs(config) - (Date.now() - startedAt);
+  const timeoutMs = Math.max(200, Math.min(ENGINES_PROBE_TIMEOUT_MS, budgetLeft));
+  try {
+    const payload = await mcpSearch(url, token, "list_engines", {}, { timeoutMs, config });
+    const list = Array.isArray(payload?.engines) ? payload.engines : null;
+    if (!list) return null;
+    const closed = list
+      .filter((engine) => engine?.circuit_state === "closed")
+      .map((engine) => String(engine?.name || "").trim())
+      .filter(Boolean);
+    return closed.length ? new Set(closed) : null;
+  } catch (error) {
+    debugLog(config, `fathom list_engines probe failed: ${error.message}`);
+    return null;
+  }
+}
 
 export function hasFathomApiKey(config) {
   return hasMcpConfig(config, { urlKey: "fathomApiUrl", tokenKey: "fathomApiKey" });
@@ -73,10 +116,11 @@ function fathomResults(payload) {
  * The call plan matters more than it looks. `mega_search` fans out to every engine in
  * `engines` and fails the whole call (`all_engines_failed`) when any one of them is
  * unhealthy — and the engines' health is a per-server circuit breaker, so one flaky engine
- * takes down a query that another engine could have answered. `search` takes exactly one
- * engine and fails only for that engine, so the reliable shape is: the configured tool
- * with the configured engines first, then the same tool one engine at a time over the
- * configured list, then the engines observed to work.
+ * takes down a query that another engine could have answered. It also waits for the slowest
+ * engine in the list, which is why the fan-out runs last. `search` takes exactly one engine
+ * and fails only for that engine, so the reliable shape is: `list_engines` to learn which
+ * breakers are closed, then one engine at a time (configured engines first, then the engines
+ * observed to work), then the fan-out over the healthy ones as a last resort.
  */
 export async function fathomSearch(query, limit, config, filters = {}) {
   if (!hasFathomApiKey(config)) {
@@ -98,22 +142,44 @@ export async function fathomSearch(query, limit, config, filters = {}) {
   };
 
   const attempts = [];
+  // Ask the server which engines it considers healthy. Without this the first plan fans out
+  // over every engine including the ones whose breaker is open, and the server answers only
+  // after its own slowest engine times out (observed: 85s, then `all_engines_failed`).
+  const healthy = await probeHealthyEngines(url, token, config, startedAt);
+  const isHealthy = (engine) => !healthy || healthy.has(engine);
+
   const plans = [];
-  if (engines.length) {
-    plans.push({ tool, args: buildArgs(engines.join(",")) });
-    // One engine at a time: a single unhealthy engine no longer fails the whole query.
+  if (!healthy) {
+    // Probe unavailable: keep the previous order (fan-out first) rather than guessing health.
+    if (engines.length) plans.push({ tool, args: buildArgs(engines.join(",")) });
     for (const engine of engines) plans.push({ tool, args: buildArgs(engine) });
   }
+  // Single engines before the fan-out: one engine answers (or fails) on its own, while the
+  // fan-out always waits for the slowest engine in the list, so it belongs last.
+  for (const engine of engines.filter(isHealthy)) plans.push({ tool, args: buildArgs(engine) });
   for (const engine of FALLBACK_ENGINES) {
-    if (engines.includes(engine)) continue;
+    if (engines.includes(engine) || !isHealthy(engine)) continue;
     plans.push({ tool, args: buildArgs(engine) });
+  }
+  if (healthy) {
+    const fanOut = [...new Set([...engines, ...FALLBACK_ENGINES])].filter(isHealthy);
+    if (fanOut.length) plans.push({ tool, args: buildArgs(fanOut.join(",")) });
   }
 
   let lastError = null;
-  for (const plan of plans) {
+  const deadlineAt = startedAt + fathomBudgetMs(config);
+  for (const [index, plan] of plans.entries()) {
+    const remaining = deadlineAt - Date.now();
+    if (remaining <= 0) {
+      attempts.push(`预算用尽（${Math.round((Date.now() - startedAt) / 1000)}s），剩余方案跳过`);
+      break;
+    }
+    // Each plan gets a share of what is left, not all of it: a plan that hangs until the
+    // deadline would consume the budget and leave the remaining engines untried.
+    const planTimeout = Math.min(remaining, Math.max(FATHOM_MIN_PLAN_MS, Math.floor(remaining / (plans.length - index))));
     try {
       const payload = await mcpSearch(url, token, plan.tool, plan.args, {
-        timeoutMs: FATHOM_TIMEOUT_MS,
+        timeoutMs: planTimeout,
         config,
       });
       const results = fathomResults(payload);

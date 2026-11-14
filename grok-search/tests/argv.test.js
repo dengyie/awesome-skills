@@ -262,7 +262,9 @@ await withServer(
   }
 );
 
-// A relay that accepts the request but drops tools still returns prose. That is not a search.
+// A relay that accepts the request but drops tools still returns prose. That is not a search,
+// but the answer was already billed: with --no-extra it comes back as an ungrounded answer
+// (exit 0, notice in the body) instead of being thrown away as an error.
 await withServer(
   (req, res) => {
     assert.equal(req.url, "/responses");
@@ -278,11 +280,15 @@ await withServer(
   },
   async (_server, port) => {
     const searchResult = await runNode(["scripts/search.js", "--no-extra", "mock query"], baseGrokEnv(port));
-    assert.equal(searchResult.code, 1, searchResult.stdout);
+    assert.equal(searchResult.code, 0, searchResult.stdout);
     const output = parseJson(searchResult.stdout);
-    assert.equal(output.error.code, "GROK_RESPONSES_NO_SEARCH");
+    assert.equal(output.error, undefined);
+    assert.match(output.answer.text, /未经搜索取证/);
+    assert.match(output.answer.text, /Answer from memory\./);
     assert.equal(output.diagnostics.responses_native_search, false);
     assert.equal(output.diagnostics.responses_web_search_calls, 0);
+    assert.equal(output.diagnostics.degraded, true);
+    assert.equal(output.diagnostics.grok_error.code, "NO_SEARCH");
   }
 );
 

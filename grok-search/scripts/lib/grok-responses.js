@@ -524,6 +524,13 @@ export function parseGrokResponses(data, { defaultTool = "web_search", xEnabled 
   }
   if (!text) warnings.push("Responses returned no output text.");
   if (!outputItems(data).length && !textField(data?.output_text)) warnings.push("Responses output array is missing or empty.");
+  // A cut-off answer is still an answer, and it was billed: keep it, but never let it pass as
+  // complete. Without this the caller gets a sentence that stops mid-thought and no hint why.
+  const responseStatus = textField(data?.status);
+  const incompleteReason = textField(data?.incomplete_details?.reason);
+  if (responseStatus === "incomplete") {
+    warnings.push(`Responses 输出不完整（${incompleteReason || "incomplete"}）：正文可能被截断。`);
+  }
 
   const citationSources = extractCitationSources(data, defaultTool, xEnabled);
   const searched = extractSearchedSources(data, defaultTool);
@@ -543,6 +550,8 @@ export function parseGrokResponses(data, { defaultTool = "web_search", xEnabled 
     diagnostics: {
       ...usageDiagnostics(data),
       ...(servedModel ? { responses_model: servedModel } : {}),
+      ...(responseStatus ? { responses_status: responseStatus } : {}),
+      ...(incompleteReason ? { responses_incomplete_reason: incompleteReason } : {}),
       responses_native_search: nativeSearch,
       responses_web_search_calls: counts.webSearchCalls,
       responses_x_search_calls: counts.xSearchCalls,
@@ -559,6 +568,11 @@ export function parseGrokResponses(data, { defaultTool = "web_search", xEnabled 
 }
 
 export const GROK_REQUEST_TIMEOUT_MS = 180_000;
+// A 5xx or a timeout is usually a blip (relay restart, local proxy EOF), while an exhausted
+// quota is a durable state. Holding the upstream out for the full default on a blip turns a
+// five-second error into fifteen minutes of degraded answers, so transient failures only
+// pause it briefly.
+export const GROK_TRANSIENT_COOLDOWN_MS = 60_000;
 const GROK_TIMEOUT_RESERVE_MS = 20_000;
 const GROK_MIN_TIMEOUT_MS = 8_000;
 
@@ -610,9 +624,10 @@ export async function searchGrokResponses(query, options, config) {
     // is a configuration error and retrying it later does not help, so it is not recorded.
     const recoverable = error?.status >= 500 || error?.timedOut || error?.status === 429 || error?.status === 402;
     if (recoverable) {
+      const durable = error?.status === 402 || error?.status === 429;
       await recordChannelCooldown(config, "grok", {
         authMode: cooldownKey,
-        retryAfterMs: error?.retryAfterMs,
+        retryAfterMs: error?.retryAfterMs ?? (durable ? undefined : GROK_TRANSIENT_COOLDOWN_MS),
         reason: error?.upstreamCode || (error?.timedOut ? "timeout" : `http_${error?.status ?? "unknown"}`),
       });
     }
@@ -634,6 +649,10 @@ export async function searchGrokResponses(query, options, config) {
     const error = new Error("Grok Responses 未执行服务端搜索，返回的是无来源正文");
     error.code = "GROK_RESPONSES_NO_SEARCH";
     error.diagnostics = parsed.diagnostics;
+    // The upstream billed for this completion. Keep the text so the caller can hand it back
+    // (clearly marked as ungrounded) instead of discarding an answer that was already paid for.
+    error.answer = parsed.text;
+    error.sources = parsed.sources;
     throw error;
   }
 

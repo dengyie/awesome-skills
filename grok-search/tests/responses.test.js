@@ -551,4 +551,36 @@ const searchedWeb = parseGrokResponses({
 });
 assert.equal(searchedWeb.diagnostics.responses_native_search, true);
 
+// A cut-off completion still carries a real (billed) answer, but it must never pass as complete:
+// the caller needs to know the sentence stops mid-thought because the budget ran out.
+const truncated = parseGrokResponses({
+  status: "incomplete",
+  incomplete_details: { reason: "max_output_tokens" },
+  output: [
+    { type: "web_search_call", status: "completed", action: { type: "search", query: "a" } },
+    { type: "message", content: [{ type: "output_text", text: "The release shipped on " }] },
+  ],
+});
+assert.equal(truncated.diagnostics.responses_status, "incomplete");
+assert.equal(truncated.diagnostics.responses_incomplete_reason, "max_output_tokens");
+assert.equal(truncated.diagnostics.responses_native_search, true);
+assert.equal(
+  truncated.diagnostics.warnings.some((warning) => warning.includes("max_output_tokens")),
+  true,
+  "an incomplete completion must warn with the upstream reason"
+);
+assert.equal(truncated.text, "The release shipped on", "the paid partial text is kept");
+
+// A normal completion records its status without inventing a warning.
+const completed = parseGrokResponses({
+  status: "completed",
+  output: [
+    { type: "web_search_call", status: "completed", action: { type: "search", query: "a" } },
+    { type: "message", content: [{ type: "output_text", text: "Done." }] },
+  ],
+});
+assert.equal(completed.diagnostics.responses_status, "completed");
+assert.equal(completed.diagnostics.responses_incomplete_reason, undefined);
+assert.equal(completed.diagnostics.warnings.some((warning) => warning.includes("不完整")), false);
+
 console.log("responses fixtures ok");

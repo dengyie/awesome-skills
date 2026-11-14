@@ -15,7 +15,7 @@ import { cleanupOutputDir, previewText, printJson, runRecordBase, writeRunRecord
 import { firecrawlAuthMode } from "./lib/firecrawl.js";
 import { assertProxyUsable, getProxyState } from "./lib/proxy.js";
 import { buildRawSourcesPayload, compactSources, mergeSources, selectSources } from "./lib/sources.js";
-import { degradedAnswer, failureDiagnostics, GROK_FAILURE_LABELS, grokFailureAttempt } from "./lib/search-degrade.js";
+import { degradedAnswer, failureDiagnostics, GROK_FAILURE_LABELS, grokFailureAttempt, ungroundedAnswer } from "./lib/search-degrade.js";
 import { extraModeWarnings, extraSources, resolveExtra } from "./lib/search-extras.js";
 import { parseArgs, usage } from "./lib/search-argv.js";
 import { responsesDiagnosticOptions, resolveSearchOptions, searchBudget, searchSourceWarnings } from "./lib/search-options.js";
@@ -99,16 +99,21 @@ async function publicResult(args, config) {
   } else {
     const extrasReady = extraOptions.limit > 0 && extra.sources.length > 0;
     const named = classifyGrokFailure(grokResult.error);
+    const degradeKind = grokDegradeKind(grokResult.error);
     // Quota and rate-limit are named even without extras. Timeouts, 5xx, and replies without
     // usable search still leave Tavily/Firecrawl/Exa results on the table; auth and protocol
     // errors (401/403/422 without a quota body) stay hard failures even when extras exist.
-    const failure = extrasReady ? named || grokDegradeKind(grokResult.error) : named;
+    // NO_SEARCH is the one failure that is worth degrading even with no extras at all: the
+    // model did answer, so there is text to return instead of an error.
+    const failure = extrasReady ? named || degradeKind : named || (degradeKind === "no_search" ? degradeKind : null);
     if (!failure) {
       grokResult.error.diagnostics = failureDiagnostics(config, searchOptions, extraOptions, extra, grokResult.error);
       throw grokResult.error;
     }
     const labels = GROK_FAILURE_LABELS[failure];
-    if (!extrasReady) {
+    // Only when no extra source can stand in: with extras in hand their grounded results win.
+    const ungroundedText = !extrasReady && failure === "no_search" ? String(grokResult.error.answer || "").trim() : "";
+    if (!extrasReady && !ungroundedText) {
       const error = new Error(
         extraOptions.mode === "off-x-only"
           ? `Grok Responses ${labels.label}；--source x 下 extra sources 默认关闭（传 --extra N 可开启），无法降级`
@@ -122,19 +127,37 @@ async function publicResult(args, config) {
     }
     degraded = true;
     grokError = { code: labels.code, message: grokResult.error.message };
-    grok = {
-      endpoint: "responses",
-      model: searchOptions.model,
-      answer: degradedAnswer(extra.sources, labels.label),
-      sources: [],
-      tool_calls: [],
-      warnings: [
-        `Grok Responses 因${labels.label}不可用；当前 answer 仅包含 Tavily/Firecrawl/Exa 原始搜索结果，未经 Grok 综合生成。`,
-      ],
-      provider_attempts: [grokFailureAttempt(config, grokResult.error)],
-      diagnostics: {},
-      raw_content_chars: 0,
-    };
+    if (ungroundedText) {
+      // Nothing grounded to show, but the model's own answer is already paid for: return it
+      // with the caveat in the body and responses_native_search=false in the diagnostics.
+      const grokDiagnostics = { ...(grokResult.error.diagnostics || {}) };
+      delete grokDiagnostics.warnings;
+      grok = {
+        endpoint: "responses",
+        model: searchOptions.model,
+        answer: ungroundedAnswer(ungroundedText),
+        sources: [],
+        tool_calls: [],
+        warnings: ["Grok Responses 未执行服务端搜索：正文由模型直接生成，未经 web_search 取证，按未验证信息对待。"],
+        provider_attempts: [grokFailureAttempt(config, grokResult.error)],
+        diagnostics: grokDiagnostics,
+        raw_content_chars: ungroundedText.length,
+      };
+    } else {
+      grok = {
+        endpoint: "responses",
+        model: searchOptions.model,
+        answer: degradedAnswer(extra.sources, labels.label),
+        sources: [],
+        tool_calls: [],
+        warnings: [
+          `Grok Responses 因${labels.label}不可用；当前 answer 仅包含 Tavily/Firecrawl/Exa 原始搜索结果，未经 Grok 综合生成。`,
+        ],
+        provider_attempts: [grokFailureAttempt(config, grokResult.error)],
+        diagnostics: {},
+        raw_content_chars: 0,
+      };
+    }
   }
 
   const warnings = [...searchSourceWarnings(searchOptions, config), ...extraModeWarnings(extraOptions), ...grok.warnings, ...extra.warnings];

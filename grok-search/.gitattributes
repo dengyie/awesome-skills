@@ -1,0 +1,3 @@
+# SKILL.md is authored and installed as LF. Without this pin a checkout rewrites it to CRLF,
+# which then travels into the install copy and shows up as a whole-file diff.
+SKILL.md text eol=lf

@@ -199,6 +199,7 @@ Node 原生 `fetch` 默认不会可靠读取终端代理变量。本项目会在
 | `FATHOM_API_KEY` | `fathomApiKey` | 否 | `search.js` | 可选。fathom MCP 服务的 Bearer token。 |
 | `FATHOM_SEARCH_TOOL` | `fathomSearchTool` | 否 | `search.js` | 默认 `mega_search`。 |
 | `FATHOM_ENGINES` | `fathomEngines` | 否 | `search.js` | 可选。限制 fathom 使用哪些引擎。 |
+| `FATHOM_TIMEOUT_MS` | `fathomTimeoutMs` | 否 | `search.js` | 默认 `45000`。**整次 fathom 调用的总预算**，不是每个引擎方案的超时：方案是串行重试的，按方案计时会成倍放大并可能超出命令 deadline。 |
 | `MCP_TAVILY_URL` | `mcpTavilyUrl` | 否 | `search.js` | 可选。Tavily 兼容的 MCP 中继 URL；配置后加入 `--extra` 轮转。 |
 | `MCP_TAVILY_TOKEN` | `mcpTavilyToken` | 否 | `search.js` | 可选。MCP 中继的 Bearer token。 |
 | `MCP_TAVILY_TOOL` | `mcpTavilyTool` | 否 | `search.js` | 默认 `search_proxy_tavily_search`。 |
@@ -302,7 +303,7 @@ X citation 只返回裸 URL、且 `title` 是 inline citation 序号，因此 so
 
 `--extra N` 是**每个渠道各自**的目标结果数，默认 `6`：所有配置了的渠道（Tavily / Firecrawl / Exa）各完整搜索 N 条，合并后按 URL 去重（归一化时剥离 `utm_*`、`dub_id`、`fbclid`、`gclid` 等追踪参数，同页多渠道命中合并为一张卡片、保留最干净的 URL，`merged_from` 列出所有命中该页的渠道），最终输出由 `--max-sources`（默认 12）裁剪。请求数与拆分分配相同，但两家按结果量计费：小名额时近乎固定（实测 2–6 条均为 Firecrawl 2 credits、Exa $0.007），名额增大后线性上涨（实测 25 条：Firecrawl 6 credits、Exa $0.022；Tavily 按官方 key/代理计费）。全渠道搜索给去重提供了最多的候选。`--no-extra` 严格关闭所有外部搜索通道。
 
-当 Grok 明确返回额度耗尽（402/403、额度类错误码如 `insufficient_user_usd_credit`、正文提到 quota / credits / billing / 余额 / 积分的 4xx）时，无论 extra 是否可用都会得到明确的失败码；若 extra sources 可用，命令会返回标记为 `diagnostics.degraded: true` 的降级结果：`QUOTA_EXHAUSTED`（配额）、`RATE_LIMITED`（存活下来的 429 限流）、`NO_SEARCH`（中转丢弃了 web_search、只回散文）、`EMPTY`（空内容）、`TIMEOUT`（超时 / 408 / 504 / 524）、`UPSTREAM`（5xx）。`answer.text` 会明确说明当前仅为 Tavily/Firecrawl/Exa 原始搜索结果，`diagnostics.grok_error` 保留脱敏后的上游错误。纯认证与协议错误（401/403/422 且无配额特征）保持硬失败，不会被伪装成降级。
+当 Grok 明确返回额度耗尽（402/403、额度类错误码如 `insufficient_user_usd_credit`、正文提到 quota / credits / billing / 余额 / 积分的 4xx）时，无论 extra 是否可用都会得到明确的失败码；若 extra sources 可用，命令会返回标记为 `diagnostics.degraded: true` 的降级结果：`QUOTA_EXHAUSTED`（配额）、`RATE_LIMITED`（存活下来的 429 限流）、`NO_SEARCH`（中转丢弃了 web_search、只回散文）、`EMPTY`（空内容）、`TIMEOUT`（超时 / 408 / 504 / 524）、`UPSTREAM`（5xx）。`answer.text` 会明确说明当前仅为 Tavily/Firecrawl/Exa 原始搜索结果，`diagnostics.grok_error` 保留脱敏后的上游错误。纯认证与协议错误（401/403/422 且无配额特征）保持硬失败，不会被伪装成降级。**`NO_SEARCH` 是唯一例外**：即使 `--no-extra` 完全关闭了 extra，也会把模型已经生成的正文作为**未取证**结果返回——`answer.text` 顶部带 ⚠️ 声明、`diagnostics.responses_native_search=false`、`diagnostics.degraded=true`、退出码 0——而不是丢弃这次已经计费的答案；只有正文为空（`EMPTY`）且无 extra 时才仍然失败。另外，上游把这次补全标成 `status: incomplete`（例如输出被 `max_output_tokens` 截断）时不算失败：正文照常返回，但 `warnings` 会点名截断原因，`diagnostics.responses_status` / `responses_incomplete_reason` 保留上游原值——截断不等于报错，但也不能当成完整答案。
 
 Firecrawl Keyless 提供每月 1,000 credits，并受按 IP 的每日限额约束。配置 `FIRECRAWL_API_KEY` 不会增加免费计划的月度 credits，但能获得更高限流、独立账户额度和更多 API 能力。
 

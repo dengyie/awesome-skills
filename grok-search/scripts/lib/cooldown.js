@@ -1,4 +1,4 @@
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /**
@@ -52,11 +52,42 @@ async function readCooldownRecord(config, filePath) {
   return { ...record, until: new Date(until).toISOString() };
 }
 
+/**
+ * Replace a state file atomically. A plain in-place write can be read mid-flight by a parallel
+ * search, and a torn JSON document parses as "no cooldown" — the protection silently disappears
+ * exactly while two commands are running. Write a sibling temp file and rename it over the
+ * target: rename is atomic within a volume on both POSIX and Windows.
+ *
+ * Windows additionally refuses to replace a file another process holds open, so a busy target is
+ * retried briefly rather than dropping the record.
+ */
+async function replaceFile(tmpPath, filePath) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await rename(tmpPath, filePath);
+      return;
+    } catch (error) {
+      const busy = error.code === "EPERM" || error.code === "EACCES" || error.code === "EBUSY";
+      if (!busy || attempt >= 2) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
+}
+
+// Parallel writes inside one process start in the same millisecond, so a pid+clock temp name
+// would collide and let two writers interleave into the same temp file.
+let tempCounter = 0;
+
 async function writeCooldownRecord(config, filePath, record) {
+  tempCounter += 1;
+  const tmpPath = `${filePath}.${process.pid}.${tempCounter}.tmp`;
   try {
     await mkdir(config.stateDir, { recursive: true, mode: 0o700 });
-    await writeFile(filePath, JSON.stringify(record, null, 2), { encoding: "utf8", mode: 0o600 });
+    await writeFile(tmpPath, JSON.stringify(record, null, 2), { encoding: "utf8", mode: 0o600 });
+    await replaceFile(tmpPath, filePath);
   } catch (error) {
+    // Do not leave the temp file behind when the swap failed.
+    await unlink(tmpPath).catch(() => {});
     debug(config, `cooldown write skipped: ${error.message}`);
   }
 }
