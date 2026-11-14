@@ -4,6 +4,7 @@ import { getLocalTimeContext, platformPrompt } from "./context.js";
 import { searchPrompt, xSearchPrompt } from "./prompts.js";
 import { isCitationMarker, isXUrl, normalizeSourceUrl, parseXPostUrl } from "./sources.js";
 import { numericField, usageDiagnostics } from "./usage.js";
+import { activeChannelCooldown, clearChannelCooldown, recordChannelCooldown } from "./cooldown.js";
 
 function asArray(value) {
   if (Array.isArray(value)) return value;
@@ -42,6 +43,7 @@ export function classifyGrokFailure(error) {
 }
 
 export function grokDegradeKind(error) {
+  if (error?.code === "GROK_UPSTREAM_COOLDOWN") return "cooldown";
   if (error?.code === "GROK_RESPONSES_NO_SEARCH") return "no_search";
   if (error?.code === "GROK_RESPONSES_EMPTY") return "empty";
   if (error?.timedOut || error?.status === 408 || error?.status === 504 || error?.status === 524) return "timeout";
@@ -560,6 +562,16 @@ export const GROK_REQUEST_TIMEOUT_MS = 180_000;
 const GROK_TIMEOUT_RESERVE_MS = 20_000;
 const GROK_MIN_TIMEOUT_MS = 8_000;
 
+/**
+ * The cooldown key for the Grok upstream. The endpoint and the model both matter: a relay
+ * that is out of quota for one model may still serve another, and a changed endpoint is a
+ * different upstream entirely. Changing either takes effect at once instead of waiting
+ * out the old cooldown.
+ */
+export function grokCooldownKey(config, model) {
+  return `${responsesEndpoint(config)}|${model}`;
+}
+
 export function grokRequestTimeoutMs(deadlineSeconds) {
   if (!Number.isFinite(deadlineSeconds) || deadlineSeconds <= 0) return GROK_REQUEST_TIMEOUT_MS;
   return Math.max(GROK_MIN_TIMEOUT_MS, Math.min(GROK_REQUEST_TIMEOUT_MS, deadlineSeconds * 1000 - GROK_TIMEOUT_RESERVE_MS));
@@ -570,18 +582,46 @@ export async function searchGrokResponses(query, options, config) {
   const body = buildResponsesBody(query, options, config);
   const timeoutMs =
     Number.isFinite(options.timeoutMs) && options.timeoutMs > 0 ? options.timeoutMs : GROK_REQUEST_TIMEOUT_MS;
-  const data = await requestJson(endpoint, {
-    headers: authHeaders(config.grokApiKey),
-    body,
-    timeoutMs,
-    config,
-    retry: true,
-    retryOnTimeout: false,
-  });
+  const cooldownKey = grokCooldownKey(config, options.model);
+
+  // A dead upstream is worth remembering: without this every later command pays the same
+  // failed request (and the same latency) before falling back to the extra channels.
+  const cooldown = await activeChannelCooldown(config, "grok", cooldownKey);
+  if (cooldown) {
+    const error = new Error(`Grok Responses 上游处于冷却中（${cooldown.until}）：${cooldown.reason || "unavailable"}`);
+    error.code = "GROK_UPSTREAM_COOLDOWN";
+    error.cooldown = cooldown;
+    throw error;
+  }
+
+  let data;
+  try {
+    data = await requestJson(endpoint, {
+      headers: authHeaders(config.grokApiKey),
+      body,
+      timeoutMs,
+      config,
+      retry: true,
+      retryOnTimeout: false,
+    });
+  } catch (error) {
+    // Quota, 5xx and timeouts all mean the same thing for the next command: this upstream
+    // cannot serve the request right now. A 4xx that is not a quota problem (401/403/422)
+    // is a configuration error and retrying it later does not help, so it is not recorded.
+    const recoverable = error?.status >= 500 || error?.timedOut || error?.status === 429 || error?.status === 402;
+    if (recoverable) {
+      await recordChannelCooldown(config, "grok", {
+        authMode: cooldownKey,
+        retryAfterMs: error?.retryAfterMs,
+        reason: error?.upstreamCode || (error?.timedOut ? "timeout" : `http_${error?.status ?? "unknown"}`),
+      });
+    }
+    throw error;
+  }
 
   const defaultTool =
     config.apiProvider === "openrouter" ? "openrouter:web_search" : options.searchSource === "x" ? "x_search" : "web_search";
-  // OpenRouter attaches x_search to native search for xAI models whatever we asked for.
+  // OpenRouter attaches x_search to native search on xAI models whatever we asked for.
   const xEnabled = usesXSearch(options.searchSource) || config.apiProvider === "openrouter";
   const parsed = parseGrokResponses(data, { defaultTool, xEnabled, requestedModel: options.model });
   if (!parsed.text.trim()) {
@@ -596,6 +636,9 @@ export async function searchGrokResponses(query, options, config) {
     error.diagnostics = parsed.diagnostics;
     throw error;
   }
+
+  // The upstream answered: whatever cooldown an earlier failure left behind is stale.
+  await clearChannelCooldown(config, "grok");
 
   return {
     model: options.model,

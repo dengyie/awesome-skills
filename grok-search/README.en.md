@@ -89,9 +89,17 @@ Full configuration example:
   "tavilyProxyKey": "",
   "tavilyProxyTimeoutMs": 12000,
   "firecrawlApiKey": "",
+  "firecrawlApiKeys": [],
   "firecrawlApiUrl": "https://api.firecrawl.dev/v2",
   "exaApiKey": "",
   "exaApiUrl": "https://api.exa.ai",
+  "fathomApiUrl": "",
+  "fathomApiKey": "",
+  "fathomSearchTool": "mega_search",
+  "fathomEngines": "",
+  "mcpTavilyUrl": "",
+  "mcpTavilyToken": "",
+  "mcpTavilyTool": "search_proxy_tavily_search",
   "outputDir": "",
   "stateDir": "",
   "runLog": true
@@ -112,7 +120,7 @@ Common configuration rules:
 - The old `responsesIncludeXSearch` / `GROK_RESPONSES_INCLUDE_X_SEARCH` option has been removed (deprecated 2026-08, removed 2026-09). A `true` value now fails with `CONFIG_OPTION_REMOVED` instead of silently dropping X search; switch to `searchSource: "both"`. `false` or absent is unaffected.
 - Precedence is CLI > environment > config file > built-in default. Note that you write the config file while the agent invoking this tool writes the CLI args: scalar settings such as `searchSource` are **defaults** the agent may override, and the value actually used is always recorded in `diagnostics.options`. Configured **restrictions**, however, are never silently discarded — allow-lists and deny-lists are both restrictions, and CLI values may only narrow them. Stepping outside one raises `RESPONSES_FILTER_FORBIDDEN`, emptying an allow-list raises `RESPONSES_FILTER_EMPTY`, and two deny-lists are merged rather than replaced. See [docs/responses-mode.md](docs/responses-mode.md#配置与命令行的优先级).
 - `responsesOpenRouterEngine` accepts `auto`, `native`, `exa`, `firecrawl`, `parallel`, or `perplexity`, and only applies when `apiProvider` is `openrouter`.
-- `tavilyApiKey` is optional. Put several official keys in `tavilyApiKeys` (or comma-separated `TAVILY_API_KEYS`); the pool rotates only on quota or auth failure, and the cursor lives at `~/.cache/grok-search/tavily-rr.json`. `tavilyProxyUrl` plus `tavilyProxyKey` is a separate third-party compatible endpoint: the proxy is tried first (12s, no retry) and HTTP failures or empty search/map results fall back to official keys. Do not put the proxy URL in `tavilyApiUrl`; the two key types are not interchangeable. `firecrawlApiKey` may also be empty to use Firecrawl Keyless. An empty `outputDir` uses `~/.cache/grok-search/outputs/`; an empty `stateDir` uses `~/.cache/grok-search/` for the Firecrawl cooldown state. `runLog: false` disables the per-run record files.
+- `tavilyApiKey` is optional. Put several official keys in `tavilyApiKeys` (or comma-separated `TAVILY_API_KEYS`); the pool rotates only on quota or auth failure, and the cursor lives at `~/.cache/grok-search/tavily-rr.json`. `tavilyProxyUrl` plus `tavilyProxyKey` is a separate third-party compatible endpoint: the proxy is tried first (12s, no retry) and HTTP failures or empty search/map results fall back to official keys. Do not put the proxy URL in `tavilyApiUrl`; the two key types are not interchangeable. `firecrawlApiKey` may also be empty to use Firecrawl Keyless. Put several official Firecrawl keys in `firecrawlApiKeys` (or comma-separated `FIRECRAWL_API_KEYS`) to run a key pool: the cursor lives at `~/.cache/grok-search/firecrawl-rr.json`, a key that reports exhausted credits is put in cooldown and the next one takes over, and a bare 429 (transient rate limit) does not rotate the pool. An optional `exaApiKey` adds Exa to the search extra rotation and to the fetch auto chain (it is unrelated to the OpenRouter engine value `exa`, which only applies when `apiProvider` is `openrouter`). `fathomApiUrl` plus `fathomApiKey` points at an MCP server that fans one query out across several web engines and joins the extra rotation when set; `mcpTavilyUrl` plus `mcpTavilyToken` points at a Tavily-compatible MCP relay and joins the rotation the same way. `providerWeights` sets a per-channel weight (`tavily` / `firecrawl` / `exa` / `fathom` / `mcpTavily`): a weight of 0 switches that channel off, and a weight below 1 shrinks its request. An empty `outputDir` uses `~/.cache/grok-search/outputs/`; an empty `stateDir` uses `~/.cache/grok-search/` for the Firecrawl cooldown state. `runLog: false` disables the per-run record files.
 
 For OpenRouter, replace the core fields with:
 
@@ -190,9 +198,17 @@ Supported variables:
 | `TAVILY_PROXY_KEY` | `tavilyProxyKey` | No | Tavily paths | Proxy bearer token. When both URL and key are set, the proxy is tried first. |
 | `TAVILY_PROXY_TIMEOUT_MS` | `tavilyProxyTimeoutMs` | No | Tavily paths | Proxy fail-fast timeout. Default `12000`, no retry. Empty search/map results also fall back; empty extract content does not. |
 | `FIRECRAWL_API_KEY` | `firecrawlApiKey` | No | `search.js`, `fetch.js` | Optional. Uses Firecrawl Keyless when absent; a key provides account-scoped credits and higher rate limits. |
+| `FIRECRAWL_API_KEYS` | `firecrawlApiKeys` | No | Firecrawl paths | Comma-separated official key pool. Rotates only on exhausted credits (402, or 429 with `reason:"credits"`) or 401; a bare 429 is a transient rate limit and does not rotate. Cursor at `~/.cache/grok-search/firecrawl-rr.json`. Env wins over the config file. |
 | `FIRECRAWL_API_URL` | `firecrawlApiUrl` | No | Firecrawl paths | Defaults to `https://api.firecrawl.dev/v2`. |
 | `EXA_API_KEY` | `exaApiKey` | No | `search.js`, `fetch.js` | Optional. When set, Exa joins the `--extra` rotation and serves `fetch.js --provider exa` / the auto chain. |
 | `EXA_API_URL` | `exaApiUrl` | No | Exa paths | Defaults to `https://api.exa.ai`. |
+| `FATHOM_API_URL` | `fathomApiUrl` | No | `search.js` | Optional. fathom is an MCP server that fans one query out across several web engines; setting the URL adds it to the `--extra` rotation. |
+| `FATHOM_API_KEY` | `fathomApiKey` | No | `search.js` | Optional. Bearer token for the fathom MCP server. |
+| `FATHOM_SEARCH_TOOL` | `fathomSearchTool` | No | `search.js` | Defaults to `mega_search`. |
+| `FATHOM_ENGINES` | `fathomEngines` | No | `search.js` | Optional. Restricts which engines fathom uses. |
+| `MCP_TAVILY_URL` | `mcpTavilyUrl` | No | `search.js` | Optional. URL of a Tavily-compatible MCP relay; setting it adds the channel to the `--extra` rotation. |
+| `MCP_TAVILY_TOKEN` | `mcpTavilyToken` | No | `search.js` | Optional. Bearer token for the MCP relay. |
+| `MCP_TAVILY_TOOL` | `mcpTavilyTool` | No | `search.js` | Defaults to `search_proxy_tavily_search`. |
 | `GROK_OUTPUT_DIR` | `outputDir` | No | all scripts | Overrides long-output and run-record storage. Default: `~/.cache/grok-search/outputs/`. |
 | `GROK_STATE_DIR` | `stateDir` | No | all scripts | Cross-command state directory (Firecrawl quota cooldown file `firecrawl-cooldown.json`). Default: `~/.cache/grok-search/`. |
 | `GROK_RUN_LOG` | `runLog` | No | all scripts | Default `true`: every command writes one run-record JSON. `off` / `false` disables it, and `sources.raw_path` / `diagnostics.run_path` become null. |
@@ -324,7 +340,7 @@ Tavily Extract -> Firecrawl Scrape -> Exa Contents -> Direct Fetch
 
 Direct Fetch is a best-effort fallback for normal HTTP(S) text pages. It strips simple HTML, formats JSON when possible, records redirects, and rejects binary/attachment/oversized responses.
 
-Firecrawl Scrape uses Keyless without a key and automatically sends a Bearer token when `FIRECRAWL_API_KEY` is configured. The active mode is exposed as `diagnostics.firecrawl_auth_mode`. Exa Contents requires `EXA_API_KEY`, bills per page (about $0.001 for a normal page), provides `title / author / published_at` metadata, and reports `cost_usd` on its attempt; without a key it is just a `skipped` entry in the auto chain.
+Firecrawl Scrape uses Keyless without a key and automatically sends a Bearer token when `FIRECRAWL_API_KEY` is configured. The active mode is exposed as `diagnostics.firecrawl_auth_mode`. With a key pool the attempt also carries `firecrawl_key_index` / `firecrawl_key_total` / `firecrawl_keys_tried`, so you can see which key answered and how many were tried; cooldowns are tracked per key fingerprint, so one exhausted key does not switch the whole Firecrawl channel off. Exa Contents requires `EXA_API_KEY`, bills per page (about $0.001 for a normal page), provides `title / author / published_at` metadata, and reports `cost_usd` on its attempt; without a key it is just a `skipped` entry in the auto chain.
 
 X posts (`x.com/<handle>/status/<id>`) under `--provider auto` try Direct first regardless of keys, and count as success only when the page names the handle, carries a date, and has non-boilerplate text (main post only). If validation fails the normal Tavily → Firecrawl order runs; if that is unavailable too, the Direct text is returned with a warning. The 2026-09-08 side-by-side is the reason: Tavily is fast and free but returned one of three posts without a date and timed out on another; Firecrawl costs about 30 credits and 10+ seconds per post in exchange for ISO timestamps, engagement counts and the thread. Use `--provider firecrawl` explicitly when you need the thread. Any fetch with `credits_used >= 10` adds a cost warning to `diagnostics.warnings`.
 

@@ -238,15 +238,15 @@ await withServer(
 // downstream. A missing key or cooldown drops that channel entirely.
 {
   const withExa = { ...baseConfig, tavilyApiKeys: ["tvly-x"] };
-  assert.deepEqual(extraAllocation(6, withExa), { tavily: 6, firecrawl: 6, exa: 6 });
-  assert.deepEqual(extraAllocation(1, withExa), { tavily: 1, firecrawl: 1, exa: 1 });
-  assert.deepEqual(extraAllocation(6, withExa, { exaAvailable: false }), { tavily: 6, firecrawl: 6, exa: 0 });
+  assert.deepEqual(extraAllocation(6, withExa), { tavily: 6, firecrawl: 6, exa: 6, fathom: 0, mcpTavily: 0 });
+  assert.deepEqual(extraAllocation(1, withExa), { tavily: 1, firecrawl: 1, exa: 1, fathom: 0, mcpTavily: 0 });
+  assert.deepEqual(extraAllocation(6, withExa, { exaAvailable: false }), { tavily: 6, firecrawl: 6, exa: 0, fathom: 0, mcpTavily: 0 });
   // No Tavily key: Firecrawl and Exa each take the full target.
-  assert.deepEqual(extraAllocation(6, baseConfig), { tavily: 0, firecrawl: 6, exa: 6 });
-  assert.deepEqual(extraAllocation(6, baseConfig, { exaAvailable: false }), { tavily: 0, firecrawl: 6, exa: 0 });
+  assert.deepEqual(extraAllocation(6, baseConfig), { tavily: 0, firecrawl: 6, exa: 6, fathom: 0, mcpTavily: 0 });
+  assert.deepEqual(extraAllocation(6, baseConfig, { exaAvailable: false }), { tavily: 0, firecrawl: 6, exa: 0, fathom: 0, mcpTavily: 0 });
   // Firecrawl cooling down: the remaining channels still search the full target.
-  assert.deepEqual(extraAllocation(4, withExa, { firecrawlAvailable: false }), { tavily: 4, firecrawl: 0, exa: 4 });
-  assert.deepEqual(extraAllocation(0, withExa), { tavily: 0, firecrawl: 0, exa: 0 });
+  assert.deepEqual(extraAllocation(4, withExa, { firecrawlAvailable: false }), { tavily: 4, firecrawl: 0, exa: 4, fathom: 0, mcpTavily: 0 });
+  assert.deepEqual(extraAllocation(0, withExa), { tavily: 0, firecrawl: 0, exa: 0, fathom: 0, mcpTavily: 0 });
 }
 
 // classifyGrokFailure: the wxiai relay answers an empty balance with 403 +

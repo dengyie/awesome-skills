@@ -1,9 +1,15 @@
-/** Independent Tavily / Firecrawl / Exa extra searches: allocation, fan-out, and attempt shaping. */
-import { activeExaCooldown, activeFirecrawlCooldown, cooldownSkipMessage } from "./cooldown.js";
+/** Independent Tavily / Firecrawl / Exa / fathom / MCP-Tavily extra searches: allocation, fan-out, and attempt shaping. */
+import {
+  activeChannelCooldown,
+  activeExaCooldown,
+  cooldownSkipMessage,
+} from "./cooldown.js";
 import { usesWebSearch, usesXSearch } from "./config.js";
 import { exaSearch } from "./exa.js";
-import { firecrawlAuthMode, firecrawlSearch } from "./firecrawl.js";
-import { extraAllocation } from "./providers.js";
+import { fathomSearch } from "./fathom.js";
+import { firecrawlAuthMode, firecrawlChannelCooldown, firecrawlSearch } from "./firecrawl.js";
+import { mcpTavilySearch } from "./mcp-tavily.js";
+import { emptyAllocation, extraAllocation } from "./providers.js";
 import { isOffDomainExtra } from "./sources.js";
 import { tavilySearch } from "./tavily.js";
 
@@ -23,27 +29,42 @@ function providerAttempt(result) {
     ...(Number.isFinite(result.tavily_key_index) ? { tavily_key_index: result.tavily_key_index } : {}),
     ...(result.tavily_proxy_tried ? { tavily_proxy_tried: true } : {}),
     ...(result.tavily_proxy_error ? { tavily_proxy_error: result.tavily_proxy_error } : {}),
+    ...(Number.isFinite(result.firecrawl_key_index) ? { firecrawl_key_index: result.firecrawl_key_index } : {}),
+    ...(Number.isFinite(result.firecrawl_key_total) ? { firecrawl_key_total: result.firecrawl_key_total } : {}),
+    ...(Number.isFinite(result.firecrawl_keys_tried) ? { firecrawl_keys_tried: result.firecrawl_keys_tried } : {}),
     ...(result.error ? { error: result.error } : {}),
   };
 }
 
 /**
- * Independent Tavily / Firecrawl / Exa searches. Domain filters are the same ones Grok's
- * web_search gets: when the caller scopes a search to github.com, extras that wander off to
- * blogs and video sites only displace in-scope candidates. A Firecrawl quota cooldown hands its
- * share to the other channels; the same applies to an Exa balance cooldown.
+ * Independent Tavily / Firecrawl / Exa / fathom / MCP-Tavily searches. Domain filters are
+ * the same ones Grok's web_search gets: when the caller scopes a search to github.com,
+ * extras that wander off to blogs and video sites only displace in-scope candidates. A
+ * Firecrawl quota cooldown hands its share to the other channels; the same applies to an
+ * Exa balance cooldown and to an MCP channel that is in cooldown.
  */
 export async function extraSources(query, limit, config, filters = {}) {
   const warnings = [];
   const providerRaw = {};
   if (limit <= 0) {
-    return { sources: [], warnings, provider_attempts: [], provider_raw: providerRaw, allocation: { tavily: 0, firecrawl: 0, exa: 0 } };
+    return { sources: [], warnings, provider_attempts: [], provider_raw: providerRaw, allocation: emptyAllocation() };
   }
 
   const firecrawlMode = firecrawlAuthMode(config);
-  const cooldown = await activeFirecrawlCooldown(config, firecrawlMode);
+  // With a key pool the channel is only dead when every key is cooling; one spent key is
+  // skipped inside the pool instead of switching the whole channel off.
+  const cooldown = await firecrawlChannelCooldown(config);
   const exaCooldown = await activeExaCooldown(config);
-  const allocation = extraAllocation(limit, config, { firecrawlAvailable: !cooldown, exaAvailable: !exaCooldown });
+  // The MCP channels key their cooldown on the server URL, so a different relay takes
+  // effect immediately instead of waiting out the old cooldown.
+  const fathomCooldown = await activeChannelCooldown(config, "fathom", config.fathomApiUrl);
+  const mcpTavilyCooldown = await activeChannelCooldown(config, "mcpTavily", config.mcpTavilyUrl);
+  const allocation = extraAllocation(limit, config, {
+    firecrawlAvailable: !cooldown,
+    exaAvailable: !exaCooldown,
+    fathomAvailable: !fathomCooldown,
+    mcpTavilyAvailable: !mcpTavilyCooldown,
+  });
 
   // Timed per provider so the attempt says which side made the caller wait.
   const timed = async (job) => {
@@ -55,6 +76,8 @@ export async function extraSources(query, limit, config, filters = {}) {
   if (allocation.tavily > 0) jobs.push(timed(tavilySearch(query, allocation.tavily, config, filters)));
   if (allocation.firecrawl > 0) jobs.push(timed(firecrawlSearch(query, allocation.firecrawl, config, filters)));
   if (allocation.exa > 0) jobs.push(timed(exaSearch(query, allocation.exa, config, filters)));
+  if (allocation.fathom > 0) jobs.push(timed(fathomSearch(query, allocation.fathom, config, filters)));
+  if (allocation.mcpTavily > 0) jobs.push(timed(mcpTavilySearch(query, allocation.mcpTavily, config, filters)));
   const results = await Promise.all(jobs);
   const sources = [];
   const providerAttempts = [];
@@ -81,6 +104,18 @@ export async function extraSources(query, limit, config, filters = {}) {
     const message = cooldownSkipMessage(exaCooldown);
     providerAttempts.push({ provider: "exa", ok: false, count: 0, skipped: true, error: message });
     warnings.push(`exa extra source search skipped: ${message}`);
+  }
+
+  if (fathomCooldown) {
+    const message = cooldownSkipMessage(fathomCooldown);
+    providerAttempts.push({ provider: "fathom", ok: false, count: 0, skipped: true, error: message });
+    warnings.push(`fathom extra source search skipped: ${message}`);
+  }
+
+  if (mcpTavilyCooldown) {
+    const message = cooldownSkipMessage(mcpTavilyCooldown);
+    providerAttempts.push({ provider: "mcpTavily", ok: false, count: 0, skipped: true, error: message });
+    warnings.push(`mcpTavily extra source search skipped: ${message}`);
   }
 
   // No cap here: every channel returns up to `limit`, and the union only gets truncated later

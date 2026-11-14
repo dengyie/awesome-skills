@@ -379,7 +379,7 @@ await withServer(
     assert.equal(searchResult.code, 0, searchResult.stderr);
     const output = parseJson(searchResult.stdout);
     assert.equal(output.diagnostics.options.extra_mode, "off-x-only");
-    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0, exa: 0 });
+    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0, exa: 0, fathom: 0, mcpTavily: 0 });
     assert.deepEqual(output.diagnostics.provider_attempts.map((attempt) => attempt.provider), ["grok-responses:xai"]);
     assert.equal(output.diagnostics.warnings.some((warning) => /--source x searches X only/.test(warning)), true);
     // --source both still runs extras by default, so nothing changes for the routed mode.
@@ -970,7 +970,7 @@ await withServer(
     assert.equal(output.sources.omitted, 0);
     assert.equal(output.sources.items.filter((source) => source.provider === "tavily").length, 3);
     assert.equal(output.sources.items.filter((source) => source.provider === "firecrawl").length, 3);
-    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 6, firecrawl: 6, exa: 0 });
+    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 6, firecrawl: 6, exa: 0, fathom: 0, mcpTavily: 0 });
     assert.equal(output.diagnostics.options.firecrawl_auth_mode, "keyless");
     assert.deepEqual(
       output.diagnostics.provider_attempts.map((attempt) => [attempt.provider, attempt.ok, attempt.count]),
@@ -1003,7 +1003,7 @@ await withServer(
     }));
     assert.equal(searchResult.code, 0);
     const output = parseJson(searchResult.stdout);
-    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 4, exa: 0 });
+    assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 4, exa: 0, fathom: 0, mcpTavily: 0 });
     assert.equal(output.sources.items.filter((source) => source.provider === "firecrawl").length, 1);
   }
 );
@@ -1485,8 +1485,10 @@ await withServer(
       assert.equal(firecrawlAttempt.ok, false);
       assert.equal(firecrawlAttempt.requests, 1);
       const cooldown = JSON.parse(await readFile(path.join(cooldownState, "firecrawl-cooldown.json"), "utf8"));
-      assert.equal(cooldown.reason, "credits");
-      assert.equal(cooldown.auth_mode, "keyless");
+      // The state file holds one record per scope; without a key pool the keyless tier owns the
+      // `keyless` slot.
+      assert.equal(cooldown.keyless.reason, "credits");
+      assert.equal(cooldown.keyless.auth_mode, "keyless");
 
       const searchResult = await runNode(["scripts/search.js", "--extra", "2", "mock query"], baseGrokEnv(port, {
         FIRECRAWL_API_URL: `http://127.0.0.1:${port}/firecrawl`,
@@ -1495,7 +1497,7 @@ await withServer(
       assert.equal(searchResult.code, 0);
       output = parseJson(searchResult.stdout);
       assert.equal(output.answer.text, "Cooldown answer.");
-      assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0, exa: 0 });
+      assert.deepEqual(output.diagnostics.options.extra_allocation, { tavily: 0, firecrawl: 0, exa: 0, fathom: 0, mcpTavily: 0 });
       const skipped = output.diagnostics.provider_attempts.find((attempt) => attempt.provider === "firecrawl");
       assert.equal(skipped.skipped, true);
       assert.match(skipped.error, /cooldown until/);

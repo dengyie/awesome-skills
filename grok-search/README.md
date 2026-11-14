@@ -89,9 +89,17 @@ chmod 600 ~/.config/grok-search/config.json
   "tavilyProxyKey": "",
   "tavilyProxyTimeoutMs": 12000,
   "firecrawlApiKey": "",
+  "firecrawlApiKeys": [],
   "firecrawlApiUrl": "https://api.firecrawl.dev/v2",
   "exaApiKey": "",
   "exaApiUrl": "https://api.exa.ai",
+  "fathomApiUrl": "",
+  "fathomApiKey": "",
+  "fathomSearchTool": "mega_search",
+  "fathomEngines": "",
+  "mcpTavilyUrl": "",
+  "mcpTavilyToken": "",
+  "mcpTavilyTool": "search_proxy_tavily_search",
   "outputDir": "",
   "stateDir": "",
   "runLog": true
@@ -112,7 +120,7 @@ chmod 600 ~/.config/grok-search/config.json
 - 旧配置项 `responsesIncludeXSearch` / `GROK_RESPONSES_INCLUDE_X_SEARCH` 已移除（2026-08 弃用，2026-09 删除）。值为 `true` 时命令直接报 `CONFIG_OPTION_REMOVED` 而不是静默丢掉 X 检索，请改为 `searchSource: "both"`；`false` 或缺失不受影响。
 - 优先级为 命令行 > 环境变量 > 配置文件 > 默认值。注意配置文件由你书写、命令行参数由调用本工具的 agent 书写：标量配置（如 `searchSource`）是**默认值**，agent 可以覆盖，实际生效值见 `diagnostics.options`；但配置里的**限制**不会被静默抹掉——allow-list 与 deny-list 都是限制，命令行只能收紧不能放宽。越界报 `RESPONSES_FILTER_FORBIDDEN`，把 allow-list 减空报 `RESPONSES_FILTER_EMPTY`，两个 deny-list 合并而非替换。规则见 [docs/responses-mode.md](docs/responses-mode.md#配置与命令行的优先级)。
 - `responsesOpenRouterEngine` 可选 `auto`、`native`、`exa`、`firecrawl`、`parallel` 或 `perplexity`，仅在 `apiProvider` 为 `openrouter` 时生效。
-- `tavilyApiKey` 可留空；多把官方 key 写进 `tavilyApiKeys`（或环境变量 `TAVILY_API_KEYS`，逗号分隔），配额或鉴权失败时才轮到下一把，游标在 `~/.cache/grok-search/tavily-rr.json`。`tavilyProxyUrl` + `tavilyProxyKey` 是另一套第三方兼容入口：先打代理（默认 12 秒、不重试），HTTP 失败或 search/map 空结果再回落官方 key。不要把代理 URL 写进 `tavilyApiUrl`，两边的 key 不通用。`firecrawlApiKey` 也可留空并使用 Firecrawl Keyless。`exaApiKey` 可选，配置后 Exa 加入 search 的 extra 轮转与 fetch 的 auto 链（注意它与 OpenRouter 引擎值 `exa` 无关，后者仅在 `apiProvider` 为 `openrouter` 时生效）。`outputDir` 留空时使用默认目录 `~/.cache/grok-search/outputs/`；`stateDir` 留空时使用 `~/.cache/grok-search/`，存放 Firecrawl 冷却状态；`runLog: false` 关闭每次调用的运行记录落盘。
+- `tavilyApiKey` 可留空；多把官方 key 写进 `tavilyApiKeys`（或环境变量 `TAVILY_API_KEYS`，逗号分隔），配额或鉴权失败时才轮到下一把，游标在 `~/.cache/grok-search/tavily-rr.json`。`tavilyProxyUrl` + `tavilyProxyKey` 是另一套第三方兼容入口：先打代理（默认 12 秒、不重试），HTTP 失败或 search/map 空结果再回落官方 key。不要把代理 URL 写进 `tavilyApiUrl`，两边的 key 不通用。`firecrawlApiKey` 也可留空并使用 Firecrawl Keyless；多把官方 key 写进 `firecrawlApiKeys`（或环境变量 `FIRECRAWL_API_KEYS`，逗号分隔）即为 key 池：游标在 `~/.cache/grok-search/firecrawl-rr.json`，某把 key 报告额度耗尽会进入冷却并轮到下一把，而裸 429（瞬时限流）不会轮转整个池。`exaApiKey` 可选，配置后 Exa 加入 search 的 extra 轮转与 fetch 的 auto 链（注意它与 OpenRouter 引擎值 `exa` 无关，后者仅在 `apiProvider` 为 `openrouter` 时生效）。`fathomApiUrl` + `fathomApiKey` 指向一个把单次查询分发给多个搜索引擎的 MCP 服务端，配置后加入 extra 轮转；`mcpTavilyUrl` + `mcpTavilyToken` 指向 Tavily 兼容的 MCP 中继，同样加入 extra 轮转。`providerWeights` 可以给每个通道单独配权重（`tavily` / `firecrawl` / `exa` / `fathom` / `mcpTavily`），权重为 0 的通道直接关闭，权重小于 1 则按比例缩小该通道的请求量。`outputDir` 留空时使用默认目录 `~/.cache/grok-search/outputs/`；`stateDir` 留空时使用 `~/.cache/grok-search/`，存放 Firecrawl 冷却状态；`runLog: false` 关闭每次调用的运行记录落盘。
 
 如果使用 OpenRouter，核心字段可改为：
 
@@ -183,9 +191,17 @@ Node 原生 `fetch` 默认不会可靠读取终端代理变量。本项目会在
 | `TAVILY_PROXY_KEY` | `tavilyProxyKey` | 否 | Tavily 路径 | 代理 Bearer token。配齐 URL 和 key 后优先打代理。 |
 | `TAVILY_PROXY_TIMEOUT_MS` | `tavilyProxyTimeoutMs` | 否 | Tavily 路径 | 代理 fail-fast 超时，默认 `12000`，不重试。search/map 空结果也回落官方；extract 空内容不回落。 |
 | `FIRECRAWL_API_KEY` | `firecrawlApiKey` | 否 | `search.js`、`fetch.js` | 可选。未配置时使用 Firecrawl Keyless；配置后使用独立账户额度和更高限流。 |
+| `FIRECRAWL_API_KEYS` | `firecrawlApiKeys` | 否 | Firecrawl 路径 | 逗号分隔的官方 key 池。额度耗尽（402 或 429 `reason:"credits"`）或 401 才轮换；裸 429 视为瞬时限流不轮换；游标 `~/.cache/grok-search/firecrawl-rr.json`。环境变量优先于配置文件。 |
 | `FIRECRAWL_API_URL` | `firecrawlApiUrl` | 否 | Firecrawl 路径 | 默认 `https://api.firecrawl.dev/v2`。 |
 | `EXA_API_KEY` | `exaApiKey` | 否 | `search.js`、`fetch.js` | 可选。配置后 Exa 加入 `--extra` 轮转，并作为 `fetch.js --provider exa` / auto 链的 Contents 渠道。 |
 | `EXA_API_URL` | `exaApiUrl` | 否 | Exa 路径 | 默认 `https://api.exa.ai`。 |
+| `FATHOM_API_URL` | `fathomApiUrl` | 否 | `search.js` | 可选。fathom 是一个 MCP 服务端，把一次查询分发给多个搜索引擎；配置 URL 后加入 `--extra` 轮转。 |
+| `FATHOM_API_KEY` | `fathomApiKey` | 否 | `search.js` | 可选。fathom MCP 服务的 Bearer token。 |
+| `FATHOM_SEARCH_TOOL` | `fathomSearchTool` | 否 | `search.js` | 默认 `mega_search`。 |
+| `FATHOM_ENGINES` | `fathomEngines` | 否 | `search.js` | 可选。限制 fathom 使用哪些引擎。 |
+| `MCP_TAVILY_URL` | `mcpTavilyUrl` | 否 | `search.js` | 可选。Tavily 兼容的 MCP 中继 URL；配置后加入 `--extra` 轮转。 |
+| `MCP_TAVILY_TOKEN` | `mcpTavilyToken` | 否 | `search.js` | 可选。MCP 中继的 Bearer token。 |
+| `MCP_TAVILY_TOOL` | `mcpTavilyTool` | 否 | `search.js` | 默认 `search_proxy_tavily_search`。 |
 | `GROK_OUTPUT_DIR` | `outputDir` | 否 | 所有脚本 | 覆盖长输出与运行记录的落盘目录。默认 `~/.cache/grok-search/outputs/`。 |
 | `GROK_STATE_DIR` | `stateDir` | 否 | 所有脚本 | 跨命令状态目录（Firecrawl 额度冷却文件 `firecrawl-cooldown.json`）。默认 `~/.cache/grok-search/`。 |
 | `GROK_RUN_LOG` | `runLog` | 否 | 所有脚本 | 默认 `true`，每次调用写一份运行记录 JSON；`off` / `false` 关闭后 `sources.raw_path` / `diagnostics.run_path` 为 null。 |
@@ -317,7 +333,7 @@ Tavily Extract -> Firecrawl Scrape -> Exa Contents -> Direct Fetch
 
 Direct Fetch 是普通 HTTP(S) 文本页面的 best-effort fallback。它会做简单 HTML 清理、尽量格式化 JSON、记录重定向，并拒绝二进制 / 附件 / 超大响应。
 
-Firecrawl Scrape 无 key 时会使用 Keyless；配置 `FIRECRAWL_API_KEY` 后会自动发送 Bearer token。当前认证模式写入 `diagnostics.firecrawl_auth_mode`。Exa Contents 需要配置 `EXA_API_KEY`，按页计费（普通页约 $0.001），`metadata` 提供 `title / author / published_at`，attempt 携带 `cost_usd`；未配置时 auto 链里它只是一条 `skipped` 记录。
+Firecrawl Scrape 无 key 时会使用 Keyless；配置 `FIRECRAWL_API_KEY` 后会自动发送 Bearer token。当前认证模式写入 `diagnostics.firecrawl_auth_mode`。配置 key 池后，attempt 还会带上 `firecrawl_key_index` / `firecrawl_key_total` / `firecrawl_keys_tried`，可以看出来是哪一把 key 出的结果、试了几把；冷却状态按 key 指纹分别记录，只有一把 key 额度耗尽不会关掉整个 Firecrawl 通道。Exa Contents 需要配置 `EXA_API_KEY`，按页计费（普通页约 $0.001），`metadata` 提供 `title / author / published_at`，attempt 携带 `cost_usd`；未配置时 auto 链里它只是一条 `skipped` 记录。
 
 X 原帖（`x.com/<handle>/status/<id>`）在 `--provider auto` 下不论是否配置 key 都先走 Direct，校验页面含 `@handle`、日期与非登录页正文才算成功（只有主帖）；校验不过再回到 Tavily → Firecrawl，都不可用时按原样返回 Direct 内容并写 warning。这样定的依据是 2026-09-08 的对照：Tavily 快且免费但三条里一条不带日期、另有一次超时；Firecrawl 每条约 30 credits、10 秒以上，换来 ISO 时间戳、互动数和 thread。需要 thread 时显式 `--provider firecrawl`。任何一次 `credits_used >= 10` 都会在 `diagnostics.warnings` 里说明成本。
 

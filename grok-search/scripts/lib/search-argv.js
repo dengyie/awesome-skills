@@ -45,7 +45,9 @@ Environment:
   GROK_DEADLINE_SECONDS
                        Optional whole-command deadline; default 240, 0 disables
   TAVILY_API_KEY       Optional Tavily parallel source provider
+  TAVILY_API_KEYS      Optional comma-separated official Tavily key pool
   FIRECRAWL_API_KEY    Optional Firecrawl key; keyless search works without it
+  FIRECRAWL_API_KEYS   Optional comma-separated official Firecrawl key pool
   GROK_OUTPUT_DIR      Optional directory for full answer when preview is truncated
 `;
 }

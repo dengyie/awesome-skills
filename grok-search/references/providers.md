@@ -4,7 +4,9 @@ Read this when a result mentions a skipped or failed provider, when configuratio
 
 ## Provider Order
 
-- `search.js`: Grok Responses runs alongside independent Tavily Search (needs `TAVILY_API_KEY`), Firecrawl Search (keyless by default, `FIRECRAWL_API_KEY` when set), and Exa Search (needs `EXA_API_KEY`). Extras are never fed into Grok. `--extra N` (default 6) is the per-channel target: every configured channel searches N results on its own, then `mergeSources` dedupes the union by normalized URL (tracking params stripped, cleanest URL kept, `merged_from` listing every channel whose duplicate merged in); `--no-extra` disables all extras and the degraded fallback. On `--source x` extras are off unless `--extra N` is given (`extra_mode: "off-x-only"`).
+- `search.js`: Grok Responses runs alongside independent Tavily Search (needs `TAVILY_API_KEY`), Firecrawl Search (keyless by default, `FIRECRAWL_API_KEY` when set), Exa Search (needs `EXA_API_KEY`), fathom (needs `FATHOM_API_URL` plus `FATHOM_API_KEY`), and MCP-Tavily (needs `MCP_TAVILY_URL` plus `MCP_TAVILY_TOKEN`). Extras are never fed into Grok. `--extra N` (default 6) is the per-channel target: every configured channel searches N results on its own, then `mergeSources` dedupes the union by normalized URL (tracking params stripped, cleanest URL kept, `merged_from` listing every channel whose duplicate merged in); `--no-extra` disables all extras and the degraded fallback. On `--source x` extras are off unless `--extra N` is given (`extra_mode: "off-x-only"`).
+- `fathom` and `mcpTavily` are MCP channels: both call a JSON-RPC MCP server over HTTP (`scripts/lib/mcp.js`) and ask it to run one tool. fathom fans the query out across several web engines (`fathomSearchTool`, default `mega_search`; `fathomEngines` narrows the engine set). MCP-Tavily speaks a Tavily-compatible relay (`mcpTavilyTool`, default `search_proxy_tavily_search`). Neither channel is in the `fetch.js` auto chain, and both stay out of the way when their URL or token is missing.
+- `providerWeights` scales each channel: a weight of 0 switches it off, a weight below 1 shrinks that channel's request, and a weight above 1 cannot buy more than the `--extra N` target.
 - `fetch.js --provider auto`: Tavily Extract → Firecrawl Scrape → Exa Contents (needs `EXA_API_KEY`, about $0.001 per page, `cost_usd` on the attempt) → Direct Fetch. Without a key Exa is just a skipped attempt. Exception: X post URLs try Direct first regardless of keys (`references/x-search.md`).
 - `map.js --provider auto`: Tavily Map → Direct Map.
 - `--responses-openrouter-engine exa` forces a web-only engine on OpenRouter.
@@ -15,13 +17,22 @@ Direct is this repo's own fallback: a plain HTTP GET through Node's `fetch` (und
 
 ## Firecrawl And Exa Quota Cooldowns
 
-Firecrawl keyless has a rolling daily quota per IP. When it is exhausted the API answers 429 with `reason: credits` and a `retry_after_seconds` that is usually hours. The scripts then:
+Firecrawl keyless has a rolling daily quota per IP. When it is exhausted the API answers 429 with `reason: credits` and a `retry_after_seconds` that is usually hours. An account key runs out the same way, with HTTP 402 or 429 plus `reason: credits`. The scripts then:
 
 - stop retrying immediately (a `Retry-After` beyond the retry budget means "not now", not "wait a bit");
-- write `<stateDir>/firecrawl-cooldown.json` (`until`, `auth_mode`, `reason`, `hit_at`), default `~/.cache/grok-search/`;
+- write `<stateDir>/firecrawl-cooldown.json`, default `~/.cache/grok-search/`. The file holds one record per key: `{ keyless: record | null, keys: { <fingerprint>: record } }`, where a record is `until`, `auth_mode`, `reason`, `hit_at`. The fingerprint is a truncated SHA-256 of the key, so the state file never contains key material while a replaced key still gets its own record. A file written before the key pool held a single record at the top level; it is read as the `keyless` record so an in-flight cooldown is not lost on upgrade;
 - skip Firecrawl in every later `auto` command until `until` passes. Skips appear in `diagnostics.provider_attempts` as `{ provider: "firecrawl", skipped: true, error: "cooldown until <ISO> (credits)" }`. For search, the slots go to Tavily when configured, otherwise extras are empty and a warning says so.
 
 An explicit `--provider firecrawl` ignores the cooldown and clears it on success. The cooldown is scoped to `auth_mode`, so adding an API key takes effect immediately. Set `GROK_STATE_DIR` to move the state file.
+
+### Firecrawl Key Pool
+
+Several official keys can be listed in `firecrawlApiKeys` (or comma-separated `FIRECRAWL_API_KEYS`); `firecrawlApiKey` still works and counts as the first key. With a pool:
+
+- the round-robin cursor lives at `~/.cache/grok-search/firecrawl-rr.json` and advances on every claim, so consecutive commands spread over the keys instead of always burning the first one;
+- the pool rotates only on an exhausted allowance (HTTP 402, or 429 with `reason: credits`) or an invalid key (401). A bare 429 is a transient rate limit and must not rotate the pool — that would spend every remaining key on the same request. A 5xx or a timeout is nobody's fault and is returned as-is;
+- a spent key is put in cooldown and the next key takes over within the same command. The channel is only dead when *every* key is cooling; one cooling key is skipped inside the pool instead of switching Firecrawl off;
+- attempts report `firecrawl_key_index`, `firecrawl_key_total` and `firecrawl_keys_tried`, so a run record shows which key answered and how many were tried. The keyless tier reports index `-1` and total `0`.
 
 Exa answers an empty balance with HTTP 402 and gets the same treatment: the scripts stop retrying, write `<stateDir>/exa-cooldown.json`, and skip Exa in later `auto` runs (search slots go to the remaining channels). An explicit `--provider exa` still makes the request and clears the cooldown on success.
 

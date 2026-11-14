@@ -4,10 +4,13 @@
  * (`http.js`, `tavily.js`, `firecrawl.js`, `direct.js`); everything they export is re-exported
  * here so callers keep a single import path.
  */
-import { activeExaCooldown, activeFirecrawlCooldown, clearExaCooldown, clearFirecrawlCooldown, cooldownSkipMessage } from "./cooldown.js";
+import { activeExaCooldown, clearExaCooldown, cooldownSkipMessage } from "./cooldown.js";
+import { DEFAULT_PROVIDER_WEIGHTS } from "./config.js";
 import { directFetch, directFirstForX, directMap, validateXPostContent } from "./direct.js";
 import { exaExtract, hasExaApiKey } from "./exa.js";
-import { firecrawlAuthMode, firecrawlScrape } from "./firecrawl.js";
+import { fathomSearch, hasFathomApiKey } from "./fathom.js";
+import { firecrawlAuthMode, firecrawlScrape, firecrawlChannelCooldown } from "./firecrawl.js";
+import { hasMcpTavily, mcpTavilySearch } from "./mcp-tavily.js";
 import { parseXPostUrl } from "./sources.js";
 import { hasTavilyApiKey, tavilyExtract, tavilyMap } from "./tavily.js";
 
@@ -28,8 +31,26 @@ export {
   tavilySearch,
   withTavilyApiKey,
 } from "./tavily.js";
-export { firecrawlAuthMode, firecrawlMetadata, firecrawlScrape, firecrawlSearch, isFirecrawlQuotaError } from "./firecrawl.js";
+export {
+  allFirecrawlKeys,
+  firecrawlAuthMode,
+  firecrawlChannelCooldown,
+  firecrawlKeyFingerprint,
+  firecrawlMetadata,
+  firecrawlRoundRobinPath,
+  firecrawlScrape,
+  firecrawlSearch,
+  hasFirecrawlApiKey,
+  isFirecrawlKeySpentError,
+  isFirecrawlQuotaError,
+  loadFirecrawlRoundRobinIndex,
+  nextFirecrawlApiKey,
+  saveFirecrawlRoundRobinIndex,
+  withFirecrawlApiKey,
+} from "./firecrawl.js";
 export { exaExtract, exaSearch, hasExaApiKey, isExaQuotaError } from "./exa.js";
+export { fathomSearch, hasFathomApiKey } from "./fathom.js";
+export { hasMcpTavily, mcpTavilySearch } from "./mcp-tavily.js";
 export {
   DIRECT_MAP_REQUEST_TIMEOUT_SECONDS,
   collapseRepeatedLines,
@@ -61,16 +82,47 @@ function attemptFromResult(result) {
   };
 }
 
-export function extraAllocation(limit, config, { firecrawlAvailable = true, exaAvailable = true } = {}) {
-  // Every configured channel searches the full target; mergeSources then dedupes the union.
-  // Search endpoints bill per request, not per result, so this costs the same requests as a
-  // split allocation while giving the merge step the most candidates to dedupe against. A
-  // missing key or an active cooldown drops that channel entirely.
-  return {
-    tavily: limit > 0 && hasTavilyApiKey(config) ? limit : 0,
-    firecrawl: limit > 0 && firecrawlAvailable ? limit : 0,
-    exa: limit > 0 && exaAvailable && hasExaApiKey(config) ? limit : 0,
+/**
+ * How many results each extra channel should ask for.
+ *
+ * Every configured channel searches the full target; mergeSources then dedupes the union.
+ * Search endpoints bill per request, not per result, so this costs the same requests as a
+ * split allocation while giving the merge step the most candidates to dedupe against. A
+ * missing key or an active cooldown drops that channel entirely.
+ *
+ * `providerWeights` scales the per-channel target: a weight of 0 switches a channel off
+ * entirely, and weights below 1 shrink its request (fewer results, same one request).
+ * Weights above 1 cannot buy more than the target, since the target is what the caller
+ * asked for in total.
+ */
+export function extraAllocation(limit, config, { firecrawlAvailable = true, exaAvailable = true, fathomAvailable = true, mcpTavilyAvailable = true } = {}) {
+  if (limit <= 0) return emptyAllocation();
+
+  // A config without providerWeights means "every channel at its full share". Falling back to
+  // the defaults keeps a hand-built config (tests, embedders) from silently switching every
+  // channel off.
+  const weights = { ...DEFAULT_PROVIDER_WEIGHTS, ...(config?.providerWeights || {}) };
+  const scale = (channel) => {
+    const weight = Number(weights[channel]);
+    if (!Number.isFinite(weight) || weight <= 0) return 0;
+    // A weight of 1 means the full target; smaller weights ask for proportionally fewer
+    // results, but never fewer than one (a request for 0 results is a wasted request).
+    if (weight >= 1) return limit;
+    return Math.max(1, Math.round(limit * weight));
   };
+
+  return {
+    tavily: hasTavilyApiKey(config) ? scale("tavily") : 0,
+    firecrawl: firecrawlAvailable ? scale("firecrawl") : 0,
+    exa: exaAvailable && hasExaApiKey(config) ? scale("exa") : 0,
+    fathom: fathomAvailable && hasFathomApiKey(config) ? scale("fathom") : 0,
+    mcpTavily: mcpTavilyAvailable && hasMcpTavily(config) ? scale("mcpTavily") : 0,
+  };
+}
+
+/** The allocation shape with every channel switched off. */
+export function emptyAllocation() {
+  return { tavily: 0, firecrawl: 0, exa: 0, fathom: 0, mcpTavily: 0 };
 }
 
 export async function mapUrl(url, config, { provider = "auto", ...options } = {}) {
@@ -153,7 +205,9 @@ export async function fetchUrl(url, config, { provider = "auto", maxChars } = {}
     const authMode = firecrawlAuthMode(config);
     // An explicit --provider firecrawl still makes the request: the user may have just added
     // a key or topped up, and a success clears the stale cooldown.
-    const cooldown = provider === "auto" ? await activeFirecrawlCooldown(config, authMode) : null;
+    // With a key pool the channel is only dead when every key is cooling; one spent key is
+    // skipped inside the pool instead of switching the whole channel off.
+    const cooldown = provider === "auto" ? await firecrawlChannelCooldown(config) : null;
     if (cooldown) {
       tried.push({ provider: "firecrawl", ok: false, skipped: true, auth_mode: authMode, error: cooldownSkipMessage(cooldown) });
     } else {
@@ -167,8 +221,10 @@ export async function fetchUrl(url, config, { provider = "auto", maxChars } = {}
         ...(result.requests == null ? {} : { requests: result.requests }),
         ...(result.duration_ms == null ? {} : { duration_ms: result.duration_ms }),
         ...(result.credits_used == null ? {} : { credits_used: result.credits_used }),
+        ...(result.firecrawl_key_index == null ? {} : { firecrawl_key_index: result.firecrawl_key_index }),
+        ...(result.firecrawl_key_total == null ? {} : { firecrawl_key_total: result.firecrawl_key_total }),
+        ...(result.firecrawl_keys_tried == null ? {} : { firecrawl_keys_tried: result.firecrawl_keys_tried }),
       });
-      if (result.ok && provider === "firecrawl") await clearFirecrawlCooldown(config);
       if (result.ok || provider === "firecrawl") return { ...result, tried };
     }
   }

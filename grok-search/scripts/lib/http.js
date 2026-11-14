@@ -65,9 +65,13 @@ export function redactSecrets(text, config) {
   const secrets = [
     config?.grokApiKey,
     config?.firecrawlApiKey,
+    ...(Array.isArray(config?.firecrawlApiKeys) ? config.firecrawlApiKeys : []),
     config?.tavilyProxyKey,
     ...(Array.isArray(config?.tavilyApiKeys) ? config.tavilyApiKeys : []),
     config?.tavilyApiKey,
+    config?.exaApiKey,
+    config?.fathomApiKey,
+    config?.mcpTavilyToken,
   ];
   for (const secret of secrets) {
     if (typeof secret !== "string" || secret.length < 4) continue;

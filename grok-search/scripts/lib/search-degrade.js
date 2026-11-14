@@ -1,4 +1,5 @@
 /** Degraded-search machinery: failure labels, the raw-extras fallback answer, and failure diagnostics. */
+import { emptyAllocation } from "./providers.js";
 import { firecrawlAuthMode } from "./firecrawl.js";
 import { responsesDiagnosticOptions } from "./search-options.js";
 
@@ -9,6 +10,7 @@ export const GROK_FAILURE_LABELS = {
   empty: { code: "EMPTY", errorCode: "GROK_RESPONSES_EMPTY", label: "返回空内容", warning: "Grok Responses returned empty content." },
   timeout: { code: "TIMEOUT", errorCode: "GROK_TIMEOUT", label: "请求超时", warning: "Grok Responses timed out." },
   upstream: { code: "UPSTREAM", errorCode: "GROK_UPSTREAM", label: "上游不可用", warning: "Grok Responses upstream failed." },
+  cooldown: { code: "UPSTREAM_COOLDOWN", errorCode: "GROK_UPSTREAM_COOLDOWN", label: "上游冷却中", warning: "Grok Responses upstream is in cooldown after an earlier failure." },
 };
 
 export function grokFailureAttempt(config, error) {
@@ -23,7 +25,7 @@ export function clipText(value, max = 800) {
 
 export function degradedAnswer(sources, label) {
   const lines = [
-    `> ⚠️ Grok Responses ${label}。以下为 Tavily / Firecrawl / Exa 原始搜索结果，未经 Grok 综合生成。`,
+    `> ⚠️ Grok Responses ${label}。以下为 Tavily / Firecrawl / Exa / fathom / MCP-Tavily 原始搜索结果，未经 Grok 综合生成。`,
     "",
   ];
   const groups = new Map();
@@ -32,8 +34,15 @@ export function degradedAnswer(sources, label) {
     if (!groups.has(provider)) groups.set(provider, []);
     groups.get(provider).push(source);
   }
+  const PROVIDER_LABELS = {
+    tavily: "Tavily",
+    firecrawl: "Firecrawl",
+    exa: "Exa",
+    fathom: "fathom",
+    mcpTavily: "MCP-Tavily",
+  };
   for (const [provider, items] of groups) {
-    lines.push(`## ${provider === "tavily" ? "Tavily" : provider === "firecrawl" ? "Firecrawl" : provider === "exa" ? "Exa" : provider}`);
+    lines.push(`## ${PROVIDER_LABELS[provider] || provider}`);
     lines.push("");
     for (const [index, source] of items.entries()) {
       const title = String(source.title || `Result ${index + 1}`).trim();
@@ -62,7 +71,7 @@ export function failureDiagnostics(config, searchOptions, extraOptions, extra, e
       api_provider: config.apiProvider,
       extra: extraOptions.limit,
       extra_mode: extraOptions.mode,
-      extra_allocation: extra?.allocation || { tavily: 0, firecrawl: 0, exa: 0 },
+      extra_allocation: extra?.allocation || emptyAllocation(),
       firecrawl_auth_mode: extraOptions.limit > 0 ? firecrawlAuthMode(config) : null,
       ...responsesDiagnosticOptions(searchOptions),
     },

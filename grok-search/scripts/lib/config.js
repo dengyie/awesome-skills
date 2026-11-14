@@ -169,11 +169,99 @@ export function resolveTavilyApiKeys(fileConfig, getEnv = env) {
   return dedupeStrings([...multi, ...single]);
 }
 
+/**
+ * Collect official Firecrawl keys.
+ * Priority: FIRECRAWL_API_KEYS env → FIRECRAWL_API_KEY env → merge file firecrawlApiKeys +
+ * firecrawlApiKey. Empty firecrawlApiKeys: [] does NOT suppress a valid firecrawlApiKey.
+ *
+ * The pool is separate from the keyless tier: an empty result means "use keyless", which is a
+ * different billing path (per-IP allowance) from an account-scoped key.
+ */
+export function resolveFirecrawlApiKeys(fileConfig, getEnv = env) {
+  const fromEnvMulti = getEnv("FIRECRAWL_API_KEYS");
+  if (fromEnvMulti != null && String(fromEnvMulti).trim() !== "") {
+    return dedupeStrings(parseListValue(fromEnvMulti));
+  }
+
+  const fromEnvSingle = getEnv("FIRECRAWL_API_KEY");
+  if (fromEnvSingle != null && String(fromEnvSingle).trim() !== "") {
+    return dedupeStrings(parseListValue(fromEnvSingle));
+  }
+
+  const multiRaw = fileValue(fileConfig, ["FIRECRAWL_API_KEYS", "firecrawlApiKeys", "firecrawl_api_keys"]);
+  const singleRaw = fileValue(fileConfig, ["FIRECRAWL_API_KEY", "firecrawlApiKey", "firecrawl_api_key"]);
+  const multi = multiRaw == null ? [] : dedupeStrings(parseListValue(multiRaw));
+  const single = singleRaw == null ? [] : dedupeStrings(parseListValue(singleRaw));
+  return dedupeStrings([...multi, ...single]);
+}
+
 function resolveUserPath(value) {
   if (!value || typeof value !== "string") return value;
   if (value === "~") return homedir();
   if (value.startsWith("~/")) return path.join(homedir(), value.slice(2));
   return value;
+}
+
+/**
+ * Extra-channel weights. The value may be a number (applied to every channel) or an object
+ * keyed by channel name (`tavily`, `firecrawl`, `exa`, `fathom`, `mcpTavily`). Weights are
+ * relative shares used to decide how many channels are worth calling when the budget is
+ * tight; a weight of 0 (or a missing key) switches that channel off.
+ */
+export const DEFAULT_PROVIDER_WEIGHTS = {
+  tavily: 1,
+  firecrawl: 1,
+  exa: 1,
+  fathom: 1,
+  mcpTavily: 1,
+};
+
+function normalizeWeight(value, fallback) {
+  const parsed = typeof value === "number" ? value : Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+  return parsed;
+}
+
+export function resolveProviderWeights(fileConfig, getEnv = env) {
+  const fromEnv = getEnv("GROK_PROVIDER_WEIGHTS");
+  // fileValue only accepts strings/numbers/booleans/arrays, so the object form is read
+  // straight off the file here.
+  const raw =
+    fromEnv != null
+      ? fromEnv
+      : (() => {
+          for (const key of ["GROK_PROVIDER_WEIGHTS", "providerWeights", "provider_weights"]) {
+            const value = fileConfig?.[key];
+            if (value != null && (typeof value === "object" || (typeof value === "string" && value.trim()))) return value;
+          }
+          return undefined;
+        })();
+
+  const weights = { ...DEFAULT_PROVIDER_WEIGHTS };
+  if (raw == null) return weights;
+
+  if (typeof raw === "number" || (typeof raw === "string" && raw.trim() && !raw.trim().startsWith("{"))) {
+    const shared = normalizeWeight(raw, 1);
+    for (const key of Object.keys(weights)) weights[key] = shared;
+    return weights;
+  }
+
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return weights;
+    }
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return weights;
+
+  for (const key of Object.keys(weights)) {
+    if (Object.hasOwn(parsed, key)) weights[key] = normalizeWeight(parsed[key], weights[key]);
+  }
+  // Unknown channel names are kept out of the resolved map: a typo should not silently
+  // create a channel that no adapter implements.
+  return weights;
 }
 
 export function inferApiProvider(grokApiUrl) {
@@ -357,10 +445,38 @@ export async function loadConfig({ requireGrok = false } = {}) {
       ["FIRECRAWL_API_URL", "firecrawlApiUrl", "firecrawl_api_url"],
       DEFAULT_FIRECRAWL_API_URL
     ),
-    firecrawlApiKey: envOrFile("FIRECRAWL_API_KEY", fileConfig, ["FIRECRAWL_API_KEY", "firecrawlApiKey", "firecrawl_api_key"]),
+    // Multi-key official pool. firecrawlApiKey stays the first key for callers that still
+    // read one; an empty pool means the keyless tier is used.
+    ...((firecrawlApiKeys) => ({
+      firecrawlApiKeys,
+      firecrawlApiKey: firecrawlApiKeys[0] || "",
+    }))(resolveFirecrawlApiKeys(fileConfig)),
 
     exaApiUrl: envOrFile("EXA_API_URL", fileConfig, ["EXA_API_URL", "exaApiUrl", "exa_api_url"], DEFAULT_EXA_API_URL),
     exaApiKey: envOrFile("EXA_API_KEY", fileConfig, ["EXA_API_KEY", "exaApiKey", "exa_api_key"]),
+
+    // fathom: an MCP server that fans one query out across several web engines.
+    fathomApiUrl: envOrFile("FATHOM_API_URL", fileConfig, ["FATHOM_API_URL", "fathomApiUrl", "fathom_api_url"]),
+    fathomApiKey: envOrFile("FATHOM_API_KEY", fileConfig, ["FATHOM_API_KEY", "fathomApiKey", "fathom_api_key"]),
+    // `mega_search` takes an engine list, `search` takes exactly one engine.
+    fathomSearchTool: envOrFile("FATHOM_SEARCH_TOOL", fileConfig, ["FATHOM_SEARCH_TOOL", "fathomSearchTool", "fathom_search_tool"], "mega_search"),
+    fathomEngines: envOrFile("FATHOM_ENGINES", fileConfig, ["FATHOM_ENGINES", "fathomEngines", "fathom_engines"]),
+
+    // MCP-Tavily: a Tavily-compatible MCP relay (its own URL/token pair, separate from
+    // the official Tavily keys and from the Tavily proxy above).
+    mcpTavilyUrl: envOrFile("MCP_TAVILY_URL", fileConfig, ["MCP_TAVILY_URL", "mcpTavilyUrl", "mcp_tavily_url"]),
+    mcpTavilyToken: envOrFile("MCP_TAVILY_TOKEN", fileConfig, ["MCP_TAVILY_TOKEN", "mcpTavilyToken", "mcp_tavily_token"]),
+    mcpTavilyTool: envOrFile(
+      "MCP_TAVILY_TOOL",
+      fileConfig,
+      ["MCP_TAVILY_TOOL", "mcpTavilyTool", "mcp_tavily_tool"],
+      "search_proxy_tavily_search"
+    ),
+
+    // Relative search share per extra channel. Each channel still searches the full
+    // --extra target; the weights only decide which channels are worth calling when the
+    // budget is tight, and a weight of 0 switches a channel off.
+    providerWeights: resolveProviderWeights(fileConfig),
 
     retryMaxAttempts: envInt("GROK_RETRY_MAX_ATTEMPTS", 3, { min: 1 }),
     retryMultiplier: envFloat("GROK_RETRY_MULTIPLIER", 1, { min: 0 }),
