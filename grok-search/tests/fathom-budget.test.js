@@ -79,10 +79,12 @@ const healthyServer = await listen((frame, res) => {
     return json(
       res,
       handshake(frame, {
-        engines: [
-          { name: "bing", circuit_state: "closed", initialized: true },
-          { name: "duckduckgo", circuit_state: "open", initialized: true },
-        ],
+        structuredContent: {
+          engines: [
+            { name: "bing", circuit_state: "closed", initialized: true },
+            { name: "duckduckgo", circuit_state: "open", initialized: true },
+          ],
+        },
       })
     );
   }
@@ -118,6 +120,87 @@ assert.deepEqual(
   "one probe, then the healthy engine — the open engine is never tried"
 );
 healthyServer.close();
+
+// --- 3. only non-favourite engines are closed: the shortlist follows the server, not a literal -
+// Live servers rotate engine health; at one point google was closed while bing, duckduckgo and
+// brave were all open. A plan built only from the hardcoded favourites then had nothing to do and
+// the channel reported a failure without sending a request.
+const altCalls = [];
+const altServer = await listen((frame, res) => {
+  if (frame.method === "initialize") return json(res, handshake(frame, { protocolVersion: "2024-11-05", capabilities: {} }));
+  const args = frame.params?.arguments || {};
+  altCalls.push({ tool: frame.params?.name, engines: args.engines });
+  if (frame.params?.name === "list_engines") {
+    return json(
+      res,
+      handshake(frame, {
+        structuredContent: {
+          engines: [
+            { name: "google", circuit_state: "closed", initialized: true },
+            { name: "bing", circuit_state: "open", initialized: true },
+            { name: "duckduckgo", circuit_state: "open", initialized: true },
+            { name: "brave", circuit_state: "open", initialized: true },
+          ],
+        },
+      })
+    );
+  }
+  if (args.engines === "google") {
+    return json(
+      res,
+      handshake(frame, {
+        content: [{ type: "text", text: JSON.stringify({ results: [{ title: "Google hit", url: "https://example.com/google" }] }) }],
+      })
+    );
+  }
+  return json(res, handshake(frame, { isError: true, content: [{ type: "text", text: "engine unavailable" }] }));
+});
+
+const alt = await fathomSearch("anything", 5, {
+  ...healthyConfig,
+  fathomApiUrl: `http://127.0.0.1:${altServer.address().port}/mcp`,
+  stateDir: mkdtempSync(path.join(tmpdir(), "grok-fathom-alt-")),
+}, {});
+assert.equal(alt.ok, true, alt.error);
+assert.equal(alt.fathom_engines, "google", "the closed engine from the server is used");
+assert.deepEqual(altCalls.map((call) => call.engines), [undefined, "google"]);
+altServer.close();
+
+// --- 4. every breaker open: one bounded default call, and the error names the open engines -----
+const deadCalls = [];
+const deadServer = await listen((frame, res) => {
+  if (frame.method === "initialize") return json(res, handshake(frame, { protocolVersion: "2024-11-05", capabilities: {} }));
+  const args = frame.params?.arguments || {};
+  deadCalls.push({ tool: frame.params?.name, engines: args.engines });
+  if (frame.params?.name === "list_engines") {
+    return json(
+      res,
+      handshake(frame, {
+        structuredContent: {
+          engines: [
+            // A closed catalog engine is not a fallback: the mega tools reject it outright.
+            { name: "arxiv", circuit_state: "closed" },
+            { name: "bing", circuit_state: "open" },
+            { name: "duckduckgo", circuit_state: "open" },
+          ],
+        },
+      })
+    );
+  }
+  return json(res, handshake(frame, { isError: true, content: [{ type: "text", text: "all_engines_failed" }] }));
+});
+
+const dead = await fathomSearch("anything", 5, {
+  ...healthyConfig,
+  fathomApiUrl: `http://127.0.0.1:${deadServer.address().port}/mcp`,
+  stateDir: mkdtempSync(path.join(tmpdir(), "grok-fathom-dead-")),
+}, {});
+assert.equal(dead.ok, false);
+assert.match(dead.error, /all_engines_failed/);
+assert.match(dead.error, /open 引擎.*bing/);
+assert.equal(deadCalls.length, 2, "probe plus one default call, not zero");
+assert.equal(deadCalls[1].engines, undefined, "the fallback call lets the server route");
+deadServer.close();
 
 console.log("fathom-budget.test.js: ok");
 // The slow stub's pending timers would keep the process alive for hangMs; nothing else is running.

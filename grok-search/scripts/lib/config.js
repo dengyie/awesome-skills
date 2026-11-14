@@ -474,7 +474,7 @@ export async function loadConfig({ requireGrok = false } = {}) {
       "FATHOM_TIMEOUT_MS",
       fileConfig,
       ["FATHOM_TIMEOUT_MS", "fathomTimeoutMs", "fathom_timeout_ms"],
-      45_000,
+      30_000,
       { min: 1 }
     ),
 

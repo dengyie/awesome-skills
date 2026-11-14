@@ -199,7 +199,7 @@ Node 原生 `fetch` 默认不会可靠读取终端代理变量。本项目会在
 | `FATHOM_API_KEY` | `fathomApiKey` | 否 | `search.js` | 可选。fathom MCP 服务的 Bearer token。 |
 | `FATHOM_SEARCH_TOOL` | `fathomSearchTool` | 否 | `search.js` | 默认 `mega_search`。 |
 | `FATHOM_ENGINES` | `fathomEngines` | 否 | `search.js` | 可选。限制 fathom 使用哪些引擎。 |
-| `FATHOM_TIMEOUT_MS` | `fathomTimeoutMs` | 否 | `search.js` | 默认 `45000`。**整次 fathom 调用的总预算**，不是每个引擎方案的超时：方案是串行重试的，按方案计时会成倍放大并可能超出命令 deadline。 |
+| `FATHOM_TIMEOUT_MS` | `fathomTimeoutMs` | 否 | `search.js` | 默认 `30000`。**整次 fathom 调用的总预算**，不是每个引擎方案的超时：方案是串行重试的，按方案计时会成倍放大并可能超出命令 deadline。 |
 | `MCP_TAVILY_URL` | `mcpTavilyUrl` | 否 | `search.js` | 可选。Tavily 兼容的 MCP 中继 URL；配置后加入 `--extra` 轮转。 |
 | `MCP_TAVILY_TOKEN` | `mcpTavilyToken` | 否 | `search.js` | 可选。MCP 中继的 Bearer token。 |
 | `MCP_TAVILY_TOOL` | `mcpTavilyTool` | 否 | `search.js` | 默认 `search_proxy_tavily_search`。 |

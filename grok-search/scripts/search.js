@@ -151,7 +151,7 @@ async function publicResult(args, config) {
         sources: [],
         tool_calls: [],
         warnings: [
-          `Grok Responses 因${labels.label}不可用；当前 answer 仅包含 Tavily/Firecrawl/Exa 原始搜索结果，未经 Grok 综合生成。`,
+          `Grok Responses ${labels.label}；当前 answer 仅包含 Tavily/Firecrawl/Exa 原始搜索结果，未经 Grok 综合生成。`,
         ],
         provider_attempts: [grokFailureAttempt(config, grokResult.error)],
         diagnostics: {},

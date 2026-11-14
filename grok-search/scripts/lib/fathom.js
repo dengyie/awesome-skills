@@ -23,7 +23,7 @@ import { hasMcpConfig, mcpSearch } from "./mcp.js";
  * and outlast the command's own deadline, killing a search that already had an answer from Grok.
  * One budget for the whole call keeps this channel as expensive as any other single extra.
  */
-const FATHOM_TIMEOUT_MS = 45_000;
+const FATHOM_TIMEOUT_MS = 30_000;
 
 function fathomBudgetMs(config) {
   const configured = config?.fathomTimeoutMs;
@@ -32,34 +32,48 @@ function fathomBudgetMs(config) {
 }
 
 /**
- * Engines that were observed working at the server. `list_engines` reports a per-engine
- * circuit breaker, and an engine that is `open` fails the whole call. Ordered by observed
- * latency: `bing` answers in about a second, while `duckduckgo` can sit on a server-side
- * timeout for a minute and a half before failing.
+ * Engines that search the open web, in preference order.
+ *
+ * This is the server's own answer to what `mega_search` accepts: its `list_engines` also reports
+ * single-catalog engines (arxiv, wikipedia, pubmed, github, and several adult image boards), and
+ * a mega call naming one of those fails outright — "engine \"arxiv\" is a single-catalog engine and
+ * not allowed in mega tools". Leaving them in the candidate list therefore burns the whole plan
+ * list on calls the server refuses before a real engine is ever tried.
+ *
+ * `google` leads because the general-web engines rotate: at one point bing, duckduckgo, brave,
+ * ecosia, grok, baidu and yandex were all open while google stayed closed.
  */
-const FALLBACK_ENGINES = ["bing", "duckduckgo"];
+const WEB_ENGINES = ["google", "bing", "duckduckgo", "brave", "ecosia", "grok", "baidu", "yandex"];
+
+/**
+ * Cap on single-engine attempts. A handful is enough to find one working engine; more would
+ * only slice the shared budget thinner.
+ */
+const MAX_ENGINE_PLANS = 4;
 
 const ENGINES_PROBE_TIMEOUT_MS = 5_000;
 // Floor for a single plan so the share never collapses to a few milliseconds.
 const FATHOM_MIN_PLAN_MS = 5_000;
 
 /**
- * Names of the engines the server still considers healthy (breaker closed), or null when the
- * probe is unavailable or every engine is open — in that case the caller keeps the legacy plan
- * order instead of guessing.
+ * The engines the server reports as usable, or null when the probe failed. Open and closed
+ * names are both kept: the closed ones become the plan, the open ones explain a total failure.
  */
-async function probeHealthyEngines(url, token, config, startedAt) {
+async function probeEngines(url, token, config, startedAt) {
   const budgetLeft = fathomBudgetMs(config) - (Date.now() - startedAt);
   const timeoutMs = Math.max(200, Math.min(ENGINES_PROBE_TIMEOUT_MS, budgetLeft));
   try {
     const payload = await mcpSearch(url, token, "list_engines", {}, { timeoutMs, config });
     const list = Array.isArray(payload?.engines) ? payload.engines : null;
     if (!list) return null;
-    const closed = list
-      .filter((engine) => engine?.circuit_state === "closed")
-      .map((engine) => String(engine?.name || "").trim())
-      .filter(Boolean);
-    return closed.length ? new Set(closed) : null;
+    const closed = [];
+    const open = [];
+    for (const engine of list) {
+      const name = String(engine?.name || "").trim();
+      if (!name) continue;
+      (engine?.circuit_state === "closed" ? closed : open).push(name);
+    }
+    return { closed, open };
   } catch (error) {
     debugLog(config, `fathom list_engines probe failed: ${error.message}`);
     return null;
@@ -119,8 +133,9 @@ function fathomResults(payload) {
  * takes down a query that another engine could have answered. It also waits for the slowest
  * engine in the list, which is why the fan-out runs last. `search` takes exactly one engine
  * and fails only for that engine, so the reliable shape is: `list_engines` to learn which
- * breakers are closed, then one engine at a time (configured engines first, then the engines
- * observed to work), then the fan-out over the healthy ones as a last resort.
+ * breakers are closed, then one engine at a time from a bounded shortlist (configured engines
+ * first, then the general-web set in preference order), then the fan-out over that shortlist as
+ * a last resort.
  */
 export async function fathomSearch(query, limit, config, filters = {}) {
   if (!hasFathomApiKey(config)) {
@@ -145,26 +160,39 @@ export async function fathomSearch(query, limit, config, filters = {}) {
   // Ask the server which engines it considers healthy. Without this the first plan fans out
   // over every engine including the ones whose breaker is open, and the server answers only
   // after its own slowest engine times out (observed: 85s, then `all_engines_failed`).
-  const healthy = await probeHealthyEngines(url, token, config, startedAt);
-  const isHealthy = (engine) => !healthy || healthy.has(engine);
+  const probe = await probeEngines(url, token, config, startedAt);
+  const healthy = probe ? new Set(probe.closed) : null;
+  const openEngines = probe ? probe.open : [];
 
   const plans = [];
-  if (!healthy) {
+  if (!probe) {
     // Probe unavailable: keep the previous order (fan-out first) rather than guessing health.
     if (engines.length) plans.push({ tool, args: buildArgs(engines.join(",")) });
     for (const engine of engines) plans.push({ tool, args: buildArgs(engine) });
+    for (const engine of WEB_ENGINES) {
+      if (!engines.includes(engine)) plans.push({ tool, args: buildArgs(engine) });
+    }
+  } else {
+    // Candidate order: configured engines first, then the web engines in preference order. Only
+    // web engines are planned — a closed catalog engine (arxiv, wikipedia) is not an alternative,
+    // because the mega tools reject it and the single-engine `search` tool answers a different
+    // question. The configured list is exempt: the user asked for those engine names explicitly.
+    const candidates = [];
+    for (const engine of [...engines, ...WEB_ENGINES]) {
+      if (healthy.has(engine) && !candidates.includes(engine)) candidates.push(engine);
+    }
+    const shortlist = candidates.slice(0, MAX_ENGINE_PLANS);
+    for (const engine of shortlist) plans.push({ tool, args: buildArgs(engine) });
+    // The fan-out must stay inside the web set for the same reason: one catalog engine in the
+    // list fails the whole call before any web engine runs.
+    const fanOut = shortlist.filter((engine) => engines.includes(engine) || WEB_ENGINES.includes(engine));
+    if (fanOut.length > 1) plans.push({ tool, args: buildArgs(fanOut.join(",")) });
   }
-  // Single engines before the fan-out: one engine answers (or fails) on its own, while the
-  // fan-out always waits for the slowest engine in the list, so it belongs last.
-  for (const engine of engines.filter(isHealthy)) plans.push({ tool, args: buildArgs(engine) });
-  for (const engine of FALLBACK_ENGINES) {
-    if (engines.includes(engine) || !isHealthy(engine)) continue;
-    plans.push({ tool, args: buildArgs(engine) });
-  }
-  if (healthy) {
-    const fanOut = [...new Set([...engines, ...FALLBACK_ENGINES])].filter(isHealthy);
-    if (fanOut.length) plans.push({ tool, args: buildArgs(fanOut.join(",")) });
-  }
+  // Never leave the channel without a plan. When every preferred engine's breaker is open the
+  // shortlist is empty, and returning "search failed" without making a single request turns a
+  // degraded engine into a silent outage; the server's own default routing is still worth one
+  // bounded call.
+  if (!plans.length) plans.push({ tool, args: buildArgs(null) });
 
   let lastError = null;
   const deadlineAt = startedAt + fathomBudgetMs(config);
@@ -215,7 +243,7 @@ export async function fathomSearch(query, limit, config, filters = {}) {
   return {
     ok: false,
     provider: "fathom",
-    error: attempts.join("; ") || "Fathom 搜索失败",
+    error: `${attempts.join("; ") || "Fathom 搜索失败"}${openEngines.length ? `（服务端 open 引擎：${openEngines.join(", ")}）` : ""}`,
     sources: [],
     duration_ms: Date.now() - startedAt,
   };

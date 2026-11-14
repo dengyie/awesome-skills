@@ -206,7 +206,7 @@ Supported variables:
 | `FATHOM_API_KEY` | `fathomApiKey` | No | `search.js` | Optional. Bearer token for the fathom MCP server. |
 | `FATHOM_SEARCH_TOOL` | `fathomSearchTool` | No | `search.js` | Defaults to `mega_search`. |
 | `FATHOM_ENGINES` | `fathomEngines` | No | `search.js` | Optional. Restricts which engines fathom uses. |
-| `FATHOM_TIMEOUT_MS` | `fathomTimeoutMs` | No | `search.js` | Defaults to `45000`. **Total budget for one fathom call**, not a per-plan timeout: plans are retried in sequence, so a per-plan limit multiplies and can outlast the command deadline. |
+| `FATHOM_TIMEOUT_MS` | `fathomTimeoutMs` | No | `search.js` | Defaults to `30000`. **Total budget for one fathom call**, not a per-plan timeout: plans are retried in sequence, so a per-plan limit multiplies and can outlast the command deadline. |
 | `MCP_TAVILY_URL` | `mcpTavilyUrl` | No | `search.js` | Optional. URL of a Tavily-compatible MCP relay; setting it adds the channel to the `--extra` rotation. |
 | `MCP_TAVILY_TOKEN` | `mcpTavilyToken` | No | `search.js` | Optional. Bearer token for the MCP relay. |
 | `MCP_TAVILY_TOOL` | `mcpTavilyTool` | No | `search.js` | Defaults to `search_proxy_tavily_search`. |
