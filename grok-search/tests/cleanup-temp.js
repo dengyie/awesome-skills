@@ -9,8 +9,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const root = tmpdir();
+// Only the prefixes the tests actually create. A bare `grok-*` sweep would also remove an
+// unrelated user directory that happens to share the prefix.
+const TEST_DIR = /^grok-(cli-degrade|cooldown-atomic|fallback|fathom|search)-/;
 const stale = (await readdir(root, { withFileTypes: true })).filter(
-  (entry) => entry.isDirectory() && entry.name.startsWith("grok-")
+  (entry) => entry.isDirectory() && TEST_DIR.test(entry.name)
 );
 await Promise.all(stale.map((entry) => rm(path.join(root, entry.name), { recursive: true, force: true })));
 console.log(`cleanup-temp.js: removed ${stale.length} test dirs`);

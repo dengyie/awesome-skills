@@ -11,6 +11,8 @@
  * adapter therefore treats the configured engine list as a preference and falls back to
  * the server's own default routing when the preferred call fails.
  */
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { recordChannelCooldown } from "./cooldown.js";
 import { debugLog } from "./http.js";
 import { hasMcpConfig, mcpSearch } from "./mcp.js";
@@ -59,6 +61,62 @@ const FATHOM_MIN_PLAN_MS = 5_000;
  * The engines the server reports as usable, or null when the probe failed. Open and closed
  * names are both kept: the closed ones become the plan, the open ones explain a total failure.
  */
+function splitEngines(list) {
+  const closed = [];
+  const open = [];
+  for (const engine of list) {
+    const name = String(engine?.name || "").trim();
+    if (!name) continue;
+    (engine?.circuit_state === "closed" ? closed : open).push(name);
+  }
+  return { closed, open };
+}
+
+const ENGINES_CACHE_FILE = "fathom-engines.json";
+// Engine health rotates slowly, so the probe is worth a short cache: a warm search should not
+// pay an extra round trip, and the server's own view is what the plan is built from anyway.
+const ENGINES_CACHE_TTL_MS = 120_000;
+
+/** The cached engine table for this endpoint, or null when missing, stale or from another URL. */
+async function readEnginesCache(config, url) {
+  if (!config?.stateDir) return null;
+  const file = path.join(config.stateDir, ENGINES_CACHE_FILE);
+  let parsed;
+  try {
+    parsed = JSON.parse(await readFile(file, "utf8"));
+  } catch (error) {
+    if (error.code !== "ENOENT") debugLog(config, `fathom engine cache read skipped: ${error.message}`);
+    return null;
+  }
+  // A changed endpoint is a different server; its engine table must not be reused.
+  if (parsed?.auth_mode !== url) return null;
+  const at = Date.parse(parsed?.at);
+  if (!Number.isFinite(at) || Date.now() - at >= ENGINES_CACHE_TTL_MS) return null;
+  const list = Array.isArray(parsed?.engines) ? parsed.engines : null;
+  if (!list) return null;
+  return { ...splitEngines(list), engines: list };
+}
+
+/** Cache only what the plan needs: engine names and breaker states, never the token. */
+async function writeEnginesCache(config, url, probe) {
+  if (!config?.stateDir) return;
+  const file = path.join(config.stateDir, ENGINES_CACHE_FILE);
+  const tmp = `${file}.${process.pid}.tmp`;
+  const engines = probe.engines.map((engine) => ({ name: engine.name, circuit_state: engine.circuit_state }));
+  try {
+    await mkdir(config.stateDir, { recursive: true, mode: 0o700 });
+    await writeFile(tmp, JSON.stringify({ auth_mode: url, at: new Date().toISOString(), engines }, null, 2), {
+      encoding: "utf8",
+      mode: 0o600,
+    });
+    await rename(tmp, file);
+  } catch (error) {
+    // A failed cache write only costs the next probe; it must not fail the search.
+    await unlink(tmp).catch(() => {});
+    debugLog(config, `fathom engine cache write skipped: ${error.message}`);
+  }
+}
+
 async function probeEngines(url, token, config, startedAt) {
   const budgetLeft = fathomBudgetMs(config) - (Date.now() - startedAt);
   const timeoutMs = Math.max(200, Math.min(ENGINES_PROBE_TIMEOUT_MS, budgetLeft));
@@ -66,14 +124,7 @@ async function probeEngines(url, token, config, startedAt) {
     const payload = await mcpSearch(url, token, "list_engines", {}, { timeoutMs, config });
     const list = Array.isArray(payload?.engines) ? payload.engines : null;
     if (!list) return null;
-    const closed = [];
-    const open = [];
-    for (const engine of list) {
-      const name = String(engine?.name || "").trim();
-      if (!name) continue;
-      (engine?.circuit_state === "closed" ? closed : open).push(name);
-    }
-    return { closed, open };
+    return { ...splitEngines(list), engines: list };
   } catch (error) {
     debugLog(config, `fathom list_engines probe failed: ${error.message}`);
     return null;
@@ -160,14 +211,21 @@ export async function fathomSearch(query, limit, config, filters = {}) {
   // Ask the server which engines it considers healthy. Without this the first plan fans out
   // over every engine including the ones whose breaker is open, and the server answers only
   // after its own slowest engine times out (observed: 85s, then `all_engines_failed`).
-  const probe = await probeEngines(url, token, config, startedAt);
+  let probe = await readEnginesCache(config, url);
+  if (!probe) {
+    probe = await probeEngines(url, token, config, startedAt);
+    if (probe) await writeEnginesCache(config, url, probe);
+  }
   const healthy = probe ? new Set(probe.closed) : null;
   const openEngines = probe ? probe.open : [];
 
   const plans = [];
   if (!probe) {
     // Probe unavailable: keep the previous order (fan-out first) rather than guessing health.
-    if (engines.length) plans.push({ tool, args: buildArgs(engines.join(",")) });
+    // The fan-out still has to stay inside the web set: a mega call naming a catalog engine is
+    // refused before any web engine runs, so one configured `arxiv` would burn the first plan.
+    const legacyFanOut = engines.filter((engine) => WEB_ENGINES.includes(engine));
+    if (legacyFanOut.length) plans.push({ tool, args: buildArgs(legacyFanOut.join(",")) });
     for (const engine of engines) plans.push({ tool, args: buildArgs(engine) });
     for (const engine of WEB_ENGINES) {
       if (!engines.includes(engine)) plans.push({ tool, args: buildArgs(engine) });

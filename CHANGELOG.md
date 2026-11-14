@@ -4,29 +4,38 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
-## Unreleased
+## grok-search 0.3.1 - 2026-11-15
 
 ### Changed
 
 - fixed `grok-search` Windows invocation: all documented command examples now call the scripts through `node` (`node scripts/search.js ...`) instead of executing the `.js` files directly, and `SKILL.md` plus `docs/usage/grok-search.md` carry an explicit warning that direct execution hands the file to Windows Script Host, which dies with a JScript compile error (`800A03F6 无效字符`) on the shebang line; normalized skill Markdown files to LF line endings so install copies stay byte-identical across Windows and macOS
-- fixed `huawei-cloud-gallery-publish` frontmatter YAML: wrapped `description` in double quotes so the inline `Triggers: ...` segment no longer breaks GitHub's frontmatter parser (mapping-values error at the `Triggers: ` colon)
-- hardened `cue-sandbox` for multi-instance fleet deployments: parameterized EasyTier overlay IP (`<CUE_OVERLAY>`) and instance name (`<CUE_INSTANCE_NAME>`) to prevent intra-mesh collision, parameterized India reverse-SSH fallback port (`<TUNNEL_REMOTE_PORT>`) with a standard systemd keepalive service template, expanded test suite credential scans to usage docs, and added root `pytest.ini` for reliable test collection
-- made `cue-sandbox` fully self-contained: removed all external vault/doc-lookup/canonical references, derive configuration solely from host probing and operator inputs, and forbid halting for external documentation
+- renamed the `grok-search` fathom engine preference list to the general-web set the server documents as mega-compatible, with `google` first (`FALLBACK_ENGINES` is gone), and documented the resulting plan order in `references/providers.md`
+- cached the `grok-search` fathom engine table for 120s in `fathom-engines.json` (keyed by endpoint, engine names and breaker states only, mode 0600): a warm search no longer pays the `list_engines` round trip, and a changed endpoint or an expired entry re-probes
 
 ### Fixed
 
 - fixed `grok-search` degraded-answer wording: the raw-extras fallback warning read "Grok Responses 因上游不可用不可用；..." (the failure label already carries 不可用); it now reads "Grok Responses 上游不可用；当前 answer 仅包含 ..."
 - fixed `grok-search` fathom engine planning: the probe's closed-engine list was only used to filter two hardcoded favourites, so on the live server, where bing/duckduckgo/brave/ecosia/grok/baidu were all open while google and yandex stayed closed, the plan came out empty and the channel reported "Fathom 搜索失败" without sending a request. Plans are now built from the configured engines plus the general-web set the server itself documents as mega-compatible (google, bing, duckduckgo, brave, ecosia, grok, baidu, yandex), the fan-out stays inside that set (a mega call naming a single-catalog engine like arxiv fails the whole call), and a guard makes sure the plan list is never empty (defaults to the server's own routing); a total failure now names the open engines so the outage is explainable
 - fixed `grok-search` fathom default budget: lowered from 45s to 30s after live measurement showed a fully-broken engine set costing the same as the whole command deadline; the shared per-plan share logic keeps a healthy engine answering in ~1s unchanged
-
-### Changed
-
-- renamed the `grok-search` fathom engine preference list to the general-web set the server documents as mega-compatible, with `google` first (`FALLBACK_ENGINES` is gone), and documented the resulting plan order in `references/providers.md`
+- fixed the `grok-search` fathom fallback plan: when `list_engines` is unavailable, the fan-out now drops configured single-catalog engines (arxiv, wikipedia, ...) that the mega tools reject, instead of spending its first plan on a call that always fails
 
 ### Added
 
 - added `grok-search/tests/cli-degrade.test.js`: a local HTTP stub drives `scripts/search.js` end to end with an isolated HOME and state dir (HTTP 500 twice → cooldown persisted, second run never reaches the upstream; text-only reply → ungrounded-answer degradation; `status: "incomplete"` → kept answer plus a truncation warning), so the degraded contract is guarded by `npm test` instead of a manual check; fathom tests additionally cover engine rotation and all-engines-open fallback routing
 - extended `grok-search` fathom tests: `list_engines` stubs now answer through `structuredContent`, matching the live server, so the probe path is actually exercised instead of silently falling back to the legacy plan
+- extended `grok-search/tests/cli-degrade.test.js` with a 429 scenario: a rate-limited upstream opens the durable 15-minute cooldown instead of the 60s transient one, and the follow-up command never reaches the upstream
+- added `grok-search/tests/cleanup-temp.js`: the last `npm test` step removes the `grok-*` mkdtemp dirs the suite leaves behind (known test prefixes only, ~60 per run)
+
+## Unreleased
+
+### Changed
+
+- fixed `huawei-cloud-gallery-publish` frontmatter YAML: wrapped `description` in double quotes so the inline `Triggers: ...` segment no longer breaks GitHub's frontmatter parser (mapping-values error at the `Triggers: ` colon)
+- hardened `cue-sandbox` for multi-instance fleet deployments: parameterized EasyTier overlay IP (`<CUE_OVERLAY>`) and instance name (`<CUE_INSTANCE_NAME>`) to prevent intra-mesh collision, parameterized India reverse-SSH fallback port (`<TUNNEL_REMOTE_PORT>`) with a standard systemd keepalive service template, expanded test suite credential scans to usage docs, and added root `pytest.ini` for reliable test collection
+- made `cue-sandbox` fully self-contained: removed all external vault/doc-lookup/canonical references, derive configuration solely from host probing and operator inputs, and forbid halting for external documentation
+
+### Added
+
 - extended `huawei-cloud-gallery-publish`: added `references/shareable-prompt.md` carrying the original copy-paste prompt for non-skill users, and a Share & Install section in the usage guide with the raw `SKILL.md` URL and one-command curl installer
 - added `huawei-cloud-gallery-publish` skill package: one-click orchestration runbook that generates a simple webpage with CodeArts ACP, exposes it over a DevBridge tunnel, pushes source to GitCode (OAuth + `private_token` API auth), builds cover/intro/detail assets, and publishes to the Huawei Cloud Developer Works Gallery with a single user camp confirmation; encodes the full pitfall checklist (bwrap `/proc/<pid>/cwd` file access, `.gitignore`-before-init, single-commit discipline, STS 900s refresh, 29-char intro)
 - added `phone-playwright` skill package: AI-native mobile interaction and semantic distillation framework for Android (ADB) and iOS (WDA), featuring Viewport-Aware Semantic Pruning (O(N) DFS, ≥90% token reduction), 5-phase Actionability Auto-Waiting State Machine, Snapshot Warm-Cache (1.0s TTL, 54x click speedup to ~140ms), automated dynamic `scroll_into_view()`, unclipped virtual viewport error diagnostics, cross-platform STDIO MCP JSON-RPC 2.0 server with Windows IOCP threadpool isolation, mDNS port drift self-healing Fleet Watchdog, interactive CLI & REPL runner, exhaustive references, and 27 offline unit tests
@@ -47,13 +56,11 @@ The format is intentionally lightweight and optimized for small skill releases.
 
 - updated `muse-reverse-ssh` watchdog cadence guidance with measured production token data: 1-minute agent poll ≈26M input tokens/day, 5-minute supervisor ≈1/5 of that, 2.5-minute supervisor ≈2/5 (≈11M/day) — and recorded production's tightening to 2.5 min after repeated resident-loop deaths on a churny platform (worst-case detection window ≤2.5 min)
 - updated `muse-reverse-ssh` SKILL.md Layer 3 watchdog guidance to the production two-tier pattern: a zero-cost resident loop (`scripts/health-watch-loop.sh`, new template) runs minute-level checks and self-heals on the ephemeral machine, while the external supervisor polls sparsely (5 min default) to verify loop liveness (pidfile + `/proc/<pid>/cmdline`), relaunch it detached, and read the JSON status with one fixed command — silent when healthy, logs only anomalies. Replaces the old "1-minute external poll" default after production measurement showed a 1-minute agent-driven poll burning ~7% of a weekly free quota on an idle machine (resident loop + 5-min supervisor ≈ 1/5 the usage). Added pitfalls: never `set -e` in the resident loop (degraded exit code kills it), wrap each run in `timeout`, and the post-restore re-verify must clear first-pass failures to `fixed` instead of sticking at `failed`
-
 - updated `obsidian-doc-router` SKILL.md: multi-platform vault paths (macOS iCloud + Windows), vault-real recording directories (`Note/Project/`, `Note/AI/经验/`, `Note/Accounts/`) replacing non-existent `01.项目/`/`02.技术/`, TLDR header contract `## 速读（当前有效 · 维护于 …）`, trigger-word budget (≤15 distinctive keywords, no synonym/version enumeration), quick-section length cap (≤200 chars), and removal of stale cross-skill references
 
 ### Added
 
 - added `muse-reverse-ssh`, a reproducible skill for exposing a machine without a public IP as a publicly reachable SSH server via a persistent reverse SSH tunnel through a VPS (two-keypair model, `GatewayPorts` setup, keepalive supervisor template, verification and failure-mode table)
-
 - added `best-project-memory`, a repo-native continuity skill for project-state restoration, decision capture, TODO maintenance, and handoff generation
 - added deterministic project-memory helper scripts for memory initialization, session-log appends, and handoff pack creation
 - added `best-project-memory/scripts/compact_session.py` plus regression coverage so long-running repos can compact old session history into shorter summaries and phase recaps
@@ -79,7 +86,6 @@ The format is intentionally lightweight and optimized for small skill releases.
 - skipped symlink-recursion coverage on Windows when the process lacks symlink creation privileges
 - aligned website templates with `binding-route` and `temporary-binding` provenance language plus framework-ready versus delivery-ready reporting
 - strengthened `best-project-memory/scripts/memory_lint.py` to catch missing referenced snapshots, long session history without compaction, and snapshot-to-state visibility drift
-
 ## v0.1.6 - 2026-06-17
 
 ### Added

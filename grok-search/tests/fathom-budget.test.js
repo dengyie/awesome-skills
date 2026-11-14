@@ -8,6 +8,7 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { mkdtempSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -201,6 +202,77 @@ assert.match(dead.error, /open 引擎.*bing/);
 assert.equal(deadCalls.length, 2, "probe plus one default call, not zero");
 assert.equal(deadCalls[1].engines, undefined, "the fallback call lets the server route");
 deadServer.close();
+
+// --- 5. probe unavailable: the legacy fan-out still refuses catalog engines ------------------
+// The fallback keeps the old fan-out-first order, but a configured single-catalog engine must
+// stay out of the mega list: the server rejects the whole call before any web engine runs.
+const legacyCalls = [];
+const legacyServer = await listen((frame, res) => {
+  if (frame.method === "initialize") return json(res, handshake(frame, { protocolVersion: "2024-11-05", capabilities: {} }));
+  const args = frame.params?.arguments || {};
+  legacyCalls.push({ tool: frame.params?.name, engines: args.engines });
+  if (frame.params?.name === "list_engines") {
+    return json(res, handshake(frame, { isError: true, content: [{ type: "text", text: "probe down" }] }));
+  }
+  if (args.engines === "bing,duckduckgo") {
+    return json(
+      res,
+      handshake(frame, {
+        content: [{ type: "text", text: JSON.stringify({ results: [{ title: "Legacy hit", url: "https://example.com/legacy" }] }) }],
+      })
+    );
+  }
+  return json(res, handshake(frame, { isError: true, content: [{ type: "text", text: "engine unavailable" }] }));
+});
+
+const legacy = await fathomSearch("anything", 5, {
+  ...healthyConfig,
+  fathomApiUrl: `http://127.0.0.1:${legacyServer.address().port}/mcp`,
+  fathomEngines: "arxiv,bing,duckduckgo",
+  stateDir: mkdtempSync(path.join(tmpdir(), "grok-fathom-legacy-")),
+}, {});
+assert.equal(legacy.ok, true, legacy.error);
+assert.equal(legacyCalls[0].tool, "list_engines", "the probe is attempted first");
+assert.equal(legacyCalls[1].tool, "mega_search");
+assert.equal(legacyCalls[1].engines, "bing,duckduckgo", "the catalog engine never enters the fan-out");
+legacyServer.close();
+
+// --- 6. the engine table is cached across commands ------------------------------------------
+// Each CLI run is a fresh process, so the cache has to live on disk. The second call must reuse
+// it (no second list_engines) and the file must carry engine names only, never the token.
+const cachedCalls = [];
+const cachedServer = await listen((frame, res) => {
+  if (frame.method === "initialize") return json(res, handshake(frame, { protocolVersion: "2024-11-05", capabilities: {} }));
+  const args = frame.params?.arguments || {};
+  cachedCalls.push({ tool: frame.params?.name, engines: args.engines });
+  if (frame.params?.name === "list_engines") {
+    return json(
+      res,
+      handshake(frame, { structuredContent: { engines: [{ name: "bing", circuit_state: "closed" }] } })
+    );
+  }
+  return json(
+    res,
+    handshake(frame, {
+      content: [{ type: "text", text: JSON.stringify({ results: [{ title: "Cached hit", url: "https://example.com/cached" }] }) }],
+    })
+  );
+});
+
+const cachedConfig = {
+  ...healthyConfig,
+  fathomApiUrl: `http://127.0.0.1:${cachedServer.address().port}/mcp`,
+  stateDir: mkdtempSync(path.join(tmpdir(), "grok-fathom-cache-")),
+};
+const cachedFirst = await fathomSearch("anything", 5, cachedConfig, {});
+const cachedSecond = await fathomSearch("anything", 5, cachedConfig, {});
+assert.equal(cachedFirst.ok, true, cachedFirst.error);
+assert.equal(cachedSecond.ok, true, cachedSecond.error);
+assert.equal(cachedCalls.filter((call) => call.tool === "list_engines").length, 1, "the probe is cached");
+const cacheText = await readFile(path.join(cachedConfig.stateDir, "fathom-engines.json"), "utf8");
+assert.match(cacheText, /bing/);
+assert.ok(!cacheText.includes("test-token"), "the cache must not carry the token");
+cachedServer.close();
 
 console.log("fathom-budget.test.js: ok");
 // The slow stub's pending timers would keep the process alive for hangMs; nothing else is running.

@@ -30,6 +30,11 @@ const server = createServer((req, res) => {
       res.end(JSON.stringify({ error: { message: "stub upstream exploded", code: "stub_500" } }));
       return;
     }
+    if (mode === "429") {
+      res.writeHead(429, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: { message: "stub rate limited", code: "stub_rate" } }));
+      return;
+    }
     const body =
       mode === "textonly"
         ? { model: "grok-4.7", output: [{ type: "message", content: [{ type: "output_text", text: "Stub answer from memory." }] }] }
@@ -104,7 +109,31 @@ assert.equal(second.out.error.code, "GROK_UPSTREAM_COOLDOWN");
 assert.equal(hits, hitsAfterFirst, "a cooled-down call must not reach the upstream again");
 assert.match(second.out.error.message, /stub_500/, "the cooldown message carries the original reason");
 
-// --- 2. text-only 200: the billed answer is kept, but never passed off as grounded ----------
+// --- 2. 429: the cooldown is durable (15 min), not the 60s transient window ------------------
+// A rate limit is a state, not a blip: treating it like a 5xx would re-bill the same failing
+// request every minute for as long as the limit lasts.
+const rateState = await newState();
+mode = "429";
+hits = 0;
+const rateLimited = await run(["--no-extra", "stub query"], rateState);
+assert.equal(rateLimited.code, 1);
+assert.equal(rateLimited.out.error.code, "GROK_RATE_LIMITED", "a 429 is named as a rate limit, not a generic upstream error");
+assert.match(rateLimited.out.error.message, /触发限流/);
+const rateHits = hits;
+assert.ok(rateHits > 0, "the rate-limited call must reach the upstream");
+
+const rateRecord = JSON.parse(await readFile(path.join(rateState, "grok-cooldown.json"), "utf8"));
+assert.equal(rateRecord.reason, "stub_rate");
+const rateTtl = Date.parse(rateRecord.until) - Date.now();
+assert.ok(rateTtl > 120_000, `a 429 cooldown is durable (~15 min), got ${rateTtl}ms`);
+assert.ok(rateTtl <= 16 * 60_000, `a 429 cooldown stays inside the default window, got ${rateTtl}ms`);
+
+const rateSecond = await run(["--no-extra", "stub query"], rateState);
+assert.equal(rateSecond.code, 1);
+assert.equal(rateSecond.out.error.code, "GROK_UPSTREAM_COOLDOWN");
+assert.equal(hits, rateHits, "a cooled-down call must not reach the upstream again");
+
+// --- 3. text-only 200: the billed answer is kept, but never passed off as grounded ----------
 mode = "textonly";
 const ungrounded = await run(["--no-extra", "stub query"], await newState());
 assert.equal(ungrounded.code, 0, JSON.stringify(ungrounded.out.error));
@@ -114,7 +143,7 @@ assert.match(ungrounded.out.answer.text, /^> ⚠️ 未经搜索取证/);
 assert.match(ungrounded.out.answer.text, /Stub answer from memory\./);
 assert.ok(ungrounded.out.diagnostics.warnings.some((warning) => /未执行服务端搜索/.test(warning)));
 
-// --- 3. truncated 200: the partial answer survives, and the truncation is reported ----------
+// --- 4. truncated 200: the partial answer survives, and the truncation is reported ----------
 mode = "incomplete";
 const truncated = await run(["--no-extra", "stub query"], await newState());
 assert.equal(truncated.code, 0, JSON.stringify(truncated.out.error));
