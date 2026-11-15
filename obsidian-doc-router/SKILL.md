@@ -195,6 +195,15 @@ PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s .local/tests/doc_go
 ```
 确保无断链、无预算超限、无语法解析错误（三项均须 RESULT=OK / OK）。
 
+主表预算是**机器级强制**，不靠自觉：`.git/hooks/pre-commit` 在每次提交时校验 staged 的
+`00.MOC/AI-DOC-ROUTER.md`（判据 `.local/bin/check-router-budget`，与 scan 共用
+`doc_governance.rules` 的四个常量），超预算直接拒绝提交并打印压缩改法。所以：
+
+- 改完主表先自查 `python .local/bin/check-router-budget`（<100 ms，只查这一页）；
+- 钩子是本机状态、不随 git 同步：缺失时跑 `sh .local/bin/vault-install-hooks` 补装
+  （vault-backup daemon 每轮也会自动补，不覆盖外人写的 pre-commit）；
+- 确认要带超预算主表提交（极少）：`VAULT_ALLOW_ROUTER_OVERBUDGET=1 git commit ...`。
+
 ---
 
 ## 四、 核心反模式（严厉禁止）
