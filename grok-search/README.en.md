@@ -39,7 +39,7 @@ node scripts/map.js https://docs.example.com --limit 20
 
 Other agent harnesses can use the same pattern: read `SKILL.md`, then run `node scripts/search.js`, `node scripts/fetch.js`, or `node scripts/map.js` when needed.
 
-**Windows:** always run through `node` (or the bundled `scripts\<name>.cmd` wrappers). Executing a `.js` file directly - double-click, `.\scripts\fetch.js`, or `start scripts\fetch.js` - hands it to Windows Script Host, which fails with `800A03F6` because the file is a Node ES module.
+**Windows:** always run through `node` (or the bundled `scripts\<name>.cmd` wrappers). Executing a `.js` file directly - double-click, `.\scripts\fetch.js`, or `start scripts\fetch.js` - hands it to Windows Script Host, which fails with `800A03F6` because the file is a Node ES module. Quote URLs and keywords that contain spaces or `&` / `^` (`scripts\fetch.cmd "https://x.com/?a=1&b=2"`); cmd splits unquoted arguments.
 
 ## Documentation
 

@@ -1,5 +1,6 @@
 import json
 import pathlib
+import subprocess
 import re
 import unittest
 
@@ -84,6 +85,54 @@ class GrokSearchPackageTests(unittest.TestCase):
 
         self.assertEqual(package["name"], "grok-search")
         self.assertIn("test", package["scripts"])
+
+
+class InstalledCopyDriftTests(unittest.TestCase):
+    """Every install point must carry the committed tree byte for byte.
+
+    The 2026-11-15 Windows report came from exactly this gap: the installed
+    copy was behind the repository, so the agent running out of
+    ``~/.agents`` saw the old bare ``scripts/fetch.js`` examples and hit the
+    WScript error the repository had already documented away. Nothing turned
+    red when the copy drifted, so the drift was only found by hand.
+
+    Byte comparison is sound because the install is a literal copy of a
+    checkout: ``SKILL.md`` is pinned to LF and ``*.cmd`` to CRLF in
+    ``.gitattributes``, so both sides agree on line endings on every platform.
+    """
+
+    INSTALL_POINTS = (
+        pathlib.Path.home() / ".agents/skills/grok-search",
+        pathlib.Path.home() / ".claude/skills/grok-search",
+        pathlib.Path.home() / ".codex/skills/grok-search",
+        pathlib.Path.home() / ".zcode/skills/grok-search",
+        pathlib.Path.home() / ".mirasim/skills/grok-search",
+    )
+
+    def tracked_files(self):
+        root = ROOT.parent
+        try:
+            listed = subprocess.run(
+                ["git", "-C", str(root), "ls-files", "grok-search"],
+                capture_output=True, text=True, check=True,
+            ).stdout.split()
+        except (OSError, subprocess.CalledProcessError):
+            self.skipTest("not a git checkout")
+        return [path[len("grok-search/"):] for path in listed if path.startswith("grok-search/")]
+
+    def test_installed_copies_match_the_committed_tree(self):
+        tracked = self.tracked_files()
+        self.assertGreater(len(tracked), 50, f"tracked file list looks wrong: {len(tracked)}")
+        stale = []
+        for install in self.INSTALL_POINTS:
+            if not install.is_dir():
+                continue
+            for rel in tracked:
+                source = ROOT / rel
+                copy = install / rel
+                if not copy.is_file() or copy.read_bytes() != source.read_bytes():
+                    stale.append(f"{install.parent.parent.name}/{rel}")
+        self.assertEqual(stale, [], f"drifted install copies (re-run the copy step): {stale}")
 
 
 if __name__ == "__main__":

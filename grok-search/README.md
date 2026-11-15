@@ -39,7 +39,7 @@ node scripts/map.js https://docs.example.com --limit 20
 
 其他 agent harness 也可以采用同样方式：读取 `SKILL.md`，再按需运行 `node scripts/search.js`、`node scripts/fetch.js`、`node scripts/map.js`。
 
-> **Windows**：必须通过 `node` 运行（或用随附的 `scripts\<name>.cmd` 包装器）。直接双击 / `start scripts\fetch.js` 执行 `.js` 文件会交给 Windows Script Host，因该文件是 Node ES 模块而报 `800A03F6 Microsoft JScript 编译错误`。
+> **Windows**：必须通过 `node` 运行（或用随附的 `scripts\<name>.cmd` 包装器）。直接双击 / `start scripts\fetch.js` 执行 `.js` 文件会交给 Windows Script Host，因该文件是 Node ES 模块而报 `800A03F6 Microsoft JScript 编译错误`。含空格或以 `&`、`^` 开头的 URL / 关键词必须加引号（`scripts\fetch.cmd "https://x.com/?a=1&b=2"`）——cmd 会先按裸文本切参数。
 
 ## 文档
 
