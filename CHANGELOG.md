@@ -4,6 +4,22 @@ All notable changes to this repository should be documented in this file.
 
 The format is intentionally lightweight and optimized for small skill releases.
 
+## grok-search 0.3.4 - 2026-11-15
+
+### Fixed
+
+- fixed `grok-search` failing on Windows when a script was executed directly (double-click, `start`, or `scripts\fetch.js`): the `.js` association on Windows is `WScript.exe`, so the ES module was handed to JScript and died with `800A03F6` on the shebang line. Each script now has a `scripts/{search,fetch,map}.cmd` wrapper (`node "%~dp0<name>.js" %*` with the exit code forwarded), so `scripts\fetch.cmd <url>` is a valid Windows entry point from cmd, PowerShell and Git Bash alike
+- fixed the routing bullets in `SKILL.md` and `docs/usage/grok-search.md` still reading `scripts/fetch.js` a couple of lines below a warning that says to use `node`: the examples now read `node scripts/fetch.js <url>`. The example is what an agent copies, so it now matches the warning
+
+### Added
+
+- added the three `scripts/*.cmd` wrappers to the required files in `tests/test_skill_package.py`, so a package that ships the prose without them fails the suite
+
+### Changed
+
+- `grok-search/.gitattributes` pins `*.cmd` to CRLF: batch files are parsed line by line, and a clone made with `core.autocrlf=false` should not land LF-only wrappers
+- both READMEs state the real `SKILL.md` size (~6.5k chars) instead of a stale "under 5k" that had been wrong for several releases
+
 ## grok-search 0.3.3 - 2026-11-15
 
 ### Fixed

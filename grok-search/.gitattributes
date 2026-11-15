@@ -1,3 +1,7 @@
 # SKILL.md is authored and installed as LF. Without this pin a checkout rewrites it to CRLF,
 # which then travels into the install copy and shows up as a whole-file diff.
 SKILL.md text eol=lf
+
+# The .cmd wrappers are batch files: cmd.exe parses them line by line, so a clone with
+# core.autocrlf=false must still land CRLF on disk.
+*.cmd text eol=crlf

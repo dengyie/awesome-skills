@@ -49,7 +49,7 @@ node scripts/map.js https://docs.example.com --limit 20
 - [Smoke Tests](docs/smoke-tests.md)
 - [公开 Benchmark](docs/benchmark.md)
 - [评测方法研究](docs/web-search-evaluation-research.md)
-- Agent 侧说明：[SKILL.md](SKILL.md)（每轮都读，≤5k 字）与按需阅读的 [references/x-search.md](references/x-search.md)、[references/providers.md](references/providers.md)、[references/planning.md](references/planning.md)
+- Agent 侧说明：[SKILL.md](SKILL.md)（每轮都读，≈6.5k 字符）与按需阅读的 [references/x-search.md](references/x-search.md)、[references/providers.md](references/providers.md)、[references/planning.md](references/planning.md)
 
 ## 配置
 

@@ -49,7 +49,7 @@ Other agent harnesses can use the same pattern: read `SKILL.md`, then run `node 
 - [Smoke tests](docs/smoke-tests.md)
 - [Public benchmark](docs/benchmark.md)
 - [Evaluation methodology research](docs/web-search-evaluation-research.md)
-- Agent-facing: [SKILL.md](SKILL.md) (read every turn, kept under 5k chars) plus the on-demand [references/x-search.md](references/x-search.md), [references/providers.md](references/providers.md), and [references/planning.md](references/planning.md)
+- Agent-facing: [SKILL.md](SKILL.md) (read every turn, ~6.5k chars) plus the on-demand [references/x-search.md](references/x-search.md), [references/providers.md](references/providers.md), and [references/planning.md](references/planning.md)
 
 ## Configuration
 

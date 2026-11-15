@@ -37,9 +37,9 @@ Keep credentials out of the repository. `config.example.json` is a template with
 
 Route by what the request already gives you:
 
-- a URL, and the question is what it says: `scripts/fetch.js`
-- a named site but no URL, and the question is what is on it: `scripts/map.js`, then fetch the URLs you pick
-- current information, or the URL is unknown: `scripts/search.js`
+- a URL, and the question is what it says: `node scripts/fetch.js <url>`
+- a named site but no URL, and the question is what is on it: `node scripts/map.js <site>`, then fetch the URLs you pick
+- current information, or the URL is unknown: `node scripts/search.js "<keywords>"`
 
 Run the fewest commands that answer the question. Do not chain map, fetch, and search by default. When sub-questions are independent, run the commands in parallel.
 

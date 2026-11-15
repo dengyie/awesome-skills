@@ -18,6 +18,9 @@ class GrokSearchPackageTests(unittest.TestCase):
             ROOT / "scripts" / "search.js",
             ROOT / "scripts" / "fetch.js",
             ROOT / "scripts" / "map.js",
+            ROOT / "scripts" / "search.cmd",
+            ROOT / "scripts" / "fetch.cmd",
+            ROOT / "scripts" / "map.cmd",
             ROOT.parent / "docs" / "usage" / "grok-search.md",
         ]
         missing = [

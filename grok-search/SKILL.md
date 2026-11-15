@@ -7,7 +7,7 @@ description: Use when the user explicitly asks to search the web, check latest/c
 
 Node scripts for web search, URL fetch and site mapping. Run `npm install` once. Run scripts from the grok-search root (the directory of this SKILL.md): `cd` there or use absolute paths.
 
-**Windows: always invoke the scripts through `node` (`node scripts/fetch.js ...`), never execute the `.js` files directly.** Running `./scripts/fetch.js` or `scripts\fetch.js` on Windows hands the file to Windows Script Host (JScript), which dies with `800A03F6` on the shebang line — the `.js` association is `WScript.exe`, so double-clicking or `start`-ing the file is never valid. Use `node`, or the bundled `scripts\<name>.cmd` wrappers (they call `node` for you).
+**Windows: run the scripts only through `node` (`node scripts/fetch.js ...`) or the bundled `scripts\<name>.cmd` wrappers (they call `node` for you).** Executing a `.js` file directly (double-click, `start`, `scripts\fetch.js`) hands it to Windows Script Host, which dies with `800A03F6` on the shebang line — the `.js` association is `WScript.exe`.
 
 ## Choose The Script
 
