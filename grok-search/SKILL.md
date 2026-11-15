@@ -7,13 +7,13 @@ description: Use when the user explicitly asks to search the web, check latest/c
 
 Node scripts for web search, URL fetch and site mapping. Run `npm install` once. Run scripts from the grok-search root (the directory of this SKILL.md): `cd` there or use absolute paths.
 
-**Windows: always invoke the scripts through `node` (`node scripts/fetch.js ...`), never execute the `.js` files directly.** Running `./scripts/fetch.js` or `scripts\fetch.js` on Windows hands the file to Windows Script Host (JScript), which dies with `800A03F6 无效字符` on the shebang line.
+**Windows: always invoke the scripts through `node` (`node scripts/fetch.js ...`), never execute the `.js` files directly.** Running `./scripts/fetch.js` or `scripts\fetch.js` on Windows hands the file to Windows Script Host (JScript), which dies with `800A03F6` on the shebang line — the `.js` association is `WScript.exe`, so double-clicking or `start`-ing the file is never valid. Use `node`, or the bundled `scripts\<name>.cmd` wrappers (they call `node` for you).
 
 ## Choose The Script
 
-- URL given → `scripts/fetch.js`.
-- Site named, URL unknown → `scripts/map.js`, then `fetch.js` on the URLs you pick.
-- Current/latest information, or URL unknown → `scripts/search.js`.
+- URL given → `node scripts/fetch.js <url>`.
+- Site named, URL unknown → `node scripts/map.js <site>`, then `fetch.js` on the URLs you pick.
+- Current/latest information, or URL unknown → `node scripts/search.js "<keywords>"`.
 - Question about the user's local machine → inspect local files first; search only to interpret them.
 
 Run the fewest commands that answer the question; run independent sub-questions in parallel. Do not chain map → fetch → search.
